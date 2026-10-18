@@ -1073,12 +1073,39 @@ Public Class ffmpegMuxer
     End Sub
 
     Overrides Sub Mux()
-        Dim args = "-y -hide_banner -probesize 10M -i "
+        Dim args = "-y -hide_banner -probesize 10M"
 
         If File.Exists(p.VideoEncoder.OutputPath) Then
-            args += p.VideoEncoder.OutputPath.Escape
+            Dim videoPath = p.VideoEncoder.OutputPath
+            Dim info = p.Script.GetInfo()
+            Dim fps = If(info.FrameRateDen > 0, info.FrameRateNum & "/" & info.FrameRateDen, "")
+
+            'FFmpeg can't restore the timestamps of the B-frames in raw H.264 and HEVC streams
+            'and drops frames, mkvmerge can, AVI and MPG require the raw stream
+            If fps <> "" AndAlso videoPath.Ext.EqualsAny("h264", "264", "avc", "h265", "265", "hevc", "hvc") AndAlso
+                Not OutputFormat.EqualsAny("AVI", "MPG") Then
+
+                Dim wrappedPath = videoPath.DirAndBase + "_wrapped.mkv"
+
+                Using proc As New Proc
+                    proc.Header = "Wrapping raw video stream"
+                    proc.SkipString = "Progress: "
+                    proc.Encoding = Encoding.UTF8
+                    proc.Package = Package.mkvmerge
+                    proc.Arguments = "-o " + wrappedPath.Escape + " --default-duration 0:" + fps + "fps " + videoPath.Escape
+                    proc.AllowedExitCodes = {0, 1}
+                    proc.Start()
+                End Using
+
+                videoPath = wrappedPath
+            ElseIf fps <> "" AndAlso FileTypes.VideoRaw.Contains(videoPath.Ext) Then
+                'raw streams have no timestamps, FFmpeg assumes 25 FPS for them
+                args += " -r " + fps
+            End If
+
+            args += " -i " + videoPath.Escape
         Else
-            args += p.LastOriginalSourceFile.Escape
+            args += " -i " + p.LastOriginalSourceFile.Escape
         End If
 
         Dim id As Integer
