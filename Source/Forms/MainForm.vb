@@ -3516,6 +3516,8 @@ Partial Public Class MainForm
         Dim sourcePaths = {proj.SourceFile, proj.FirstOriginalSourceFile, proj.LastOriginalSourceFile}
 
         For Each sourcePath As String In sourcePaths
+            'the project of the ExtractHdrMetadata command only defines the first two paths
+            If Not File.Exists(sourcePath) Then Continue For
             Dim mi = New MediaInfo(sourcePath)
 
             If Not mi.GetVideo("HDR_Format_Commercial")?.ContainsAny("HDR10+") Then Continue For
@@ -3579,6 +3581,7 @@ Partial Public Class MainForm
         Dim sourcePaths = {proj.SourceFile, proj.FirstOriginalSourceFile, proj.LastOriginalSourceFile}
 
         For Each sourcePath As String In sourcePaths
+            If Not File.Exists(sourcePath) Then Continue For
             Dim isEL = False
             Dim files = Directory.GetFiles(sourcePath.Dir, sourcePath.Base + "*_EL*.*", SearchOption.TopDirectoryOnly).AsEnumerable()
             files = files?.Where(Function(x) {"h265", "hevc"}.Contains(x.Ext))
