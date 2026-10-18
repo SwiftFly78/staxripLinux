@@ -2376,7 +2376,7 @@ Partial Public Class MainForm
             Return False
         End If
 
-        Dim minDuration = If(p.MinBdmvPlaylistDuration >= 0, $" -minDuration={p.MinBdmvPlaylistDuration}", "")
+        Dim minDuration = eac3toForm.GetPlaylistOptions(p)
 
         Log.WriteEnvironment()
         Log.Write("Process Blu-Ray folder using eac3to", """" + Package.eac3to.Path + """ """ + srcPath + """" + minDuration + BR2)
@@ -2430,7 +2430,7 @@ Partial Public Class MainForm
                 Return False
             End If
 
-            Dim minDuration = If(p.MinBdmvPlaylistDuration >= 0, $" -minDuration={p.MinBdmvPlaylistDuration}", "")
+            Dim minDuration = eac3toForm.GetPlaylistOptions(p)
 
             Log.WriteEnvironment()
             Log.Write("Process mounted Blu-Ray folder using eac3to", """" + Package.eac3to.Path + """ """ + srcPath + """" + minDuration + BR2)
@@ -5398,7 +5398,7 @@ Partial Public Class MainForm
                         pr.SkipStrings = {"analyze: ", "process: "}
                         pr.Package = Package.eac3to
                         Dim outFiles As New List(Of String)
-                        pr.Process.StartInfo.Arguments = form.GetArgs(playlistFolder.Escape + " " & playlistID & ")", title, outFiles)
+                        pr.Process.StartInfo.Arguments = form.GetArgs(playlistFolder.Escape + " " & playlistID & ")", title, outFiles) + eac3toForm.GetPlaylistOptions(p)
                         pr.OutputFiles = outFiles
 
                         Try

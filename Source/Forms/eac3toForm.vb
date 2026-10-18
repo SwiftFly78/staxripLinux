@@ -723,6 +723,12 @@ Public Class eac3toForm
         End Using
     End Sub
 
+    'eac3to applies -minDuration only together with -showall, which changes the playlist numbers,
+    'so listing, analyzing and demuxing must use the same options
+    Shared Function GetPlaylistOptions(proj As Project) As String
+        Return If(proj.MinBdmvPlaylistDuration >= 0, $" -showall -minDuration={proj.MinBdmvPlaylistDuration}", "")
+    End Function
+
     Sub StartAnalyze()
         Dim args = ""
 
@@ -730,7 +736,7 @@ Public Class eac3toForm
             args = M2TSFile.Escape + " -progressnumbers"
             Project.Log.Write("Process M2TS file using eac3to", Package.eac3to.Path.Escape + " " + args + BR2)
         ElseIf Directory.Exists(PlaylistFolder) Then
-            args = PlaylistFolder.Escape + " " & PlaylistID & ") -progressnumbers"
+            args = PlaylistFolder.Escape + " " & PlaylistID & ") -progressnumbers" + GetPlaylistOptions(Project)
             Project.Log.Write("Process playlist file using eac3to", Package.eac3to.Path.Escape + " " + args + BR2)
         End If
 
