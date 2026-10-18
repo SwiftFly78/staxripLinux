@@ -1,5 +1,6 @@
-﻿
+
 Imports System.Net.Http
+Imports System.Runtime.InteropServices
 Imports System.Text.RegularExpressions
 
 Imports Microsoft.VisualBasic
@@ -18,12 +19,21 @@ Public Class ToolUpdate
     Sub New(pack As Package, updateUI As IUpdateUI)
         Package = pack
         TargetDir = pack.Directory
+
+        If TargetDir = "" Then
+            TargetDir = Path.Combine(Folder.Apps, "Tools", pack.Name)
+        End If
         Me.UpdateUI = updateUI
     End Sub
 
     Async Sub Update()
+        If Package.IsSystemInstalled Then
+            MsgInfo(Package.Name + " is installed system wide, please update it with the package manager.", Package.Path)
+            Exit Sub
+        End If
+
         Dim content = Await HttpClient.GetStringAsync(Package.DownloadURL)
-        Dim matches = Regex.Matches(content, "href=(""|')[^ ]+\.(7z|zip|exe)(""|')")
+        Dim matches = Regex.Matches(content, "href=(""|')[^ ]+\.(7z|zip|tar\.gz|tar\.xz|tar\.bz2|tar\.zst|tgz)(""|')")
 
         For Each match As Match In matches
             Dim url = match.Value
@@ -46,9 +56,7 @@ Public Class ToolUpdate
 
     Sub Download(url As String)
         'TaskDialog trims URLs
-        If MessageBox.Show("Download the file shown below?" + BR2 + url,
-            "StaxRip", MessageBoxButtons.OKCancel,
-            MessageBoxIcon.Question) = DialogResult.OK Then
+        If MsgQuestion("Download the file shown below?", url) = DialogResult.OK Then
 
             Using form As New DownloadForm(url, DownloadFile)
                 If form.ShowDialog() = DialogResult.OK AndAlso DownloadFile.FileExists Then
@@ -66,15 +74,42 @@ Public Class ToolUpdate
     End Sub
 
     Sub Extract()
-        If DownloadFile.Ext <> "7z" AndAlso DownloadFile.Ext <> "zip" Then
+        Dim isTar = DownloadFile.ToLowerInvariant.EndsWithAny(".tar.gz", ".tar.xz", ".tar.bz2", ".tar.zst", ".tgz")
+
+        If Not isTar AndAlso DownloadFile.Ext <> "7z" AndAlso DownloadFile.Ext <> "zip" Then
             Exit Sub
         End If
 
-        ExtractDir = Path.Combine(DownloadFile.Dir, DownloadFile.Base)
+        Dim base = DownloadFile.Base
+
+        If base.ToLowerInvariant.EndsWith(".tar") Then
+            base = base.Substring(0, base.Length - 4)
+        End If
+
+        ExtractDir = Path.Combine(DownloadFile.Dir, base)
+        Directory.CreateDirectory(ExtractDir)
 
         Using pr As New Process
-            pr.StartInfo.FileName = Package.SevenZip.Path
-            pr.StartInfo.Arguments = "x -y " + DownloadFile.Escape + " -o""" + ExtractDir + """"
+            If isTar Then
+                pr.StartInfo.FileName = "tar"
+                pr.StartInfo.ArgumentList.Add("-xf")
+                pr.StartInfo.ArgumentList.Add(DownloadFile)
+                pr.StartInfo.ArgumentList.Add("-C")
+                pr.StartInfo.ArgumentList.Add(ExtractDir)
+            Else
+                If Package.SevenZip.Path = "" Then
+                    UpdatePackageDialog()
+                    MsgError("7-Zip (7z) is required to extract " + DownloadFile.FileName)
+                    Exit Sub
+                End If
+
+                pr.StartInfo.FileName = Package.SevenZip.Path
+                pr.StartInfo.ArgumentList.Add("x")
+                pr.StartInfo.ArgumentList.Add("-y")
+                pr.StartInfo.ArgumentList.Add(DownloadFile)
+                pr.StartInfo.ArgumentList.Add("-o" + ExtractDir)
+            End If
+
             pr.StartInfo.UseShellExecute = False
             pr.Start()
             pr.WaitForExit()
@@ -139,7 +174,7 @@ Public Class ToolUpdate
                     Continue For
                 End If
 
-                FileHelp.Delete(file, FileIO.RecycleOption.SendToRecycleBin)
+                FileHelp.Delete(file, RecycleOption.SendToRecycleBin)
             Next
 
             For Each folder In Directory.GetDirectories(TargetDir)
@@ -147,7 +182,7 @@ Public Class ToolUpdate
                     Continue For
                 End If
 
-                FolderHelp.Delete(folder, FileIO.RecycleOption.SendToRecycleBin)
+                FolderHelp.Delete(folder, RecycleOption.SendToRecycleBin)
             Next
         Else
             UpdatePackageDialog()
@@ -181,7 +216,7 @@ Public Class ToolUpdate
             Exit Sub
         End If
 
-        FolderHelp.Delete(ExtractDir, FileIO.RecycleOption.SendToRecycleBin)
+        FolderHelp.Delete(ExtractDir, RecycleOption.SendToRecycleBin)
         EditVersion()
     End Sub
 
@@ -203,9 +238,21 @@ Public Class ToolUpdate
             Return True
         End If
 
-        Dim x86 = {"_win32", "\x86", "-x86", "32-bit", "-win32"}
+        Dim lower = value.ToLowerInvariant
+        Dim x86 = {"_win32", "/x86", "-x86", "32-bit", "-win32", "i686", "i386"}
 
-        If Environment.Is64BitProcess AndAlso value.ToLowerInvariant.ContainsAny(x86) Then
+        If Environment.Is64BitProcess AndAlso lower.ContainsAny(x86) Then
+            Return True
+        End If
+
+        If lower.ContainsAny("windows", "win64", "-win", "_win", ".exe", "macos", "darwin", "-osx", "_osx") Then
+            Return True
+        End If
+
+        Dim isArm = RuntimeInformation.OSArchitecture = Architecture.Arm64
+        Dim otherArch = If(isArm, {"x86_64", "amd64", "x64"}, {"aarch64", "arm64", "armv7", "armhf"})
+
+        If lower.ContainsAny(otherArch) Then
             Return True
         End If
     End Function

@@ -1,4 +1,4 @@
-﻿
+
 Imports System.Text
 Imports System.Text.RegularExpressions
 Imports System.Xml
@@ -83,21 +83,12 @@ Public MustInherit Class Demuxer
             New mkvDemuxer,
             New MP4BoxDemuxer,
             New CommandLineDemuxer With {
-                .Name = "DGIndex: Demux & Index MPEG-2",
-                .InputExtensions = {"mpg", "mpeg", "vob", "m2ts", "m2v", "mts", "m2t"},
-                .OutputExtensions = {"d2v"},
-                .InputFormats = {"mpeg2"},
-                .Command = "%app_path:DGIndex%",
-                .Arguments = "-i %source_files% -ia 2 -fo 0 -yr 1 -tn 1 -om 2 -drc 2 -dsd 0 -dsa 0 -o ""%temp_file%"" -hide -exit",
-                .SourceFilters = {"MPEG2Source", "D2VSource", "d2v.Source"}
-            },
-            New CommandLineDemuxer With {
                 .Name = "D2V Witch: Demux & Index MPEG-2",
                 .InputExtensions = {"mpg", "mpeg", "vob", "m2ts", "m2v", "mts", "m2t"},
                 .OutputExtensions = {"d2v"},
                 .InputFormats = {"mpeg2"},
-                .Command = "cmd.exe",
-                .Arguments = "/S /C """"%app_path:D2V Witch%"" --audio-ids all --output ""%temp_file%.d2v"" %source_files%""",
+                .Command = "%app_path:D2V Witch%",
+                .Arguments = "--audio-ids all --output ""%temp_file%.d2v"" %source_files%",
                 .SourceFilters = {"MPEG2Source", "D2VSource", "d2v.Source"},
                 .Active = False
             }
@@ -141,8 +132,8 @@ Public Class CommandLineDemuxer
             End If
 
             proc.Header = Name
-            proc.File = Macro.Expand(Command)
-            proc.Arguments = Macro.Expand(Arguments)
+            'the command is a user editable template with manually quoted paths
+            proc.SetShellCommand(Macro.ExpandShell(Command + " " + Arguments))
             proc.Start()
 
             If Command?.Contains("DGIndex") Then
@@ -161,7 +152,7 @@ Public Class CommandLineDemuxer
                     proc.SkipString = "Progress: "
                     proc.Encoding = Encoding.UTF8
                     proc.Package = Package.mkvextract
-                    proc.Arguments = "--ui-language en timestamps_v2 " + proj.SourceFile.Escape + " " & streamOrder & ":" + Path.Combine(proj.TempDir, proj.SourceFile.Base + "_timestamps.txt").Escape
+                    proc.Arguments = "--ui-language en_US timestamps_v2 " + proj.SourceFile.Escape + " " & streamOrder & ":" + Path.Combine(proj.TempDir, proj.SourceFile.Base + "_timestamps.txt").Escape
                     proc.AllowedExitCodes = {0, 1, 2}
                     proc.Start()
                 End Using
@@ -730,7 +721,7 @@ Public Class mkvDemuxer
     Overrides Sub Run(proj As Project)
         Dim audioStreams As List(Of AudioStream) = Nothing
         Dim subtitles As List(Of Subtitle) = Nothing
-        Dim stdout = ProcessHelp.GetConsoleOutput(Package.mkvmerge.Path, "--identify --ui-language en " + proj.SourceFile.Escape)
+        Dim stdout = ProcessHelp.GetConsoleOutput(Package.mkvmerge.Path, "--identify --ui-language en_US " + proj.SourceFile.Escape)
         Dim attachments = GetAttachments(stdout)
         Dim demuxAudio = MediaInfo.GetAudioCount(proj.SourceFile) > 0
         Dim demuxSubtitles = MediaInfo.GetSubtitleCount(proj.SourceFile) > 0
@@ -770,7 +761,7 @@ Public Class mkvDemuxer
                 proc.WriteLog(stdout + BR)
                 proc.Encoding = Encoding.UTF8
                 proc.Package = Package.mkvextract
-                proc.Arguments = proj.SourceFile.Escape + " --ui-language en chapters " + Path.Combine(proj.TempDir, proj.SourceFile.Base + "_chapters.xml").Escape
+                proc.Arguments = proj.SourceFile.Escape + " --ui-language en_US chapters " + Path.Combine(proj.TempDir, proj.SourceFile.Base + "_chapters.xml").Escape
                 proc.AllowedExitCodes = {0, 1, 2}
                 proc.Start()
             End Using
@@ -782,7 +773,7 @@ Public Class mkvDemuxer
                 proc.WriteLog(stdout + BR)
                 proc.Encoding = Encoding.UTF8
                 proc.Package = Package.mkvextract
-                proc.Arguments = proj.SourceFile.Escape + " --ui-language en chapters " + Path.Combine(proj.TempDir, proj.SourceFile.Base + "_chapters.txt").Escape + " --simple"
+                proc.Arguments = proj.SourceFile.Escape + " --ui-language en_US chapters " + Path.Combine(proj.TempDir, proj.SourceFile.Base + "_chapters.txt").Escape + " --simple"
                 proc.AllowedExitCodes = {0, 1, 2}
                 proc.Start()
             End Using
@@ -798,7 +789,7 @@ Public Class mkvDemuxer
                     proc.SkipString = "Progress: "
                     proc.Encoding = Encoding.UTF8
                     proc.Package = Package.mkvextract
-                    proc.Arguments = "--ui-language en timestamps_v2 " + proj.SourceFile.Escape + " " & streamOrder & ":" + Path.Combine(proj.TempDir, proj.SourceFile.Base + "_timestamps.txt").Escape
+                    proc.Arguments = "--ui-language en_US timestamps_v2 " + proj.SourceFile.Escape + " " & streamOrder & ":" + Path.Combine(proj.TempDir, proj.SourceFile.Base + "_timestamps.txt").Escape
                     proc.AllowedExitCodes = {0, 1, 2}
                     proc.Start()
                 End Using
@@ -816,7 +807,7 @@ Public Class mkvDemuxer
                     proc.WriteLog(stdout + BR)
                     proc.Encoding = Encoding.UTF8
                     proc.Package = Package.mkvextract
-                    proc.Arguments = proj.SourceFile.Escape + " --ui-language en attachments " + enabledAttachments.Select(Function(val) val.ID & ":" + GetAttachmentPath(proj, val.Name).Escape).Join(" ")
+                    proc.Arguments = proj.SourceFile.Escape + " --ui-language en_US attachments " + enabledAttachments.Select(Function(val) val.ID & ":" + GetAttachmentPath(proj, val.Name).Escape).Join(" ")
                     proc.AllowedExitCodes = {0, 1, 2}
                     proc.Start()
                 End Using
@@ -882,7 +873,7 @@ Public Class mkvDemuxer
             Exit Sub
         End If
 
-        Dim args = "--ui-language en " + sourcefile.Escape + " tracks"
+        Dim args = "--ui-language en_US " + sourcefile.Escape + " tracks"
         Dim newCount As Integer
         Dim outPaths As New List(Of String)
 
@@ -928,7 +919,7 @@ Public Class mkvDemuxer
                 Dim outPath = Path.Combine(proj.TempDir, subtitle.Filename + _default + forced + commentary + hearingimpaired + subtitle.ExtFull)
 
                 If subtitle.Ext = "mks" Then
-                    Dim arguments = "--ui-language en --no-audio --no-video --no-global-tags --no-attachments --no-buttons -o " + outPath.Escape + " " + sourcefile.Escape
+                    Dim arguments = "--ui-language en_US --no-audio --no-video --no-global-tags --no-attachments --no-buttons -o " + outPath.Escape + " " + sourcefile.Escape
 
                     Using proc As New Proc
                         proc.Project = proj

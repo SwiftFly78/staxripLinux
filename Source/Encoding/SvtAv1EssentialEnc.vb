@@ -1,4 +1,4 @@
-﻿Imports System.Globalization
+Imports System.Globalization
 Imports System.Text
 Imports System.Text.RegularExpressions
 Imports StaxRip.UI
@@ -133,8 +133,7 @@ Public Class SvtAv1EssentialEnc
             proc.SkipStrings = {"Encoding:", "Encoding frame", " Frames @ "}
 
             If commandLine.Contains("|") Then
-                proc.File = "cmd.exe"
-                proc.Arguments = "/S /C """ + commandLine + """"
+                proc.SetShellCommand(commandLine)
             Else
                 proc.CommandLine = commandLine
             End If
@@ -365,7 +364,7 @@ Public Class SvtAv1EssentialEnc
     End Function
 
     Overrides Function CreateEditControl() As Control
-        Return New SvtAv1EncAppEssentialControl(Me) With {.Dock = DockStyle.Fill}
+        Return New SvtAv1EncAppEssentialControl(Me)
     End Function
 
     Overrides Sub ShowConfigDialog(Optional param As CommandLineParam = Nothing)
@@ -476,7 +475,7 @@ Public Class SvtAv1EssentialEncParams
     Property Decoder As New OptionParam With {
         .Text = "Decoder",
         .Expanded = True,
-        .Options = {"AviSynth/VapourSynth", "QSVEnc (Intel)", "ffmpeg (Intel)", "ffmpeg (DXVA2)"},
+        .Options = {"AviSynth/VapourSynth", "QSVEnc (Intel)", "ffmpeg (Intel)", "ffmpeg (VAAPI)"},
         .Values = {"script", "qs", "ffqsv", "ffdxva"}}
 
     Property PipingToolAVS As New OptionParam With {
@@ -1552,7 +1551,7 @@ Public Class SvtAv1EssentialEncParams
                 Case "script"
                     'Broken ANSI fallback taken from x265
                     If pipeTool = "automatic" OrElse (p.Script.IsAviSynth AndAlso Not TextEncoding.IsProcessUTF8 AndAlso Not TextEncoding.ArePathsSupportedByASCIIEncoding) Then
-                        pipeTool = If(p.Script.IsAviSynth, "avs2pipemod", "vspipe")
+                        pipeTool = If(p.Script.IsAviSynth, FrameServerHelp.GetAviSynthPipeTool(), "vspipe")
                     End If
 
                     Select Case pipeTool
@@ -1586,7 +1585,7 @@ Public Class SvtAv1EssentialEncParams
                 Case "ffdxva"
                     Dim crop = If(isCropped, $" -vf ""crop={p.SourceWidth - p.CropLeft - p.CropRight}:{p.SourceHeight - p.CropTop - p.CropBottom}:{p.CropLeft}:{p.CropTop}""", "")
                     Dim pix_fmt = "yuv420p10le"
-                    pipeString = Package.ffmpeg.Path.Escape + " -threads 1 -hwaccel dxva2 -i " + p.SourceFile.Escape + " -f yuv4mpegpipe -pix_fmt " + pix_fmt + " -strict -1" + crop + " -loglevel fatal -hide_banner -"
+                    pipeString = Package.ffmpeg.Path.Escape + " -threads 1 -hwaccel vaapi -i " + p.SourceFile.Escape + " -f yuv4mpegpipe -pix_fmt " + pix_fmt + " -strict -1" + crop + " -loglevel fatal -hide_banner -"
 
                     sb.Append(pipeString & " | " & Package.Path.Escape)
             End Select

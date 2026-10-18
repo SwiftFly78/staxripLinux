@@ -30,9 +30,9 @@ Public Class Animation
             Proc.SkipStrings = {"frame=", "size="}
             Proc.Encoding = Encoding.UTF8
             Proc.Package = Package.ffmpeg
-            Proc.Arguments = " -ss " & Seek & " -t " & Duration & " -i " + """" + inputFile + """" +
+            Proc.Arguments = " -ss " & Seek & " -t " & Duration & " -i " + inputFile.Escape +
                 " -vf " + """" + "fps=" & Rate & ",scale=" & Size & ":-1:flags=spline,palettegen=stats_mode=" &
-                Mode & """ -loglevel quiet -an -y " + cachePath
+                Mode & """ -loglevel quiet -an -y " + cachePath.Escape
             Proc.Start()
         End Using
 
@@ -42,10 +42,10 @@ Public Class Animation
                 Proc.SkipStrings = {"frame=", "size="}
                 Proc.Encoding = Encoding.UTF8
                 Proc.Package = Package.ffmpeg
-                Proc.Arguments = " -ss " & Seek & " -t " & Duration & " -i " + """" + inputFile + """" +
-                    " -i " + cachePath + " -lavfi " + """" + "fps=" & Rate & ",scale=" & Size &
+                Proc.Arguments = " -ss " & Seek & " -t " & Duration & " -i " + inputFile.Escape +
+                    " -i " + cachePath.Escape + " -lavfi " + """" + "fps=" & Rate & ",scale=" & Size &
                     ":-1:flags=spline [x]; [x][1:v] paletteuse=" & Dither & ":diff_mode=" & SecondMode &
-                    """ -loglevel quiet -an -y " + """" + Export + """"
+                    """ -loglevel quiet -an -y " + Export.Escape
                 Proc.Start()
             End Using
         Else
@@ -54,10 +54,10 @@ Public Class Animation
                 Proc.SkipStrings = {"frame=", "size="}
                 Proc.Encoding = Encoding.UTF8
                 Proc.Package = Package.ffmpeg
-                Proc.Arguments = " -ss " & Seek & " -t " & Duration & " -i " + """" + inputFile + """" +
-                    " -i " + cachePath + " -lavfi " + """" + "fps=" & Rate & ",scale=" & Size &
+                Proc.Arguments = " -ss " & Seek & " -t " & Duration & " -i " + inputFile.Escape +
+                    " -i " + cachePath.Escape + " -lavfi " + """" + "fps=" & Rate & ",scale=" & Size &
                     ":-1:flags=spline [x]; [x][1:v] paletteuse=" & Dither & ":diff_mode=" & SecondMode &
-                    """ -loglevel quiet -an -y " + """" + OutPutPath + """"
+                    """ -loglevel quiet -an -y " + OutPutPath.Escape
                 Proc.Start()
             End Using
         End If
@@ -97,9 +97,9 @@ Public Class Animation
             Proc.SkipStrings = {"frame=", "size="}
             Proc.Encoding = Encoding.UTF8
             Proc.Package = Package.ffmpeg
-            Proc.Arguments = " -ss " & Seek & " -t " & Duration & " -i " + """" + inputFile + """" +
+            Proc.Arguments = " -ss " & Seek & " -t " & Duration & " -i " + inputFile.Escape +
                 " -lavfi " + """" + "fps=" & Rate & ",scale=" & Size & ":-1:flags=spline" +
-                """ -plays 0 -loglevel quiet -an -y " + """" + Path + """"
+                """ -plays 0 -loglevel quiet -an -y " + Path.Escape
             Proc.Start()
         End Using
 
@@ -118,7 +118,7 @@ Public Class Animation
                     Proc.SkipStrings = {"saving", "Reading", "all done", "APNG"}
                     Proc.Encoding = Encoding.UTF8
                     Proc.Package = Package.PNGopt
-                    Proc.Arguments = OptSettings + " " + """" + Path + """" + " " + """" + Export + """"
+                    Proc.Arguments = OptSettings + " " + Path.Escape + " " + Export.Escape
                     Proc.Start()
                 End Using
             Else
@@ -127,7 +127,7 @@ Public Class Animation
                     Proc.SkipStrings = {"saving", "Reading", "all done", "APNG"}
                     Proc.Encoding = Encoding.UTF8
                     Proc.Package = Package.PNGopt
-                    Proc.Arguments = OptSettings + " " + """" + Path + """" + " " + """" + OptOut + """"
+                    Proc.Arguments = OptSettings + " " + Path.Escape + " " + OptOut.Escape
                     Proc.Start()
                 End Using
             End If

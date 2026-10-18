@@ -1,7 +1,6 @@
-﻿Imports System.ComponentModel
+Imports System.ComponentModel
 Imports System.Runtime.Serialization
 Imports System.Runtime.Serialization.Formatters.Binary
-Imports Microsoft.VisualBasic
 Imports StaxRip.Theme
 
 Public Class Theme
@@ -486,18 +485,18 @@ Public Class Theme
 
         <Serializable>
         Public Class ButtonThemeColors
-            Public Property BackColor As ColorHSL = SystemColors.ScrollBar
+            Public Property BackColor As ColorHSL = LegacySystemColors.ScrollBar
             Public Property BackDisabledColor As ColorHSL = BackColor
-            Public Property BackHighlightColor As ColorHSL = SystemColors.ControlLight
-            Public Property BorderColor As ColorHSL = SystemColors.ActiveBorder
-            Public Property ForeColor As ColorHSL = SystemColors.ControlText
+            Public Property BackHighlightColor As ColorHSL = LegacySystemColors.ControlLight
+            Public Property BorderColor As ColorHSL = LegacySystemColors.ActiveBorder
+            Public Property ForeColor As ColorHSL = LegacySystemColors.ControlText
             Public Property ForeDisabledColor As ColorHSL = ForeColor
             Public Property ForeHighlightColor As ColorHSL = ForeColor
         End Class
 
         <Serializable>
         Public Class ButtonLabelThemeColors
-            Public Property BackColor As ColorHSL = SystemColors.Control
+            Public Property BackColor As ColorHSL = LegacySystemColors.Control
             Public Property BackHighlightColor As ColorHSL = _defaultBackHighlightColor
             Public Property ForeColor As ColorHSL = New ColorHSL(_baseHue, 0.75, 0.5, 1)
             Public Property ForeHighlightColor As ColorHSL = New ColorHSL(_highlightHue, 0.75, 0.5, 1)
@@ -508,17 +507,17 @@ Public Class Theme
 
         <Serializable>
         Public Class CheckBoxThemeColors
-            Public Property BackColor As ColorHSL = SystemColors.Control
+            Public Property BackColor As ColorHSL = LegacySystemColors.Control
             Public Property BackCheckedColor As ColorHSL = BackColor
             Public Property BackHighlightColor As ColorHSL = _defaultBackHighlightColor
             Public Property BackHoverColor As ColorHSL = BackColor
-            Public Property BorderColor As ColorHSL = SystemColors.ActiveBorder
-            Public Property BorderCheckedColor As ColorHSL = SystemColors.ActiveBorder
-            Public Property BoxColor As ColorHSL = SystemColors.Control
-            Public Property BoxCheckedColor As ColorHSL = SystemColors.Control
-            Public Property CheckmarkColor As ColorHSL = SystemColors.ControlText
-            Public Property CheckedBackColor As ColorHSL = SystemColors.Control
-            Public Property ForeColor As ColorHSL = SystemColors.ControlText
+            Public Property BorderColor As ColorHSL = LegacySystemColors.ActiveBorder
+            Public Property BorderCheckedColor As ColorHSL = LegacySystemColors.ActiveBorder
+            Public Property BoxColor As ColorHSL = LegacySystemColors.Control
+            Public Property BoxCheckedColor As ColorHSL = LegacySystemColors.Control
+            Public Property CheckmarkColor As ColorHSL = LegacySystemColors.ControlText
+            Public Property CheckedBackColor As ColorHSL = LegacySystemColors.Control
+            Public Property ForeColor As ColorHSL = LegacySystemColors.ControlText
             Public Property ForeCheckedColor As ColorHSL = ForeColor
             Public Property ForeDisabledColor As ColorHSL = ForeColor
             Public Property ForeHighlightColor As ColorHSL = ForeColor
@@ -526,116 +525,115 @@ Public Class Theme
 
         <Serializable>
         Public Class ComboBoxThemeColors
-            Public Property BackColor As ColorHSL = SystemColors.Window
+            Public Property BackColor As ColorHSL = LegacySystemColors.Window
             Public Property BackHighlightColor As ColorHSL = _defaultBackHighlightColor
-            Public Property BorderColor As ColorHSL = SystemColors.ActiveBorder
-            Public Property FlatStyle As FlatStyle = FlatStyle.Standard
-            Public Property ForeColor As ColorHSL = SystemColors.ControlText
+            Public Property BorderColor As ColorHSL = LegacySystemColors.ActiveBorder
+            Public Property ForeColor As ColorHSL = LegacySystemColors.ControlText
             Public Property ForeHighlightColor As ColorHSL = ForeColor
         End Class
 
         <Serializable>
         Public Class CommandLineRichTextBoxThemeColors
-            Public Property ParameterBackColor As ColorHSL = SystemColors.Window
+            Public Property ParameterBackColor As ColorHSL = LegacySystemColors.Window
             Public Property ParameterForeColor As ColorHSL = New ColorHSL(220, 0.5, 0.33, 1)
             Public Property ParameterFontStyles As FontStyle() = {}
-            Public Property ParameterValueBackColor As ColorHSL = SystemColors.Window
+            Public Property ParameterValueBackColor As ColorHSL = LegacySystemColors.Window
             Public Property ParameterValueForeColor As ColorHSL = New ColorHSL(160, 0.99, 0.4, 1)
             Public Property ParameterValueFontStyles As FontStyle() = {}
         End Class
 
         <Serializable>
         Public Class CriteriaControlThemeColors
-            Public Property BackColor As ColorHSL = SystemColors.Window
-            Public Property ForeColor As ColorHSL = SystemColors.WindowText
+            Public Property BackColor As ColorHSL = LegacySystemColors.Window
+            Public Property ForeColor As ColorHSL = LegacySystemColors.WindowText
         End Class
 
         <Serializable>
         Public Class FlowLayoutPanelThemeColors
-            Public Property BackColor As ColorHSL = SystemColors.Control
+            Public Property BackColor As ColorHSL = LegacySystemColors.Control
             Public Property BackHighlightColor As ColorHSL = BackColor.AddLuminance(-0.25)
-            Public Property ForeColor As ColorHSL = SystemColors.ControlText
+            Public Property ForeColor As ColorHSL = LegacySystemColors.ControlText
             Public Property ForeHighlightColor As ColorHSL = ForeColor
         End Class
 
         <Serializable>
         Public Class FlowPageThemeColors
-            Public Property BackColor As ColorHSL = SystemColors.Control
+            Public Property BackColor As ColorHSL = LegacySystemColors.Control
             Public Property BackHighlightColor As ColorHSL = BackColor.AddLuminance(-0.25)
-            Public Property ForeColor As ColorHSL = SystemColors.ControlText
+            Public Property ForeColor As ColorHSL = LegacySystemColors.ControlText
             Public Property ForeHighlightColor As ColorHSL = ForeColor
         End Class
 
         <Serializable>
         Public Class GridviewThemeColors
-            Public Property BackColor As ColorHSL = SystemColors.Control
+            Public Property BackColor As ColorHSL = LegacySystemColors.Control
             Public Property BackHighlightColor As ColorHSL = BackColor.AddLuminance(-0.25)
-            Public Property ForeColor As ColorHSL = SystemColors.ControlText
+            Public Property ForeColor As ColorHSL = LegacySystemColors.ControlText
             Public Property ForeHighlightColor As ColorHSL = ForeColor
-            Public Property GridColor As ColorHSL = SystemColors.Control
+            Public Property GridColor As ColorHSL = LegacySystemColors.Control
         End Class
 
         <Serializable>
         Public Class GroupBoxThemeColors
-            Public Property BackColor As ColorHSL = SystemColors.Control
+            Public Property BackColor As ColorHSL = LegacySystemColors.Control
             Public Property BackHighlightColor As ColorHSL = BackColor.AddLuminance(-0.25)
-            Public Property ForeColor As ColorHSL = SystemColors.ControlText
+            Public Property ForeColor As ColorHSL = LegacySystemColors.ControlText
             Public Property ForeHighlightColor As ColorHSL = ForeColor
         End Class
 
         <Serializable>
         Public Class LabelThemeColors
-            Public Property BackColor As ColorHSL = SystemColors.Control
+            Public Property BackColor As ColorHSL = LegacySystemColors.Control
             Public Property BackHighlightColor As ColorHSL = _defaultBackHighlightColor
-            Public Property ForeColor As ColorHSL = SystemColors.ControlText
+            Public Property ForeColor As ColorHSL = LegacySystemColors.ControlText
             Public Property ForeHighlightColor As ColorHSL = ForeColor
         End Class
 
         <Serializable>
         Public Class LabelProgressBarThemeColors
-            Public Property BackColor As ColorHSL = SystemColors.Control
-            Public Property ForeColor As ColorHSL = SystemColors.ControlText
+            Public Property BackColor As ColorHSL = LegacySystemColors.Control
+            Public Property ForeColor As ColorHSL = LegacySystemColors.ControlText
             Public Property ProgressColor As ColorHSL = New ColorHSL(_baseHue, 0.5, 0.75, 1)
         End Class
 
         <Serializable>
         Public Class LineThemeColors
-            Public Property BackColor As ColorHSL = SystemColors.Window
-            Public Property ForeColor As ColorHSL = SystemColors.WindowText
-            Public Property LineColor1 As ColorHSL = SystemColors.WindowText
-            Public Property LineColor2 As ColorHSL = SystemColors.WindowText
+            Public Property BackColor As ColorHSL = LegacySystemColors.Window
+            Public Property ForeColor As ColorHSL = LegacySystemColors.WindowText
+            Public Property LineColor1 As ColorHSL = LegacySystemColors.WindowText
+            Public Property LineColor2 As ColorHSL = LegacySystemColors.WindowText
         End Class
 
         <Serializable>
         Public Class ListBoxThemeColors
-            Public Property BackColor As ColorHSL = SystemColors.Window
+            Public Property BackColor As ColorHSL = LegacySystemColors.Window
             Public Property BackAlternateColor As ColorHSL = BackColor.AddLuminance(-0.05)
             Public Property BackHighlightColor As ColorHSL = _defaultBackHighlightColor
-            Public Property BackSelectedColor As ColorHSL = SystemColors.ControlDarkDark
-            Public Property ForeColor As ColorHSL = SystemColors.WindowText
+            Public Property BackSelectedColor As ColorHSL = LegacySystemColors.ControlDarkDark
+            Public Property ForeColor As ColorHSL = LegacySystemColors.WindowText
             Public Property ForeHighlightColor As ColorHSL = ForeColor
-            Public Property ForeSelectedColor As ColorHSL = SystemColors.Window
+            Public Property ForeSelectedColor As ColorHSL = LegacySystemColors.Window
             Public Property SymbolImageColor As ColorHSL = ForeColor
         End Class
 
         <Serializable>
         Public Class ListViewThemeColors
-            Public Property BackColor As ColorHSL = SystemColors.Window
+            Public Property BackColor As ColorHSL = LegacySystemColors.Window
             Public Property BackAlternateColor As ColorHSL = BackColor.AddLuminance(-0.05)
             Public Property BackHighlightColor As ColorHSL = _defaultBackHighlightColor
-            Public Property BackSelectedColor As ColorHSL = SystemColors.ControlDarkDark
-            Public Property ForeColor As ColorHSL = SystemColors.WindowText
+            Public Property BackSelectedColor As ColorHSL = LegacySystemColors.ControlDarkDark
+            Public Property ForeColor As ColorHSL = LegacySystemColors.WindowText
             Public Property ForeHighlightColor As ColorHSL = ForeColor
-            Public Property ForeSelectedColor As ColorHSL = SystemColors.Window
+            Public Property ForeSelectedColor As ColorHSL = LegacySystemColors.Window
             Public Property SeparatorColor As ColorHSL = BackColor.AddLuminance(-0.15)
             Public Property SymbolImageColor As ColorHSL = ForeColor
         End Class
 
         <Serializable>
         Public Class NumEditThemeColors
-            Public Property BackColor As ColorHSL = SystemColors.Window
+            Public Property BackColor As ColorHSL = LegacySystemColors.Window
             Public Property BorderColor As ColorHSL = BackColor
-            Public Property BorderSelectedColor As ColorHSL = SystemColors.ControlText
+            Public Property BorderSelectedColor As ColorHSL = LegacySystemColors.ControlText
 
 
             Private _upDownButton As UpDownButtonThemeColors
@@ -651,115 +649,115 @@ Public Class Theme
 
             <Serializable>
             Public Class UpDownButtonThemeColors
-                Public Property BackColor As ColorHSL = SystemColors.Control
-                Public Property BackHotColor As ColorHSL = SystemColors.Control
-                Public Property BackPressedColor As ColorHSL = SystemColors.Control
+                Public Property BackColor As ColorHSL = LegacySystemColors.Control
+                Public Property BackHotColor As ColorHSL = LegacySystemColors.Control
+                Public Property BackPressedColor As ColorHSL = LegacySystemColors.Control
                 Public Property BorderColor As ColorHSL = BackColor
-                Public Property ForeColor As ColorHSL = SystemColors.ControlText
-                Public Property ForeDisabledColor As ColorHSL = SystemColors.GrayText
+                Public Property ForeColor As ColorHSL = LegacySystemColors.ControlText
+                Public Property ForeDisabledColor As ColorHSL = LegacySystemColors.GrayText
             End Class
         End Class
 
         <Serializable>
         Public Class PanelThemeColors
-            Public Property BackColor As ColorHSL = SystemColors.Control
+            Public Property BackColor As ColorHSL = LegacySystemColors.Control
             Public Property BackHighlightColor As ColorHSL = _defaultBackHighlightColor
-            Public Property ForeColor As ColorHSL = SystemColors.ControlText
+            Public Property ForeColor As ColorHSL = LegacySystemColors.ControlText
             Public Property ForeHighlightColor As ColorHSL = ForeColor
         End Class
 
         <Serializable>
         Public Class PropertyGridThemeColors
-            Public Property BackColor As ColorHSL = SystemColors.Control
-            Public Property CategoryForeColor As ColorHSL = SystemColors.ControlText
-            Public Property CategorySplitterColor As ColorHSL = SystemColors.ControlText
-            Public Property CommandsActiveLinkColor As ColorHSL = SystemColors.ControlText
-            Public Property CommandsBackColor As ColorHSL = SystemColors.ControlText
-            Public Property CommandsBorderColor As ColorHSL = SystemColors.ControlText
-            Public Property CommandsDisabledLinkColor As ColorHSL = SystemColors.ControlText
-            Public Property CommandsForeColor As ColorHSL = SystemColors.ControlText
-            Public Property CommandsLinkColor As ColorHSL = SystemColors.ControlText
-            Public Property DisabledItemForeColor As ColorHSL = SystemColors.ControlText
-            Public Property ForeColor As ColorHSL = SystemColors.ControlText
-            Public Property HelpBackColor As ColorHSL = SystemColors.Control
-            Public Property HelpBorderColor As ColorHSL = SystemColors.ControlDark
-            Public Property HelpForeColor As ColorHSL = SystemColors.ControlText
-            Public Property LineColor As ColorHSL = SystemColors.ControlDark
-            Public Property SelectedItemWithFocusBackColor As ColorHSL = SystemColors.Control
-            Public Property SelectedItemWithFocusForeColor As ColorHSL = SystemColors.ControlText
-            Public Property ViewBackColor As ColorHSL = SystemColors.Control
-            Public Property ViewBorderColor As ColorHSL = SystemColors.ControlText
-            Public Property ViewForeColor As ColorHSL = SystemColors.ControlText
+            Public Property BackColor As ColorHSL = LegacySystemColors.Control
+            Public Property CategoryForeColor As ColorHSL = LegacySystemColors.ControlText
+            Public Property CategorySplitterColor As ColorHSL = LegacySystemColors.ControlText
+            Public Property CommandsActiveLinkColor As ColorHSL = LegacySystemColors.ControlText
+            Public Property CommandsBackColor As ColorHSL = LegacySystemColors.ControlText
+            Public Property CommandsBorderColor As ColorHSL = LegacySystemColors.ControlText
+            Public Property CommandsDisabledLinkColor As ColorHSL = LegacySystemColors.ControlText
+            Public Property CommandsForeColor As ColorHSL = LegacySystemColors.ControlText
+            Public Property CommandsLinkColor As ColorHSL = LegacySystemColors.ControlText
+            Public Property DisabledItemForeColor As ColorHSL = LegacySystemColors.ControlText
+            Public Property ForeColor As ColorHSL = LegacySystemColors.ControlText
+            Public Property HelpBackColor As ColorHSL = LegacySystemColors.Control
+            Public Property HelpBorderColor As ColorHSL = LegacySystemColors.ControlDark
+            Public Property HelpForeColor As ColorHSL = LegacySystemColors.ControlText
+            Public Property LineColor As ColorHSL = LegacySystemColors.ControlDark
+            Public Property SelectedItemWithFocusBackColor As ColorHSL = LegacySystemColors.Control
+            Public Property SelectedItemWithFocusForeColor As ColorHSL = LegacySystemColors.ControlText
+            Public Property ViewBackColor As ColorHSL = LegacySystemColors.Control
+            Public Property ViewBorderColor As ColorHSL = LegacySystemColors.ControlText
+            Public Property ViewForeColor As ColorHSL = LegacySystemColors.ControlText
         End Class
 
         <Serializable>
         Public Class RichTextBoxThemeColors
-            Public Property BackColor As ColorHSL = SystemColors.Window
+            Public Property BackColor As ColorHSL = LegacySystemColors.Window
             Public Property BackHighlightColor As ColorHSL = _defaultBackHighlightColor
-            Public Property BackReadonlyColor As ColorHSL = SystemColors.Control
+            Public Property BackReadonlyColor As ColorHSL = LegacySystemColors.Control
             Public Property BorderColor As ColorHSL = New ColorHSL(_baseHue, 0.0, 0.3, 1)
             Public Property BorderFocusedColor As ColorHSL = New ColorHSL(_baseHue, 0.0, 0.5, 1)
-            Public Property ForeColor As ColorHSL = SystemColors.ControlText
+            Public Property ForeColor As ColorHSL = LegacySystemColors.ControlText
             Public Property ForeHighlightColor As ColorHSL = ForeColor
         End Class
 
         <Serializable>
         Public Class TableLayoutPanelThemeColors
-            Public Property BackColor As ColorHSL = SystemColors.Control
+            Public Property BackColor As ColorHSL = LegacySystemColors.Control
             Public Property BackHighlightColor As ColorHSL = _defaultBackHighlightColor
-            Public Property ForeColor As ColorHSL = SystemColors.ControlText
+            Public Property ForeColor As ColorHSL = LegacySystemColors.ControlText
             Public Property ForeHighlightColor As ColorHSL = ForeColor
         End Class
 
         <Serializable>
         Public Class TabControlThemeColors
-            Public Property BackColor As ColorHSL = SystemColors.Control
+            Public Property BackColor As ColorHSL = LegacySystemColors.Control
             Public Property BackHighlightColor As ColorHSL = _defaultBackHighlightColor
-            Public Property BorderColor As ColorHSL = SystemColors.Control
-            Public Property ForeColor As ColorHSL = SystemColors.ControlText
+            Public Property BorderColor As ColorHSL = LegacySystemColors.Control
+            Public Property ForeColor As ColorHSL = LegacySystemColors.ControlText
             Public Property ForeHighlightColor As ColorHSL = ForeColor
         End Class
 
         <Serializable>
         Public Class TabPageThemeColors
-            Public Property BackColor As ColorHSL = SystemColors.Control
+            Public Property BackColor As ColorHSL = LegacySystemColors.Control
             Public Property BackHighlightColor As ColorHSL = _defaultBackHighlightColor
-            Public Property ForeColor As ColorHSL = SystemColors.ControlText
+            Public Property ForeColor As ColorHSL = LegacySystemColors.ControlText
             Public Property ForeHighlightColor As ColorHSL = ForeColor
         End Class
 
         <Serializable>
         Public Class TextBoxThemeColors
-            Public Property BackColor As ColorHSL = SystemColors.Window
+            Public Property BackColor As ColorHSL = LegacySystemColors.Window
             Public Property BackHighlightColor As ColorHSL = _defaultBackHighlightColor
-            Public Property BackReadonlyColor As ColorHSL = SystemColors.Control
+            Public Property BackReadonlyColor As ColorHSL = LegacySystemColors.Control
             Public Property BorderColor As ColorHSL = New ColorHSL(_baseHue, 0.0, 0.3, 1)
             Public Property BorderFocusedColor As ColorHSL = New ColorHSL(_baseHue, 0.0, 0.5, 1)
-            Public Property ForeColor As ColorHSL = SystemColors.ControlText
+            Public Property ForeColor As ColorHSL = LegacySystemColors.ControlText
             Public Property ForeHighlightColor As ColorHSL = ForeColor
         End Class
 
         <Serializable>
         Public Class TextEditThemeColors
-            Public Property BackColor As ColorHSL = SystemColors.Window
+            Public Property BackColor As ColorHSL = LegacySystemColors.Window
             Public Property BackHighlightColor As ColorHSL = _defaultBackHighlightColor
-            Public Property BackReadonlyColor As ColorHSL = SystemColors.Control
+            Public Property BackReadonlyColor As ColorHSL = LegacySystemColors.Control
             Public Property BorderColor As ColorHSL = New ColorHSL(_baseHue, 0.0, 0.3, 1)
             Public Property BorderFocusedColor As ColorHSL = New ColorHSL(_baseHue, 0.0, 0.5, 1)
             Public Property BorderHoverColor As ColorHSL = BorderFocusedColor.AddLuminance(0.1).AddSaturation(0.1)
-            Public Property ForeColor As ColorHSL = SystemColors.ControlText
+            Public Property ForeColor As ColorHSL = LegacySystemColors.ControlText
             Public Property ForeHighlightColor As ColorHSL = ForeColor
-            Public Property ForeReadonlyColor As ColorHSL = SystemColors.ControlText
+            Public Property ForeReadonlyColor As ColorHSL = LegacySystemColors.ControlText
         End Class
 
         <Serializable>
         Public Class ToggleButtonLabelThemeColors
-            Public Property BackColor As ColorHSL = SystemColors.Control
+            Public Property BackColor As ColorHSL = LegacySystemColors.Control
             Public Property BackHighlightColor As ColorHSL = _defaultBackHighlightColor
             Public Property ForeColor As ColorHSL = New ColorHSL(_baseHue, 0.75, 0.5, 1)
             Public Property ForeHighlightColor As ColorHSL = New ColorHSL(_highlightHue, 0.75, 0.5, 1)
             Public Property LinkOnForeColor As ColorHSL = ForeColor
-            Public Property LinkOffForeColor As ColorHSL = Color.Gray
+            Public Property LinkOffForeColor As ColorHSL = Colors.Gray
             Public Property LinkForeHoverColor As ColorHSL = LinkOnForeColor.AddSaturation(0.5).AddLuminance(0.2)
             Public Property LinkForeHighlightHoverColor As ColorHSL = ForeHighlightColor.AddSaturation(0.5).AddLuminance(0.2)
         End Class
@@ -788,39 +786,39 @@ Public Class Theme
 
         <Serializable>
         Public Class ToolStripButtonThemeColors
-            Public Property BackColor As ColorHSL = SystemColors.Control
+            Public Property BackColor As ColorHSL = LegacySystemColors.Control
             Public Property BackHighlightColor As ColorHSL = _defaultBackHighlightColor
-            Public Property ForeColor As ColorHSL = SystemColors.ControlText
+            Public Property ForeColor As ColorHSL = LegacySystemColors.ControlText
             Public Property ForeHighlightColor As ColorHSL = ForeColor
         End Class
 
         <Serializable>
         Public Class TrackBarThemeColors
-            Public Property BackColor As ColorHSL = SystemColors.Control
+            Public Property BackColor As ColorHSL = LegacySystemColors.Control
             Public Property BackHighlightColor As ColorHSL = _defaultBackHighlightColor
-            Public Property ForeColor As ColorHSL = SystemColors.ControlText
+            Public Property ForeColor As ColorHSL = LegacySystemColors.ControlText
             Public Property ForeHighlightColor As ColorHSL = ForeColor
         End Class
 
         <Serializable>
         Public Class TreeViewThemeColors
-            Public Property BackColor As ColorHSL = SystemColors.Window
+            Public Property BackColor As ColorHSL = LegacySystemColors.Window
             Public Property BackAlternateColor As ColorHSL = BackColor.AddLuminance(-0.05)
-            Public Property BackExpandableColor As ColorHSL = SystemColors.Control
-            Public Property BackExpandedColor As ColorHSL = SystemColors.Control
+            Public Property BackExpandableColor As ColorHSL = LegacySystemColors.Control
+            Public Property BackExpandedColor As ColorHSL = LegacySystemColors.Control
             Public Property BackHighlightColor As ColorHSL = _defaultBackHighlightColor
-            Public Property BackSelectedColor As ColorHSL = SystemColors.ControlLight
-            Public Property ForeColor As ColorHSL = SystemColors.WindowText
+            Public Property BackSelectedColor As ColorHSL = LegacySystemColors.ControlLight
+            Public Property ForeColor As ColorHSL = LegacySystemColors.WindowText
             Public Property ForeExpandableColor As ColorHSL = ForeColor
             Public Property ForeExpandedColor As ColorHSL = ForeColor
             Public Property ForeHighlightColor As ColorHSL = ForeColor
-            Public Property ForeSelectedColor As ColorHSL = SystemColors.ControlText
-            Public Property LineColor As ColorHSL = SystemColors.WindowText
+            Public Property ForeSelectedColor As ColorHSL = LegacySystemColors.ControlText
+            Public Property LineColor As ColorHSL = LegacySystemColors.WindowText
         End Class
 
         <Serializable>
         Public Class VideoRendererThemeColors
-            Public Property BackColor As ColorHSL = SystemColors.Window
+            Public Property BackColor As ColorHSL = LegacySystemColors.Window
         End Class
 
     End Class
@@ -840,11 +838,11 @@ Public Class Theme
             End Set
         End Property
 
-        Public Property BackColor As ColorHSL = SystemColors.Control
-        Public Property ControlBackColor As ColorHSL = Color.Transparent
-        Public Property DangerBackColor As ColorHSL = Color.Transparent
+        Public Property BackColor As ColorHSL = LegacySystemColors.Control
+        Public Property ControlBackColor As ColorHSL = Colors.Transparent
+        Public Property DangerBackColor As ColorHSL = Colors.Transparent
         Public Property DangerForeColor As ColorHSL = New ColorHSL(358, 1, 0.5, 1)
-        Public Property ForeColor As ColorHSL = SystemColors.ControlText
+        Public Property ForeColor As ColorHSL = LegacySystemColors.ControlText
     End Class
 
     <Serializable>
@@ -856,37 +854,37 @@ Public Class Theme
 
     <Serializable>
     Public Class CodeEditorThemeColors
-        Public Property BackAccentColor As ColorHSL = SystemColors.Window
-        Public Property ForeColor As ColorHSL = SystemColors.ControlDark
-        Public Property ForeAccentColor As ColorHSL = SystemColors.WindowText
-        Public Property RichTextBoxBorderColor As ColorHSL = SystemColors.ControlDark
-        Public Property RichTextBoxBorderAccentColor As ColorHSL = SystemColors.ControlDark
-        Public Property RichTextBoxForeColor As ColorHSL = SystemColors.ControlDark
-        Public Property RichTextBoxForeAccentColor As ColorHSL = SystemColors.WindowText
+        Public Property BackAccentColor As ColorHSL = LegacySystemColors.Window
+        Public Property ForeColor As ColorHSL = LegacySystemColors.ControlDark
+        Public Property ForeAccentColor As ColorHSL = LegacySystemColors.WindowText
+        Public Property RichTextBoxBorderColor As ColorHSL = LegacySystemColors.ControlDark
+        Public Property RichTextBoxBorderAccentColor As ColorHSL = LegacySystemColors.ControlDark
+        Public Property RichTextBoxForeColor As ColorHSL = LegacySystemColors.ControlDark
+        Public Property RichTextBoxForeAccentColor As ColorHSL = LegacySystemColors.WindowText
     End Class
 
     <Serializable>
     Public Class CropFormThemeColors
-        Public Property BackColor As ColorHSL = SystemColors.Window
-        Public Property BorderColor As ColorHSL = SystemColors.ControlDark
-        Public Property BorderSelectedColor As ColorHSL = SystemColors.Control
+        Public Property BackColor As ColorHSL = LegacySystemColors.Window
+        Public Property BorderColor As ColorHSL = LegacySystemColors.ControlDark
+        Public Property BorderSelectedColor As ColorHSL = LegacySystemColors.Control
     End Class
 
     <Serializable>
     Public Class MainFormThemeColors
-        Public Property laTipBackColor As ColorHSL = Color.Transparent
-        Public Property laTipBackHighlightColor As ColorHSL = Color.Transparent
+        Public Property laTipBackColor As ColorHSL = Colors.Transparent
+        Public Property laTipBackHighlightColor As ColorHSL = Colors.Transparent
         Public Property laTipForeColor As ColorHSL = New ColorHSL(_baseHue, 1, 0.5, 1)
         Public Property laTipForeHighlightColor As ColorHSL = New ColorHSL(355, 1, 0.5, 1)
     End Class
 
     <Serializable>
     Public Class ProcessingFormThemeColors
-        Public Property BackColor As ColorHSL = SystemColors.Control
-        Public Property ProcessButtonBackColor As ColorHSL = SystemColors.Control
-        Public Property ProcessButtonBackSelectedColor As ColorHSL = SystemColors.ScrollBar
-        Public Property ProcessButtonForeColor As ColorHSL = SystemColors.ControlText
-        Public Property ProcessButtonForeSelectedColor As ColorHSL = SystemColors.ControlText
+        Public Property BackColor As ColorHSL = LegacySystemColors.Control
+        Public Property ProcessButtonBackColor As ColorHSL = LegacySystemColors.Control
+        Public Property ProcessButtonBackSelectedColor As ColorHSL = LegacySystemColors.ScrollBar
+        Public Property ProcessButtonForeColor As ColorHSL = LegacySystemColors.ControlText
+        Public Property ProcessButtonForeSelectedColor As ColorHSL = LegacySystemColors.ControlText
 
 
         Private _outputHighlighting As OutputHighlightingThemeColors
@@ -902,43 +900,43 @@ Public Class Theme
 
         <Serializable>
         Public Class OutputHighlightingThemeColors
-            Public Property HeaderBackColor As ColorHSL = Color.Transparent
+            Public Property HeaderBackColor As ColorHSL = Colors.Transparent
             Public Property HeaderForeColor As ColorHSL = New ColorHSL(333, 0.99, 0.5, 1)
             Public Property HeaderFontStyles As FontStyle() = {}
 
-            Public Property EncoderTitleBackColor As ColorHSL = Color.Transparent
+            Public Property EncoderTitleBackColor As ColorHSL = Colors.Transparent
             Public Property EncoderTitleForeColor As ColorHSL = New ColorHSL(12, 0.99, 0.5, 1)
             Public Property EncoderTitleFontStyles As FontStyle() = {}
 
-            Public Property ParameterBackColor As ColorHSL = Color.Transparent
+            Public Property ParameterBackColor As ColorHSL = Colors.Transparent
             Public Property ParameterForeColor As ColorHSL = New ColorHSL(320, 0.99, 0.5, 1)
             Public Property ParameterFontStyles As FontStyle() = {}
-            Public Property ParameterValueBackColor As ColorHSL = Color.Transparent
+            Public Property ParameterValueBackColor As ColorHSL = Colors.Transparent
             Public Property ParameterValueForeColor As ColorHSL = New ColorHSL(270, 0.99, 0.5, 1)
             Public Property ParameterValueFontStyles As FontStyle() = {}
 
-            Public Property PipeBackColor As ColorHSL = Color.Transparent
+            Public Property PipeBackColor As ColorHSL = Colors.Transparent
             Public Property PipeForeColor As ColorHSL = New ColorHSL(0, 0.99, 0.4, 1)
             Public Property PipeFontStyles As FontStyle() = {FontStyle.Bold}
 
-            Public Property ExeFileBackColor As ColorHSL = Color.Transparent
+            Public Property ExeFileBackColor As ColorHSL = Colors.Transparent
             Public Property ExeFileForeColor As ColorHSL = New ColorHSL(180, 0.99, 0.4, 1)
             Public Property ExeFileFontStyles As FontStyle() = {}
 
-            Public Property MediaFileBackColor As ColorHSL = Color.Transparent
+            Public Property MediaFileBackColor As ColorHSL = Colors.Transparent
             Public Property MediaFileForeColor As ColorHSL = New ColorHSL(220, 0.99, 0.4, 1)
             Public Property MediaFileFontStyles As FontStyle() = {}
 
-            Public Property MetadataFileBackColor As ColorHSL = Color.Transparent
+            Public Property MetadataFileBackColor As ColorHSL = Colors.Transparent
             Public Property MetadataFileForeColor As ColorHSL = New ColorHSL(290, 0.99, 0.4, 1)
             Public Property MetadataFileFontStyles As FontStyle() = {}
 
-            Public Property ScriptFileBackColor As ColorHSL = Color.Transparent
+            Public Property ScriptFileBackColor As ColorHSL = Colors.Transparent
             Public Property ScriptFileForeColor As ColorHSL = New ColorHSL(240, 0.99, 0.4, 1)
             Public Property ScriptFileFontStyles As FontStyle() = {}
 
-            Public Property AlternateBackColor As ColorHSL = SystemColors.Window.ToColorHSL().AddLuminance(-0.075)
-            Public Property AlternateForeColor As ColorHSL = SystemColors.WindowText
+            Public Property AlternateBackColor As ColorHSL = LegacySystemColors.Window.ToColorHSL().AddLuminance(-0.075)
+            Public Property AlternateForeColor As ColorHSL = LegacySystemColors.WindowText
             Public Property AlternateFontStyles As FontStyle() = {}
 
             Public Property SourceBackColor As ColorHSL = New ColorHSL(0, 0.5, 0.75, 1)
@@ -952,25 +950,25 @@ Public Class Theme
             Public Property WarningLabelBackColor As ColorHSL = New ColorHSL(0, 0.77, 0.75, 1)
             Public Property WarningLabelForeColor As ColorHSL = New ColorHSL(0, 0.0, 0.0, 1)
             Public Property WarningLabelFontStyles As FontStyle() = {}
-            Public Property WarningTextBackColor As ColorHSL = Color.Transparent
+            Public Property WarningTextBackColor As ColorHSL = Colors.Transparent
             Public Property WarningTextForeColor As ColorHSL = New ColorHSL(0, 0.99, 0.5, 1)
             Public Property WarningTextFontStyles As FontStyle() = {}
 
-            Public Property FramesBackColor As ColorHSL = Color.Transparent
+            Public Property FramesBackColor As ColorHSL = Colors.Transparent
             Public Property FramesForeColor As ColorHSL = New ColorHSL(140, 0.99, 0.33, 1)
             Public Property FramesFontStyles As FontStyle() = {}
-            Public Property FramesCuttedBackColor As ColorHSL = Color.Transparent
+            Public Property FramesCuttedBackColor As ColorHSL = Colors.Transparent
             Public Property FramesCuttedForeColor As ColorHSL = New ColorHSL(30, 0.99, 0.33, 1)
             Public Property FramesCuttedFontStyles As FontStyle() = {}
-            Public Property FramesCuttedNumberBackColor As ColorHSL = Color.Transparent
+            Public Property FramesCuttedNumberBackColor As ColorHSL = Colors.Transparent
             Public Property FramesCuttedNumberForeColor As ColorHSL = New ColorHSL(30, 0.99, 0.4, 1)
             Public Property FramesCuttedNumberFontStyles As FontStyle() = {}
 
-            Public Property FrameServerBackColor As ColorHSL = Color.Transparent
+            Public Property FrameServerBackColor As ColorHSL = Colors.Transparent
             Public Property FrameServerForeColor As ColorHSL = New ColorHSL(240, 0.99, 0.33, 1)
             Public Property FrameServerFontStyles As FontStyle() = {}
 
-            Public Property EncoderBackColor As ColorHSL = Color.Transparent
+            Public Property EncoderBackColor As ColorHSL = Colors.Transparent
             Public Property EncoderForeColor As ColorHSL = New ColorHSL(220, 0.99, 0.33, 1)
             Public Property EncoderFontStyles As FontStyle() = {}
         End Class
@@ -978,8 +976,8 @@ Public Class Theme
 
     <Serializable>
     Public Class TaskDialogThemeColors
-        Public Property BackColor As ColorHSL = SystemColors.Control
-        Public Property ForeColor As ColorHSL = SystemColors.ControlText
+        Public Property BackColor As ColorHSL = LegacySystemColors.Control
+        Public Property ForeColor As ColorHSL = LegacySystemColors.ControlText
 
 
         Private _button As ButtonThemeColors
@@ -1006,28 +1004,88 @@ Public Class Theme
 
         <Serializable>
         Public Class ButtonThemeColors
-            Public Property BackColor As ColorHSL = SystemColors.ScrollBar
-            Public Property BorderColor As ColorHSL = SystemColors.ActiveBorder
-            Public Property ForeColor As ColorHSL = SystemColors.ControlText
-            Public Property TimeoutBackColor As ColorHSL = SystemColors.ScrollBar
-            Public Property TimeoutForeColor As ColorHSL = SystemColors.ControlText
+            Public Property BackColor As ColorHSL = LegacySystemColors.ScrollBar
+            Public Property BorderColor As ColorHSL = LegacySystemColors.ActiveBorder
+            Public Property ForeColor As ColorHSL = LegacySystemColors.ControlText
+            Public Property TimeoutBackColor As ColorHSL = LegacySystemColors.ScrollBar
+            Public Property TimeoutForeColor As ColorHSL = LegacySystemColors.ControlText
         End Class
 
         <Serializable>
         Public Class CommandButtonThemeColors
-            Public Property BackColor As ColorHSL = SystemColors.ScrollBar
-            Public Property BorderColor As ColorHSL = SystemColors.ActiveBorder
-            Public Property ForeColor As ColorHSL = SystemColors.ControlText
+            Public Property BackColor As ColorHSL = LegacySystemColors.ScrollBar
+            Public Property BorderColor As ColorHSL = LegacySystemColors.ActiveBorder
+            Public Property ForeColor As ColorHSL = LegacySystemColors.ControlText
         End Class
     End Class
 
     <Serializable>
     Public Class VideoComparisonFormThemeColors
-        Public Property BackColor As ColorHSL = SystemColors.Window
-        Public Property TabBackColor As ColorHSL = Color.Black
+        Public Property BackColor As ColorHSL = LegacySystemColors.Window
+        Public Property TabBackColor As ColorHSL = Colors.Black
     End Class
 
 End Class
 
+'maps the WinForms system colors used by the theme definitions to Eto system colors
+Public Class LegacySystemColors
+    Shared ReadOnly Property Control As Color
+        Get
+            Return SystemColors.Control
+        End Get
+    End Property
 
+    Shared ReadOnly Property ControlText As Color
+        Get
+            Return SystemColors.ControlText
+        End Get
+    End Property
 
+    Shared ReadOnly Property Window As Color
+        Get
+            Return SystemColors.ControlBackground
+        End Get
+    End Property
+
+    Shared ReadOnly Property WindowText As Color
+        Get
+            Return SystemColors.ControlText
+        End Get
+    End Property
+
+    Shared ReadOnly Property ControlDark As Color
+        Get
+            Return CType(SystemColors.Control, ColorHSL).AddLuminance(-0.25F).ToColor
+        End Get
+    End Property
+
+    Shared ReadOnly Property ControlDarkDark As Color
+        Get
+            Return CType(SystemColors.Control, ColorHSL).AddLuminance(-0.45F).ToColor
+        End Get
+    End Property
+
+    Shared ReadOnly Property ControlLight As Color
+        Get
+            Return CType(SystemColors.Control, ColorHSL).AddLuminance(0.1F).ToColor
+        End Get
+    End Property
+
+    Shared ReadOnly Property ActiveBorder As Color
+        Get
+            Return CType(SystemColors.Control, ColorHSL).AddLuminance(-0.2F).ToColor
+        End Get
+    End Property
+
+    Shared ReadOnly Property ScrollBar As Color
+        Get
+            Return CType(SystemColors.Control, ColorHSL).AddLuminance(-0.05F).ToColor
+        End Get
+    End Property
+
+    Shared ReadOnly Property GrayText As Color
+        Get
+            Return SystemColors.DisabledText
+        End Get
+    End Property
+End Class

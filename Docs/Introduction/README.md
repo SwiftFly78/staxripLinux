@@ -9,4 +9,5 @@
 - [Community](Community.md)
 - [System Requirements](System-Requirements.md)
 - [Installation](Installation.md)
+- [Linux](Linux.md)
 - [Changelog](../../CHANGELOG.md)

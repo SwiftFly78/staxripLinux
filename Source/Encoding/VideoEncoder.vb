@@ -1,4 +1,4 @@
-﻿
+
 Imports System.Text.RegularExpressions
 
 Imports StaxRip.UI
@@ -140,30 +140,20 @@ Public MustInherit Class VideoEncoder
     End Sub
 
     Overrides Function CreateEditControl() As Control
-        Dim ret As New ToolStripEx With {
-            .Renderer = New ToolStripRendererEx(),
-            .ShowItemToolTips = False,
-            .GripStyle = ToolStripGripStyle.Hidden,
-            .Dock = DockStyle.Fill,
-            .LayoutStyle = ToolStripLayoutStyle.VerticalStackWithOverflow,
-            .ShowControlBorder = True,
-            .Font = FontManager.GetDefaultFont()
-        }
-
-        Dim pad = ret.Font.Height \ 9
+        Dim ret As New StackLayout With {
+            .Orientation = Orientation.Vertical,
+            .HorizontalContentAlignment = HorizontalAlignment.Stretch,
+            .Spacing = FH(0.2),
+            .Padding = New Padding(FH(0.2))}
 
         For Each pair In GetMenu()
-            Dim bn As New ToolStripButtonEx
-            bn.Margin = New Padding(2, 2, 0, 0)
-            bn.Text = pair.Key
-            bn.Padding = New Padding(pad)
+            Dim bn As New ButtonEx(pair.Key)
             Dim tmp = pair
             AddHandler bn.Click, Sub() tmp.Value.Invoke()
-            bn.TextAlign = ContentAlignment.MiddleLeft
-            ret.Items.Add(bn)
+            ret.Items.Add(New StackLayoutItem(bn))
         Next
 
-        Return ret
+        Return New Scrollable With {.Content = ret, .Border = BorderType.None}
     End Function
 
     Overridable ReadOnly Property IsCompCheckEnabled() As Boolean
@@ -527,7 +517,7 @@ Public MustInherit Class BasicVideoEncoder
             Dim a = g.MainForm.ParseCommandLine(commandLine)
 
             For x = 0 To a.Length - 1
-                Application.DoEvents()
+                DoEvents()
                 For Each param In params.Items
                     If param.ImportAction IsNot Nothing AndAlso param.GetSwitches.Contains(a(x), StringComparer.OrdinalIgnoreCase) Then
                         If a.Length - 1 > x Then
@@ -691,12 +681,12 @@ Public Class BatchEncoder
     Overrides Sub Encode()
         p.Script.Synchronize()
 
-        For Each line In Macro.Expand(CommandLines).SplitLinesNoEmpty
+        'the lines are split before the expansion, file names can contain line breaks
+        For Each line In CommandLines.SplitLinesNoEmpty
             Using proc As New Proc
                 proc.Header = "Video encoding command line encoder: " + Name
                 proc.SkipStrings = Proc.GetSkipStrings(CommandLines)
-                proc.File = "cmd.exe"
-                proc.Arguments = "/S /C """ + line + """"
+                proc.SetShellCommand(Macro.ExpandShell(line))
 
                 Try
                     proc.Start()
@@ -742,14 +732,13 @@ Public Class BatchEncoder
         script.Path = Path.Combine(p.TempDir, p.TargetFile.Base + "_CompCheck." + script.FileType).ToShortFilePath
         script.Synchronize()
 
-        Dim line = Macro.Expand(CompCheckCommandLines)
+        Dim line = Macro.ExpandShell(CompCheckCommandLines)
 
         Using proc As New Proc
             proc.Header = "Compressibility Check"
             proc.WriteLog(code + BR2)
             proc.SkipStrings = Proc.GetSkipStrings(line)
-            proc.File = "cmd.exe"
-            proc.Arguments = "/S /C """ + line + """"
+            proc.SetShellCommand(line)
 
             Try
                 proc.Start()

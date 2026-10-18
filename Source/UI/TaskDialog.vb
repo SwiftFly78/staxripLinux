@@ -1,284 +1,50 @@
-﻿
-Imports System.Text
-Imports System.Threading
-Imports System.Threading.Tasks
-Imports Microsoft.VisualBasic
-Imports StaxRip.UI
 
+Imports StaxRip.UI
+Imports Microsoft.VisualBasic
+
+'Thread safe task dialog, the Eto dialog is created and shown on the UI thread when Show is called.
 Public Class TaskDialog(Of T)
-    Inherits TaskDialogBaseForm
+    Implements IDisposable
 
     Property CommandDefinitions As New List(Of CommandDefinition)
     Property ButtonDefinitions As New List(Of ButtonDefinition)
     Property SelectedValue As T
     Property SelectedText As String
     Property Title As String
+    Property Text As String
     Property Timeout As Integer
-    Property TimeoutButton As ButtonEx
     Property Symbol As Symbol
     Property Content As String
-    Property ContentLabel As LabelEx
     Property ExpandedContent As String
-    Property ExpandedContentLabel As LabelEx
+    Property Icon As TaskIcon
+    Property Owner As Window
+    Property ShowCopyButton As Boolean
+    Property InputText As String
+    Property CheckBoxText As String
+    Property CheckBoxChecked As Boolean
+    Property MenuItems As New List(Of Object)
+    Property MenuValue As Object
 
-    Overloads Property Icon As TaskIcon
-    Overloads Property Owner As IntPtr
+    Private Dialog As TaskDialogForm
+    Private Disposed As Boolean
 
-
-    Public Sub New()
-        MyBase.New()
+    Sub New()
     End Sub
 
-    Public Sub New(defaultValue As T)
-        MyClass.New()
+    Sub New(defaultValue As T)
         SelectedValue = defaultValue
     End Sub
 
-    Public Sub New(defaultText As String, defaultValue As T)
-        MyClass.New(defaultValue)
+    Sub New(defaultText As String, defaultValue As T)
+        Me.New(defaultValue)
         SelectedText = defaultText
     End Sub
 
-
-    Sub Init()
-        ShowInTaskbar = False
-        Width = FontHeight * 35
-
-        Content = If(Content = "", " ", Content)
-        Title = If(Title = "", " ", Title)
-
-        If Content = " " AndAlso Title?.Length > 80 Then
-            Content = Title
-            Title = " "
-        End If
-
-        If MenuButton.Items.Count > 0 Then
-            MenuButton.Visible = True
-
-            For Each i In MenuButton.Items
-                Dim textWidth = TextRenderer.MeasureText(i.ToString, Font).Width + FontHeight * 3
-
-                If MenuButton.Width < textWidth Then
-                    Width += textWidth - MenuButton.Width
-                End If
-            Next
-        End If
-
-        Dim c = If(Not String.IsNullOrWhiteSpace(Content), Content, "")
-        c = If(Not String.IsNullOrWhiteSpace(ExpandedContent) AndAlso ExpandedContent.Length > Content?.Length, ExpandedContent, c)
-        Dim lines = c.Split({BR}, StringSplitOptions.RemoveEmptyEntries)
-        Dim maxLength = If(lines.Any(), lines.Max(Function(x) x.Length), 0)
-        Width = Math.Max(Width, FontHeight * maxLength \ 3)
-        If c.Length > 1000 Then Width = Math.Max(Width, FontHeight * 65)
-
-        ShowIcon = False
-        StartPosition = FormStartPosition.CenterScreen
-
-        If Icon <> TaskIcon.None OrElse Symbol <> Symbol.None Then
-            pbIcon.Visible = True
-        End If
-
-        Select Case Icon
-            Case TaskIcon.Warning
-                pbIcon.Image = StockIcon.GetImage(StockIconIdentifier.Warning)
-            Case TaskIcon.Error
-                pbIcon.Image = StockIcon.GetImage(StockIconIdentifier.Error)
-            Case TaskIcon.Info
-                pbIcon.Image = StockIcon.GetImage(StockIconIdentifier.Info)
-            Case TaskIcon.Shield
-                pbIcon.Image = StockIcon.GetImage(StockIconIdentifier.Shield)
-            Case TaskIcon.Question
-                pbIcon.Image = StockIcon.GetImage(StockIconIdentifier.Help)
-        End Select
-
-        If Symbol <> Symbol.None Then
-            pbIcon.Image = ImageHelp.GetSymbolImage(Symbol, Nothing, 20)
-        End If
-
-        TitleLabel.Font = FontManager.GetDefaultFont(2, If(String.IsNullOrWhiteSpace(Content) AndAlso String.IsNullOrWhiteSpace(ExpandedContent), FontStyle.Regular, FontStyle.Bold))
-        TitleLabel.Text = Title
-
-        Dim firstCommandButton As CommandButton = Nothing
-
-        Try
-            paMain.SuspendLayout()
-
-            If Content <> "" Then
-                ContentLabel = New LabelEx With {
-                    .AutoSize = False,
-                    .BorderStyle = BorderStyle.None,
-                    .Dock = DockStyle.Top,
-                    .Font = FontManager.GetDefaultFont(0.5),
-                    .Margin = New Padding(0),
-                    .Name = "Information",
-                    .Text = Content
-                }
-                paMain.Controls.Add(ContentLabel)
-            End If
-
-            If ExpandedContent <> "" Then
-                ExpandedContentLabel = New LabelEx With {
-                    .AutoSize = False,
-                    .BorderStyle = BorderStyle.None,
-                    .Dock = DockStyle.Top,
-                    .Font = FontManager.GetDefaultFont(),
-                    .Margin = New Padding(0),
-                    .Name = "ExpandedInformation",
-                    .Text = ExpandedContent
-                }
-                blDetails.Visible = True
-                paMain.Controls.Add(ExpandedContentLabel)
-            End If
-
-            For i = 0 To ButtonDefinitions.Count - 1
-                Dim bd = ButtonDefinitions(i)
-
-                If Not flpButtons.Visible Then
-                    flpButtons.Visible = True
-                    flpButtons.AutoSize = True
-                End If
-
-                Dim b As New ButtonEx With {
-                    .Text = bd.Text,
-                    .Tag = bd.Value,
-                    .TabStop = True,
-                    .TabIndex = i
-                }
-
-                If AcceptButton Is Nothing AndAlso bd.Text = "OK" Then
-                    AcceptButton = b
-                End If
-
-                If bd.TimeoutButton AndAlso TimeoutButton Is Nothing Then
-                    TimeoutButton = b
-                    TimeoutButton.BackColor = ThemeManager.CurrentTheme.TaskDialog.Button.TimeoutBackColor
-                    TimeoutButton.ForeColor = ThemeManager.CurrentTheme.TaskDialog.Button.TimeoutForeColor
-                End If
-
-                flpButtons.Controls.Add(b)
-                bd.Button = b
-                AddHandler b.Click, AddressOf ButtonClick
-            Next
-
-            For Each command In CommandDefinitions
-                Dim cb As New CommandButton With {
-                    .Title = command.Text,
-                    .Description = command.Description,
-                    .Tag = command
-                }
-
-                If TimeoutButton IsNot Nothing AndAlso TypeOf TimeoutButton.Tag Is T AndAlso TimeoutButton.Tag.Equals(command.Value) Then
-                    cb.BackColor = ThemeManager.CurrentTheme.TaskDialog.Button.TimeoutBackColor
-                    cb.ForeColor = ThemeManager.CurrentTheme.TaskDialog.Button.TimeoutForeColor
-                Else
-                    If command.BackColor.HasValue Then cb.BackColor = command.BackColor.Value
-                    If command.ForeColor.HasValue Then cb.ForeColor = command.ForeColor.Value
-                End If
-
-                If TypeOf command.Value Is FontFamily Then
-                    cb.ReplaceFontFamily(FontManager.GetFontFamily(FontCategory.All, command.Text))
-                End If
-
-                AddHandler cb.Click, AddressOf CommandClick
-                paMain.Controls.Add(cb)
-
-                If firstCommandButton Is Nothing Then
-                    firstCommandButton = cb
-                End If
-            Next
-        Finally
-            paMain.ResumeLayout()
-        End Try
-
-        If Timeout > 0 Then
-            Dim originalWindowTitle = Text
-            Dim originalButtonText = ""
-            Dim button = If(TimeoutButton, TryCast(AcceptButton, ButtonEx))
-
-            If button IsNot Nothing Then
-                originalButtonText = button.Text
-            End If
-
-            button.SetFontStyle(FontStyle.Bold)
-
-            g.RunTask(Sub()
-                          Dim buttonText = originalButtonText
-                          Dim windowTitle = originalWindowTitle
-                          Dim counter = Timeout
-
-                          While counter > 0 AndAlso Not IsDisposingOrDisposed
-                              If button IsNot Nothing AndAlso Not button.IsDisposed Then
-                                  Try
-                                      If button.InvokeRequired Then
-                                          button.Invoke(Sub()
-                                                            If button IsNot Nothing AndAlso Not button.IsDisposed Then
-                                                                button.Text = $"{buttonText} ({counter})"
-                                                            End If
-                                                        End Sub)
-                                      Else
-                                          button.Text = $"{buttonText} ({counter})"
-                                      End If
-                                  Catch ex As Exception
-                                  End Try
-                              Else
-                                  If InvokeRequired Then
-                                      Invoke(Sub() Text = $"{windowTitle} ({counter})")
-                                  Else
-                                      Text = $"{windowTitle} ({counter})"
-                                  End If
-                              End If
-                              counter -= 1
-                              Thread.Sleep(1000)
-                          End While
-
-                          If Not IsDisposingOrDisposed Then
-                              Invoke(Sub()
-                                         SelectedText = button.Text
-                                         SelectedValue = DirectCast(button.Tag, T)
-                                         Close()
-                                     End Sub)
-                          End If
-                      End Sub)
-        End If
-
-        If TypeOf SelectedValue Is DialogResult Then
-            If SelectedValue.Equals(DialogResult.None) Then
-                If ButtonDefinitions.Where(Function(i) i.Value.Equals(DialogResult.No)).Any Then
-                    SelectedValue = CType(CObj(DialogResult.No), T)
-                End If
-
-                If ButtonDefinitions.Where(Function(i) i.Value.Equals(DialogResult.Cancel)).Any Then
-                    SelectedValue = CType(CObj(DialogResult.Cancel), T)
-                End If
-            End If
-
-            Dim ok = ButtonDefinitions.Where(Function(i) i.Value.Equals(DialogResult.OK)).FirstOrDefault
-
-            If ok IsNot Nothing Then
-                ActiveControl = ok.Button
-            End If
-
-            If ActiveControl Is Nothing Then
-                Dim yes = ButtonDefinitions.Where(Function(i) i.Value.Equals(DialogResult.Yes)).FirstOrDefault
-
-                If yes IsNot Nothing Then
-                    ActiveControl = yes.Button
-                End If
-            End If
-
-            If TimeoutButton IsNot Nothing Then
-                ActiveControl = TimeoutButton
-            End If
-        End If
-
-        If ActiveControl Is Nothing Then
-            ActiveControl = If(firstCommandButton Is Nothing, TitleLabel, DirectCast(firstCommandButton, Control))
-        End If
-
-        If Owner = IntPtr.Zero Then
-            Owner = GetHandle()
-        End If
-    End Sub
+    ReadOnly Property IsDisposingOrDisposed As Boolean
+        Get
+            Return Disposed
+        End Get
+    End Property
 
     Sub AddCommand(value As T)
         AddCommand(value.ToString, Nothing, value)
@@ -293,7 +59,7 @@ Public Class TaskDialog(Of T)
             value = CType(CObj(text), T)
         End If
 
-        CommandDefinitions.Add(New CommandDefinition With {.Text = text, .Description = description, .Value = value, .BackColor = backColor, .ForeColor = foreColor})
+        CommandDefinitions.Add(New CommandDefinition With {.Text = text, .Description = description, .Value = value})
     End Sub
 
     Sub AddCommands(values As IEnumerable(Of T))
@@ -332,162 +98,25 @@ Public Class TaskDialog(Of T)
         End Set
     End Property
 
-    Sub CommandClick(sender As Object, e As EventArgs)
-        Dim tag = DirectCast(sender, CommandButton).Tag
-        Dim cmd = DirectCast(tag, CommandDefinition)
-        SelectedText = If(cmd.Text = "", cmd.Description, cmd.Text)
-        SelectedValue = cmd.Value
-        Close()
-    End Sub
-
-    Sub ButtonClick(sender As Object, e As EventArgs)
-        Dim button = DirectCast(sender, ButtonEx)
-        SelectedText = button.Text
-        SelectedValue = DirectCast(button.Tag, T)
-        Close()
-    End Sub
-
-    Overrides Sub AdjustSize()
-        Dim h = tlpTop.Top + tlpTop.Height + tlpTop.Margin.Vertical
-
-        If ContentLabel IsNot Nothing Then
-            Dim preferred = TextRenderer.MeasureText(ContentLabel.Text, ContentLabel.Font, New Size(ContentLabel.Width, Integer.MaxValue), TextFormatFlags.WordBreak)
-            ContentLabel.Size = New Size(preferred.Width, preferred.Height + 10)
-        End If
-
-        If paMain.Controls.Count > 0 Then
-            Dim last = paMain.Controls(paMain.Controls.Count - 1)
-            h += last.Top + last.Height + last.Margin.Vertical
-        End If
-
-        If spBottom.Controls.OfType(Of Control).Where(Function(i) i.Visible).Count > 0 Then
-            spBottom.Visible = True
-            h += spBottom.Height
-            h += spBottom.Margin.Vertical
-        Else
-            spBottom.Visible = False
-        End If
-
-        Dim fh = FontHeight
-        h += CInt(fh * 0.7)
-
-        Dim nonClientHeight = Height - ClientSize.Height
-        Dim workingArea = Screen.FromControl(Me).WorkingArea
-        Dim maxHeight = workingArea.Height
-        Dim minWidth = fh * 35
-        Dim maxWidth = fh * 80
-        Dim predictedWidth = GetWidth()
-
-        If GetType(T) Is GetType(FontFamily) Then
-            predictedWidth = CInt(predictedWidth * 1.5D)
-        End If
-
-        Dim w = CInt(predictedWidth + fh * 2)
-
-        If predictedWidth > Width Then
-            w = predictedWidth
-        End If
-
-        If w < minWidth Then
-            w = minWidth
-        ElseIf w > maxWidth Then
-            w = maxWidth
-        End If
-
-        Dim ncx = Width - ClientSize.Width
-        Dim ncy = Height - ClientSize.Height
-
-        w += ncx
-        h += ncy
-
-        If h > maxHeight Then
-            h = maxHeight
-        End If
-
-        Dim x = (workingArea.Width - w) \ 2
-        Dim y = (workingArea.Height - h) \ 2
-
-        Native.SetWindowPos(Handle, IntPtr.Zero, x, y, w, h, 64)
-    End Sub
-
-    Function GetWidth() As Integer
-        Dim list As New List(Of String)()
-        Dim font = FontManager.GetDefaultFont()
-
-        If Title.Trim() <> "" Then
-            list.Add(Title)
-        End If
-
-        If Content?.Trim() <> "" Then
-            For Each line In Content.Split(BR(1))
-                list.Add(line)
-            Next
-        End If
-
-        If ExpandedContent?.Trim() <> "" AndAlso ExpandedContentLabel?.Height > 0 Then
-            For Each line In ExpandedContent.Split(BR(1))
-                list.Add(line)
-            Next
-        End If
-
-        For Each def In CommandDefinitions
-            If def.Description <> "" Then
-                For Each line In def.Description.Split(BR(1))
-                    list.Add(line)
-                Next
-            End If
-
-            If def.Text <> "" Then
-                For Each line In def.Text.Split(BR(1))
-                    list.Add(line)
-                Next
-            End If
-        Next
-
-        list = list.Where(Function(x) Not String.IsNullOrWhiteSpace(x)).ToList()
-        If list.Count = 0 Then Return TextRenderer.MeasureText(New String("x"c, 55), font).Width
-
-        Dim ml As List(Of (Text As String, Width As Integer)) = list.Select(Function(x) (x, TextRenderer.MeasureText(x, font).Width)).OrderByDescending(Function(x) x.Width).ToList()
-        Dim longestWidth = ml(0).Width
-        Dim ret = longestWidth
-
-        If list.Count < 50 Then
-            Dim averageWidth = CInt(ml.Take(Math.Max(1, ml.Count \ 2)).Average(Function(x) x.Width))
-            ret = longestWidth - (longestWidth - averageWidth) \ 3
-        ElseIf list.Count > 100
-            ret += FontHeight * 2
-        End If        
-
-        Return ret
-    End Function
-
-    WriteOnly Property ShowCopyButton As Boolean
-        Set(value As Boolean)
-            If value Then
-                blCopyMessage.Text = "Copy Message"
-                blCopyMessage.Visible = True
-                blCopyMessage.ClickAction = Sub()
-                                                g.RunSTATask(Sub()
-                                                                 Clipboard.SetText(GetText)
-                                                                 MsgInfo("Message was copied to clipboard.")
-                                                             End Sub)
-                                            End Sub
-            End If
-        End Set
-    End Property
-
-    Function GetHandle() As IntPtr
-        Dim sb As New StringBuilder(500)
-        Dim handle = Native.GetForegroundWindow
-        Native.GetWindowModuleFileName(handle, sb, CUInt(sb.Capacity))
-
-        If sb.ToString.Replace(".vshost", "").Base = Application.ExecutablePath.Base Then
-            Return handle
-        End If
+    Shared Function GetDialogResultFromButton(button As TaskButton) As DialogResult
+        Select Case button
+            Case TaskButton.OK
+                Return DialogResult.Ok
+            Case TaskButton.Cancel, TaskButton.Close
+                Return DialogResult.Cancel
+            Case TaskButton.Yes
+                Return DialogResult.Yes
+            Case TaskButton.No
+                Return DialogResult.No
+            Case TaskButton.Retry
+                Return DialogResult.Retry
+            Case Else
+                Return DialogResult.None
+        End Select
     End Function
 
     Function GetText() As String
-        Dim ret = TitleLabel.Text
+        Dim ret = Title
 
         If Content <> "" Then
             ret += BR2 + Content
@@ -500,82 +129,276 @@ Public Class TaskDialog(Of T)
         Return ret
     End Function
 
-    Shared Function GetDialogResultFromButton(button As TaskButton) As DialogResult
-        Select Case button
-            Case TaskButton.OK
-                Return DialogResult.OK
-            Case TaskButton.Cancel, TaskButton.Close
-                Return DialogResult.Cancel
-            Case TaskButton.Yes
-                Return DialogResult.Yes
-            Case TaskButton.No
-                Return DialogResult.No
-            Case TaskButton.None
-                Return DialogResult.None
-            Case TaskButton.Retry
-                Return DialogResult.Retry
-        End Select
-    End Function
-
-    Protected Overrides Sub OnLoad(args As EventArgs)
-        MyBase.OnLoad(args)
-        Font = FontManager.GetDefaultFont()
-        Dim fh = FontHeight
-
-        For Each i As ButtonEx In flpButtons.Controls
-            i.Height = CInt(fh * 1.5)
-            i.Width = fh * 5
-
-            Using g = i.CreateGraphics
-                Dim minWidth = CInt(g.MeasureString(i.Text, i.Font).Width + fh)
-
-                If i.Width < minWidth Then
-                    i.Width = minWidth
-                End If
-            End Using
-
-            i.Margin = New Padding(CInt(fh * 0.4), 0, 0, 0)
-        Next
-
-        MenuButton.Margin = New Padding(CInt(fh * 0.7), MenuButton.Margin.Top, CInt(fh * 0.7), MenuButton.Margin.Bottom)
-        InputTextEdit.Margin = MenuButton.Margin
-        flpButtons.Margin = New Padding(0, 0, CInt(fh * 0.7), 0)
-
-        If InputTextEdit.Visible Then
-            ActiveControl = InputTextEdit
-            InputTextEdit.TextBox.SelectAll()
-        End If
-
-        AdjustSize()
-        AdjustSize()
-
-        If Owner <> IntPtr.Zero Then
-            Dim GWLP_HWNDPARENT = -8
-            SetWindowLongPtr(Handle, GWLP_HWNDPARENT, Owner)
-        End If
+    Sub Close()
+        UIBeginInvoke(Sub() Dialog?.Close())
     End Sub
 
-    Protected Overrides Sub OnResize(e As EventArgs)
-        MyBase.OnResize(e)
-    End Sub
-
-    Overloads Function Show() As T
-        Init()
-
-        If Application.MessageLoop Then
-            Using Me
-                ShowDialog()
-            End Using
-        Else
-            Application.Run(Me)
-        End If
-
+    Function Show() As T
+        UIInvoke(AddressOf ShowInternal)
         Return SelectedValue
     End Function
 
+    Private Sub ShowInternal()
+        If TypeOf SelectedValue Is DialogResult AndAlso SelectedValue.Equals(DialogResult.None) Then
+            If ButtonDefinitions.Any(Function(i) i.Value.Equals(DialogResult.No)) Then
+                SelectedValue = CType(CObj(DialogResult.No), T)
+            End If
+
+            If ButtonDefinitions.Any(Function(i) i.Value.Equals(DialogResult.Cancel)) Then
+                SelectedValue = CType(CObj(DialogResult.Cancel), T)
+            End If
+        End If
+
+        Dialog = New TaskDialogForm
+        Dialog.Title = If(Text <> "", Text, g.DefaultCommands.GetApplicationDetails())
+
+        Dim fh = FontHeight
+        Dim maxTextWidth = fh * 45
+        Dim lines = (Title & BR & Content).Split({vbCr, vbLf}, StringSplitOptions.RemoveEmptyEntries)
+
+        If lines.Length > 0 Then
+            Dim longest = lines.Max(Function(x) MeasureTextWidth(x))
+            maxTextWidth = Math.Max(maxTextWidth, Math.Min(longest + fh, fh * 75))
+        End If
+
+        If CommandDefinitions.Count > 0 Then
+            maxTextWidth = Math.Max(maxTextWidth, fh * 35)
+        End If
+
+        Dim layout As New DynamicLayout With {.Padding = New Padding(fh), .DefaultSpacing = New Size(fh \ 2, fh \ 2)}
+        Dim headerTitle = If(String.IsNullOrWhiteSpace(Title), Content, Title)
+        Dim showContent = Not String.IsNullOrWhiteSpace(Title) AndAlso Content <> ""
+
+        Dim titleLabel As New Label With {
+            .Text = headerTitle,
+            .Wrap = WrapMode.Word,
+            .Width = maxTextWidth,
+            .Font = If(showContent OrElse ExpandedContent <> "" OrElse CommandDefinitions.Count > 0,
+                FontManager.GetDefaultFont(2, FontStyle.Bold), FontManager.GetDefaultFont(1))
+        }
+
+        If Icon <> TaskIcon.None Then
+            Dim iconControl As New TaskDialogIcon(Icon) With {.Size = New Size(CInt(fh * 2.2), CInt(fh * 2.2))}
+            layout.AddRow(New TableLayout(New TableRow(New TableCell(iconControl), New TableCell(titleLabel, True))) With {.Spacing = New Size(fh, 0)})
+        Else
+            layout.AddRow(titleLabel)
+        End If
+
+        If showContent Then
+            If Content.Length > 2500 OrElse Content.Split(CChar(vbLf)).Length > 30 Then
+                Dim ta As New TextArea With {
+                    .Text = Content,
+                    .ReadOnly = True,
+                    .Wrap = True,
+                    .Font = FontManager.GetCodeFont(-1),
+                    .Size = New Size(maxTextWidth, fh * 20)
+                }
+                layout.AddRow(ta)
+            Else
+                layout.AddRow(New Label With {.Text = Content, .Wrap = WrapMode.Word, .Width = maxTextWidth})
+            End If
+        End If
+
+        If ExpandedContent <> "" Then
+            Dim details As New TextArea With {
+                .Text = ExpandedContent,
+                .ReadOnly = True,
+                .Wrap = False,
+                .Font = FontManager.GetCodeFont(-1),
+                .Size = New Size(maxTextWidth, fh * 14)
+            }
+
+            layout.AddRow(New Expander With {.Header = New Label With {.Text = "Details"}, .Content = details, .Expanded = False})
+        End If
+
+        Dim inputBox As TextBox = Nothing
+
+        If InputText IsNot Nothing Then
+            inputBox = New TextBox With {.Text = InputText}
+            layout.AddRow(inputBox)
+        End If
+
+        Dim menuDropDown As DropDown = Nothing
+
+        If MenuItems.Count > 0 Then
+            menuDropDown = New DropDown
+
+            For Each item In MenuItems
+                menuDropDown.Items.Add(New ListItem With {.Text = item.ToString, .Tag = item})
+            Next
+
+            Dim index = MenuItems.IndexOf(MenuValue)
+            menuDropDown.SelectedIndex = If(index < 0, 0, index)
+            layout.AddRow(menuDropDown)
+        End If
+
+        Dim timeoutButton As Button = Nothing
+        Dim firstCommand As Button = Nothing
+
+        For Each command In CommandDefinitions
+            Dim cmd = command
+            Dim button As New Button With {.Text = cmd.Text, .Font = FontManager.GetDefaultFont(1)}
+
+            Dim family = TryCast(CObj(cmd.Value), FontFamily)
+
+            If family IsNot Nothing Then
+                button.Font = New Font(family, FontManager.SystemFontSize + 1)
+            End If
+
+            AddHandler button.Click, Sub()
+                                         SelectedText = If(cmd.Text = "", cmd.Description, cmd.Text)
+                                         SelectedValue = cmd.Value
+                                         Dialog.Close(DialogResult.Ok)
+                                     End Sub
+
+            If firstCommand Is Nothing Then
+                firstCommand = button
+            End If
+
+            If cmd.Description <> "" Then
+                Dim stack As New StackLayout With {.Orientation = Orientation.Vertical, .HorizontalContentAlignment = HorizontalAlignment.Stretch, .Spacing = 2}
+                stack.Items.Add(button)
+                stack.Items.Add(New Label With {.Text = cmd.Description, .Wrap = WrapMode.Word, .Width = maxTextWidth, .TextColor = SystemColors.DisabledText})
+                layout.AddRow(stack)
+            Else
+                layout.AddRow(button)
+            End If
+        Next
+
+        Dim checkBox As CheckBox = Nothing
+        Dim bottomRow As New StackLayout With {.Orientation = Orientation.Horizontal, .Spacing = fh \ 2, .VerticalContentAlignment = VerticalAlignment.Center}
+
+        If CheckBoxText <> "" Then
+            checkBox = New CheckBox With {.Text = CheckBoxText, .Checked = CheckBoxChecked}
+            bottomRow.Items.Add(checkBox)
+        End If
+
+        If ShowCopyButton Then
+            Dim copyLink As New LinkButton With {.Text = "Copy Message"}
+            AddHandler copyLink.Click, Sub()
+                                           Clipboard.Instance.Text = GetText()
+                                           copyLink.Text = "Copied"
+                                       End Sub
+            bottomRow.Items.Add(copyLink)
+        End If
+
+        bottomRow.Items.Add(New StackLayoutItem(Nothing, True))
+
+        For Each bd In ButtonDefinitions
+            Dim def = bd
+            Dim button As New Button With {.Text = def.Text}
+
+            AddHandler button.Click, Sub()
+                                         SelectedText = def.Text
+                                         SelectedValue = def.Value
+
+                                         If inputBox IsNot Nothing Then
+                                             InputText = inputBox.Text
+                                         End If
+
+                                         Dialog.Close(If(TypeOf CObj(def.Value) Is DialogResult, DirectCast(CObj(def.Value), DialogResult), DialogResult.Ok))
+                                     End Sub
+
+            If def.TimeoutButton AndAlso timeoutButton Is Nothing Then
+                timeoutButton = button
+            End If
+
+            If Dialog.DefaultButton Is Nothing AndAlso (def.Text = "OK" OrElse def.Text = "Yes") Then
+                Dialog.DefaultButton = button
+            End If
+
+            If def.Value IsNot Nothing AndAlso def.Value.Equals(DialogResult.Cancel) Then
+                Dialog.AbortButton = button
+            End If
+
+            bd.Button = button
+            bottomRow.Items.Add(button)
+        Next
+
+        If bottomRow.Items.Count > 1 Then
+            layout.AddRow(bottomRow)
+        End If
+
+        Dialog.Content = layout
+
+        If Timeout > 0 Then
+            Dim button = If(timeoutButton, Dialog.DefaultButton)
+            Dim originalText = If(button?.Text, "")
+            Dim originalTitle = Dialog.Title
+            Dim counter = Timeout
+            Dim timer As New UITimer With {.Interval = 1}
+
+            Dim update = Sub()
+                             If button IsNot Nothing Then
+                                 button.Text = $"{originalText} ({counter})"
+                             Else
+                                 Dialog.Title = $"{originalTitle} ({counter})"
+                             End If
+                         End Sub
+
+            update()
+
+            AddHandler timer.Elapsed, Sub()
+                                          counter -= 1
+
+                                          If counter <= 0 Then
+                                              timer.Stop()
+
+                                              If button IsNot Nothing Then
+                                                  button.Text = originalText
+                                                  button.PerformClick()
+                                              Else
+                                                  Dialog.Close(DialogResult.Cancel)
+                                              End If
+                                          Else
+                                              update()
+                                          End If
+                                      End Sub
+
+            AddHandler Dialog.Closed, Sub() timer.Stop()
+            timer.Start()
+        End If
+
+        AddHandler Dialog.Shown, Sub()
+                                     If inputBox IsNot Nothing Then
+                                         inputBox.Focus()
+                                         inputBox.SelectAll()
+                                     ElseIf Dialog.DefaultButton IsNot Nothing Then
+                                         Dialog.DefaultButton.Focus()
+                                     ElseIf firstCommand IsNot Nothing Then
+                                         firstCommand.Focus()
+                                     End If
+                                 End Sub
+
+        Dim ownerWindow = If(Owner, GetOwnerWindow())
+
+        If ownerWindow Is Nothing Then
+            Dialog.ShowModal()
+        Else
+            Dialog.ShowModal(ownerWindow)
+        End If
+
+        If inputBox IsNot Nothing AndAlso SelectedValue IsNot Nothing AndAlso Not SelectedValue.Equals(DialogResult.Cancel) Then
+            InputText = inputBox.Text
+        End If
+
+        If checkBox IsNot Nothing Then
+            CheckBoxChecked = checkBox.Checked.GetValueOrDefault()
+        End If
+
+        If menuDropDown IsNot Nothing AndAlso menuDropDown.SelectedIndex > -1 Then
+            MenuValue = MenuItems(menuDropDown.SelectedIndex)
+        End If
+
+        Dialog.Dispose()
+        Dialog = Nothing
+    End Sub
+
+    Sub Dispose() Implements IDisposable.Dispose
+        Disposed = True
+    End Sub
+
     Public Class CommandDefinition
-        Property BackColor As ColorHSL?
-        Property ForeColor As ColorHSL?
         Property Text As String
         Property Description As String
         Property Value As T
@@ -585,8 +408,78 @@ Public Class TaskDialog(Of T)
         Property Text As String
         Property Value As T
         Property TimeoutButton As Boolean
-        Property Button As ButtonEx
+        Property Button As Button
     End Class
+End Class
+
+Public Class TaskDialogForm
+    Inherits Dialog(Of DialogResult)
+
+    Sub New()
+        Resizable = True
+        ShowInTaskbar = False
+        Minimizable = False
+        Maximizable = False
+        Icon = g.Icon
+    End Sub
+End Class
+
+Public Class TaskDialogIcon
+    Inherits Drawable
+
+    Private ReadOnly TaskIcon As TaskIcon
+
+    Sub New(icon As TaskIcon)
+        TaskIcon = icon
+    End Sub
+
+    Protected Overrides Sub OnPaint(e As PaintEventArgs)
+        MyBase.OnPaint(e)
+
+        Dim g = e.Graphics
+        g.AntiAlias = True
+        Dim size = Math.Min(Width, Height) - 2
+        Dim rect As New RectangleF(1, 1, size, size)
+        Dim color As Color
+        Dim glyph As String
+
+        Select Case TaskIcon
+            Case TaskIcon.Warning
+                color = Color.FromArgb(230, 160, 0)
+                glyph = "!"
+            Case TaskIcon.Error
+                color = Color.FromArgb(210, 40, 40)
+                glyph = "×"
+            Case TaskIcon.Question
+                color = Color.FromArgb(40, 110, 210)
+                glyph = "?"
+            Case TaskIcon.Shield
+                color = Color.FromArgb(40, 150, 80)
+                glyph = "✓"
+            Case Else
+                color = Color.FromArgb(40, 110, 210)
+                glyph = "i"
+        End Select
+
+        If TaskIcon = TaskIcon.Warning Then
+            g.FillPolygon(color, {New PointF(rect.Left + rect.Width / 2, rect.Top),
+                                  New PointF(rect.Right, rect.Bottom),
+                                  New PointF(rect.Left, rect.Bottom)})
+        Else
+            g.FillEllipse(color, rect)
+        End If
+
+        Using font = New Font(SystemFont.Bold, size * 0.45F)
+            Dim textSize = g.MeasureString(font, glyph)
+            Dim y = rect.Top + (rect.Height - textSize.Height) / 2
+
+            If TaskIcon = TaskIcon.Warning Then
+                y += rect.Height * 0.12F
+            End If
+
+            g.DrawText(font, Colors.White, rect.Left + (rect.Width - textSize.Width) / 2, y, glyph)
+        End Using
+    End Sub
 End Class
 
 Public Enum TaskIcon

@@ -1,4 +1,4 @@
-﻿
+
 Imports System.Collections.Concurrent
 Imports System.Threading
 Imports System.Threading.Tasks
@@ -6,6 +6,35 @@ Imports StaxRip.VideoEncoderCommandLine
 Imports StaxRip.UI
 
 Public Class CommandLineForm
+    Inherits DialogBase
+
+    Public WithEvents bnCancel As ButtonEx
+    Public WithEvents bnOK As ButtonEx
+    Public WithEvents SimpleUI As SimpleUI
+    Public WithEvents cbGoTo As ComboBoxEx
+    Public WithEvents bnMenu As ButtonEx
+    Public WithEvents cms As ContextMenuStripEx
+    Public WithEvents rtbCommandLine As CommandLineRichTextBox
+    Public WithEvents cmsCommandLine As ContextMenuStripEx
+
+    Private Sub InitializeComponent()
+        bnOK = CreateButton("OK", DialogResult.OK)
+        bnCancel = CreateButton("Cancel", DialogResult.Cancel)
+        SimpleUI = New SimpleUI
+        cbGoTo = New ComboBoxEx With {.DropDownStyle = ComboBoxStyle.DropDown, .ToolTip = "Search"}
+        cms = New ContextMenuStripEx
+        bnMenu = New ButtonEx With {.ShowMenuSymbol = True, .ContextMenuStrip = cms}
+        cmsCommandLine = New ContextMenuStripEx
+        rtbCommandLine = New CommandLineRichTextBox With {.ReadOnly = True, .Font = FontManager.GetCodeFont()}
+
+        Content = PaddedTable(
+            ScaledRow(SimpleUI),
+            Row(rtbCommandLine),
+            Row(New TableLayout(Row(Scaled(cbGoTo), bnMenu, bnOK, bnCancel)) With {.Spacing = DefaultSpacing}))
+
+        AbortButton = bnCancel
+    End Sub
+
     Private Params As CommandLineParams
     Private SearchIndex As Integer
     Private Items As New List(Of Item)
@@ -20,10 +49,7 @@ Public Class CommandLineForm
 
     Sub New(params As CommandLineParams)
         InitializeComponent()
-        SimpleUI.ScaleClientSize(50, 30)
-
-        rtbCommandLine.ScrollBars = RichTextBoxScrollBars.None
-        rtbCommandLine.ContextMenuStrip.Dispose()
+        ScaleClientSize(52, 36)
         rtbCommandLine.ContextMenuStrip = cmsCommandLine
 
         Dim singleList As New List(Of String)
@@ -44,13 +70,11 @@ Public Class CommandLineForm
         AddHandler params.ValueChanged, AddressOf ValueChanged
         params.RaiseValueChanged(Nothing)
 
-        cbGoTo.Sorted = True
-        cbGoTo.SendMessageCue("Search")
-        cbGoTo.Select()
+        cbGoTo.Focus()
 
         cms.Form = Me
 
-        cms.Add("Execute Command Line", Sub() params.Execute(), Keys.Control Or Keys.E, p.SourceFile <> "").SetImage(Symbol.fa_terminal)
+        cms.Add("Execute Command Line", Sub() params.Execute(), Keys.Control Or Keys.E, p.SourceFile <> "")
 
         Dim a = Sub()
                     Clipboard.SetText(params.GetCommandLine(True, True))
@@ -64,21 +88,21 @@ Public Class CommandLineForm
         cms.Add("-")
 
         a = Sub()
-                CommandLineHighlightingMenuItem.Checked = Not CommandLineHighlightingMenuItem.Checked
-                s.CommandLineHighlighting = CommandLineHighlightingMenuItem.Checked
+                CommandLineHighlightingMenuItem.Marked = Not CommandLineHighlightingMenuItem.Marked
+                s.CommandLineHighlighting = CommandLineHighlightingMenuItem.Marked
                 rtbCommandLine.Format(rtbCommandLine.Text.ToString)
             End Sub
 
         CommandLineHighlightingMenuItem = cms.Add("Command Line Highlighting", a, Keys.Control Or Keys.H)
-        CommandLineHighlightingMenuItem.Checked = s.CommandLineHighlighting
+        CommandLineHighlightingMenuItem.Marked = s.CommandLineHighlighting
 
         a = Sub()
-                CommandLineMouseUpSearchMenuItem.Checked = Not CommandLineMouseUpSearchMenuItem.Checked
-                s.CommandLinePreviewMouseUpSearch = CommandLineMouseUpSearchMenuItem.Checked
+                CommandLineMouseUpSearchMenuItem.Marked = Not CommandLineMouseUpSearchMenuItem.Marked
+                s.CommandLinePreviewMouseUpSearch = CommandLineMouseUpSearchMenuItem.Marked
             End Sub
 
         CommandLineMouseUpSearchMenuItem = cms.Add("Preview Mouse-Up Search", a, Keys.Control Or Keys.P, "Clicking on an option in the preview navigates directly to the UI control.")
-        CommandLineMouseUpSearchMenuItem.Checked = s.CommandLinePreviewMouseUpSearch
+        CommandLineMouseUpSearchMenuItem.Marked = s.CommandLinePreviewMouseUpSearch
 
         cms.Add("-")
 
@@ -88,33 +112,6 @@ Public Class CommandLineForm
 
         cms.Add("Help about " + params.Package.Name, Sub() params.Package.ShowHelp(), Keys.Control Or Keys.F1).SetImage(Symbol.Help)
 
-        cms.Add("-")
-
-        ApplyTheme()
-
-        AddHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
-    End Sub
-
-    Protected Overrides Sub Dispose(disposing As Boolean)
-        RemoveHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
-        components?.Dispose()
-        MyBase.Dispose(disposing)
-    End Sub
-
-    Sub OnThemeChanged(theme As Theme)
-        ApplyTheme(theme)
-    End Sub
-
-    Sub ApplyTheme()
-        ApplyTheme(ThemeManager.CurrentTheme)
-    End Sub
-
-    Sub ApplyTheme(theme As Theme)
-        If DesignHelp.IsDesignMode Then
-            Exit Sub
-        End If
-
-        BackColor = theme.General.BackColor
     End Sub
 
     Sub SelectLastPage()
@@ -328,16 +325,16 @@ Public Class CommandLineForm
         Property Param As CommandLineParam
     End Class
 
-    Protected Overrides Sub OnFormClosed(e As FormClosedEventArgs)
+    Protected Overrides Sub OnClosed(e As EventArgs)
         SimpleUI.SaveLast(Params.Title + "page selection")
         RemoveHandler Params.ValueChanged, AddressOf ValueChanged
-        MyBase.OnFormClosed(e)
+        Params.DetachControls()
+        MyBase.OnClosed(e)
+        g.MainForm.PopulateProfileMenu(DynamicMenuItemID.EncoderProfiles)
     End Sub
 
-    Sub CommandLineForm_HelpRequested(sender As Object, hlpevent As HelpEventArgs) Handles Me.HelpRequested
-        If ModifierKeys = Keys.None Then
-            ShowHelp()
-        End If
+    Sub CommandLineForm_HelpRequested(sender As Object, e As EventArgs) Handles Me.HelpRequested
+        ShowHelp()
     End Sub
 
     Sub ShowHelp()
@@ -374,13 +371,13 @@ Public Class CommandLineForm
         End If
 
         If e.KeyData = Keys.Enter Then
-            e.SuppressKeyPress = True
+            e.Handled = True
         End If
     End Sub
 
     Sub cbGoTo_TextChanged(sender As Object, e As EventArgs) Handles cbGoTo.TextChanged
         If HighlightedControl IsNot Nothing Then
-            HighlightedControl.Font = FontManager.GetDefaultFont()
+            SetControlFont(HighlightedControl, FontManager.GetDefaultFont())
             HighlightedControl = Nothing
         End If
 
@@ -482,7 +479,7 @@ Public Class CommandLineForm
 
                 Dim control = visibleItems(SearchIndex).Control
                 SimpleUI.ShowPage(visibleItems(SearchIndex).Page)
-                control.Font = FontManager.GetDefaultFont(0, FontStyle.Bold)
+                SetControlFont(control, FontManager.GetDefaultFont(0, FontStyle.Bold))
                 HighlightedControl = control
                 Exit Sub
             End If
@@ -531,54 +528,59 @@ Public Class CommandLineForm
                                                                    queue.Enqueue(item.HelpSwitch)
                                                                End If
                                                            End Sub)
-                         Dim array = queue.OrderBy(Function(x) x).ToArray()
+                         Dim array = queue.Distinct.OrderBy(Function(x) x).ToArray()
 
-                         If array IsNot Nothing Then
-                             cbGoTo.BeginUpdate()
-                             cbGoTo.Items.Clear()
-                             cbGoTo.Items.AddRange(array)
-                             cbGoTo.EndUpdate()
-                         End If
+                         UIBeginInvoke(Sub()
+                                           If token.IsCancellationRequested OrElse IsDisposed Then
+                                               Exit Sub
+                                           End If
+
+                                           Dim text = cbGoTo.Text
+                                           cbGoTo.Items.Clear()
+                                           cbGoTo.Items.AddRange(array)
+                                           cbGoTo.Text = text
+                                       End Sub)
                      End Sub, token)
         Catch ex As Exception
-        Finally
-            cbGoTo.EndUpdate()
         End Try
     End Sub
 
-    Sub CommandLineForm_FormClosed(sender As Object, e As FormClosedEventArgs) Handles Me.FormClosed
-        g.MainForm.PopulateProfileMenu(DynamicMenuItemID.EncoderProfiles)
+    Shared Sub SetControlFont(control As Control, font As Font)
+        Dim common = TryCast(control, CommonControl)
+
+        If common IsNot Nothing Then
+            common.Font = font
+        End If
     End Sub
 
     Sub rtbCommandLine_MouseUp(sender As Object, e As MouseEventArgs) Handles rtbCommandLine.MouseUp
-        If e.Button = MouseButtons.Left AndAlso s.CommandLinePreviewMouseUpSearch Then
+        If e.Buttons = MouseButtons.Primary AndAlso s.CommandLinePreviewMouseUpSearch Then
             Dim find = FindOptionInPreview()
 
             If find <> "" Then
                 cbGoTo.Text = find
             End If
-        ElseIf e.Button = MouseButtons.Right Then
-            cmsCommandLine.Items.Clear()
+        End If
+    End Sub
 
-            Dim copyItem = cmsCommandLine.Add("Copy Selection", Sub() Clipboard.SetText(rtbCommandLine.SelectedText))
-            copyItem.ShortcutKeyDisplayString = "Ctrl+C"
-            copyItem.Visible = rtbCommandLine.SelectionLength > 0
+    Sub cmsCommandLine_Opening(sender As Object, e As EventArgs) Handles cmsCommandLine.Opening
+        cmsCommandLine.Items.Clear()
 
-            cmsCommandLine.Add("Copy Command Line", Sub() Clipboard.SetText(Params.GetCommandLine(True, True)))
+        Dim copyItem = cmsCommandLine.Add("Copy Selection", Sub() Clipboard.SetText(rtbCommandLine.SelectedText))
+        copyItem.ShortcutKeyDisplayString = "Ctrl+C"
+        copyItem.Visible = rtbCommandLine.SelectionLength > 0
 
-            Dim find = FindOptionInPreview()
+        cmsCommandLine.Add("Copy Command Line", Sub() Clipboard.SetText(Params.GetCommandLine(True, True)))
 
-            If find <> "" Then
-                Dim a = Sub()
-                            cbGoTo.Text = find
-                            cbGoTo.Focus()
-                        End Sub
+        Dim find = FindOptionInPreview()
 
-                cmsCommandLine.Add("Search " + find, a)
-            End If
+        If find <> "" Then
+            Dim a = Sub()
+                        cbGoTo.Text = find
+                        cbGoTo.Focus()
+                    End Sub
 
-            cmsCommandLine.ApplyMarginFix()
-            cmsCommandLine.Show(rtbCommandLine, e.Location)
+            cmsCommandLine.Add("Search " + find, a)
         End If
     End Sub
 
@@ -610,10 +612,4 @@ Public Class CommandLineForm
             Return find
         End If
     End Function
-
-    Sub rtbCommandLine_MouseDown(sender As Object, e As MouseEventArgs) Handles rtbCommandLine.MouseDown
-        If e.Button = MouseButtons.Right AndAlso rtbCommandLine.SelectedText = "" Then
-            rtbCommandLine.SelectionStart = rtbCommandLine.GetCharIndexFromPosition(e.Location)
-        End If
-    End Sub
 End Class

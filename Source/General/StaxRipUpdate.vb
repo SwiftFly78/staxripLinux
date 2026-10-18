@@ -1,10 +1,9 @@
-﻿
+
 Imports System.ComponentModel
 Imports System.Net
 Imports System.Net.Http
 Imports System.Reflection
 Imports System.Text.RegularExpressions
-Imports System.Windows.Forms.VisualStyles.VisualStyleElement
 Imports Microsoft.VisualBasic
 
 Public Class StaxRipUpdate

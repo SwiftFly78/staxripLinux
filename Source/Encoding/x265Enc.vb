@@ -1,4 +1,4 @@
-﻿
+
 Imports System.Text
 Imports System.Text.RegularExpressions
 Imports System.Threading.Tasks
@@ -135,8 +135,7 @@ Public Class x265Enc
             proc.SkipString = "%] "
 
             If commandLine.Contains("|") Then
-                proc.File = "cmd.exe"
-                proc.Arguments = "/S /C """ + commandLine + """"
+                proc.SetShellCommand(commandLine)
             Else
                 proc.CommandLine = commandLine
             End If
@@ -148,7 +147,7 @@ Public Class x265Enc
     Overrides Function BeforeEncoding() As Boolean
         Dim rpu = Params.DolbyVisionRpu.Value
         If Not String.IsNullOrWhiteSpace(rpu) AndAlso rpu = p.HdrDolbyVisionMetadataFile?.Path AndAlso rpu.FileExists() Then
-            Dim offset = If(p.Script.IsFilterActive("Crop"), New Padding(p.CropLeft, p.CropTop, p.CropRight, p.CropBottom), Padding.Empty)
+            Dim offset = If(p.Script.IsFilterActive("Crop"), New CropPadding(p.CropLeft, p.CropTop, p.CropRight, p.CropBottom), CropPadding.Empty)
             Dim rpuProfile = p.HdrDolbyVisionMetadataFile.ReadProfileFromRpu()
             Dim profile = Params.DolbyVisionProfile.ValueText
             Dim mode = DoviMode.Mode0
@@ -496,7 +495,7 @@ Public Class x265Enc
     End Sub
 
     Overrides Function CreateEditControl() As Control
-        Return New x265Control(Me) With {.Dock = DockStyle.Fill}
+        Return New x265Control(Me)
     End Function
 
     Shared Function Test() As String
@@ -597,7 +596,7 @@ Public Class x265Params
 
     Property Decoder As New OptionParam With {
         .Text = "Decoder",
-        .Options = {"AviSynth/VapourSynth", "QSVEnc (Intel)", "ffmpeg (Intel)", "ffmpeg (DXVA2)"},
+        .Options = {"AviSynth/VapourSynth", "QSVEnc (Intel)", "ffmpeg (Intel)", "ffmpeg (VAAPI)"},
         .Values = {"script", "qs", "ffqsv", "ffdxva"}}
 
     Property Preset As New OptionParam With {
@@ -1709,7 +1708,7 @@ Public Class x265Params
                         (p.Script.IsAviSynth AndAlso Not TextEncoding.IsProcessUTF8 AndAlso
                         Not TextEncoding.ArePathsSupportedByASCIIEncoding)) Then
 
-                        pipeTool = If(p.Script.IsAviSynth, "avs2pipemod", "vspipe")
+                        pipeTool = If(p.Script.IsAviSynth, FrameServerHelp.GetAviSynthPipeTool(), "vspipe")
                     End If
 
                     Select Case pipeTool
@@ -1821,7 +1820,7 @@ Public Class x265Params
                 Case "ffdxva"
                     Dim crop = If(isCropped, $" -vf ""crop={p.SourceWidth - p.CropLeft - p.CropRight}:{p.SourceHeight - p.CropTop - p.CropBottom}:{p.CropLeft}:{p.CropTop}""", "")
                     Dim pix_fmt = If(p.SourceVideoBitDepth = 10 OrElse p.Script.Info.BitDepth >= 10, "yuv420p10le", "yuv420p")
-                    sb.Append(Package.ffmpeg.Path.Escape + " -threads 1 -hwaccel dxva2 -i " + p.SourceFile.Escape +
+                    sb.Append(Package.ffmpeg.Path.Escape + " -threads 1 -hwaccel vaapi -i " + p.SourceFile.Escape +
                               " -f yuv4mpegpipe -pix_fmt " + pix_fmt + " -strict -1" + crop +
                               " -loglevel fatal -hide_banner - | " + Package.x265.Path.Escape)
                     If isSingleChunk Then
@@ -1898,7 +1897,7 @@ Public Class x265Params
             End If
 
             If (Mode.Value = x265RateMode.ThreePass AndAlso pass <> 2) OrElse (Mode.Value = x265RateMode.TwoPass AndAlso pass = 1) Then
-                sb.Append(" --output NUL")
+                sb.Append(" --output /dev/null")
             Else
                 sb.Append(" --output " + (targetPath.DirAndBase + chunkName + targetPath.ExtFull).Escape)
             End If

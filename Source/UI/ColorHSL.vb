@@ -1,4 +1,4 @@
-﻿Imports System.Globalization
+Imports System.Globalization
 
 <Serializable>
 Public Structure ColorHSL
@@ -82,17 +82,17 @@ Public Structure ColorHSL
             b = 0
         End If
 
-        Return Color.FromArgb(CType(alpha * 255.0F, Byte), CType(Mathf.Clamp01(r + m) * 255.0F, Byte), CType(Mathf.Clamp01(g + m) * 255.0F, Byte), CType(Mathf.Clamp01(b + m) * 255.0F, Byte))
+        Return New Color(Mathf.Clamp01(r + m), Mathf.Clamp01(g + m), Mathf.Clamp01(b + m), alpha)
     End Operator
 
     Public Shared Widening Operator CType(color As Color) As ColorHSL
-        Dim r As Single = color.R / 255.0F
-        Dim g As Single = color.G / 255.0F
-        Dim b As Single = color.B / 255.0F
+        Dim r As Single = color.R
+        Dim g As Single = color.G
+        Dim b As Single = color.B
         Dim max As Single = Mathf.Max(r, g, b)
         Dim min As Single = Mathf.Min(r, g, b)
         Dim delta As Single = max - min
-        Dim alpha As Single = color.A / 255.0F
+        Dim alpha As Single = color.A
         Dim lightness As Single = (min + max) / 2
         Dim saturation As Single = 0F
         saturation = If(delta <> 0F, (delta / (1 - Math.Abs(2 * lightness - 1))), saturation)
@@ -155,8 +155,16 @@ Public Structure ColorHSL
     End Function
 
     Public Function ToHTML() As String
-        Return ColorTranslator.ToHtml(Me)
+        Return ToColor().ToHex(False)
     End Function
+
+    Public Shared Widening Operator CType(colorHSL As ColorHSL) As System.Drawing.Color
+        Return ToDrawingColor(colorHSL.ToColor())
+    End Operator
+
+    Public Shared Widening Operator CType(color As System.Drawing.Color) As ColorHSL
+        Return ToEtoColor(color)
+    End Operator
 
     Public Overrides Function ToString() As String
         Return String.Format($"HSLA({H:0}, {(S.ToInvariantString("0.00"))}, {(L.ToInvariantString("0.00"))}, {(A.ToInvariantString("0.00"))})")

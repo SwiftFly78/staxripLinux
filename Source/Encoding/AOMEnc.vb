@@ -1,4 +1,4 @@
-﻿
+
 Imports System.Text
 Imports StaxRip.UI
 
@@ -101,8 +101,7 @@ Public Class AOMEnc
             proc.Priority = priority
             proc.FrameCount = p.Script.GetFrameCount
             proc.SkipString = "[ETA"
-            proc.File = "cmd.exe"
-            proc.Arguments = "/S /C """ + commandLine + """"
+            proc.SetShellCommand(commandLine)
             proc.Start()
         End Using
     End Sub
@@ -266,7 +265,7 @@ Public Class AV1Params
 
     Property Decoder As New OptionParam With {
         .Text = "Decoder",
-        .Options = {"AviSynth/VapourSynth", "QSVEnc (Intel)", "ffmpeg (Intel)", "ffmpeg (DXVA2)"},
+        .Options = {"AviSynth/VapourSynth", "QSVEnc (Intel)", "ffmpeg (Intel)", "ffmpeg (VAAPI)"},
         .Values = {"script", "qs", "ffqsv", "ffdxva"}}
 
     Property EnableRestoration As New OptionParam With {
@@ -639,7 +638,7 @@ Public Class AV1Params
 
                     If pipeTool = "automatic" Then
                         If p.Script.IsAviSynth Then
-                            pipeTool = "avs2pipemod"
+                            pipeTool = FrameServerHelp.GetAviSynthPipeTool()
                         Else
                             pipeTool = "vspipe"
                         End If
@@ -734,7 +733,7 @@ Public Class AV1Params
                 Case "ffdxva"
                     Dim crop = If(isCropped, $" -vf ""crop={p.SourceWidth - p.CropLeft - p.CropRight}:{p.SourceHeight - p.CropTop - p.CropBottom}:{p.CropLeft}:{p.CropTop}""", "")
                     Dim pix_fmt = If(p.SourceVideoBitDepth = 10 OrElse script.Info.BitDepth >= 10, "yuv420p10le", "yuv420p")
-                    sb.Append(Package.ffmpeg.Path.Escape + " -threads 1 -hwaccel dxva2 -i " + p.SourceFile.Escape +
+                    sb.Append(Package.ffmpeg.Path.Escape + " -threads 1 -hwaccel vaapi -i " + p.SourceFile.Escape +
                               " -f yuv4mpegpipe -pix_fmt " + pix_fmt + " -strict -1" + crop +
                               " -loglevel fatal -hide_banner - | " + Package.AOMEnc.Path.Escape)
                     If isSingleChunk Then

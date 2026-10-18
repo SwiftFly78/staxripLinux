@@ -1,22 +1,13 @@
-﻿Imports System.Drawing.Design
-Imports System.ComponentModel
+
 Imports System.Text.RegularExpressions
 
 Namespace UI
-    <ProvideProperty("Pattern", GetType(Control))>
+    'validates the text of text edits with a regex pattern when they lose the focus
     Public Class ValidationProvider
-        Inherits Component
-        Implements IExtenderProvider
+        Private Patterns As New Dictionary(Of TextEdit, String)
+        Private Defaults As New Dictionary(Of TextEdit, String)
 
-        Private Patterns As New Dictionary(Of Control, String)
-        Private Defaults As New Dictionary(Of Control, String)
-
-        Function CanExtend(obj As Object) As Boolean Implements IExtenderProvider.CanExtend
-            Return TypeOf obj Is Control
-        End Function
-
-        <DefaultValue("")>
-        Function GetPattern(c As Control) As String
+        Function GetPattern(c As TextEdit) As String
             If Patterns.ContainsKey(c) Then
                 Return Patterns(c)
             End If
@@ -24,26 +15,29 @@ Namespace UI
             Return ""
         End Function
 
-        Sub SetPattern(c As Control, value As String)
+        Sub SetPattern(c As TextEdit, value As String)
             If Not Patterns.ContainsKey(c) Then
-                AddHandler c.Validating, AddressOf Validating
-                AddHandler c.Enter, AddressOf Enter
+                AddHandler c.LostFocus, AddressOf Validating
+                AddHandler c.GotFocus, AddressOf Enter
             End If
 
             Patterns(c) = value
         End Sub
 
-        Sub Validating(sender As Object, e As CancelEventArgs)
-            Dim c = CType(sender, Control)
+        Sub Validating(sender As Object, e As EventArgs)
+            Dim c = DirectCast(sender, TextEdit)
 
             If Not Regex.IsMatch(c.Text, Patterns(c)) Then
                 MsgWarn("""" + c.Text + """ is no valid input.")
-                c.Text = Defaults(c)
+
+                If Defaults.ContainsKey(c) Then
+                    c.Text = Defaults(c)
+                End If
             End If
         End Sub
 
         Sub Enter(sender As Object, e As EventArgs)
-            Dim c = DirectCast(sender, Control)
+            Dim c = DirectCast(sender, TextEdit)
             Defaults(c) = c.Text
         End Sub
     End Class

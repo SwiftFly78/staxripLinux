@@ -1,6 +1,5 @@
-﻿
+
 Imports Microsoft
-Imports Microsoft.VisualBasic.Logging
 Imports System.Runtime.InteropServices.ComTypes
 Imports StaxRip.VideoEncoderCommandLine
 Imports StaxRip.UI
@@ -200,8 +199,7 @@ Public Class QSVEnc
             proc.Header = "Video encoding"
             proc.Package = Package
             proc.SkipString = " frames: "
-            proc.File = "cmd.exe"
-            proc.Arguments = "/S /C """ + Params.GetCommandLine(True, True) + """"
+            proc.SetShellCommand(Params.GetCommandLine(True, True))
             proc.Start()
         End Using
     End Sub
@@ -209,7 +207,7 @@ Public Class QSVEnc
     Overrides Function BeforeEncoding() As Boolean
         Dim rpu = Params.DolbyVisionRpu.Value
         If Not String.IsNullOrWhiteSpace(rpu) AndAlso rpu = p.HdrDolbyVisionMetadataFile?.Path AndAlso rpu.FileExists() Then
-            Dim offset = If(p.Script.IsFilterActive("Crop"), New Padding(p.CropLeft, p.CropTop, p.CropRight, p.CropBottom), Padding.Empty)
+            Dim offset = If(p.Script.IsFilterActive("Crop"), New CropPadding(p.CropLeft, p.CropTop, p.CropRight, p.CropBottom), CropPadding.Empty)
             Dim rpuProfile = p.HdrDolbyVisionMetadataFile.ReadProfileFromRpu()
 
             Dim profile = "#"
@@ -471,7 +469,7 @@ Public Class QSVEnc
 
         Property Decoder As New OptionParam With {
             .Text = "Decoder",
-            .Options = {"AviSynth/VapourSynth", "QSVEnc Hardware", "QSVEnc Software", "ffmpeg Intel", "ffmpeg DXVA2"},
+            .Options = {"AviSynth/VapourSynth", "QSVEnc Hardware", "QSVEnc Software", "ffmpeg Intel", "ffmpeg VAAPI"},
             .Values = {"avs", "avhw", "avsw", "ffqsv", "ffdxva"}}
 
         Property Interlace As New OptionParam With {
@@ -807,9 +805,9 @@ Public Class QSVEnc
         Property ResizeLibplaceboPlBlur As New NumParam With {.Text = "      Libplacebo Pl-Blur", .HelpSwitch = "--vpp-resize", .Init = 0, .Config = {0, 100, 1, 1}, .VisibleFunc = ResizeLibplaceboFilter.VisibleFunc}
         Property ResizeLibplaceboPlAntiring As New NumParam With {.Text = "      Libplacebo Pl-Antiring", .HelpSwitch = "--vpp-resize", .Init = 0, .Config = {0, 1, 0.05, 2}, .VisibleFunc = ResizeLibplaceboFilter.VisibleFunc}
 
-        Property TransformFlipX As New BoolParam With {.Switch = "--vpp-transform", .Text = "Flip X", .Label = "Transform", .LeftMargin = g.MainForm.FontHeight * 1.5, .ArgsFunc = AddressOf GetTransform}
-        Property TransformFlipY As New BoolParam With {.Text = "Flip Y", .LeftMargin = g.MainForm.FontHeight * 1.5, .HelpSwitch = "--vpp-transform"}
-        Property TransformTranspose As New BoolParam With {.Text = "Transpose", .LeftMargin = g.MainForm.FontHeight * 1.5, .HelpSwitch = "--vpp-transform"}
+        Property TransformFlipX As New BoolParam With {.Switch = "--vpp-transform", .Text = "Flip X", .Label = "Transform", .LeftMargin = EtoHelp.FontHeight * 1.5, .ArgsFunc = AddressOf GetTransform}
+        Property TransformFlipY As New BoolParam With {.Text = "Flip Y", .LeftMargin = EtoHelp.FontHeight * 1.5, .HelpSwitch = "--vpp-transform"}
+        Property TransformTranspose As New BoolParam With {.Text = "Transpose", .LeftMargin = EtoHelp.FontHeight * 1.5, .HelpSwitch = "--vpp-transform"}
 
         Property DenoiseDct As New BoolParam With {.Text = "Denoise DCT", .Switch = "--vpp-denoise-dct", .ArgsFunc = AddressOf GetDenoiseDctArgs}
         Property DenoiseDctStep As New OptionParam With {.Text = "      Step", .HelpSwitch = "--vpp-denoise-dct", .Init = 1, .Options = {"1 (high quality, slow)", "2 (default)", "4", "8 (fast)"}, .Values = {"1", "2", "4", "8"}}
@@ -862,8 +860,8 @@ Public Class QSVEnc
         Property DebandDitherY As New NumParam With {.Text = "          Y", .HelpSwitch = "--vpp-deband", .Name = "vpp-deband_dither_y", .Init = 15, .Config = {0, 31}}
         Property DebandDitherC As New NumParam With {.Text = "          C", .HelpSwitch = "--vpp-deband", .Init = 15, .Config = {0, 31}}
         Property DebandSeed As New NumParam With {.Text = "     Seed", .HelpSwitch = "--vpp-deband", .Init = 1234}
-        Property DebandBlurfirst As New BoolParam With {.Text = "Blurfirst", .HelpSwitch = "--vpp-deband", .LeftMargin = g.MainForm.FontHeight * 1.3}
-        Property DebandRandEachFrame As New BoolParam With {.Text = "Rand Each Frame", .HelpSwitch = "--vpp-deband", .LeftMargin = g.MainForm.FontHeight * 1.3}
+        Property DebandBlurfirst As New BoolParam With {.Text = "Blurfirst", .HelpSwitch = "--vpp-deband", .LeftMargin = EtoHelp.FontHeight * 1.3}
+        Property DebandRandEachFrame As New BoolParam With {.Text = "Rand Each Frame", .HelpSwitch = "--vpp-deband", .LeftMargin = EtoHelp.FontHeight * 1.3}
 
 
         Property LibPlaceboDeband As New BoolParam With {.Text = "LibPlacebo-Deband", .Switch = "--vpp-libplacebo-deband", .ArgsFunc = AddressOf GetLibPlaceboDebandArgs, .ImportAction = AddressOf ImportLibPlaceboDebandArgs}
@@ -1301,7 +1299,14 @@ Public Class QSVEnc
                 Case "avs"
                     sourcePath = p.Script.Path
 
-                    If includePaths AndAlso FrameServerHelp.IsPortable Then
+                    'the VapourSynth reader of the encoder depends on how VapourSynth was installed, vspipe always works
+                    If p.Script.Engine = ScriptEngine.VapourSynth Then
+                        sourcePath = "-"
+
+                        If includePaths Then
+                            ret = Package.vspipe.Path.Escape + " " + p.Script.Path.Escape + " - --container y4m | " + Package.QSVEncC.Path.Escape
+                        End If
+                    ElseIf includePaths AndAlso FrameServerHelp.IsPortable Then
                         ret += " --avsdll " + Package.AviSynth.Path.Escape
                     End If
                 Case "avhw"
@@ -1315,7 +1320,7 @@ Public Class QSVEnc
 
                     If includePaths Then
                         Dim pix_fmt = If(p.SourceVideoBitDepth = 10 OrElse p.Script.Info.BitDepth >= 10, "yuv420p10le", "yuv420p")
-                        ret = If(includePaths, Package.ffmpeg.Path.Escape, "ffmpeg") + " -threads 1 -hwaccel dxva2 -i " +
+                        ret = If(includePaths, Package.ffmpeg.Path.Escape, "ffmpeg") + " -threads 1 -hwaccel vaapi -i " +
                             If(includePaths, p.LastOriginalSourceFile.Escape, "path") + " -f yuv4mpegpipe -pix_fmt " +
                             pix_fmt + " -strict -1 -loglevel fatal -hide_banner - | " +
                             If(includePaths, Package.QSVEncC.Path.Escape, "QSVEncC64")

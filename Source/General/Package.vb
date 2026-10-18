@@ -1,9 +1,8 @@
-﻿
+
 Imports System.Text
 Imports System.Text.RegularExpressions
 Imports System.IO
 
-Imports Microsoft.Win32
 
 Public Class Package
     Implements IComparable(Of Package)
@@ -41,10 +40,17 @@ Public Class Package
     Property VersionDate As Date
     Property WebURL As String
 
+    'tools that only exist for Windows are shown but never required on Linux
+    Property IsLinuxSupported As Boolean = True
+
+    'overrides the derived Linux file name
+    Property LinuxFilename As String
+
     Shared Property Items As New SortedDictionary(Of String, Package)
 
     Shared Property DGIndex As Package = Add(New Package With {
         .Name = "DGIndex",
+        .IsLinuxSupported = False,
         .Filename = "DGIndex.exe",
         .Description = "MPEG-2 demuxing and d2v indexing GUI app.",
         .WebURL = "https://rationalqm.us/dgmpgdec/dgmpgdec.html",
@@ -54,6 +60,7 @@ Public Class Package
 
     Shared Property DGDecode As Package = Add(New PluginPackage With {
         .Name = "DGDecode",
+        .IsLinuxSupported = False,
         .Filename = "DGDecode.dll",
         .WebURL = "https://rationalqm.us/dgmpgdec/dgmpgdec.html",
         .Description = "Source filter to open D2V index files created with DGIndex or D2V Witch.",
@@ -85,10 +92,11 @@ Public Class Package
         .IsIncluded = False,
         .WebURL = "http://haali.su/mkv",
         .DownloadURL = "http://haali.su/mkv",
-        .Locations = {Registry.ClassesRoot.GetString("CLSID\" + GUIDS.HaaliMuxer.ToString + "\InprocServer32", Nothing).Dir}})
+        .IsLinuxSupported = False})
 
     Shared Property NicAudio As Package = Add(New PluginPackage With {
         .Name = "NicAudio",
+        .IsLinuxSupported = False,
         .Filename = "NicAudio_x64.dll",
         .WebURL = "http://avisynth.org.ru/docs/english/externalfilters/nicaudio.htm",
         .Description = "AviSynth audio source filter plugin.",
@@ -96,6 +104,7 @@ Public Class Package
 
     Shared Property UnDot As Package = Add(New PluginPackage With {
         .Name = "UnDot",
+        .IsLinuxSupported = False,
         .Filename = "UnDot.dll",
         .WebURL = "http://avisynth.nl/index.php/UnDot",
         .Description = "UnDot is a simple median filter plugin for removing dots, that is stray orphan pixels and mosquito noise.",
@@ -202,6 +211,7 @@ Public Class Package
 
     Shared Property qaac As Package = Add(New Package With {
         .Name = "qaac",
+        .IsLinuxSupported = False,
         .Filename = "qaac64.exe",
         .Filename32 = "qaac.exe",
         .Location = IO.Path.Combine("Audio", "qaac"),
@@ -214,6 +224,7 @@ Public Class Package
 
     Shared Property AppleApplicationSupport As Package = Add(New Package With {
         .Name = "Apple Application Support",
+        .IsLinuxSupported = False,
         .Filename = "CoreAudioToolbox.dll",
         .SupportsAutoUpdate = False,
         .VersionAllowAny = True,
@@ -235,6 +246,7 @@ Public Class Package
         .RequiredFunc = Function() Audio.IsEncoderUsed(GuiAudioEncoder.fdkaac)})
 
     Shared Property eac3to As Package = Add(New Package With {
+        .RequiredFunc = Function() Audio.IsEncoderUsed(GuiAudioEncoder.eac3to),
         .Name = "eac3to",
         .Filename = "eac3to.exe",
         .Location = IO.Path.Combine("Audio", "eac3to"),
@@ -263,6 +275,7 @@ Public Class Package
 
     Shared Property MediaInfoNET As Package = Add(New Package With {
         .Name = "MediaInfo.NET",
+        .IsLinuxSupported = False,
         .Filename = "MediaInfoNET.exe",
         .Location = IO.Path.Combine("Support", "MediaInfo.NET"),
         .WebURL = "https://github.com/stax76/MediaInfo.NET",
@@ -272,6 +285,7 @@ Public Class Package
 
     Shared Property GetMediaInfo As Package = Add(New Package With {
         .Name = "Get-MediaInfo",
+        .IsLinuxSupported = False,
         .Location = IO.Path.Combine("Support", "MediaInfo.NET"),
         .Filename = "Get-MediaInfo.ps1",
         .SupportsAutoUpdate = False,
@@ -280,6 +294,7 @@ Public Class Package
         .DownloadURL = "https://github.com/stax76/Get-MediaInfo/releases"})
 
     Shared Property MP4Box As Package = Add(New Package With {
+        .RequiredFunc = Function() TypeOf p?.VideoEncoder?.Muxer Is MP4Muxer,
         .Name = "MP4Box",
         .Filename = "MP4Box.exe",
         .Location = IO.Path.Combine("Support", "MP4Box"),
@@ -340,6 +355,7 @@ Public Class Package
         .HintDirFunc = AddressOf GetPythonHintDir})
 
     Shared Property chapterEditor As Package = Add(New Package With {
+        .RequiredFunc = Function() False,
         .Name = "chapterEditor",
         .Location = IO.Path.Combine("Support", "chapterEditor"),
         .Filename = "chapterEditor.exe",
@@ -349,6 +365,7 @@ Public Class Package
         .DownloadURL = "https://www.videohelp.com/software/chapterEditor"})
 
     Shared Property SevenZip As Package = Add(New Package With {
+        .RequiredFunc = Function() False,
         .Name = "7zip",
         .Location = IO.Path.Combine("Support", "7zip"),
         .Filename = "7za.exe",
@@ -371,6 +388,7 @@ Public Class Package
 
     Shared Property VisualCpp2010 As Package = Add(New Package With {
         .Name = "Visual C++ 2010",
+        .IsLinuxSupported = False,
         .Filename = "msvcp100.dll",
         .Description = "Visual C++ 2010 Redistributable.",
         .DownloadURL = "https://www.microsoft.com/en-us/download/details.aspx?id=14632",
@@ -380,6 +398,7 @@ Public Class Package
 
     Shared Property VisualCpp2012 As Package = Add(New Package With {
         .Name = "Visual C++ 2012",
+        .IsLinuxSupported = False,
         .Filename = "msvcp110.dll",
         .Description = "Visual C++ 2012 Redistributable.",
         .DownloadURL = "https://www.microsoft.com/en-US/download/details.aspx?id=30679",
@@ -389,6 +408,7 @@ Public Class Package
 
     Shared Property VisualCpp2013 As Package = Add(New Package With {
         .Name = "Visual C++ 2013",
+        .IsLinuxSupported = False,
         .Filename = "msvcp120.dll",
         .Description = "Visual C++ 2013 Redistributable.",
         .DownloadURL = "https://www.microsoft.com/en-US/download/details.aspx?id=40784",
@@ -398,6 +418,7 @@ Public Class Package
 
     Shared Property VisualCpp2022 As Package = Add(New Package With {
         .Name = "Visual C++ 2015-2022",
+        .IsLinuxSupported = False,
         .Filename = "msvcp140.dll",
         .Description = "Visual C++ 2015-2022 Redistributable.",
         .DownloadURL = "https://support.microsoft.com/en-gb/help/2977003/the-latest-supported-visual-c-downloads",
@@ -420,6 +441,7 @@ Public Class Package
 
     Shared Property AVSMeter As Package = Add(New Package With {
         .Name = "AVSMeter",
+        .IsLinuxSupported = False,
         .Location = IO.Path.Combine("Support", "AVSMeter"),
         .Filename = "AVSMeter64.exe",
         .Filename32 = "AVSMeter.exe",
@@ -430,6 +452,7 @@ Public Class Package
         .HelpSwitch = ""})
 
     Shared Property BDSup2SubPP As Package = Add(New Package With {
+        .RequiredFunc = Function() False,
         .Name = "BDSup2Sub++",
         .Filename = "bdsup2sub++.exe",
         .Location = IO.Path.Combine("Subtitles", "BDSup2Sub++"),
@@ -438,6 +461,7 @@ Public Class Package
         .Description = "GUI app that converts Blu-ray subtitles to other formats like VobSub."})
 
     Shared Property SubtitleEdit As Package = Add(New Package With {
+        .RequiredFunc = Function() False,
         .Name = "Subtitle Edit",
         .Filename = "SubtitleEdit.exe",
         .Location = IO.Path.Combine("Support", "SubtitleEdit"),
@@ -448,12 +472,14 @@ Public Class Package
         .Description = "Subtitle editor GUI app."})
 
     Shared Property mpvnet As Package = Add(New Package With {
-        .Name = "mpv.net",
+        .RequiredFunc = Function() False,
+        .Name = "mpv",
         .Filename = "mpvnet.exe",
         .Location = IO.Path.Combine("Support", "mpv.net"),
-        .WebURL = "https://github.com/stax76/mpv.net",
-        .DownloadURL = "https://github.com/stax76/mpv.net#download",
-        .Description = "The worlds best media player (GUI app)."})
+        .WebURL = "https://mpv.io",
+        .DownloadURL = "https://mpv.io/installation",
+        .LaunchAction = Sub() g.ShellExecute(Package.mpvnet.Path, "--player-operation-mode=pseudo-gui"),
+        .Description = "Media player (GUI app)."})
 
     Shared Property MPC As Package = Add(New Package With {
         .Name = "MPC",
@@ -465,7 +491,7 @@ Public Class Package
         .Required = False,
         .WebURL = "https://sourceforge.net/projects/mpcbe",
         .Description = "DirectShow based media player (GUI app).",
-        .Locations = {Registry.LocalMachine.GetString("SOFTWARE\MPC-BE", "ExePath").Dir, IO.Path.Combine(Folder.Programs, "MPC-BE x64")}})
+        .IsLinuxSupported = False})
 
     Shared Property modPlus As Package = Add(New PluginPackage With {
         .Name = "modPlus",
@@ -530,6 +556,7 @@ Public Class Package
 
     Shared Property VSRip As Package = Add(New Package With {
         .Name = "VSRip",
+        .IsLinuxSupported = False,
         .Filename = "VSRip.exe",
         .Location = IO.Path.Combine("Subtitles", "VSRip"),
         .Description = "GUI app that rips VobSub subtitles.",
@@ -576,7 +603,9 @@ Public Class Package
         .Filename = "scenechange.dll",
         .VsFilterNames = {"scenechange"}})
 
+    'on Linux ffmpeg reads AviSynth scripts, so avs2pipemod is only used when it's installed
     Shared Property avs2pipemod As Package = Add(New Package With {
+        .RequiredFunc = Function() p?.Script IsNot Nothing AndAlso p.Script.IsAviSynth AndAlso avs2pipemod.Path <> "",
         .Name = "avs2pipemod",
         .Filename = "avs2pipemod64.exe",
         .Filename32 = "avs2pipemod.exe",
@@ -587,6 +616,7 @@ Public Class Package
         .Description = "Console app given an AviSynth script as input, avs2pipemod can send video, audio, or information of various types to stdout for consumption by command line encoders or other tools."})
 
     Shared Property x264 As Package = Add(New Package With {
+        .RequiredFunc = Function() TypeOf p?.VideoEncoder Is x264Enc,
         .Name = "x264",
         .Filename = "x264.exe",
         .Locations = {IO.Path.Combine("Encoders", "x264"), IO.Path.Combine("FrameServer", "AviSynth")},
@@ -599,6 +629,7 @@ Public Class Package
         .HelpSwitch = "--fullhelp"})
 
     Shared Property x265 As Package = Add(New Package With {
+        .RequiredFunc = Function() TypeOf p?.VideoEncoder Is x265Enc,
         .Name = "x265",
         .Filename = "x265.exe",
         .Locations = {IO.Path.Combine("Encoders", "x265"), IO.Path.Combine("FrameServer", "AviSynth")},
@@ -698,6 +729,7 @@ Public Class Package
         .HelpSwitch = "--help"})
 
     Shared Property mkvmerge As Package = Add(New Package With {
+        .RequiredFunc = Function() TypeOf p?.VideoEncoder?.Muxer Is MkvMuxer,
         .Name = "mkvmerge",
         .Filename = "mkvmerge.exe",
         .Location = IO.Path.Combine("Support", "MKVToolNix"),
@@ -710,6 +742,7 @@ Public Class Package
         .Description = "MKV muxing tool."})
 
     Shared Property mkvextract As Package = Add(New Package With {
+        .RequiredFunc = Function() TypeOf p?.VideoEncoder?.Muxer Is MkvMuxer,
         .Name = "mkvextract",
         .Filename = "mkvextract.exe",
         .Location = IO.Path.Combine("Support", "MKVToolNix"),
@@ -722,6 +755,7 @@ Public Class Package
         .Description = "MKV demuxing tool."})
 
     Shared Property mkvinfo As Package = Add(New Package With {
+        .RequiredFunc = Function() TypeOf p?.VideoEncoder?.Muxer Is MkvMuxer,
         .Name = "mkvinfo",
         .Filename = "mkvinfo.exe",
         .Location = IO.Path.Combine("Support", "MKVToolNix"),
@@ -734,6 +768,7 @@ Public Class Package
         .Description = "MKV info tool."})
 
     Shared Property MKVToolnixGUI As Package = Add(New Package With {
+        .RequiredFunc = Function() False,
         .Name = "MKVToolnix GUI",
         .Filename = "mkvtoolnix-gui.exe",
         .Location = IO.Path.Combine("Support", "MKVToolNix"),
@@ -745,6 +780,7 @@ Public Class Package
         .Description = "MKV muxing/demuxing GUI app."})
 
     Shared Property HDR10PlusTool As Package = Add(New Package With {
+        .RequiredFunc = Function() False,
         .Name = "HDR10Plus_Tool",
         .Filename = "hdr10plus_tool.exe",
         .Location = IO.Path.Combine("Support", "HDR10Plus_Tool"),
@@ -754,6 +790,7 @@ Public Class Package
         .Description = "CLI utility to work with HDR10+ in HEVC files."})
 
     Shared Property DoViTool As Package = Add(New Package With {
+        .RequiredFunc = Function() p?.HdrDolbyVisionMetadataFile IsNot Nothing,
         .Name = "DoVi_Tool",
         .Filename = "dovi_tool.exe",
         .Location = IO.Path.Combine("Support", "DoVi_Tool"),
@@ -764,6 +801,7 @@ Public Class Package
 
     Shared Property DoViSplit As Package = Add(New Package With {
         .Name = "DoViSplit",
+        .IsLinuxSupported = False,
         .Filename = "DoViSplit.exe",
         .Location = IO.Path.Combine("Support", "DoViSplit"),
         .HelpSwitch = "",
@@ -771,6 +809,7 @@ Public Class Package
 
     Shared Property AutoCrop As Package = Add(New Package With {
         .Name = "AutoCrop",
+        .IsLinuxSupported = False,
         .Filename = "AutoCrop.exe",
         .Location = IO.Path.Combine("Support", "AutoCrop"),
         .HelpSwitch = "",
@@ -778,12 +817,14 @@ Public Class Package
 
     Shared Property Err As Package = Add(New Package With {
         .Name = "Err",
+        .IsLinuxSupported = False,
         .Filename = "Err.exe",
         .Location = IO.Path.Combine("Support", "Err"),
         .HelpSwitch = "",
         .Description = "Provides Windows error code info."})
 
     Shared Property PNGopt As Package = Add(New Package With {
+        .RequiredFunc = Function() False,
         .Name = "PNGopt",
         .Filename = "apngopt.exe",
         .HelpFilename = "help.txt",
@@ -793,6 +834,7 @@ Public Class Package
         .Description = "Opt Tools For Creating PNG"})
 
     Shared Property NVEncC As Package = Add(New Package With {
+        .RequiredFunc = Function() TypeOf p?.VideoEncoder Is NVEnc,
         .Name = "NVEncC",
         .Filename = "NVEncC64.exe",
         .Filename32 = "NVEncC.exe",
@@ -804,6 +846,7 @@ Public Class Package
         .Description = "NVIDIA hardware video encoder."})
 
     Shared Property QSVEncC As Package = Add(New Package With {
+        .RequiredFunc = Function() TypeOf p?.VideoEncoder Is QSVEnc,
         .Name = "QSVEncC",
         .Filename = "QSVEncC64.exe",
         .Filename32 = "QSVEncC.exe",
@@ -815,6 +858,7 @@ Public Class Package
         .HelpSwitch = "-h"})
 
     Shared Property VCEEncC As Package = Add(New Package With {
+        .RequiredFunc = Function() TypeOf p?.VideoEncoder Is VCEEnc,
         .Name = "VCEEncC",
         .Filename = "VCEEncC64.exe",
         .Filename32 = "VCEEncC.exe",
@@ -834,6 +878,7 @@ Public Class Package
 
     Shared Property AviSource As Package = Add(New PluginPackage With {
         .Name = "AviSource",
+        .IsLinuxSupported = False,
         .Filename = "avisource.dll",
         .Description = "Pretty old source filter for AVI files.",
         .WebURL = "https://github.com/vapoursynth/vs-avisource-obsolete/",
@@ -871,8 +916,18 @@ Public Class Package
         .AvsFilterNames = {"FFVideoSource", "FFAudioSource", "FFMS2"},
         .VsFilterNames = {"ffms2.Source"}})
 
+    Shared Property ffmsindex As Package = Add(New Package With {
+        .Name = "ffmsindex",
+        .Filename = "ffmsindex.exe",
+        .Description = "Indexing console app of ffms2.",
+        .WebURL = "https://github.com/FFMS/ffms2",
+        .HelpSwitch = "",
+        .SupportsAutoUpdate = False,
+        .RequiredFunc = Function() False})
+
     Shared Property AviSynthShader As Package = Add(New PluginPackage With {
         .Name = "AviSynthShader DLL",
+        .IsLinuxSupported = False,
         .Location = IO.Path.Combine("Plugins", "AVS", "AviSynthShader"),
         .Filename = "Shader-x64.dll",
         .WebURL = "https://github.com/mysteryx93/AviSynthShader",
@@ -880,6 +935,7 @@ Public Class Package
 
     Shared Property AviSynthShaderAVSI As Package = Add(New PluginPackage With {
         .Name = "AviSynthShader AVSI",
+        .IsLinuxSupported = False,
         .Location = IO.Path.Combine("Plugins", "AVS", "AviSynthShader"),
         .Filename = "Shader.avsi",
         .WebURL = "https://github.com/mysteryx93/AviSynthShader",
@@ -887,6 +943,7 @@ Public Class Package
 
     Shared Property VSFilterMod As Package = Add(New PluginPackage With {
         .Name = "VSFilterMod",
+        .IsLinuxSupported = False,
         .Filename = "VSFilterMod.dll",
         .Description = "VSFilterMod with VapourSynth interface added",
         .WebURL = "https://github.com/Masaiki/VSFilterMod",
@@ -1235,6 +1292,7 @@ Public Class Package
 
     Shared Property xyVSFilter As Package = Add(New PluginPackage With {
         .Name = "xy-VSFilter",
+        .IsLinuxSupported = False,
         .Filename = "VSFilter.dll",
         .Description = "AviSynth subtitle plugin.",
         .WebURL = "https://github.com/pinterf/xy-VSFilter",
@@ -1374,6 +1432,7 @@ Public Class Package
 
     Shared Property FFT3DGPU As Package = Add(New PluginPackage With {
         .Name = "FFT3DGPU",
+        .IsLinuxSupported = False,
         .Filename = "FFT3dGPU.dll",
         .Description = "Similar algorithm to FFT3DFilter, but uses graphics hardware for increased speed.",
         .WebURL = "https://github.com/pinterf/FFT3dGPU",
@@ -1458,6 +1517,7 @@ Public Class Package
 
         Add(New PluginPackage With {
             .Name = "DSS2mod",
+            .IsLinuxSupported = False,
             .Filename = "avss.dll",
             .WebURL = "https://code.google.com/p/xvid4psp/downloads/detail?name=DSS2%20mod%20%2B%20LAVFilters.7z&can=2&q=",
             .Description = "Direct Show source filter.",
@@ -2730,6 +2790,7 @@ Public Class Package
 
         Add(New Package With {
             .Name = "DirectX 9",
+            .IsLinuxSupported = False,
             .Filename = "d3d9.dll",
             .Description = "DirectX 9.0c End-User Runtime.",
             .DownloadURL = "https://www.microsoft.com/en-us/download/details.aspx?id=34429",
@@ -2772,13 +2833,24 @@ Public Class Package
 
     Private FilenameValue As String
 
+    'the Linux file name derived from the Windows file name of the Windows version
     Property Filename As String
         Get
-            Return If(Not Environment.Is64BitProcess AndAlso Filename32 <> "", Filename32, FilenameValue)
+            If LinuxFilename <> "" Then
+                Return LinuxFilename
+            End If
+
+            Return LinuxNames.GetFilename(FilenameValue, TypeOf Me Is PluginPackage)
         End Get
         Set(value As String)
             FilenameValue = value
         End Set
+    End Property
+
+    ReadOnly Property WindowsFilename As String
+        Get
+            Return FilenameValue
+        End Get
     End Property
 
     Private LaunchActionValue As Action
@@ -2789,10 +2861,10 @@ Public Class Package
                 If Description.ContainsEx("GUI app") Then
                     LaunchActionValue = Sub() g.ShellExecute(Path)
                 ElseIf HelpSwitch IsNot Nothing Then
-                    LaunchActionValue = Sub() g.DefaultCommands.ExecutePowerShellCode(
-                        $"& '{Path}' {If(HelpSwitch.Contains("stderr"), HelpSwitch.Replace("stderr", ""), HelpSwitch)}", True)
+                    LaunchActionValue = Sub() DesktopHelp.RunInTerminal(ShellHelp.Quote(Path) + " " +
+                        If(HelpSwitch.Contains("stderr"), HelpSwitch.Replace("stderr", ""), HelpSwitch))
                 ElseIf Filename.Ext.EqualsAny("avsi", "py") Then
-                    LaunchActionValue = Sub() g.ShellExecute(g.GetTextEditorPath, Path.Escape)
+                    LaunchActionValue = Sub() g.ShellExecute(Path)
                 End If
             End If
 
@@ -2807,6 +2879,10 @@ Public Class Package
 
     Overridable Property Required As Boolean
         Get
+            If Not IsLinuxSupported Then
+                Return False
+            End If
+
             Return If(RequiredFunc IsNot Nothing, RequiredFunc.Invoke, RequiredValue)
         End Get
         Set(value As Boolean)
@@ -2829,19 +2905,19 @@ Public Class Package
             Dim plugin = DirectCast(Me, PluginPackage)
 
             If Not plugin.AvsFilterNames.NothingOrEmpty Then
-                If plugin.Filename.Ext = "dll" Then
+                If plugin.Filename.Ext.EqualsAny("dll", "so") Then
                     Return "AviSynth Plugin"
                 ElseIf plugin.Filename.Ext.EqualsAny("avs", "avsi") Then
                     Return "AviSynth Script"
                 End If
             ElseIf Not plugin.VsFilterNames.NothingOrEmpty Then
-                If plugin.Filename.Ext = "dll" Then
+                If plugin.Filename.Ext.EqualsAny("dll", "so") Then
                     Return "VapourSynth Plugin"
                 ElseIf plugin.Filename.Ext = "py" Then
                     Return "VapourSynth Script"
                 End If
             End If
-        ElseIf Filename.Ext = "dll" Then
+        ElseIf Filename.Ext.EqualsAny("dll", "so") Then
             Return "Library"
         Else
             Return "Misc"
@@ -2879,9 +2955,9 @@ Public Class Package
 
         If HelpFilename <> "" Then
             If HelpSwitch IsNot Nothing AndAlso HelpFilename = Name + " Help.txt" Then
-                dic("Console Help") = Directory + HelpFilename
+                dic("Console Help") = HelpFile
             Else
-                dic("Local Help") = Directory + HelpFilename
+                dic("Local Help") = HelpFile
             End If
         End If
 
@@ -2916,6 +2992,11 @@ Public Class Package
         Get
             If HelpFilename = "" AndAlso HelpSwitch IsNot Nothing Then
                 HelpFilename = Name + " Help.txt"
+            End If
+
+            'console help is generated, the folders of system apps are not writable
+            If HelpSwitch IsNot Nothing AndAlso HelpFilename = Name + " Help.txt" Then
+                Return IO.Path.Combine(Folder.XdgCacheHome, "staxrip", "Help", HelpFilename)
             End If
 
             Return IO.Path.Combine(Directory, If(HelpFilename, ""))
@@ -2957,7 +3038,10 @@ Public Class Package
     End Property
 
     Function CreateHelpfile() As String
-        If File.Exists(HelpFile) Then
+        'generated help is created again after the app was updated
+        If File.Exists(HelpFile) AndAlso (HelpSwitch Is Nothing OrElse Not File.Exists(Path) OrElse
+            File.GetLastWriteTimeUtc(HelpFile) >= File.GetLastWriteTimeUtc(Path)) Then
+
             Return HelpFile.ReadAllText
         End If
 
@@ -2966,6 +3050,7 @@ Public Class Package
                 Dim stderr = HelpSwitch.Contains("stderr")
                 Dim switch = If(stderr, HelpSwitch.Replace("stderr", ""), HelpSwitch)
 
+                IO.Directory.CreateDirectory(IO.Path.GetDirectoryName(HelpFile))
                 File.WriteAllText(HelpFile, BR + ProcessHelp.GetConsoleOutput(
                     Path, switch, stderr).Trim + BR)
 
@@ -2997,6 +3082,10 @@ Public Class Package
     End Function
 
     Overridable Function GetStatus() As String
+        If Not IsLinuxSupported Then
+            Return "Not available on Linux."
+        End If
+
         If GetStatusLocation() <> "" Then
             Return GetStatusLocation()
         End If
@@ -3036,12 +3125,30 @@ Public Class Package
 
     Function GetStatusLocation() As String
         If Path = "" Then
-            Dim dl = If(Not String.IsNullOrWhiteSpace(DownloadURL), $"{BR}Tools > Download (Ctrl+D)", "")
-            Dim ep = If(Not String.IsNullOrWhiteSpace(Path), $"{BR}Tools > Edit Path (Ctrl+P)", "")
-            Dim choose = If(dl <> "" OrElse ep <> "", ", choose:", "")
+            Dim plugin = TryCast(Me, PluginPackage)
 
-            Return $"App not found{choose}{dl}{ep}"
+            'VapourSynth plugins installed by the distribution are loaded automatically
+            If plugin IsNot Nothing AndAlso plugin.IsLoadedByVapourSynth Then
+                Return ""
+            End If
+
+            Dim install = LinuxNames.GetInstallHint(Me)
+            Dim ep = $"{BR}Tools > Edit Path (Ctrl+P)"
+
+            Return $"{If(TypeOf Me Is PluginPackage, "Plugin", "App")} not found ({Filename}), {install}{ep}"
         End If
+    End Function
+
+    'system installed tools are managed by the package manager, their version isn't checked
+    Function IsSystemInstalled() As Boolean
+        Dim fp = Path
+        Return fp <> "" AndAlso Not fp.StartsWith(Folder.Apps) AndAlso GetStoredPath() = ""
+    End Function
+
+    'tools from a custom path or the Apps folder, their directory is added to PATH
+    Function IsCustomOrBundled() As Boolean
+        Dim fp = Path
+        Return fp <> "" AndAlso (fp.StartsWith(Folder.Apps) OrElse GetStoredPath() <> "") AndAlso fp.Ext = ""
     End Function
 
     Function IsVersionOld() As Boolean
@@ -3069,7 +3176,7 @@ Public Class Package
     End Function
 
     Overridable Function IsVersionValid() As Boolean
-        If VersionAllowAny Then Return True
+        If VersionAllowAny OrElse IsSystemInstalled() Then Return True
         If IsVersionNew() AndAlso VersionAllowNew Then Return True
 
         Return IsVersionCorrect()
@@ -3174,63 +3281,19 @@ Public Class Package
     End Function
 
     Function GetAviSynthHintDir() As String
-        If s.AviSynthMode <> FrameServerMode.Portable Then
-            Dim dllPath = FrameServerHelp.GetAviSynthInstallPath
-
-            If dllPath.FileExists Then
-                Return dllPath.Dir
-            End If
-        End If
-
-        Return GetPathFromLocation(IO.Path.Combine("FrameServer", "AviSynth")).Dir
+        Return LinuxNames.FindLibrary(Filename).Dir
     End Function
 
     Function GetVapourSynthDllHintDir() As String
-        If s.VapourSynthMode <> FrameServerMode.Portable Then
-            Dim dllPath = FrameServerHelp.GetVapourSynthInstallPath
-
-            If dllPath <> "" Then
-                Return dllPath.Dir
-            End If
-        End If
-
-        Return GetPathFromLocation(IO.Path.Combine("FrameServer", "VapourSynth", "Lib", "site-packages", "vapoursynth")).Dir
+        Return LinuxNames.FindLibrary(Filename).Dir
     End Function
 
     Function GetVapourSynthPipeHintDir() As String
-        If s.VapourSynthMode <> FrameServerMode.Portable Then
-            Dim dllPath = FrameServerHelp.GetVapourSynthInstallPath
-
-            If dllPath <> "" Then
-                Return dllPath.Dir
-            End If
-        End If
-
-        Return GetPathFromLocation(IO.Path.Combine("FrameServer", "VapourSynth", "Lib", "site-packages", "vapoursynth")).Dir
+        Return ShellHelp.Which(Filename).Dir
     End Function
 
     Shared Function GetPythonHintDir() As String
-        If Not FrameServerHelp.IsVapourSynthPortable Then
-            Dim exePath As String
-
-            For Each key In {Registry.CurrentUser, Registry.LocalMachine}
-                For Each keyName In key.GetKeyNames("SOFTWARE\Python\PythonCore")
-                    exePath = key.GetString($"SOFTWARE\Python\PythonCore\{keyName}\InstallPath", "ExecutablePath")
-
-                    If File.Exists(exePath) Then
-                        Return exePath.Dir
-                    End If
-                Next
-            Next
-
-            exePath = FindEverywhere("python.exe", Python.Exclude(0))
-
-            If exePath <> "" Then
-                Return exePath.Dir
-            End If
-        End If
-
-        Return IO.Path.Combine(Folder.Apps, "FrameServer", "VapourSynth")
+        Return ShellHelp.Which("python3").Dir
     End Function
 
     Overridable ReadOnly Property Path As String
@@ -3257,11 +3320,15 @@ Public Class Package
                 End If
             End If
 
-            If HintDirFunc IsNot Nothing Then
-                ret = IO.Path.Combine(HintDirFunc.Invoke, Filename)
+            If HintDirFunc IsNot Nothing AndAlso Filename <> "" Then
+                Dim hintDir = HintDirFunc.Invoke
 
-                If File.Exists(ret) Then
-                    Return ret
+                If hintDir <> "" Then
+                    ret = IO.Path.Combine(hintDir, Filename)
+
+                    If File.Exists(ret) Then
+                        Return ret
+                    End If
                 End If
             End If
 
@@ -3291,18 +3358,26 @@ Public Class Package
                 End If
             End If
 
-            If Find Then
-                ret = FindEverywhere(Filename, If(Exclude.NothingOrEmpty, Nothing, Exclude(0)))
+            If plugin IsNot Nothing Then
+                ret = LinuxNames.FindPlugin(Me)
+
+                If ret <> "" Then
+                    Return ret
+                End If
+            ElseIf Find AndAlso IsLinuxSupported Then
+                ret = FindEverywhere(Filename)
 
                 If ret <> "" Then
                     Return ret
                 End If
             End If
+
+            Return ""
         End Get
     End Property
 
     Function GetPathFromLocation(dir As String) As String
-        If dir = "" Then Return Nothing
+        If dir = "" OrElse Filename = "" Then Return Nothing
 
         Try
             If Not IO.Path.IsPathRooted(dir) Then
@@ -3329,32 +3404,28 @@ Public Class Package
         Next
     End Function
 
-    Shared Function IsNotEmptyOrIgnored(filePath As String, ignorePath As String) As Boolean
-        Return filePath <> "" AndAlso (ignorePath = Nothing OrElse Not filePath.Contains(ignorePath))
-    End Function
-
     Shared Function FindEverywhere(fileName As String, Optional ignorePath As String = Nothing) As String
-        Dim ret As String
-
-        If fileName.Ext = "exe" Then
-            ret = FindInMuiCacheKey(fileName)
-
-            If IsNotEmptyOrIgnored(ret, ignorePath) Then
-                Return ret
-            End If
-
-            ret = FindInAppKey(fileName)
-
-            If IsNotEmptyOrIgnored(ret, ignorePath) Then
-                Return ret
-            End If
+        If fileName = "" Then
+            Return ""
         End If
 
-        ret = FindInPathEnvVar(fileName)
-
-        If IsNotEmptyOrIgnored(ret, ignorePath) Then
-            Return ret
+        If fileName.Ext.EqualsAny("so") OrElse fileName.Contains(".so.") Then
+            Return LinuxNames.FindLibrary(fileName)
         End If
+
+        Dim ret = FindInPathEnvVar(fileName)
+
+        If ret = "" Then
+            For Each i In LinuxNames.GetExeAlternatives(fileName)
+                ret = FindInPathEnvVar(i)
+
+                If ret <> "" Then
+                    Exit For
+                End If
+            Next
+        End If
+
+        Return ret
     End Function
 
     Shared Function FindEverywhere(fileNames As String()) As String
@@ -3365,42 +3436,12 @@ Public Class Package
                 Return ret
             End If
         Next
-    End Function
 
-    Shared Function FindInMuiCacheKey(ParamArray fileNames As String()) As String
-        For Each exeName In fileNames
-            Using key = Registry.ClassesRoot.OpenSubKey("Local Settings\Software\Microsoft\Windows\Shell\MuiCache")
-                If key IsNot Nothing Then
-                    For Each valueName In key.GetValueNames
-                        If valueName.Contains(exeName) Then
-                            Dim ret = valueName.Left(exeName) + exeName
-
-                            If File.Exists(ret) Then
-                                Return ret
-                            End If
-                        End If
-                    Next
-                End If
-            End Using
-
-            Using key = Registry.CurrentUser.OpenSubKey("Software\Classes\Local Settings\Software\Microsoft\Windows\Shell\MuiCache")
-                If key IsNot Nothing Then
-                    For Each valueName In key.GetValueNames
-                        If valueName.Contains(exeName) Then
-                            Dim ret = valueName.Left(exeName) + exeName
-
-                            If File.Exists(ret) Then
-                                Return ret
-                            End If
-                        End If
-                    Next
-                End If
-            End Using
-        Next
+        Return ""
     End Function
 
     Shared Function FindInPathEnvVar(filename As String) As String
-        Dim paths = Environment.GetEnvironmentVariable("path").SplitNoEmpty(IO.Path.PathSeparator)
+        Dim paths = If(Environment.GetEnvironmentVariable("PATH"), "").SplitNoEmpty(IO.Path.PathSeparator)
 
         For Each folder In paths
             If folder.ContainsAny(IO.Path.GetInvalidPathChars) Then Continue For
@@ -3411,22 +3452,8 @@ Public Class Package
                 Return filepath
             End If
         Next
-    End Function
 
-    Shared Function FindInAppKey(filename As String) As String
-        Dim value = Registry.ClassesRoot.GetString($"Applications\{filename}\shell\open\command", Nothing)
-        value = value.Left(".exe").TrimStart(""""c)
-
-        If File.Exists(value) Then
-            Return value
-        End If
-
-        value = Registry.LocalMachine.GetString($"SOFTWARE\Classes\Applications\{filename}\shell\open\command", Nothing)
-        value = value.Left(".exe").TrimStart(""""c)
-
-        If File.Exists(value) Then
-            Return value
-        End If
+        Return ""
     End Function
 
     Overrides Function ToString() As String
@@ -3442,7 +3469,7 @@ Public Class Package
 
     ReadOnly Property ConfPath As String
         Get
-            Return IO.Path.Combine(Folder.Apps, "Conf", ID + ".conf")
+            Return IO.Path.Combine(Folder.Settings, "Conf", ID + ".conf")
         End Get
     End Property
 
@@ -3454,7 +3481,13 @@ Public Class Package
         If Not WasConfLoaded Then
             WasConfLoaded = True
 
-            For Each i In IO.Directory.GetFiles(IO.Path.Combine(Folder.Apps, "Conf"))
+            Dim confDir = IO.Path.Combine(Folder.Settings, "Conf")
+
+            If Not IO.Directory.Exists(confDir) Then
+                Exit Sub
+            End If
+
+            For Each i In IO.Directory.GetFiles(confDir)
                 If Items.ContainsKey(i.Base) Then
                     Items(i.Base).LoadConf()
                 Else
@@ -3483,6 +3516,7 @@ Public Class Package
     End Sub
 
     Sub SaveConf()
+        IO.Directory.CreateDirectory(ConfPath.Dir)
         Dim sb As New StringBuilder
         sb.Append("Version = " + Version + BR +
                   "Date = " + VersionDate.ToInvariantString("yyyy-MM-dd"))
@@ -3505,6 +3539,24 @@ Public Class PluginPackage
     Property AvsFilterNames As String()
     Property VsFilterNames As String()
     Property Dependencies As String()
+
+    'True if VapourSynth provides all namespaces of the plugin, for instance from the distribution
+    ReadOnly Property IsLoadedByVapourSynth As Boolean
+        Get
+            If VsFilterNames.NothingOrEmpty Then
+                Return False
+            End If
+
+            Dim namespaces = VsFilterNames.Where(Function(x) x.Contains(".")).Select(Function(x) x.Left(".")).Distinct.ToArray
+
+            If namespaces.Length = 0 Then
+                Return False
+            End If
+
+            Dim loaded = VapourSynthInfo.GetPluginNamespaces()
+            Return namespaces.All(Function(x) loaded.Contains(x))
+        End Get
+    End Property
 
     Public Overrides Property Required As Boolean
         Get

@@ -1,18 +1,15 @@
-﻿
+
 Imports System.Globalization
-Imports System.Runtime.InteropServices
 Imports System.Text.RegularExpressions
 Imports System.Threading
 Imports System.Threading.Tasks
-Imports Microsoft.VisualBasic
-
-Imports Microsoft.Win32
 
 Imports StaxRip.UI
+Imports Microsoft.VisualBasic
 
+'Controls a running process and its output in the processing window,
+'all UI work happens on the UI thread, output arrives on reader threads.
 Public Class ProcController
-    Private LogAction As Action = New Action(AddressOf LogHandler)
-    Private StatusAction As Action(Of String) = New Action(Of String)(AddressOf ProgressHandler)
     Private UseFirstExpression As Boolean = True
     Private ReadOnly _progressSeparator As String = " | "
     Private ReadOnly _progressSeparatorPattern As String = Regex.Escape(_progressSeparator)
@@ -25,6 +22,8 @@ Public Class ProcController
     Private _triggerWhileProcessing As Boolean = False
     Private _lastTriggerWhileProcessing As Date = Date.Now
     Private _ffmpegDuration As TimeSpan = TimeSpan.Zero
+    Private _logDirty As Integer
+    Private _pendingProgress As String
     Private Shared _blockActivation As Boolean = False
     Private Shared _lastActivation As Date = Date.UtcNow
     Private Shared _progressInterval As Integer = 200
@@ -71,7 +70,7 @@ Public Class ProcController
         End Get
     End Property
 
-
+    'must be called on the UI thread
     Sub New(proc As Proc)
         Me.Proc = proc
         ProcForm = g.ProcForm
@@ -81,39 +80,23 @@ Public Class ProcController
                                 proc.Package IsNot Nothing AndAlso
                                 proc.Package Is TryCast(p.VideoEncoder, BasicVideoEncoder)?.CommandLineParams.Package
 
-        Dim pad = g.ProcForm.FontHeight \ 6
-        Button.Margin = New Padding(pad, pad, 0, pad)
-        Button.Font = FontManager.GetCodeFont(-1)
         Button.Text = " " + proc.Title + " "
-        Dim sz = TextRenderer.MeasureText(Button.Text, Button.Font)
-        Dim fh = Button.Font.Height
-        Button.Width = sz.Width + fh
-        Button.Height = CInt(fh * 1.5)
+        Button.Font = FontManager.GetCodeFont(-1)
         AddHandler Button.Click, AddressOf Click
 
-        ProgressBar.Dock = DockStyle.Fill
         ProgressBar.Font = FontManager.GetCodeFont(-1)
 
-        LogTextBox.ScrollBars = RichTextBoxScrollBars.Both
-        LogTextBox.Multiline = True
-        LogTextBox.Dock = DockStyle.Fill
         LogTextBox.ReadOnly = True
         LogTextBox.WordWrap = True
-        LogTextBox.DetectUrls = False
         LogTextBox.Font = FontManager.GetCodeFont(-1)
-        AddHandler LogTextBox.AfterThemeApplied, AddressOf SetAndHighlightLog
 
-        ProcForm.pnLogHost.Controls.Add(LogTextBox)
-        ProcForm.pnStatusHost.Controls.Add(ProgressBar)
-        ProcForm.flpNav.Controls.Add(Button)
+        ProcForm.AddProcControls(Button)
 
         AddHandler proc.ProcDisposed, AddressOf ProcDisposed
         AddHandler proc.OutputDataReceived, AddressOf DataReceived
         AddHandler proc.ErrorDataReceived, AddressOf DataReceived
 
         ApplyTheme()
-
-        AddHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
     End Sub
 
     Sub OnThemeChanged(theme As Theme)
@@ -125,25 +108,14 @@ Public Class ProcController
     End Sub
 
     Sub ApplyTheme(theme As Theme)
-        If DesignHelp.IsDesignMode Then Exit Sub
-
-        If Proc.IsSilent Then
-            Button.BackColor = theme.ProcessingForm.ProcessButtonBackColor
-            Button.ForeColor = theme.ProcessingForm.ProcessButtonForeColor
-        Else
-            Button.BackColor = theme.ProcessingForm.ProcessButtonBackSelectedColor
-            Button.ForeColor = theme.ProcessingForm.ProcessButtonForeSelectedColor
-        End If
-
-        For Each pc In Procs
-            pc.SetAndHighlightLog(pc.Proc.Log.ToString(), theme)
-        Next
+        Button.Font = FontManager.GetCodeFont(-1, If(Proc.IsSilent, FontStyle.None, FontStyle.Bold))
     End Sub
 
     Public Shared Sub SetLastActivation(Optional offsetSeconds As Integer = 0)
         _lastActivation = Date.UtcNow.AddSeconds(offsetSeconds)
     End Sub
 
+    'called on reader threads
     Sub DataReceived(value As String)
         If value = "" Then Exit Sub
 
@@ -159,7 +131,15 @@ Public Class ProcController
                 ret.Data = "Progress: " + ret.Data + "%"
             End If
 
-            ProcForm.BeginInvoke(StatusAction, {ret.Data})
+            If Interlocked.Exchange(_pendingProgress, ret.Data) Is Nothing Then
+                UIBeginInvoke(Sub()
+                                  Dim value2 = Interlocked.Exchange(_pendingProgress, Nothing)
+
+                                  If value2 IsNot Nothing Then
+                                      ProgressHandler(value2)
+                                  End If
+                              End Sub)
+            End If
         Else
             If ret.Data.Trim <> "" Then
                 Proc.Log.WriteLine(ret.Data)
@@ -184,7 +164,14 @@ Public Class ProcController
                 End If
             End If
 
-            ProcForm.BeginInvoke(LogAction, Nothing)
+            'log updates are coalesced to limit the UI work for chatty tools
+            If Interlocked.Exchange(_logDirty, 1) = 0 Then
+                Task.Run(Sub()
+                             Thread.Sleep(250)
+                             Interlocked.Exchange(_logDirty, 0)
+                             UIBeginInvoke(AddressOf LogHandler)
+                         End Sub)
+            End If
         End If
     End Sub
 
@@ -198,9 +185,12 @@ Public Class ProcController
         If text Is Nothing Then text = LogTextBox.Text
         If theme Is Nothing Then theme = ThemeManager.CurrentTheme
 
-        If text = "" OrElse Not s.OutputHighlighting Then
-            LogTextBox.Text = text?.ReplaceTabsWithSpaces()
-            LogTextBox.BlockPaint = False
+        If text = "" OrElse Not s.OutputHighlighting OrElse text.Length > 300000 Then
+            If LogTextBox.Text <> text?.ReplaceTabsWithSpaces() Then
+                LogTextBox.Text = text?.ReplaceTabsWithSpaces()
+                LogTextBox.ScrollToEnd()
+            End If
+
             _lastHighlightedText = ""
             Exit Sub
         End If
@@ -208,27 +198,16 @@ Public Class ProcController
         If _lastHighlightedText = text Then Exit Sub
         _lastHighlightedText = text
 
-        'If LogTextBox.BlockPaint Then Exit Sub
-
         Dim format = Sub(index As Integer, length As Integer, backColor As ColorHSL, foreColor As ColorHSL, fontStyles() As FontStyle)
-                         LogTextBox.Select(index, length)
-                         LogTextBox.SelectionBackColor = backColor
-                         LogTextBox.SelectionColor = foreColor
-
-                         If fontStyles?.Length > 0 Then
-                             LogTextBox.SelectionFont = New Font(LogTextBox.Font, fontStyles.Aggregate(LogTextBox.Font.Style, Function(a, n) a Or n))
-                         End If
+                         LogTextBox.SetFormat(index, length, foreColor.ToColor, If(backColor.A > 0, backColor.ToColor, CType(Nothing, Color?)), fontStyles IsNot Nothing AndAlso fontStyles.Contains(FontStyle.Bold))
                      End Sub
-
-        LogTextBox.BlockPaint = True
-        LogTextBox.SuspendLayout()
 
         Try
             Dim oh = theme.ProcessingForm.OutputHighlighting
             Dim matches As MatchCollection
             Dim help As Integer
             Dim duplicate As String
-            Dim pathsFormat = "(""(\\\\\?\\)?[A-Z]:\\[^\a\b\e\f\n\r\t\v""]+\.({0})"")|((?<!"")(\\\\\?\\)?[A-Z]:\\[\S\\]+\.({0})(?![""\.]))"
+            Dim pathsFormat = "(""/[^\a\b\e\f\n\r\t\v""]+\.({0})"")|((?<![""\w])/[^\s""]+\.({0})(?![""\w\.]))"
             Dim isX264 = Proc.Package Is Package.x264
             Dim isX265 = Proc.Package Is Package.x265
             Dim isSvtAv1 = {Package.SvtAv1EncApp, Package.SvtAv1EncAppEssential, Package.SvtAv1EncAppHdr, Package.SvtAv1EncAppPsyex}.Contains(Proc.Package)
@@ -290,13 +269,12 @@ Public Class ProcController
                 End If
             Next
 
-            matches = Regex.Matches(LogTextBox.Text, "(?<=\.exe[\S ]*) \| (?=[\S ]*\.exe)", RegexOptions.IgnoreCase)
+            matches = Regex.Matches(LogTextBox.Text, "(?<=\S) \| (?=\S)", RegexOptions.IgnoreCase)
             For Each m As Match In matches
                 format(m.Index, m.Length, oh.PipeBackColor, oh.PipeForeColor, oh.PipeFontStyles)
             Next
 
-            duplicate = "exe"
-            matches = Regex.Matches(LogTextBox.Text, String.Format(pathsFormat, duplicate), RegexOptions.IgnoreCase)
+            matches = Regex.Matches(LogTextBox.Text, "(?<=^|\n|\| )(""?/[^\s""]*/(?:x264|x265|ffmpeg|vspipe|SvtAv1EncApp|aomenc|rav1e|mkvmerge|mp4box|MP4Box|nvencc|qsvencc|vceencc|vvencFFapp|opusenc|fdkaac|flac|dovi_tool|hdr10plus_tool)""?)(?=\s)", RegexOptions.IgnoreCase)
             For Each m As Match In matches
                 format(m.Index, m.Length, oh.ExeFileBackColor, oh.ExeFileForeColor, oh.ExeFileFontStyles)
             Next
@@ -313,7 +291,7 @@ Public Class ProcController
                 format(m.Index, m.Length, oh.MediaFileBackColor, oh.MediaFileForeColor, oh.MediaFileFontStyles)
             Next
 
-            duplicate = FileTypes.Scripts.Union(FileTypes.Indexes).Union({"dll"}).Distinct().OrderByDescending(Function(x) x.Length).Select(Function(x) Regex.Escape(x)).Join("|")
+            duplicate = FileTypes.Scripts.Union(FileTypes.Indexes).Union({"so"}).Distinct().OrderByDescending(Function(x) x.Length).Select(Function(x) Regex.Escape(x)).Join("|")
             matches = Regex.Matches(LogTextBox.Text, String.Format(pathsFormat, duplicate), RegexOptions.IgnoreCase)
             For Each m As Match In matches
                 format(m.Index, m.Length, oh.ScriptFileBackColor, oh.ScriptFileForeColor, oh.ScriptFileFontStyles)
@@ -347,10 +325,7 @@ Public Class ProcController
 
         Catch ex As Exception
         Finally
-            LogTextBox.Select(0, 0)
-            LogTextBox.BlockPaint = False
-            LogTextBox.ResumeLayout()
-            SetAndHighlightLog(_lastHighlightedText, theme)
+            LogTextBox.ScrollToEnd()
         End Try
     End Sub
 
@@ -564,18 +539,12 @@ Public Class ProcController
 
 
         If s.ProgressHighlighting Then
-            ProgressBar.Text = ""
-
             If _progressHighlightingFailCounter < 64 Then
-                Native.SendMessage(ProgressBar.Rtb.Handle, Native.WM_SETREDRAW, False, 0)
                 Dim noMatch = True
 
                 Try
-                    Dim baseHue = ThemeManager.ColorCategories.FirstOrDefault(Function(x) x.Item1 = s.ProgressHighlightingColorName).Item2
-                    Dim rtf = New RtfBuilder()
-                    Dim defaultColorIndex = rtf.AddColor(ProgressBar.Rtb.ForeColor)
+                    Dim baseHue = ThemeManager.ColorCategories.FirstOrDefault(Function(x) x.Item1 = s.ProgressHighlightingColorName)?.Item2
                     Dim tokens As New List(Of (Start As Integer, Length As Integer, Hue As Integer, Bold As Boolean))
-                    Dim pos = 0
 
                     Dim AddMatch = Sub(pattern As String, group As Integer, hueOffset As Integer, bold As Boolean, lastOnly As Boolean)
                                        Dim matches = Regex.Matches(value, pattern, RegexOptions.IgnoreCase)
@@ -585,7 +554,7 @@ Public Class ProcController
                                        For Each match As Match In selectedMatches
                                            noMatch = False
                                            Dim mg = match.Groups(group)
-                                           tokens.Add((mg.Index, mg.Length, baseHue + hueOffset, bold))
+                                           tokens.Add((mg.Index, mg.Length, If(baseHue, 181) + hueOffset, bold))
                                        Next
                                    End Sub
 
@@ -599,35 +568,38 @@ Public Class ProcController
 
                     tokens = tokens.OrderBy(Function(t) t.Start).ToList()
 
+                    Dim segments As New List(Of (Text As String, Color As Color?, Bold As Boolean))
+                    Dim pos = 0
+                    Dim luminance = If(IsDarkMode, 0.65F, 0.4F)
+
                     For Each t In tokens
-                        If t.Start > pos Then
-                            rtf.AppendText(value.Substring(pos, t.Start - pos), defaultColorIndex)
+                        If t.Start < pos Then
+                            Continue For
                         End If
 
-                        Dim c = New ColorHSL(t.Hue, 0.55, 0.6)
-                        Dim ci = rtf.AddColor(c)
+                        If t.Start > pos Then
+                            segments.Add((value.Substring(pos, t.Start - pos), Nothing, False))
+                        End If
 
-                        rtf.AppendText(value.Substring(t.Start, t.Length), ci, t.Bold)
-
+                        segments.Add((value.Substring(t.Start, t.Length), New ColorHSL(t.Hue, 0.55, luminance).ToColor, t.Bold))
                         pos = t.Start + t.Length
                     Next
 
                     If pos < value.Length Then
-                        rtf.AppendText(value.Substring(pos), defaultColorIndex)
+                        segments.Add((value.Substring(pos), Nothing, False))
                     End If
 
-                    ProgressBar.Rtb.Rtf = rtf.Build(ProgressBar.Rtb.Font)
+                    ProgressBar.SetSegments(segments)
                 Catch ex As Exception
+                    ProgressBar.Text = value
                 Finally
                     If noMatch Then _progressHighlightingFailCounter += 1
-
-                    Native.SendMessage(ProgressBar.Rtb.Handle, Native.WM_SETREDRAW, True, 0)
-                    ProgressBar.Rtb.Invalidate()
                 End Try
+            Else
+                ProgressBar.Text = value
             End If
         Else
             _progressHighlightingFailCounter = 0
-            ProgressBar.Rtb.Text = ""
             ProgressBar.Text = value
         End If
     End Sub
@@ -678,9 +650,7 @@ Public Class ProcController
         End If
 
         If progress >= 0 AndAlso LastProgress <> progress Then
-            ProcForm.Taskbar?.SetState(TaskbarStates.Normal)
-            ProcForm.Taskbar?.SetValue(Math.Max(progress, 1), 100)
-            ProcForm.NotifyIcon.Text = progress & "%"
+            ProcForm.SetProgressTitle(progress)
             ProgressBar.Value = progress
 
             If _triggerWhileProcessing Then
@@ -697,8 +667,7 @@ Public Class ProcController
         End If
 
         If progress < 0 Then
-            ProcForm.NotifyIcon.Text = g.DefaultCommands.GetApplicationDetails()
-            ProcForm.Taskbar?.SetState(TaskbarStates.NoProgress)
+            ProcForm.SetProgressTitle(-1)
             LastProgress = 0
         End If
     End Sub
@@ -716,7 +685,7 @@ Public Class ProcController
     End Sub
 
     Sub ProcDisposed()
-        ProcForm.BeginInvoke(Sub() Cleanup())
+        UIBeginInvoke(Sub() Cleanup())
     End Sub
 
     Shared Sub SetOutputHighlighting(value As Boolean, theme As Theme)
@@ -731,7 +700,7 @@ Public Class ProcController
 
     Shared Sub Abort()
         Aborted = True
-        Registry.CurrentUser.Write("Software\" + Application.ProductName, "ShutdownMode", 0)
+        g.ShutdownMode = ShutdownMode.Nothing
 
         For Each i In Procs.ToArray
             i.Proc.Abort = True
@@ -748,40 +717,33 @@ Public Class ProcController
 
     Shared Sub Suspend()
         For Each process In GetProcesses()
-            For Each thread As ProcessThread In process.Threads
-                Dim handle = OpenThread(ThreadAccess.SUSPEND_RESUME, False, thread.Id)
-                ResumeThread(handle)
-                SuspendThread(handle)
-                CloseHandle(handle)
-            Next
+            ProcessHelp.SendSignal(process.Id, "STOP")
         Next
     End Sub
 
     Shared Sub ResumeProcs()
         For Each process In GetProcesses()
-            For x = process.Threads.Count - 1 To 0 Step -1
-                Dim handle = OpenThread(ThreadAccess.SUSPEND_RESUME, False, process.Threads(x).Id)
-                ResumeThread(handle)
-                CloseHandle(handle)
-            Next
+            ProcessHelp.SendSignal(process.Id, "CONT")
         Next
     End Sub
 
+    'the processes including all processes of shell pipelines
     Shared Function GetProcesses() As List(Of Process)
         Dim ret As New List(Of Process)
 
-        For Each procButton In Procs.ToArray
-            If procButton.Proc.Process.ProcessName = "cmd" Then
-                For Each process In ProcessHelp.GetChilds(procButton.Proc.Process)
-                    If {"conhost", Package.avs2pipemod.Filename.Base(), Package.vspipe.Filename.Base()}.Contains(process.ProcessName) Then
-                        Continue For
-                    End If
+        For Each pc In Procs.ToArray
+            Try
+                If pc.Proc.Process.HasExited Then
+                    Continue For
+                End If
 
-                    ret.Add(process)
-                Next
-            Else
-                ret.Add(procButton.Proc.Process)
-            End If
+                ret.Add(pc.Proc.Process)
+
+                If pc.Proc.IsShell Then
+                    ret.AddRange(ProcessHelp.GetDescendants(pc.Proc.Process))
+                End If
+            Catch
+            End Try
         Next
 
         Return ret
@@ -799,10 +761,11 @@ Public Class ProcController
     End Function
 
     Shared Sub SetProcessPriority(priority As ProcessPriorityClass)
-        For Each pc In Procs
-            If Not pc.Proc.IsSilent Then
-                pc.Proc.Process.PriorityClass = priority
-            End If
+        For Each process In GetProcesses()
+            Try
+                process.PriorityClass = priority
+            Catch
+            End Try
         Next
     End Sub
 
@@ -812,18 +775,11 @@ Public Class ProcController
         SyncLock Procs
             Procs.Remove(Me)
 
-            RemoveHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
             RemoveHandler Proc.ProcDisposed, AddressOf ProcDisposed
             RemoveHandler Proc.OutputDataReceived, AddressOf DataReceived
             RemoveHandler Proc.ErrorDataReceived, AddressOf DataReceived
 
-            ProcForm.flpNav.Controls.Remove(Button)
-            ProcForm.pnLogHost.Controls.Remove(LogTextBox)
-            ProcForm.pnStatusHost.Controls.Remove(ProgressBar)
-
-            Button.Dispose()
-            LogTextBox.Dispose()
-            ProgressBar.Dispose()
+            ProcForm.RemoveProcControls(Me)
 
             For Each i In Procs
                 i.Deactivate()
@@ -850,46 +806,33 @@ Public Class ProcController
     End Sub
 
     Shared Sub Finished()
-        If g.ProcForm IsNot Nothing Then
-            If g.ProcForm.tlpMain.InvokeRequired Then
-                g.ProcForm.BeginInvoke(Sub() g.ProcForm.HideForm())
-            Else
-                g.ProcForm.HideForm()
-            End If
-        End If
+        UIBeginInvoke(Sub()
+                          g.ProcForm?.HideForm()
 
-        If g.MainForm.Disposing OrElse g.MainForm.IsDisposed Then
-            Exit Sub
-        End If
+                          If g.MainForm Is Nothing OrElse g.MainForm.IsDisposed Then
+                              Exit Sub
+                          End If
 
-        Dim mainSub = Sub()
                           BlockActivation = False
-                          g.MainForm.Show()
-                          g.MainForm.Refresh()
-                          Aborted = False
-                      End Sub
 
-        If g.MainForm.tlpMain.InvokeRequired Then
-            g.MainForm.BeginInvoke(mainSub)
-        Else
-            mainSub.Invoke
-        End If
+                          If Not g.IsJobProcessing AndAlso Not g.MainForm.Visible Then
+                              g.MainForm.Show()
+                          End If
+
+                          Aborted = False
+                      End Sub)
     End Sub
 
     Sub Activate()
         Proc.IsSilent = False
-        LogTextBox.Visible = True
-        LogTextBox.BringToFront()
+        ProcForm.ShowProc(Me)
+        _lastHighlightedText = ""
         LogHandler()
         ApplyTheme()
-        ProgressBar.Visible = True
-        ProgressBar.BringToFront()
     End Sub
 
     Sub Deactivate()
         Proc.IsSilent = True
-        LogTextBox.Visible = False
-        ProgressBar.Visible = False
         ApplyTheme()
     End Sub
 
@@ -906,70 +849,28 @@ Public Class ProcController
         End SyncLock
     End Sub
 
+    'can be called from any thread
     Shared Sub Start(proc As Proc)
         If Aborted Then
             Throw New AbortException
         End If
 
-        If g.MainForm.Visible Then
-            g.MainForm.Hide()
-        End If
+        UIInvoke(Sub()
+                     If g.MainForm.Visible Then
+                         g.MainForm.Hide()
+                     End If
 
-        SyncLock Procs
-            If g.ProcForm Is Nothing Then
-                Dim thread = New Thread(Sub()
-                                            g.ProcForm = New ProcessingForm
-                                            Application.Run(g.ProcForm)
-                                        End Sub)
+                     If g.ProcForm Is Nothing OrElse g.ProcForm.IsDisposed Then
+                         g.ProcForm = New ProcessingForm
+                         _progressInterval = 200
+                     End If
 
-                thread.SetApartmentState(ApartmentState.STA)
-                thread.Start()
-                _progressInterval = 200
+                     If g.ProcForm.WindowState <> WindowState.Minimized OrElse Not BlockActivation Then
+                         g.ProcForm.ShowForm()
+                     End If
 
-                While Not ProcessingForm.WasHandleCreated
-                    Thread.Sleep(50)
-                End While
-            End If
-        End SyncLock
-
-        g.ProcForm.Invoke(Sub()
-                              If Not g.ProcForm.WindowState = FormWindowState.Minimized OrElse Not BlockActivation Then
-                                  g.ProcForm.Show()
-                                  g.ProcForm.WindowState = FormWindowState.Normal
-                              End If
-
-                              AddProc(proc)
-                              g.ProcForm.UpdateControls()
-                          End Sub)
-
+                     AddProc(proc)
+                     g.ProcForm.UpdateControls()
+                 End Sub)
     End Sub
-
-    <DllImport("kernel32.dll")>
-    Shared Function SuspendThread(hThread As IntPtr) As UInt32
-    End Function
-
-    <DllImport("kernel32.dll")>
-    Shared Function OpenThread(dwDesiredAccess As ThreadAccess, bInheritHandle As Boolean, dwThreadId As Integer) As IntPtr
-    End Function
-
-    <DllImport("kernel32.dll")>
-    Shared Function ResumeThread(hThread As IntPtr) As UInt32
-    End Function
-
-    <DllImport("kernel32.dll")>
-    Shared Function CloseHandle(hObject As IntPtr) As Boolean
-    End Function
-
-    <Flags()>
-    Public Enum ThreadAccess As Integer
-        TERMINATE = &H1
-        SUSPEND_RESUME = &H2
-        GET_CONTEXT = &H8
-        SET_CONTEXT = &H10
-        SET_INFORMATION = &H20
-        QUERY_INFORMATION = &H40
-        SET_THREAD_TOKEN = &H80
-        IMPERSONATE = &H100
-        DIRECT_IMPERSONATION = &H200
-    End Enum
 End Class

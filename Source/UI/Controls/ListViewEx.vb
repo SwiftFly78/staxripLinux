@@ -1,7 +1,5 @@
-﻿
-Imports System.ComponentModel
-Imports System.Reflection
-Imports System.Windows.Forms.VisualStyles
+
+Imports System.Collections.ObjectModel
 
 Namespace UI
     Public Enum AutoCheckMode
@@ -10,347 +8,737 @@ Namespace UI
         DoubleClick
     End Enum
 
+    Public Enum View
+        Details
+        List
+        Tile
+        LargeIcon
+        SmallIcon
+    End Enum
+
+    Public Enum ColumnHeaderStyle
+        None
+        Nonclickable
+        Clickable
+    End Enum
+
+    Public Class ListViewSubItem
+        Friend Item As ListViewItem
+        Private TextValue As String = ""
+
+        Sub New()
+        End Sub
+
+        Sub New(text As String)
+            TextValue = If(text, "")
+        End Sub
+
+        Property Text As String
+            Get
+                Return TextValue
+            End Get
+            Set(value As String)
+                TextValue = If(value, "")
+                Item?.Refresh()
+            End Set
+        End Property
+
+        Property Tag As Object
+        Property ForeColor As Color
+        Property BackColor As Color
+        Property Font As Font
+
+        Overrides Function ToString() As String
+            Return Text
+        End Function
+    End Class
+
+    Public Class ListViewSubItemCollection
+        Inherits Collection(Of ListViewSubItem)
+
+        Private ReadOnly OwnerItem As ListViewItem
+
+        Sub New(item As ListViewItem)
+            OwnerItem = item
+        End Sub
+
+        Overloads Function Add(text As String) As ListViewSubItem
+            Dim ret As New ListViewSubItem(text)
+            Add(ret)
+            Return ret
+        End Function
+
+        Sub AddRange(texts As IEnumerable(Of String))
+            For Each i In texts
+                Add(i)
+            Next
+        End Sub
+
+        Protected Overrides Sub InsertItem(index As Integer, value As ListViewSubItem)
+            value.Item = OwnerItem
+            MyBase.InsertItem(index, value)
+            OwnerItem.Refresh()
+        End Sub
+
+        Protected Overrides Sub SetItem(index As Integer, value As ListViewSubItem)
+            value.Item = OwnerItem
+            MyBase.SetItem(index, value)
+            OwnerItem.Refresh()
+        End Sub
+    End Class
+
+    Public Class ListViewItem
+        Friend Owner As ListViewEx
+        Private CheckedValue As Boolean
+
+        Sub New()
+            SubItems = New ListViewSubItemCollection(Me)
+            SubItems.Add("")
+        End Sub
+
+        Sub New(text As String)
+            Me.New()
+            Me.Text = text
+        End Sub
+
+        Sub New(items As String())
+            Me.New()
+
+            If items.Length > 0 Then
+                Text = items(0)
+            End If
+
+            For x = 1 To items.Length - 1
+                SubItems.Add(items(x))
+            Next
+        End Sub
+
+        ReadOnly Property SubItems As ListViewSubItemCollection
+        Property Tag As Object
+        Property Name As String
+        Property ForeColor As Color
+        Property BackColor As Color
+        Property Font As Font
+        Property ImageIndex As Integer = -1
+
+        Property Text As String
+            Get
+                Return SubItems(0).Text
+            End Get
+            Set(value As String)
+                SubItems(0).Text = value
+            End Set
+        End Property
+
+        Property Checked As Boolean
+            Get
+                Return CheckedValue
+            End Get
+            Set(value As Boolean)
+                If value <> CheckedValue Then
+                    CheckedValue = value
+                    Owner?.OnItemCheckedChanged(Me)
+                    Refresh()
+                End If
+            End Set
+        End Property
+
+        Friend Sub SetCheckedSilent(value As Boolean)
+            CheckedValue = value
+        End Sub
+
+        Property Selected As Boolean
+            Get
+                Return Owner IsNot Nothing AndAlso Owner.SelectedRows.Contains(Index)
+            End Get
+            Set(value As Boolean)
+                If Owner Is Nothing OrElse Index < 0 Then
+                    Exit Property
+                End If
+
+                If value Then
+                    Owner.SelectRow(Index)
+                Else
+                    Owner.UnselectRow(Index)
+                End If
+
+                Owner.CheckSelectionChanged()
+            End Set
+        End Property
+
+        ReadOnly Property Index As Integer
+            Get
+                If Owner Is Nothing Then
+                    Return -1
+                End If
+
+                Return Owner.Items.IndexOf(Me)
+            End Get
+        End Property
+
+        ReadOnly Property ListView As ListViewEx
+            Get
+                Return Owner
+            End Get
+        End Property
+
+        Sub Remove()
+            Owner?.Items.Remove(Me)
+        End Sub
+
+        Sub EnsureVisible()
+            If Owner IsNot Nothing AndAlso Index > -1 Then
+                Owner.ScrollToRow(Index)
+            End If
+        End Sub
+
+        Friend Sub Refresh()
+            If Owner IsNot Nothing AndAlso Not Owner.IsUpdating Then
+                Dim i = Index
+
+                If i > -1 Then
+                    Owner.ReloadData(i)
+                End If
+            End If
+        End Sub
+
+        Function GetSubItemText(index As Integer) As String
+            If index < SubItems.Count Then
+                Return SubItems(index).Text
+            End If
+
+            Return ""
+        End Function
+
+        Overrides Function ToString() As String
+            Return Text
+        End Function
+    End Class
+
+    Public Class ListViewItemCollection
+        Inherits ObservableCollection(Of ListViewItem)
+
+        Private ReadOnly Owner As ListViewEx
+
+        Sub New(owner As ListViewEx)
+            Me.Owner = owner
+        End Sub
+
+        Overloads Function Add(text As String) As ListViewItem
+            Dim ret As New ListViewItem(text)
+            Add(ret)
+            Return ret
+        End Function
+
+        Sub AddRange(items As IEnumerable(Of ListViewItem))
+            For Each i In items.ToArray
+                Add(i)
+            Next
+        End Sub
+
+        Protected Overrides Sub InsertItem(index As Integer, item As ListViewItem)
+            item.Owner = Owner
+            MyBase.InsertItem(index, item)
+        End Sub
+
+        Protected Overrides Sub SetItem(index As Integer, item As ListViewItem)
+            item.Owner = Owner
+            MyBase.SetItem(index, item)
+        End Sub
+    End Class
+
+    Public Class ColumnHeader
+        Friend Owner As ListViewEx
+        Friend GridColumn As GridColumn
+        Private TextValue As String = ""
+        Private WidthValue As Integer = -1
+
+        Property Text As String
+            Get
+                Return TextValue
+            End Get
+            Set(value As String)
+                TextValue = If(value, "")
+
+                If GridColumn IsNot Nothing Then
+                    GridColumn.HeaderText = TextValue
+                End If
+            End Set
+        End Property
+
+        Property Width As Integer
+            Get
+                If GridColumn IsNot Nothing AndAlso GridColumn.Width > 0 Then
+                    Return GridColumn.Width
+                End If
+
+                Return WidthValue
+            End Get
+            Set(value As Integer)
+                WidthValue = value
+
+                If GridColumn IsNot Nothing AndAlso value > 0 Then
+                    GridColumn.AutoSize = False
+                    GridColumn.Width = value
+                    Owner?.InvalidateColumnSizes()
+                End If
+            End Set
+        End Property
+
+        Property TextAlign As HorizontalAlignment = HorizontalAlignment.Left
+        Property Tag As Object
+
+        ReadOnly Property Index As Integer
+            Get
+                Return If(Owner Is Nothing, -1, Owner.Columns.IndexOf(Me))
+            End Get
+        End Property
+
+        Sub AutoResize(style As Object)
+            If GridColumn IsNot Nothing Then
+                GridColumn.AutoSize = True
+                Owner?.InvalidateColumnSizes()
+            End If
+        End Sub
+    End Class
+
+    Public Class ColumnHeaderCollection
+        Inherits Collection(Of ColumnHeader)
+
+        Private ReadOnly Owner As ListViewEx
+
+        Sub New(owner As ListViewEx)
+            Me.Owner = owner
+        End Sub
+
+        Overloads Function Add(text As String) As ColumnHeader
+            Return Add(text, -1)
+        End Function
+
+        Overloads Function Add(text As String, width As Integer) As ColumnHeader
+            Dim ret As New ColumnHeader With {.Text = text, .Width = width}
+            Add(ret)
+            Return ret
+        End Function
+
+        Overloads Function Add(text As String, width As Integer, align As HorizontalAlignment) As ColumnHeader
+            Dim ret = Add(text, width)
+            ret.TextAlign = align
+            Return ret
+        End Function
+
+        Sub AddRange(headers As IEnumerable(Of ColumnHeader))
+            For Each i In headers
+                Add(i)
+            Next
+        End Sub
+
+        Protected Overrides Sub InsertItem(index As Integer, item As ColumnHeader)
+            item.Owner = Owner
+            MyBase.InsertItem(index, item)
+            Owner.RebuildColumns()
+        End Sub
+
+        Protected Overrides Sub RemoveItem(index As Integer)
+            MyBase.RemoveItem(index)
+            Owner.RebuildColumns()
+        End Sub
+
+        Protected Overrides Sub ClearItems()
+            MyBase.ClearItems()
+            Owner.RebuildColumns()
+            Owner.CheckSelectionChanged()
+        End Sub
+    End Class
+
+    'Grid based list with a WinForms ListView like API
     Public Class ListViewEx
-        Inherits ListView
+        Inherits GridView
+        Implements IContextMenuOwner
 
-        Private LastDragOverPos As Point
-        Private LastDrawPos As Integer
-        Private _blockItemChanged As Boolean = False
+        Private CheckBoxesValue As Boolean
+        Private ContextMenuValue As ContextMenuStripEx
+        Private UpdateCount As Integer
+        Private BlockItemChanged As Boolean
+        Private HeaderStyleValue As ColumnHeaderStyle = ColumnHeaderStyle.Clickable
+        Private SortColumn As Integer = -1
+        Private SortAscending As Boolean = True
+        Private IsReloading As Boolean
+        Private LastSelection As ListViewItem() = {}
 
-        Private _backAlternateColor As Color
-        Private _backHighlightColor As Color
-        Private _backSelectedColor As Color
-        Private _foreHighlightColor As Color
-        Private _foreSelectedColor As Color
-        Private _separatorColor As Color
-        Private _symbolImageColor As Color
+        ReadOnly Property Items As ListViewItemCollection
+        Shadows ReadOnly Property Columns As ColumnHeaderCollection
 
-        Event ControlsUpdated()
-
-        Public Property BackAlternateColor As Color
-            Get
-                Return _backAlternateColor
-            End Get
-            Set(value As Color)
-                _backAlternateColor = value
-                Invalidate()
-            End Set
-        End Property
-
-        Private Function ShouldSerializeBackAlternateColor() As Boolean
-            Return BackAlternateColor <> Color.Empty
-        End Function
-
-        Public Property BackHighlightColor As Color
-            Get
-                Return _backHighlightColor
-            End Get
-            Set(value As Color)
-                _backHighlightColor = value
-                Invalidate()
-            End Set
-        End Property
-
-        Private Function ShouldSerializeBackHighlightColor() As Boolean
-            Return BackHighlightColor <> Color.Empty
-        End Function
-
-        Public Property BackSelectedColor As Color
-            Get
-                Return _backSelectedColor
-            End Get
-            Set(value As Color)
-                _backSelectedColor = value
-                Invalidate()
-            End Set
-        End Property
-
-        Private Function ShouldSerializeBackSelectedColor() As Boolean
-            Return BackSelectedColor <> Color.Empty
-        End Function
-
-        Public Property ForeHighlightColor As Color
-            Get
-                Return _foreHighlightColor
-            End Get
-            Set(value As Color)
-                _foreHighlightColor = value
-                Invalidate()
-            End Set
-        End Property
-
-        Private Function ShouldSerializeForeHighlightColor() As Boolean
-            Return ForeHighlightColor <> Color.Empty
-        End Function
-
-        Public Property ForeSelectedColor As Color
-            Get
-                Return _foreSelectedColor
-            End Get
-            Set(value As Color)
-                _foreSelectedColor = value
-                Invalidate()
-            End Set
-        End Property
-
-        Private Function ShouldSerializeForeSelectedColor() As Boolean
-            Return ForeSelectedColor <> Color.Empty
-        End Function
-
-        Public Property SymbolImageColor As Color
-            Get
-                Return _symbolImageColor
-            End Get
-            Set(value As Color)
-                _symbolImageColor = value
-                Invalidate()
-            End Set
-        End Property
-
-        Private Function ShouldSerializeSymbolImageColor() As Boolean
-            Return SymbolImageColor <> Color.Empty
-        End Function
-
-        Public Property SeparatorColor As Color
-            Get
-                Return _separatorColor
-            End Get
-            Set(value As Color)
-                _separatorColor = value
-                Invalidate()
-            End Set
-        End Property
-
-        Private Function ShouldSerializeSeparatorColor() As Boolean
-            Return SeparatorColor <> Color.Empty
-        End Function
+        Property UpButton As Button
+        Property DownButton As Button
+        Property RemoveButton As Button
+        Property SingleSelectionButtons As Button()
+        Property MultiSelectionButtons As Button()
+        Property ItemCheckProperty As String
+        Property ShowContextMenuOnLeftClick As Boolean
+        Property RightClickOnlyForMenu As Boolean
+        Property AutoCheckMode As AutoCheckMode = AutoCheckMode.DoubleClick
+        Property View As View = View.Details
+        Property FullRowSelect As Boolean = True
+        Property HideSelection As Boolean
+        Property SortByColumnClick As Boolean
 
         Event ItemsChanged(indices As Integer())
         Event ItemRemoved(item As ListViewItem)
         Event UpdateContextMenu()
-
-        <DefaultValue(GetType(ButtonEx), Nothing)>
-        Property UpButton As ButtonEx
-
-        <DefaultValue(GetType(ButtonEx), Nothing)>
-        Property DownButton As ButtonEx
-
-        <DefaultValue(GetType(ButtonEx), Nothing)>
-        Property RemoveButton As ButtonEx
-
-        <DefaultValue(GetType(ButtonEx()), Nothing)>
-        Property SingleSelectionButtons As Button()
-
-        <DefaultValue(GetType(ButtonEx()), Nothing)>
-        Property MultiSelectionButtons As Button()
-
-        <DefaultValue(CStr(Nothing))>
-        Property ItemCheckProperty As String
-
-        <DefaultValue(False)>
-        Property ShowContextMenuOnLeftClick As Boolean
-
-        <DefaultValue(False)>
-        Property RightClickOnlyForMenu As Boolean
-
-        <DefaultValue(GetType(AutoCheckMode), "DoubleClick")>
-        Property AutoCheckMode As AutoCheckMode = AutoCheckMode.DoubleClick
+        Event ControlsUpdated()
+        Event SelectedIndexChanged(sender As Object, e As EventArgs)
+        Event ItemChecked(sender As Object, e As ItemCheckedEventArgs)
+        Event DoubleClick(sender As Object, e As EventArgs)
 
         Sub New()
-            DoubleBuffered = True
-            OwnerDraw = True
-            Font = FontManager.GetDefaultFont()
+            MyBase.New()
+            Items = New ListViewItemCollection(Me)
+            Columns = New ColumnHeaderCollection(Me)
+            DataStore = Items
+            AllowMultipleSelection = True
+            GridLines = GridLines.None
+            AllowColumnReordering = False
+            RowHeight = CInt(FontHeight * 1.45)
 
-            ApplyTheme()
+            AddHandler SelectionChanged, Sub() CheckSelectionChanged()
 
-            AddHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
+            AddHandler CellFormatting, AddressOf FormatCell
+            AddHandler ColumnHeaderClick, AddressOf OnColumnHeaderClick
+            RebuildColumns()
         End Sub
 
-        Protected Overrides Sub Dispose(disposing As Boolean)
-            RemoveHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
-            MyBase.Dispose(disposing)
-        End Sub
+        Property MultiSelect As Boolean
+            Get
+                Return AllowMultipleSelection
+            End Get
+            Set(value As Boolean)
+                AllowMultipleSelection = value
+            End Set
+        End Property
 
-        Sub OnThemeChanged(theme As Theme)
-            ApplyTheme(theme)
-        End Sub
+        Property CheckBoxes As Boolean
+            Get
+                Return CheckBoxesValue
+            End Get
+            Set(value As Boolean)
+                CheckBoxesValue = value
+                RebuildColumns()
+            End Set
+        End Property
 
-        Sub ApplyTheme()
-            ApplyTheme(ThemeManager.CurrentTheme)
-        End Sub
+        Property HeaderStyle As ColumnHeaderStyle
+            Get
+                Return HeaderStyleValue
+            End Get
+            Set(value As ColumnHeaderStyle)
+                HeaderStyleValue = value
+                ShowHeader = value <> ColumnHeaderStyle.None
+            End Set
+        End Property
 
-        Sub ApplyTheme(theme As Theme)
-            If DesignHelp.IsDesignMode Then
+        Property ContextMenuStrip As ContextMenuStripEx Implements IContextMenuOwner.ContextMenuStrip
+            Get
+                Return ContextMenuValue
+            End Get
+            Set(value As ContextMenuStripEx)
+                ContextMenuValue = value
+                ContextMenu = value
+
+                If value IsNot Nothing Then
+                    AddHandler value.Opening, Sub() RaiseEvent UpdateContextMenu()
+                End If
+            End Set
+        End Property
+
+        ReadOnly Property IsUpdating As Boolean
+            Get
+                Return UpdateCount > 0
+            End Get
+        End Property
+
+        Shadows ReadOnly Property SelectedItems As List(Of ListViewItem)
+            Get
+                Return SelectedIndices.Select(Function(i) Items(i)).ToList()
+            End Get
+        End Property
+
+        ReadOnly Property SelectedIndices As List(Of Integer)
+            Get
+                Return SelectedRows.Where(Function(i) i >= 0 AndAlso i < Items.Count).OrderBy(Function(i) i).ToList()
+            End Get
+        End Property
+
+        'Eto doesn't report a selection change when the selected row index stays the same
+        'but the items were replaced, WinForms does, so the selected items are compared
+        Friend Sub CheckSelectionChanged()
+            If IsReloading Then
                 Exit Sub
             End If
 
-            BackColor = theme.General.Controls.ListView.BackColor
-            BackAlternateColor = theme.General.Controls.ListView.BackAlternateColor
-            BackHighlightColor = theme.General.Controls.ListView.BackHighlightColor
-            BackSelectedColor = theme.General.Controls.ListView.BackSelectedColor
-            ForeColor = theme.General.Controls.ListView.ForeColor
-            ForeHighlightColor = theme.General.Controls.ListView.ForeHighlightColor
-            ForeSelectedColor = theme.General.Controls.ListView.ForeSelectedColor
-            SeparatorColor = theme.General.Controls.ListView.SeparatorColor
-            SymbolImageColor = theme.General.Controls.ListView.SymbolImageColor
-            BorderStyle = BorderStyle.Fixed3D
+            Dim current = SelectedItems.ToArray
+
+            If Not current.SequenceEqual(LastSelection) Then
+                LastSelection = current
+                UpdateControls()
+                RaiseEvent SelectedIndexChanged(Me, EventArgs.Empty)
+            End If
         End Sub
 
-        Protected Overrides Sub OnDrawItem(e As DrawListViewItemEventArgs)
-            e.DrawDefault = False
-            Dim flags = GetTextAlignment(0)
-            Dim fc = e.Item.ForeColor
-            Dim rect = e.Item.Bounds
+        ReadOnly Property CheckedItems As List(Of ListViewItem)
+            Get
+                Return Items.Where(Function(i) i.Checked).ToList()
+            End Get
+        End Property
 
-            If e.Item.Selected Then
-                Using brush As New SolidBrush(BackSelectedColor)
-                    e.Graphics.FillRectangle(brush, e.Bounds)
-                End Using
-                fc = ForeSelectedColor
-            Else
-                e.Item.BackColor = If(e.ItemIndex Mod 2 = 1, BackAlternateColor, BackColor)
-                e.DrawBackground()
+        ReadOnly Property CheckedIndices As List(Of Integer)
+            Get
+                Return Items.Where(Function(i) i.Checked).Select(Function(i) i.Index).ToList()
+            End Get
+        End Property
+
+        ReadOnly Property FocusedItem As ListViewItem
+            Get
+                Dim indices = SelectedIndices
+                Return If(indices.Count > 0, Items(indices(0)), Nothing)
+            End Get
+        End Property
+
+        Friend Sub RebuildColumns()
+            If Columns Is Nothing Then
+                Exit Sub
             End If
 
-            Dim separatorRect = New Rectangle(e.Item.Bounds.Right - 2, e.Item.Bounds.Top, 2, Height)
-            Using brush As New SolidBrush(SeparatorColor)
-                e.Graphics.FillRectangle(brush, separatorRect)
-            End Using
+            MyBase.Columns.Clear()
 
             If CheckBoxes Then
-                Dim checkedState = If(e.Item.Checked, CheckBoxState.CheckedNormal, CheckBoxState.UncheckedNormal)
-                Dim glyphSize = CheckBoxRendererEx.GetGlyphSize(e.Graphics, checkedState)
-                Dim hPos = (e.Bounds.Height - glyphSize.Height) \ 2
-                Dim vPos = hPos + e.Bounds.Y
-                Dim location = New Point(hPos, vPos)
-                Dim textOffset = CInt(glyphSize.Width * 1.25)
-                rect.X += textOffset
-                rect.Width -= textOffset
+                Dim checkColumn As New GridColumn With {
+                    .DataCell = New CheckBoxCell With {
+                        .Binding = Binding.Delegate(Of ListViewItem, Boolean?)(
+                            Function(item) item.Checked,
+                            Sub(item, value) item.Checked = value.GetValueOrDefault)},
+                    .Editable = True,
+                    .Width = CInt(FontHeight * 1.8),
+                    .AutoSize = False,
+                    .Resizable = False
+                }
 
-                CheckBoxRendererEx.DrawCheckBox(e.Graphics, location, checkedState)
+                MyBase.Columns.Add(checkColumn)
             End If
 
-            TextRenderer.DrawText(e.Graphics, e.Item.Text, e.Item.Font, rect, fc, flags)
+            If Columns.Count = 0 Then
+                Dim textColumn As New GridColumn With {
+                    .DataCell = New TextBoxCell With {.Binding = Binding.Delegate(Of ListViewItem, String)(Function(item) item.Text)},
+                    .Expand = True,
+                    .Editable = False,
+                    .MinWidth = FontHeight
+                }
+
+                MyBase.Columns.Add(textColumn)
+            Else
+                For x = 0 To Columns.Count - 1
+                    Dim index = x
+                    Dim header = Columns(x)
+
+                    Dim cell As New TextBoxCell With {.Binding = Binding.Delegate(Of ListViewItem, String)(Function(item) item.GetSubItemText(index))}
+
+                    If header.TextAlign = HorizontalAlignment.Right Then
+                        cell.TextAlignment = TextAlignment.Right
+                    ElseIf header.TextAlign = HorizontalAlignment.Center Then
+                        cell.TextAlignment = TextAlignment.Center
+                    End If
+
+                    Dim column As New GridColumn With {
+                        .HeaderText = header.Text,
+                        .DataCell = cell,
+                        .Editable = False,
+                        .Sortable = SortByColumnClick,
+                        .Expand = x = Columns.Count - 1,
+                        .MinWidth = FontHeight
+                    }
+
+                    If header.Width > 0 Then
+                        column.AutoSize = False
+                        column.Width = header.Width
+                    End If
+
+                    header.GridColumn = column
+                    MyBase.Columns.Add(column)
+                Next
+            End If
         End Sub
 
-        Protected Overrides Sub OnDrawSubItem(e As DrawListViewSubItemEventArgs)
-            Dim flags = GetTextAlignment(e.ColumnIndex)
-            Dim fc = If(e.Item.Selected, ForeSelectedColor, ForeColor)
+        Sub FormatCell(sender As Object, e As GridCellFormatEventArgs)
+            Dim item = TryCast(e.Item, ListViewItem)
 
-            If Not CheckBoxes OrElse e.ColumnIndex <> 0 Then
-                TextRenderer.DrawText(e.Graphics, e.SubItem.Text, e.SubItem.Font, e.Bounds, fc, flags)
+            If item Is Nothing Then
+                Exit Sub
             End If
 
-            Dim separatorRect = New Rectangle(e.SubItem.Bounds.Left - 2, e.SubItem.Bounds.Top, 2, Height)
-            Using brush As New SolidBrush(SeparatorColor)
-                e.Graphics.FillRectangle(brush, separatorRect)
-            End Using
+            If item.ForeColor.A > 0 Then
+                e.ForegroundColor = item.ForeColor
+            End If
+
+            If item.BackColor.A > 0 Then
+                e.BackgroundColor = item.BackColor
+            End If
+
+            If item.Font IsNot Nothing Then
+                e.Font = item.Font
+            End If
         End Sub
 
-        Protected Overrides Sub OnCreateControl()
-            MyBase.OnCreateControl()
+        Overloads Sub OnColumnHeaderClick(sender As Object, e As GridColumnEventArgs)
+            If Not SortByColumnClick Then
+                Exit Sub
+            End If
+
+            Dim index = MyBase.Columns.IndexOf(e.Column) - If(CheckBoxes, 1, 0)
+
+            If index < 0 Then
+                Exit Sub
+            End If
+
+            If SortColumn = index Then
+                SortAscending = Not SortAscending
+            Else
+                SortAscending = True
+            End If
+
+            SortColumn = index
+            Dim comparer As New StringLogicalComparer
+            Dim sorted = Items.OrderBy(Function(i) i.GetSubItemText(index), comparer).ToList()
+
+            If Not SortAscending Then
+                sorted.Reverse()
+            End If
+
+            BeginUpdate()
+            Items.Clear()
+            Items.AddRange(sorted)
+            EndUpdate()
+        End Sub
+
+        Friend Sub OnItemCheckedChanged(item As ListViewItem)
+            If ItemCheckProperty <> "" AndAlso item.Tag IsNot Nothing Then
+                item.Tag.GetType.GetProperty(ItemCheckProperty).SetValue(item.Tag, item.Checked)
+            End If
+
+            RaiseEvent ItemChecked(Me, New ItemCheckedEventArgs(item))
+
+            If ItemCheckProperty <> "" AndAlso Not BlockItemChanged Then
+                OnItemsChanged()
+            End If
+        End Sub
+
+        Sub BeginUpdate()
+            UpdateCount += 1
+        End Sub
+
+        Sub EndUpdate()
+            UpdateCount = Math.Max(0, UpdateCount - 1)
+
+            If UpdateCount = 0 Then
+                Invalidate()
+            End If
         End Sub
 
         Sub OnItemsChanged(ParamArray indices As Integer())
             RaiseEvent ItemsChanged(indices)
         End Sub
 
-        Function GetTextAlignment(columnIndex As Integer) As TextFormatFlags
-            Dim flags As TextFormatFlags = If(View = View.Tile, If(columnIndex = 0, TextFormatFlags.Default, TextFormatFlags.Bottom), TextFormatFlags.VerticalCenter)
-            flags = flags Or TextFormatFlags.NoPrefix
-
-            If View = View.Details Then
-                flags = flags Or TextFormatFlags.LeftAndRightPadding
-            End If
-
-            If columnIndex < Columns.Count AndAlso Not Columns(columnIndex).TextAlign = HorizontalAlignment.Left Then
-                flags = flags Or CType(CInt(Columns(columnIndex).TextAlign ^ 3), TextFormatFlags)
-            End If
-
-            Return flags
-        End Function
-
         Sub SelectFirst()
             If Items.Count > 0 Then
-                Items(0).Selected = True
+                SelectRow(0)
             End If
 
             UpdateControls()
         End Sub
 
-        Function SelectedItem(Of T)() As T
-            If SelectedItems.Count > 0 Then
-                Return DirectCast(SelectedItems(0).Tag, T)
+        Shadows Function SelectedItem(Of T)() As T
+            Dim indices = SelectedIndices
+
+            If indices.Count > 0 Then
+                Return DirectCast(Items(indices(0)).Tag, T)
             End If
         End Function
 
-        Function SelectedItem() As Object
-            If SelectedItems.Count > 0 Then
-                Return SelectedItems(0).Tag
+        Shadows Function SelectedItem() As Object
+            Dim indices = SelectedIndices
+
+            If indices.Count > 0 Then
+                Return Items(indices(0)).Tag
             End If
         End Function
 
         Function AddItem(item As Object) As ListViewItem
-            Dim listItem = Items.Add("")
+            Dim listItem As New ListViewItem
             listItem.Tag = item
+            Items.Add(listItem)
             RefreshItem(listItem.Index)
-            If Not _blockItemChanged Then OnItemsChanged()
+
+            If Not BlockItemChanged Then
+                OnItemsChanged()
+            End If
+
             Return listItem
         End Function
 
         Sub AddItems(items As IEnumerable)
-            _blockItemChanged = True
+            BlockItemChanged = True
+
             For Each item In items
                 AddItem(item)
             Next
-            _blockItemChanged = False
+
+            BlockItemChanged = False
         End Sub
 
         Sub RefreshItem(index As Integer)
+            Dim item = Items(index)
+
             If ItemCheckProperty <> "" Then
-                Items(index).Checked = CBool(Items(index).Tag.GetType.GetProperty(ItemCheckProperty).GetValue(Items(index).Tag))
+                item.SetCheckedSilent(CBool(item.Tag.GetType.GetProperty(ItemCheckProperty).GetValue(item.Tag)))
             End If
 
-            Items(index).Text = Items(index).Tag.ToString
+            item.Text = item.Tag.ToString
+            ReloadData(index)
         End Sub
 
         Sub RefreshSelection()
-            For Each item As ListViewItem In SelectedItems
-                RefreshItem(item.Index)
+            For Each index In SelectedIndices
+                RefreshItem(index)
             Next
         End Sub
 
         Sub EnableListBoxMode()
-            View = View.Details
-            FullRowSelect = True
-            Columns.Add("")
             HeaderStyle = ColumnHeaderStyle.None
-            AddHandler Layout, Sub() Columns(0).Width = Width - 4 - SystemInformation.VerticalScrollBarWidth
-            AddHandler HandleCreated, Sub() Columns(0).Width = Width - 4
         End Sub
 
         Sub UpdateControls()
-            If Not UpButton Is Nothing Then
+            Dim indices = SelectedIndices
+
+            If UpButton IsNot Nothing Then
                 UpButton.Enabled = CanMoveUp()
             End If
 
-            If Not DownButton Is Nothing Then
+            If DownButton IsNot Nothing Then
                 DownButton.Enabled = CanMoveDown()
             End If
 
-            If Not RemoveButton Is Nothing Then
-                RemoveButton.Enabled = Not SelectedItem() Is Nothing
+            If RemoveButton IsNot Nothing Then
+                RemoveButton.Enabled = indices.Count > 0
             End If
 
-            If Not SingleSelectionButtons Is Nothing Then
+            If SingleSelectionButtons IsNot Nothing Then
                 For Each button In SingleSelectionButtons
-                    button.Enabled = SelectedItems.Count = 1
+                    button.Enabled = indices.Count = 1
                 Next
             End If
 
-            If Not MultiSelectionButtons Is Nothing Then
+            If MultiSelectionButtons IsNot Nothing Then
                 For Each button In MultiSelectionButtons
-                    button.Enabled = SelectedItems.Count > 0
+                    button.Enabled = indices.Count > 0
                 Next
             End If
 
@@ -358,17 +746,26 @@ Namespace UI
         End Sub
 
         Function CanMoveUp() As Boolean
-            Return SelectedIndices.Count > 0 AndAlso SelectedIndices(0) > 0
+            Dim indices = SelectedIndices
+            Return indices.Count > 0 AndAlso indices(0) > 0
         End Function
 
         Function CanMoveDown() As Boolean
-            Return SelectedIndices.Count > 0 AndAlso SelectedIndices(SelectedIndices.Count - 1) < Items.Count - 1
+            Dim indices = SelectedIndices
+            Return indices.Count > 0 AndAlso indices(indices.Count - 1) < Items.Count - 1
         End Function
+
+        Private Sub SelectItems(selected As IEnumerable(Of ListViewItem))
+            UnselectAll()
+
+            For Each i In selected
+                SelectRow(i.Index)
+            Next
+        End Sub
 
         Sub MoveSelectionTop()
             If CanMoveUp() Then
-                BeginUpdate()
-                Dim selected = SelectedItems.OfType(Of ListViewItem).ToList
+                Dim selected = SelectedItems
 
                 For Each i In selected
                     Items.Remove(i)
@@ -378,475 +775,216 @@ Namespace UI
                     Items.Insert(x, selected(x))
                 Next
 
-                EndUpdate()
+                SelectItems(selected)
+                UpdateControls()
+                OnItemsChanged()
             End If
         End Sub
 
         Sub MoveSelectionBottom()
             If CanMoveDown() Then
-                BeginUpdate()
-                Dim selected = SelectedItems.OfType(Of ListViewItem).ToArray
+                Dim selected = SelectedItems
 
                 For Each item In selected
                     Items.Remove(item)
                 Next
 
                 Items.AddRange(selected)
-                EndUpdate()
-            End If
-        End Sub
-
-        Sub MoveSelectionUp()
-            If CanMoveUp() Then
-                Dim indexAbove = SelectedIndices(0) - 1
-                If indexAbove < 0 Then Exit Sub
-
-                Dim movedIndices = SelectedIndices.Cast(Of Integer).Union({indexAbove}).ToArray()
-                Dim itemAbove = Items(indexAbove)
-                Dim indexInsert = SelectedIndices(SelectedIndices.Count - 1)
-
-                BeginUpdate()
-                Items.RemoveAt(indexAbove)
-                Items.Insert(indexInsert, itemAbove)
-                UpdateControls()
-                OnItemsChanged(movedIndices)
-                EnsureVisible(indexAbove)
-                EndUpdate()
-            End If
-        End Sub
-
-        Sub MoveSelectionDown()
-            If CanMoveDown() Then
-                Dim indexBelow = SelectedIndices(SelectedIndices.Count - 1) + 1
-                If indexBelow >= Items.Count Then Exit Sub
-
-                Dim movedIndices = SelectedIndices.Cast(Of Integer).Union({indexBelow}).ToArray()
-                Dim itemBelow = Items(indexBelow)
-                Dim indexInsert = SelectedIndices(0)
-
-                BeginUpdate()
-                Items.RemoveAt(indexBelow)
-                Items.Insert(indexInsert, itemBelow)
-                UpdateControls()
-                OnItemsChanged(movedIndices)
-                EnsureVisible(indexBelow)
-                EndUpdate()
-            End If
-        End Sub
-
-        Sub RemoveSelection()
-            If SelectedItems.Count > 0 Then
-                Const maxToDisplay As Integer = 15
-                Dim names = SelectedItems.OfType(Of ListViewItem).Take(maxToDisplay).Select(Function(x) x.Text).Join(BR, True)
-
-                If names = "" Then
-                    Try
-                        names = SelectedItems.OfType(Of ListViewItem).Take(maxToDisplay).Select(Function(x) CStr(x.Tag)).Join(BR, True)
-                    Catch
-                    End Try
-                End If
-
-                If SelectedItems.Count > maxToDisplay AndAlso names.Length > 4 Then
-                    names = names + BR + "... and more ..."
-                End If
-
-                If MsgQuestion("Remove Selection?", names) <> DialogResult.OK Then
-                    Exit Sub
-                End If
-
-                BeginUpdate()
-
-                If Not MultiSelect Then
-                    Dim index = SelectedIndices(0)
-
-                    If Items.Count - 1 > index Then
-                        Items(index + 1).Selected = True
-                    Else
-                        If index > 0 Then
-                            Items(index - 1).Selected = True
-                        End If
-                    End If
-
-                    Dim removedItem = Items(index)
-                    Items.RemoveAt(index)
-                    RaiseEvent ItemRemoved(removedItem)
-                Else
-                    Dim iFirst = SelectedIndices(0)
-                    Dim indices(SelectedIndices.Count - 1) As Integer
-                    SelectedIndices.CopyTo(indices, 0)
-
-                    For i = indices.Length - 1 To 0 Step -1
-                        Dim removedItem = Items(indices(i))
-                        Items.RemoveAt(indices(i))
-                        RaiseEvent ItemRemoved(removedItem)
-                    Next
-
-                    If Items.Count > 0 Then
-                        Dim index = If(iFirst > Items.Count - 1, Items.Count - 1, iFirst)
-                        Items(index).Selected = True
-                        EnsureVisible(index)
-                    End If
-                End If
-
-                EndUpdate()
+                SelectItems(selected)
                 UpdateControls()
                 OnItemsChanged()
             End If
         End Sub
 
-        Sub SortItems()
-            BeginUpdate()
-            Dim sortedItems = Items.OfType(Of ListViewItem).OrderBy(Function(item) item.Text).ToArray
-            Items.Clear()
-            Items.AddRange(sortedItems)
-            EndUpdate()
+        Sub MoveSelectionUp()
+            If CanMoveUp() Then
+                Dim indices = SelectedIndices
+                Dim selected = SelectedItems
+                Dim indexAbove = indices(0) - 1
+                Dim movedIndices = indices.Union({indexAbove}).ToArray()
+                Dim itemAbove = Items(indexAbove)
+                Dim indexInsert = indices(indices.Count - 1)
+
+                Items.RemoveAt(indexAbove)
+                Items.Insert(indexInsert, itemAbove)
+                SelectItems(selected)
+                UpdateControls()
+                OnItemsChanged(movedIndices)
+                ScrollToRow(indexAbove)
+            End If
+        End Sub
+
+        Sub MoveSelectionDown()
+            If CanMoveDown() Then
+                Dim indices = SelectedIndices
+                Dim selected = SelectedItems
+                Dim indexBelow = indices(indices.Count - 1) + 1
+                Dim movedIndices = indices.Union({indexBelow}).ToArray()
+                Dim itemBelow = Items(indexBelow)
+                Dim indexInsert = indices(0)
+
+                Items.RemoveAt(indexBelow)
+                Items.Insert(indexInsert, itemBelow)
+                SelectItems(selected)
+                UpdateControls()
+                OnItemsChanged(movedIndices)
+                ScrollToRow(indexBelow)
+            End If
+        End Sub
+
+        Sub RemoveSelection()
+            Dim indices = SelectedIndices
+
+            If indices.Count = 0 Then
+                Exit Sub
+            End If
+
+            Const maxToDisplay As Integer = 15
+            Dim names = indices.Take(maxToDisplay).Select(Function(i) Items(i).Text).Join(BR, True)
+
+            If indices.Count > maxToDisplay AndAlso names.Length > 4 Then
+                names = names + BR + "... and more ..."
+            End If
+
+            If MsgQuestion("Remove Selection?", names) <> DialogResult.OK Then
+                Exit Sub
+            End If
+
+            Dim first = indices(0)
+
+            For i = indices.Count - 1 To 0 Step -1
+                Dim removedItem = Items(indices(i))
+                Items.RemoveAt(indices(i))
+                RaiseEvent ItemRemoved(removedItem)
+            Next
+
+            If Items.Count > 0 Then
+                Dim index = If(first > Items.Count - 1, Items.Count - 1, first)
+                SelectRow(index)
+                ScrollToRow(index)
+            End If
+
             UpdateControls()
             OnItemsChanged()
         End Sub
 
-        Protected Overrides Sub OnSelectedIndexChanged(e As EventArgs)
+        Sub SortItems()
+            Dim sortedItems = Items.OrderBy(Function(item) item.Text).ToArray
+            Items.Clear()
+            Items.AddRange(sortedItems)
             UpdateControls()
-            MyBase.OnSelectedIndexChanged(e)
+            OnItemsChanged()
         End Sub
 
-        Sub HideFocusRectange()
-            Const UIS_SET = 1, UISF_HIDEFOCUS = &H1, WM_CHANGEUISTATE = &H127
-            Native.SendMessage(Handle, WM_CHANGEUISTATE, MAKEWPARAM(UIS_SET, UISF_HIDEFOCUS), 0)
-        End Sub
-
-        Function MAKEWPARAM(low As Integer, high As Integer) As Integer
-            Return (low And &HFFFF) Or (high << 16)
-        End Function
-
-        Protected Overrides Sub WndProc(ByRef m As Message)
-            Select Case m.Msg
-                Case &H203 'WM_LBUTTONDBLCLK
-                    If CheckBoxes AndAlso AutoCheckMode <> AutoCheckMode.DoubleClick Then
-                        OnDoubleClick(Nothing)
-                        Exit Sub
-                    End If
-                Case &H201 'WM_LBUTTONDOWN
-                    If CheckBoxes AndAlso AutoCheckMode = AutoCheckMode.SingleClick Then
-                        Dim pos = ClientMousePos
-                        Dim item = GetItemAt(pos.X, pos.Y)
-
-                        If Not item Is Nothing Then
-                            Dim itemBounds = item.GetBounds(ItemBoundsPortion.Entire)
-
-                            If pos.X > itemBounds.Left + itemBounds.Height Then
-                                item.Checked = Not item.Checked
-                            End If
-                        End If
-                    End If
-                Case &H204 'WM_RBUTTONDOWN
-                    If RightClickOnlyForMenu Then
-                        m.Result = New IntPtr(1)
-                        ShowMenu()
-                        Exit Sub
-                    End If
-            End Select
-
-            Try
-                MyBase.WndProc(m)
-            Catch ex As DivideByZeroException
-                If m.Msg = &H20A Then 'WM_MOUSEWHEEL
-                Else
-                    Throw
-                End If
-            End Try
-        End Sub
-
-        Protected Overrides Sub OnMouseUp(e As MouseEventArgs)
-            If e.Button = MouseButtons.Right Then
-                RaiseEvent UpdateContextMenu()
+        Sub EnsureVisible(index As Integer)
+            If index > -1 AndAlso index < Items.Count Then
+                ScrollToRow(index)
             End If
-
-            If ShowContextMenuOnLeftClick AndAlso e.Button = MouseButtons.Left Then
-                RaiseEvent UpdateContextMenu()
-                ContextMenuStrip.Show(Me, e.Location)
-            End If
-
-            MyBase.OnMouseUp(e)
         End Sub
 
         Sub ShowMenu()
             RaiseEvent UpdateContextMenu()
-            ContextMenuStrip.Show(Me, PointToClient(MousePosition))
+            ContextMenuStrip?.Show(Me)
         End Sub
 
-        Function GetBounds(mousePos As Point) As Rectangle
-            Dim x, y, w, h, columnLeft, checkLength As Integer
-
-            For Each header As ColumnHeader In Columns
-                If header.Index = 0 AndAlso CheckBoxes Then
-                    checkLength = 20
-                Else
-                    checkLength = 0
-                End If
-
-                If mousePos.X >= columnLeft + checkLength AndAlso
-                    mousePos.X <= columnLeft + header.Width Then
-
-                    x = columnLeft + checkLength
-                    w = header.Width - checkLength
-                    Exit For
-                End If
-
-                columnLeft += header.Width
-            Next
-
-            For Each item As ListViewItem In Items
-                Dim bounds = item.GetBounds(ItemBoundsPortion.Entire)
-
-                If mousePos.Y >= bounds.Top AndAlso mousePos.Y <= bounds.Bottom Then
-                    y = bounds.Top
-                    h = bounds.Height
+        Sub AutoResizeColumns(lastAtListViewWidth As Boolean)
+            For Each i In MyBase.Columns
+                If i.DataCell IsNot Nothing AndAlso TypeOf i.DataCell Is TextBoxCell AndAlso Not i.Expand Then
+                    i.AutoSize = True
                 End If
             Next
 
-            If w = 0 OrElse h = 0 Then
-                Return Rectangle.Empty
-            Else
-                Return New Rectangle(x, y, w, h)
-            End If
-        End Function
+            InvalidateColumnSizes()
+        End Sub
 
-        Function GetPos(mousePos As Point) As Point
-            Dim x, y, checkLength, columnLeft As Integer
+        Private ColumnSizesPending As Boolean
 
-            For Each header As ColumnHeader In Columns
-                If header.Index = 0 AndAlso CheckBoxes Then
-                    checkLength = 20
-                Else
-                    checkLength = 0
-                End If
-
-                If mousePos.X >= columnLeft + checkLength AndAlso
-                    mousePos.X <= columnLeft + header.Width Then
-
-                    x = header.Index
-                End If
-
-                columnLeft += header.Width
-            Next
-
-            For Each item As ListViewItem In Items
-                Dim bounds = item.GetBounds(ItemBoundsPortion.Entire)
-
-                If mousePos.Y >= bounds.Top AndAlso mousePos.Y <= bounds.Bottom Then
-                    y = item.Index
-                End If
-            Next
-
-            Return New Point(x, y)
-        End Function
-
-        Protected Overrides Sub OnDragEnter(e As DragEventArgs)
-            If e.Data.GetDataPresent(DataFormats.FileDrop) Then
-                e.Effect = DragDropEffects.Copy
-                MyBase.OnDragEnter(e)
+        'GTK only updates the space of expanding columns when the list width or its rows change
+        Friend Sub InvalidateColumnSizes()
+            If ColumnSizesPending OrElse Not Loaded Then
                 Exit Sub
             End If
 
-            e.Effect = DragDropEffects.Move
-            MyBase.OnDragEnter(e)
+            ColumnSizesPending = True
+
+            Application.Instance.AsyncInvoke(Sub()
+                                                 ColumnSizesPending = False
+
+                                                 If Not IsDisposed Then
+                                                     TryCast(ControlObject, Global.Gtk.TreeView)?.ColumnsAutosize()
+                                                 End If
+                                             End Sub)
         End Sub
 
-        Protected Overrides Sub OnItemDrag(e As ItemDragEventArgs)
-            If SelectedItems.Count > 1 Then
+        'GTK measures rows added before loading too small, reloading measures them again
+        Protected Overrides Sub OnLoadComplete(e As EventArgs)
+            MyBase.OnLoadComplete(e)
+
+            If Items.Count = 0 Then
                 Exit Sub
             End If
 
-            DoDragDrop(e.Item, DragDropEffects.Move)
-            MyBase.OnItemDrag(e)
+            Dim selected = SelectedRows.ToArray
+            IsReloading = True
+
+            Try
+                DataStore = Nothing
+                DataStore = Items
+                SelectedRows = selected
+            Finally
+                IsReloading = False
+            End Try
         End Sub
 
-        Function GetMousePos() As Point
-            Return PointToClient(Control.MousePosition)
-        End Function
+        Protected Overrides Sub OnCellDoubleClick(e As GridCellMouseEventArgs)
+            MyBase.OnCellDoubleClick(e)
 
-        Protected Overrides Sub OnDragOver(e As DragEventArgs)
-            If e.Data.GetDataPresent(DataFormats.FileDrop) Then
-                MyBase.OnDragOver(e)
+            If CheckBoxes AndAlso AutoCheckMode = AutoCheckMode.DoubleClick AndAlso e.Row > -1 AndAlso e.Row < Items.Count Then
+                Items(e.Row).Checked = Not Items(e.Row).Checked
+            End If
+
+            RaiseEvent DoubleClick(Me, EventArgs.Empty)
+        End Sub
+
+        Protected Overrides Sub OnMouseUp(e As MouseEventArgs)
+            MyBase.OnMouseUp(e)
+
+            If ShowContextMenuOnLeftClick AndAlso e.Buttons = MouseButtons.Primary AndAlso ContextMenuStrip IsNot Nothing Then
+                RaiseEvent UpdateContextMenu()
+                ContextMenuStrip.Show(Me, e.Location)
+            End If
+        End Sub
+
+        Protected Overrides Sub OnKeyDown(e As KeyEventArgs)
+            MyBase.OnKeyDown(e)
+
+            If e.Handled Then
                 Exit Sub
             End If
 
-            If Control.MousePosition <> LastDragOverPos Then
-                Dim mousePos = GetMousePos()
-                Dim bounds = GetBounds(mousePos)
+            If CheckBoxes AndAlso e.KeyData = Keys.Space Then
+                Dim selected = SelectedItems
 
-                If Not e.Data.GetDataPresent(GetType(ListViewItem)) Then
-                    e.Effect = DragDropEffects.None
-                ElseIf Not bounds = Rectangle.Empty Then
-                    e.Effect = DragDropEffects.Move
-                    Dim y As Integer
+                If selected.Count > 0 Then
+                    Dim value = Not selected(0).Checked
 
-                    If Math.Abs(mousePos.Y - bounds.Top) <
-                        Math.Abs(mousePos.Y - bounds.Bottom) Then
+                    For Each i In selected
+                        i.Checked = value
+                    Next
 
-                        y = bounds.Top
-                    Else
-                        y = bounds.Bottom
-                    End If
-
-                    If y <> LastDrawPos Then
-                        LastDrawPos = y
-                        Refresh()
-
-                        Using gx As Graphics = CreateGraphics()
-                            gx.DrawLine(Pens.Black, 0, y, Width, y)
-                        End Using
-                    End If
-                Else
-                    LastDrawPos = -1
-                    e.Effect = DragDropEffects.None
-                    Refresh()
+                    e.Handled = True
                 End If
-            End If
-
-            LastDragOverPos = Control.MousePosition
-            MyBase.OnDragOver(e)
-        End Sub
-
-        Protected Overrides Sub OnDragDrop(e As DragEventArgs)
-            If e.Data.GetDataPresent(DataFormats.FileDrop) Then
-                Dim form = FindForm()
-
-                If form.AllowDrop Then
-                    form.GetType.GetMethod("OnDragDrop",
-                        BindingFlags.Instance Or BindingFlags.NonPublic).Invoke(form, {e})
-                End If
-
-                Exit Sub
-            End If
-
-            Dim item = DirectCast(e.Data.GetData(GetType(ListViewItem)), ListViewItem)
-            Dim mousePos = GetMousePos()
-            Dim p = GetPos(mousePos)
-            Dim r = GetBounds(mousePos)
-            Dim index As Integer
-
-            If Math.Abs(mousePos.Y - r.Top) < Math.Abs(mousePos.Y - r.Bottom) Then
-
-                index = p.Y
-            Else
-                index = p.Y + 1
-            End If
-
-            If index > item.Index Then
-                index -= 1
-            End If
-
-            item.Remove()
-            Items.Insert(index, item)
-            MyBase.OnDragDrop(e)
-        End Sub
-
-        Protected Overrides Sub OnHandleCreated(e As EventArgs)
-            MyBase.OnHandleCreated(e)
-            Native.SetWindowTheme(Handle, "explorer", Nothing)
-
-            If Not UpButton Is Nothing Then UpButton.ClickAction = AddressOf MoveSelectionUp
-            If Not DownButton Is Nothing Then DownButton.ClickAction = AddressOf MoveSelectionDown
-            If Not RemoveButton Is Nothing Then RemoveButton.ClickAction = AddressOf RemoveSelection
-
-            If ItemCheckProperty <> "" Then
-                AddHandler ItemCheck, Sub(sender As Object, e2 As ItemCheckEventArgs)
-                                          Items(e2.Index).Tag.GetType.GetProperty(ItemCheckProperty).SetValue(Items(e2.Index).Tag, e2.NewValue = CheckState.Checked)
-                                          OnItemsChanged()
-                                      End Sub
             End If
         End Sub
+    End Class
 
-        Protected Overrides Sub OnColumnClick(e As ColumnClickEventArgs)
-            MyBase.OnColumnClick(e)
+    Public Class ItemCheckedEventArgs
+        Inherits EventArgs
 
-            Dim sorter = TryCast(ListViewItemSorter, ColumnSorter)
+        Property Item As ListViewItem
 
-            If Not sorter Is Nothing Then
-                If sorter.LastColumn = e.Column Then
-                    If Sorting = SortOrder.Ascending Then
-                        Sorting = SortOrder.Descending
-                    Else
-                        Sorting = SortOrder.Ascending
-                    End If
-                Else
-                    Sorting = SortOrder.Descending
-                End If
-
-                sorter.ColumnIndex = e.Column
-                Sort()
-            End If
-        End Sub
-
-        Class ColumnSorter
-            Implements IComparer
-
-            Property LastColumn As Integer
-            Property ColumnIndex As Integer
-
-            Function Compare(o1 As Object, o2 As Object) As Integer Implements IComparer.Compare
-                Dim item1 = DirectCast(o2, ListViewItem)
-                Dim item2 = DirectCast(o1, ListViewItem)
-
-                Dim s1 = DirectCast(item1.SubItems(ColumnIndex).Tag, IComparable)
-                Dim s2 = DirectCast(item2.SubItems(ColumnIndex).Tag, IComparable)
-
-                If s1 Is Nothing Then
-                    s1 = DirectCast(item1.Tag, IComparable)
-                    s2 = DirectCast(item2.Tag, IComparable)
-                End If
-
-                Dim r As Integer
-
-                If item1.ListView.Sorting = SortOrder.Ascending Then
-                    r = s1.CompareTo(s2)
-                Else
-                    r = s2.CompareTo(s1)
-                End If
-
-                LastColumn = ColumnIndex
-
-                Return r
-            End Function
-        End Class
-
-        Shadows Sub AutoResizeColumns(lastAtListViewWidth As Boolean)
-            If Columns.Count = 0 Then
-                Exit Sub
-            End If
-
-            BeginUpdate()
-
-            Dim offset = CInt(FontHeight / 5)
-
-            For Each header As ColumnHeader In Columns
-                Select Case header.Text
-                    Case "Hidden"
-                        header.Width = 0
-                        Continue For
-                    Case ""
-                        Columns(0).Width = CInt(Font.Height * 1.25)
-                        Continue For
-                End Select
-
-                header.AutoResize(ColumnHeaderAutoResizeStyle.HeaderSize)
-
-                Dim headerWidth = header.Width
-                header.AutoResize(ColumnHeaderAutoResizeStyle.ColumnContent)
-                header.Width += offset
-
-                If header.Width < headerWidth Then
-                    header.Width = headerWidth
-                End If
-            Next
-
-            If lastAtListViewWidth Then
-                Dim widthAll = Aggregate i In Columns.OfType(Of ColumnHeader)() Into Sum(i.Width)
-                Columns(Columns.Count - 1).Width -= widthAll - ClientSize.Width
-            End If
-
-            EndUpdate()
+        Sub New(item As ListViewItem)
+            Me.Item = item
         End Sub
     End Class
 End Namespace

@@ -1,70 +1,22 @@
 
-Imports StaxRip.UI
-
+'help documents are written to a temp HTML file and shown with the default browser
 Public Class HelpForm
-    Inherits FormBase
-
-#Region " Designer "
-    <System.Diagnostics.DebuggerNonUserCode()>
-    Protected Overloads Overrides Sub Dispose(disposing As Boolean)
-        If disposing AndAlso components IsNot Nothing Then
-            components.Dispose()
-        End If
-        MyBase.Dispose(disposing)
-    End Sub
-
-    Private ReadOnly components As System.ComponentModel.IContainer
-
-    Friend WithEvents Browser As System.Windows.Forms.WebBrowser
-    <System.Diagnostics.DebuggerStepThrough()>
-    Private Sub InitializeComponent()
-        Me.Browser = New System.Windows.Forms.WebBrowser()
-        Me.SuspendLayout()
-        '
-        'Browser
-        '
-        Me.Browser.Dock = System.Windows.Forms.DockStyle.Fill
-        Me.Browser.Location = New System.Drawing.Point(0, 0)
-        Me.Browser.Name = "Browser"
-        Me.Browser.Size = New System.Drawing.Size(1218, 791)
-        Me.Browser.TabIndex = 0
-        '
-        'HelpForm
-        '
-        Me.AutoScaleDimensions = New System.Drawing.SizeF(288.0!, 288.0!)
-        Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi
-        Me.ClientSize = New System.Drawing.Size(1218, 791)
-        Me.Controls.Add(Me.Browser)
-        Me.KeyPreview = True
-        Me.Margin = New System.Windows.Forms.Padding(6, 6, 6, 6)
-        Me.Name = $"{g.DefaultCommands.GetApplicationDetails()} - HelpForm"
-        Me.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen
-        Me.ResumeLayout(False)
-
-    End Sub
-#End Region
-
-    Sub New()
-        InitializeComponent()
-        RestoreClientSize(50, 35)
-        Icon = g.Icon
-    End Sub
+    Implements IDisposable
 
     Private DocumentValue As HelpDocument
+    Private DocumentPath As String
 
-    Property Doc() As HelpDocument
+    ReadOnly Property Doc As HelpDocument
         Get
             If DocumentValue Is Nothing Then
-                Dim path = IO.Path.Combine(Folder.Temp, Guid.NewGuid.ToString + ".htm")
-                AddHandler g.MainForm.Disposed, Sub() FileHelp.Delete(path)
-                DocumentValue = New HelpDocument(path)
+                DocumentPath = Path.Combine(Folder.Temp, "staxrip-help-" + Guid.NewGuid.ToString("N").Substring(0, 12) + ".htm")
+                Dim filePath = DocumentPath
+                AddHandler AppDomain.CurrentDomain.ProcessExit, Sub() FileHelp.Delete(filePath)
+                DocumentValue = New HelpDocument(filePath)
             End If
 
             Return DocumentValue
         End Get
-        Set(Value As HelpDocument)
-            DocumentValue = Value
-        End Set
     End Property
 
     Overloads Shared Sub ShowDialog(heading As String, tips As StringPairList)
@@ -83,32 +35,15 @@ Public Class HelpForm
         form.Show()
     End Sub
 
-    Protected Overrides Sub OnFormClosed(e As FormClosedEventArgs)
-        Dispose()
-    End Sub
-
-    Sub Browser_DocumentCompleted(sender As Object, e As WebBrowserDocumentCompletedEventArgs) Handles Browser.DocumentCompleted
-        WebBrowserHelp.ResetTextSize(Browser)
-    End Sub
-
-    Sub Browser_Navigated(sender As Object, e As WebBrowserNavigatedEventArgs) Handles Browser.Navigated
-        If Browser.DocumentTitle <> "" Then
-            Text = Browser.DocumentTitle
-        ElseIf File.Exists(e.Url.LocalPath) Then
-            Text = e.Url.LocalPath.Base
+    Sub Show()
+        If DocumentValue Is Nothing Then
+            Exit Sub
         End If
+
+        DocumentValue.WriteDocument()
+        g.ShellExecute(DocumentPath)
     End Sub
 
-    Shadows Sub Show()
-        MyBase.Show()
-
-        DocumentValue?.WriteDocument(Browser)
-    End Sub
-
-    Sub Browser_Navigating(sender As Object, e As WebBrowserNavigatingEventArgs) Handles Browser.Navigating
-        If e.Url.AbsoluteUri.StartsWith("http") Then
-            e.Cancel = True
-            g.ShellExecute(e.Url.ToString)
-        End If
+    Sub Dispose() Implements IDisposable.Dispose
     End Sub
 End Class

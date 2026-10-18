@@ -1,4 +1,4 @@
-﻿
+
 Imports System.Runtime.Serialization
 Imports System.ComponentModel
 Imports System.Runtime.Serialization.Formatters.Binary
@@ -7,23 +7,21 @@ Imports System.Reflection
 Imports System.Text.RegularExpressions
 Imports System.Xml
 Imports System.Text
-Imports System.Security.Permissions
 
 Imports StaxRip.UI
 Imports VB6 = Microsoft.VisualBasic
-Imports Microsoft.Win32
-Imports ManagedCuda
 
 Public Class Folder
     Shared ReadOnly Property Desktop As String
         Get
-            Return Environment.GetFolderPath(Environment.SpecialFolder.Desktop)
+            Dim ret = Environment.GetFolderPath(Environment.SpecialFolder.Desktop)
+            Return If(ret <> "" AndAlso Directory.Exists(ret), ret, Home)
         End Get
     End Property
 
     Shared ReadOnly Property WindowsFonts As String
         Get
-            Return Environment.GetFolderPath(Environment.SpecialFolder.Fonts)
+            Return "/usr/share/fonts"
         End Get
     End Property
 
@@ -32,7 +30,7 @@ Public Class Folder
     Shared ReadOnly Property Startup As String
         Get
             If StartupValue Is Nothing Then
-                StartupValue = Application.StartupPath
+                StartupValue = AppContext.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar)
             End If
 
             Return StartupValue
@@ -45,48 +43,71 @@ Public Class Folder
         End Get
     End Property
 
+    'system binaries, tools found there are not stored as custom path
     Shared ReadOnly Property System As String
         Get
-            Return Environment.SystemDirectory
+            Return "/usr/bin"
         End Get
     End Property
 
     Shared ReadOnly Property Programs As String
         Get
-            Return GetFolderPath(Environment.SpecialFolder.ProgramFiles)
+            Return "/opt"
         End Get
     End Property
 
     Shared ReadOnly Property Home As String
         Get
-            Return GetFolderPath(Environment.SpecialFolder.UserProfile)
+            Return Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)
         End Get
     End Property
 
     Shared ReadOnly Property AppDataCommon As String
         Get
-            Return GetFolderPath(Environment.SpecialFolder.CommonApplicationData)
+            Return "/usr/share"
         End Get
     End Property
 
     Shared ReadOnly Property AppDataLocal As String
         Get
-            Return GetFolderPath(Environment.SpecialFolder.LocalApplicationData)
+            Return XdgDataHome
         End Get
     End Property
 
     Shared ReadOnly Property AppDataRoaming As String
         Get
-            Return GetFolderPath(Environment.SpecialFolder.ApplicationData)
+            Return XdgConfigHome
+        End Get
+    End Property
+
+    Shared ReadOnly Property XdgConfigHome As String
+        Get
+            Dim ret = Environment.GetEnvironmentVariable("XDG_CONFIG_HOME")
+            Return If(ret <> "", ret, Path.Combine(Home, ".config"))
+        End Get
+    End Property
+
+    Shared ReadOnly Property XdgDataHome As String
+        Get
+            Dim ret = Environment.GetEnvironmentVariable("XDG_DATA_HOME")
+            Return If(ret <> "", ret, Path.Combine(Home, ".local", "share"))
+        End Get
+    End Property
+
+    Shared ReadOnly Property XdgCacheHome As String
+        Get
+            Dim ret = Environment.GetEnvironmentVariable("XDG_CACHE_HOME")
+            Return If(ret <> "", ret, Path.Combine(Home, ".cache"))
         End Get
     End Property
 
     Shared ReadOnly Property Windows As String
         Get
-            Return GetFolderPath(Environment.SpecialFolder.Windows)
+            Return ""
         End Get
     End Property
 
+    'optional folder next to the executable with bundled tools
     Shared ReadOnly Property Apps As String
         Get
             Return Path.Combine(Folder.Startup, "Apps")
@@ -121,9 +142,9 @@ Public Class Folder
                 End If
             Else
                 If p.Script.IsAviSynth Then
-                    Return Registry.LocalMachine.GetString("SOFTWARE\AviSynth", "plugindir+")
+                    Return Path.Combine(Home, ".local", "lib", "avisynth")
                 Else
-                    Return Path.Combine(Folder.AppDataRoaming, "VapourSynth", "plugins64")
+                    Return Path.Combine(Home, ".local", "lib", "vapoursynth")
                 End If
             End If
         End Get
@@ -137,71 +158,40 @@ Public Class Folder
 
     Private Shared SettingsValue As String
 
+    'Settings are stored in $XDG_CONFIG_HOME/StaxRip, a 'Settings' folder next
+    'to the executable enables portable mode, STAXRIP_SETTINGS overrides both.
     Shared ReadOnly Property Settings As String
         Get
             If SettingsValue Is Nothing Then
-                For Each location In Registry.CurrentUser.GetValueNames("Software\StaxRip\SettingsLocation")
-                    If Not Directory.Exists(location) Then
-                        Registry.CurrentUser.DeleteValue("Software\StaxRip\SettingsLocation", location)
-                    End If
+                Dim dir = Environment.GetEnvironmentVariable("STAXRIP_SETTINGS")
+
+                If dir = "" Then
+                    Dim portableDir = Path.Combine(Startup, "Settings")
+                    dir = If(Directory.Exists(portableDir), portableDir, Path.Combine(XdgConfigHome, "StaxRip"))
+                End If
+
+                If Not dir.DirExists Then
+                    Directory.CreateDirectory(dir)
+                End If
+
+                For Each categoryName As String In [Enum].GetNames(GetType(FontCategory)).Skip(1)
+                    FolderHelp.Create(Path.Combine(dir, "Fonts", categoryName))
                 Next
 
-                SettingsValue = Registry.CurrentUser.GetString("Software\StaxRip\SettingsLocation", Startup)
+                Dim scriptDir = Path.Combine(dir, "Scripts")
 
-                If Not Directory.Exists(SettingsValue) Then
-                    Dim td As New TaskDialog(Of String) With {
-                        .Title = "Settings Directory",
-                        .Content = "Select the location of the settings directory:"
-                    }
-
-                    td.AddCommand(Path.Combine(Startup, "Settings"), "This is the recommended path as long as you have write permissions. Settings are more bound to their StaxRip version and won't be automatically or accidentally transferred to the next version.", Path.Combine(Startup, "Settings"))
-                    td.AddCommand(Path.Combine(AppDataRoaming, "StaxRip"), "A good choice if you don't have write permissions in the StaxRip folder or if you want to store the settings in a more common place along with other app settings.", Path.Combine(AppDataRoaming, "StaxRip"))
-                    td.AddCommand(Path.Combine(AppDataCommon, "StaxRip"), "This is another option for common settings and also the fallback directory, in case you don't select another directory.", Path.Combine(AppDataCommon, "StaxRip"))
-                    td.AddCommand("Browse for custom directory", "You prefer another directory? Feel free to select a directory of your choice. Make sure necessary write permissions are granted.", "Custom")
-
-                    Dim dir = td.Show
-                    td.Dispose()
-
-                    If dir = "Custom" Then
-                        Using dialog As New FolderBrowserDialog
-                            dialog.SelectedPath = Startup
-                            dir = If(dialog.ShowDialog = DialogResult.OK, dialog.SelectedPath, Path.Combine(AppDataCommon, "StaxRip"))
-                        End Using
-                    ElseIf dir = "" Then
-                        Process.GetCurrentProcess().Kill()
-                    End If
-
-                    If Not dir.DirExists Then
-                        Try
-                            Directory.CreateDirectory(dir)
-                        Catch
-                            dir = Path.Combine(AppDataCommon, "StaxRip")
-
-                            If Not dir.DirExists Then
-                                Directory.CreateDirectory(dir)
-                            End If
-                        End Try
-                    End If
-
-                    For Each categoryName As String In [Enum].GetNames(GetType(FontCategory)).Skip(1)
-                        Directory.CreateDirectory(Path.Combine(dir, "Fonts", categoryName))
-                    Next
-
-                    Dim scriptDir = Path.Combine(dir, "Scripts")
-                    If Not scriptDir.DirExists Then
-                        Directory.CreateDirectory(scriptDir)
-                        Const code = "[MainModule]::MsgInfo('Hello World')"
-                        code.WriteFileUTF8BOM(Path.Combine(scriptDir, "Hello World.ps1"))
-                        Directory.CreateDirectory(Path.Combine(scriptDir, "Auto Load"))
-                    End If
-
-                    FolderHelp.Create(Path.Combine(dir, "Plugins", "AviSynth"))
-                    FolderHelp.Create(Path.Combine(dir, "Plugins", "VapourSynth"))
-                    FolderHelp.Create(Path.Combine(dir, "Plugins", "Dual"))
-
-                    Registry.CurrentUser.Write("Software\StaxRip\SettingsLocation", Folder.Startup, dir)
-                    SettingsValue = dir
+                If Not scriptDir.DirExists Then
+                    Directory.CreateDirectory(scriptDir)
+                    Const code = "[MainModule]::MsgInfo('Hello World')"
+                    code.WriteFileUTF8(Path.Combine(scriptDir, "Hello World.ps1"))
+                    Directory.CreateDirectory(Path.Combine(scriptDir, "Auto Load"))
                 End If
+
+                FolderHelp.Create(Path.Combine(dir, "Plugins", "AviSynth"))
+                FolderHelp.Create(Path.Combine(dir, "Plugins", "VapourSynth"))
+                FolderHelp.Create(Path.Combine(dir, "Plugins", "Dual"))
+
+                SettingsValue = dir
             End If
 
             Return SettingsValue
@@ -245,27 +235,25 @@ Public Class Folder
                 Dim manual As New Project
                 manual.Init()
                 manual.Script = VideoScript.GetDefaults()(1)
-                manual.Script.Filters(0) = VideoFilter.GetDefault("Source", "Manual")
+                manual.Script.Filters(0) = VideoFilter.GetDefault("Source", "Manual", ScriptEngine.VapourSynth)
                 manual.DemuxAudio = DemuxMode.Dialog
                 manual.SubtitleMode = SubtitleMode.Dialog
                 SafeSerialization.Serialize(manual, Path.Combine(ret, "Manual Workflow.srip"))
 
                 Dim remux As New Project
                 remux.Init()
-                remux.Script = VideoScript.GetDefaults()(0)
-                remux.Script.Filters(0) = New VideoFilter("Source", "DSS2/L-Smash", $"srcFile = ""%source_file%""{BR}ext = LCase(RightStr(srcFile, 3)){BR}(ext == ""mp4"") ? LSMASHVideoSource(srcFile, format = ""YUV420P8"") : DSS2(srcFile)")
+                remux.Script = VideoScript.GetDefaults()(1)
+                remux.Script.Filters(0) = VideoFilter.GetDefault("Source", "Automatic", ScriptEngine.VapourSynth)
                 remux.DemuxAudio = DemuxMode.None
                 remux.SubtitleMode = SubtitleMode.Disabled
                 remux.VideoEncoder = New NullEncoder
+
                 For index = 0 To remux.AudioTracksAvailable - 1
                     remux.AudioTracks.Add(New AudioTrack(index) With {
-                                                .AudioProfile = New MuxAudioProfile(),
-                                                .EditLabel = New AudioEditButtonLabel(index),
-                                                .LanguageLabel = New AudioLanguageLabel(index),
-                                                .NameLabel = New AudioNameButtonLabel(index),
-                                                .TextEdit = New AudioTextEdit(index)
-                                          })
+                        .AudioProfile = New MuxAudioProfile()
+                    })
                 Next
+
                 SafeSerialization.Serialize(remux, Path.Combine(ret, "Re-mux.srip"))
             End If
 
@@ -273,21 +261,8 @@ Public Class Folder
         End Get
     End Property
 
-    <DllImport("shfolder.dll", CharSet:=CharSet.Unicode)>
-    Shared Function SHGetFolderPath(
-        hwndOwner As IntPtr,
-        nFolder As Integer,
-        hToken As IntPtr,
-        dwFlags As Integer,
-        lpszPath As StringBuilder) As Integer
-    End Function
-
     Shared Function GetFolderPath(folder As Environment.SpecialFolder) As String
-        Dim sb As New StringBuilder(500)
-        SHGetFolderPath(IntPtr.Zero, CInt(folder), IntPtr.Zero, 0, sb)
-        Dim ret = sb.ToString.FixDir
-        Call New FileIOPermission(FileIOPermissionAccess.PathDiscovery, ret).Demand()
-        Return ret
+        Return Environment.GetFolderPath(folder).FixDir
     End Function
 End Class
 
@@ -731,10 +706,6 @@ table {
         End If
     End Sub
 
-    Sub WriteDocument(browser As WebBrowser)
-        WriteDocument()
-        browser.Navigate(Path)
-    End Sub
 End Class
 
 <Serializable()>
@@ -1001,7 +972,7 @@ Public Class Command
     End Function
 
     Shared Sub PopulateCommandMenu(
-        items As ToolStripItemCollection,
+        items As MenuItemCollection,
         commands As List(Of Command),
         clickSub As Action(Of Command))
 
@@ -1134,7 +1105,7 @@ Public Class CommandManager
             MsgError("Parameter mismatch, for the command :" + command.MethodInfo.Name)
         Catch ex As Exception
             If TypeOf ex.InnerException IsNot AbortException Then
-                g.ShowException(ex)
+                g.ShowException(If(TypeOf ex Is TargetInvocationException, ex.InnerException, ex))
             End If
         End Try
     End Sub
@@ -1224,6 +1195,7 @@ Public Module MainModule
     End Sub
 
     Sub MsgError(title As String, content As String, handle As IntPtr, Optional timeout As Integer = 0)
+        Console.Error.WriteLine("Error: " + title + If(content <> "", BR + content, ""))
         If timeout < 0 Then Exit Sub
         If title = "" Then title = content
         If title = "" Then Exit Sub
@@ -1231,7 +1203,6 @@ Public Module MainModule
         Using td As New TaskDialog(Of String)
             td.Title = title
             td.Content = content
-            td.Owner = handle
             td.Icon = TaskIcon.Error
             td.ShowCopyButton = True
             td.Timeout = timeout
@@ -1369,81 +1340,6 @@ Public Class Reflector
     End Function
 End Class
 
-Public Class Shutdown
-    Shared Sub Commit(mode As ShutdownMode)
-        Dim psi = New ProcessStartInfo("shutdown.exe") With {
-            .CreateNoWindow = True,
-            .UseShellExecute = False
-        }
-
-        Select Case mode
-            Case ShutdownMode.Standby
-                Application.SetSuspendState(PowerState.Suspend, s.ShutdownForce, False)
-            Case ShutdownMode.Hibernate
-                Application.SetSuspendState(PowerState.Hibernate, s.ShutdownForce, False)
-            Case ShutdownMode.Hybrid
-                psi.Arguments = If(s.ShutdownForce, "/f ", "")
-                psi.Arguments += "/hybrid /t " & s.ShutdownTimeout
-                Process.Start(psi)?.Dispose()
-            Case ShutdownMode.Shutdown
-                psi.Arguments = If(s.ShutdownForce, "/f ", "")
-                psi.Arguments += "/s /t " & s.ShutdownTimeout
-                Process.Start(psi)?.Dispose()
-        End Select
-    End Sub
-End Class
-
-Public Enum ShutdownMode
-    [Nothing]
-    Close
-    Standby
-    Hibernate
-    Hybrid
-    Shutdown
-End Enum
-
-Public Class PowerRequest
-
-    Shared Sub SuppressStandby()
-        Dim previousState = SetThreadExecutionState(EXECUTION_STATE.ES_CONTINUOUS Or EXECUTION_STATE.ES_SYSTEM_REQUIRED)
-
-        If previousState = EXECUTION_STATE.ES_ERROR Then
-            Throw New Win32Exception("expected last EXECUTION_STATE but got 0 indicating an error" + previousState.ToString)
-        End If
-    End Sub
-
-    Shared Sub EnableStandby()
-        Dim previousState = SetThreadExecutionState(EXECUTION_STATE.ES_CONTINUOUS)
-
-        If previousState = EXECUTION_STATE.ES_ERROR Then
-            Throw New Win32Exception("expected last EXECUTION_STATE but got 0 indicating an error" + previousState.ToString)
-        End If
-    End Sub
-
-    <Flags>
-    Enum EXECUTION_STATE : uint
-        ES_ERROR = 0 ' indicating an error
-        ES_SYSTEM_REQUIRED = &H1
-        ES_DISPLAY_REQUIRED = &H2
-        ES_AWAYMODE_REQUIRED = &H40
-        ES_CONTINUOUS = &H80000000
-        ' Legacy flag, should Not be used.
-        ' ES_USER_PRESENT = &H00000004
-    End Enum
-
-    <DllImport("kernel32.dll", CharSet:=CharSet.Auto, SetLastError:=True)>
-    Shared Function SetThreadExecutionState(esFlags As EXECUTION_STATE) As EXECUTION_STATE
-    End Function
-
-    <StructLayout(LayoutKind.Sequential, CharSet:=CharSet.Unicode)>
-    Structure POWER_REQUEST_CONTEXT
-        Public Version As UInt32
-        Public Flags As UInt32
-        <MarshalAs(UnmanagedType.LPWStr)>
-        Public SimpleReasonString As String
-    End Structure
-End Class
-
 Public Class CRC32
     Shared ReadOnly Table As UInteger() = New UInteger(255) {}
 
@@ -1487,15 +1383,21 @@ End Class
 Public Class Cuda
     Private Shared _result As Integer = -1
 
+    'counts NVIDIA devices that have a device node, the CUDA driver library must be installed
     Public Shared ReadOnly Property Count As Integer
         Get
-            Try
-                If _result < 0 Then
-                    _result = CudaContext.GetDeviceCount()
-                End If
-            Catch ex As Exception
-                _result = 0
-            End Try
+            If _result < 0 Then
+                Try
+                    If NativeLibraries.IsAvailable("libcuda.so.1") Then
+                        _result = Directory.GetFiles("/dev", "nvidia*").Count(Function(x) Text.RegularExpressions.Regex.IsMatch(Path.GetFileName(x), "^nvidia\d+$"))
+                    Else
+                        _result = 0
+                    End If
+                Catch
+                    _result = 0
+                End Try
+            End If
+
             Return _result
         End Get
     End Property

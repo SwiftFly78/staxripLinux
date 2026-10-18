@@ -1,4 +1,4 @@
-﻿
+
 Imports System.Text
 Imports System.Text.RegularExpressions
 Imports System.Globalization
@@ -383,11 +383,11 @@ Public Class MP4Muxer
                 Dim def = If(st.Default, ":tkhd=3:group=2", If(subtitleDefaultsSet, ":tkhd=0:group=2", ""))
 
                 If st.Path.Ext = "idx" Then
-                    args.Append(" -add """ + st.Path + "#" & (st.IndexIDX + 1) &
-                                ":name=" + Macro.Expand(st.Title) + def + If(st.Forced, ":txtflags=0xC0000000", "") + """")
+                    args.Append(" -add " + (st.Path + "#" & (st.IndexIDX + 1) &
+                                ":name=" + Macro.Expand(st.Title) + def + If(st.Forced, ":txtflags=0xC0000000", "")).Escape)
                 Else
-                    args.Append(" -add """ + st.Path + ":lang=" + st.Language.ThreeLetterCode +
-                                ":name=" + Macro.Expand(st.Title) + def + If(st.Forced, ":txtflags=0xC0000000", "") + """")
+                    args.Append(" -add " + (st.Path + ":lang=" + st.Language.ThreeLetterCode +
+                                ":name=" + Macro.Expand(st.Title) + def + If(st.Forced, ":txtflags=0xC0000000", "")).Escape)
                 End If
             End If
         Next
@@ -421,33 +421,33 @@ Public Class MP4Muxer
 
     Sub AddAudio(ap As AudioProfile, args As StringBuilder, forceDisabling As Boolean)
         If File.Exists(ap.File) AndAlso IsSupported(ap.File.Ext) AndAlso IsSupported(ap.OutputFileType) Then
-            args.Append(" -add """ + ap.File)
+            Dim value As New StringBuilder(ap.File)
 
             If ap.HasStream AndAlso ap.File.Ext = "mp4" Then
-                args.Append("#trackID=" & ap.Stream.ID)
+                value.Append("#trackID=" & ap.Stream.ID)
             Else
-                args.Append("#audio")
+                value.Append("#audio")
             End If
 
             If ap.File.Contains("[SBR]") Then
-                args.Append(":sbr")
+                value.Append(":sbr")
             End If
 
-            args.Append(":lang=" + ap.Language.ThreeLetterCode)
+            value.Append(":lang=" + ap.Language.ThreeLetterCode)
 
             If ap.Delay <> 0 AndAlso Not ap.HandlesDelay Then
-                args.Append(":delay=" + ap.Delay.ToString)
+                value.Append(":delay=" + ap.Delay.ToString)
             End If
 
-            args.Append(":name=" + ap.ExpandMacros(ap.StreamName))
+            value.Append(":name=" + ap.ExpandMacros(ap.StreamName))
 
             If ap.Default Then
-                args.Append(":tkhd=3:group=1")
+                value.Append(":tkhd=3:group=1")
             ElseIf forceDisabling Then
-                args.Append(":tkhd=0:group=1")
+                value.Append(":tkhd=0:group=1")
             End If
 
-            args.Append("""")
+            args.Append(" -add " + value.ToString.Escape)
         End If
     End Sub
 
@@ -560,15 +560,15 @@ Public Class BatchMuxer
     Overrides Sub Mux()
         Log.WriteHeader("Command Line Muxing")
 
-        For Each line In Macro.Expand(CommandLines.Trim).SplitLinesNoEmpty
+        'the lines are split before the expansion, file names can contain line breaks
+        For Each line In CommandLines.Trim.SplitLinesNoEmpty
             Using proc As New Proc
                 proc.Header = "Command Line Muxing: " + Name
 
                 If line.Contains("|") Then
-                    proc.File = "cmd.exe"
-                    proc.Arguments = "/S /C """ + line + """"
+                    proc.SetShellCommand(Macro.ExpandShell(line))
                 Else
-                    proc.CommandLine = line
+                    proc.CommandLine = Macro.ExpandShell(line)
                 End If
 
                 Try
@@ -596,7 +596,7 @@ Public Class BatchMuxer
             tb.Edit.SaveAction = Sub(value) OutputTypeValue = value
 
             Dim l = ui.AddLabel(page, "Batch Script:")
-            l.MarginTop = form.Font.Height
+            l.MarginTop = form.FontHeight
             l.Help = "Batch script which may contain macros."
 
             tb = ui.AddText(page)
@@ -733,7 +733,7 @@ Public Class MkvMuxer
         End If
 
         If VideoTrackName <> "" Then
-            args += " --track-name """ & id & ":" + Convert(VideoTrackName) + """"
+            args += " --track-name " + (id & ":" + Convert(VideoTrackName)).Escape
         End If
 
         Dim dar = Me.DAR.TrimEx
@@ -829,7 +829,7 @@ Public Class MkvMuxer
                 End If
 
                 If isContainer OrElse subtitle.Title <> "" Then
-                    args += " --track-name """ & id & ":" + Convert(subtitle.Title) + """"
+                    args += " --track-name " + (id & ":" + Convert(subtitle.Title)).Escape
                 End If
 
                 args += " " + subtitle.Path.LongPathPrefix.Escape
@@ -882,8 +882,10 @@ Public Class MkvMuxer
             args += " --attach-file " + CoverFile.Escape
         End If
 
-        If Title <> "" Then
-            args += " --title """ + Convert(Title) + """"
+        Dim titleText = Convert(Title)
+
+        If titleText <> "" Then
+            args += " --title " + titleText.Escape
         End If
 
         If TypeOf p.VideoEncoder Is NullEncoder AndAlso p.Ranges.Count > 0 Then
@@ -895,7 +897,7 @@ Public Class MkvMuxer
         End If
 
         args += " --engage append_and_split_flac"
-        args += " --ui-language en"
+        args += " --ui-language en_US"
 
         If AdditionalGeneralSwitches <> "" Then
             args += " " + Macro.Expand(AdditionalGeneralSwitches)
@@ -962,11 +964,11 @@ Public Class MkvMuxer
             End If
 
             If Not (isAudioType AndAlso ap.StreamName = "") Then
-                args += " --track-name """ & tid & ":" + Convert(ap.ExpandMacros(ap.StreamName, False)) + """"
+                args += " --track-name " + (tid & ":" + Convert(ap.ExpandMacros(ap.StreamName, False))).Escape
             End If
 
             If isCombo Then
-                args += " --track-name """ & tid + 1 & ":" + Convert(ap.ExpandMacros(ap.StreamName, False)) + """"
+                args += " --track-name " + (tid + 1 & ":" + Convert(ap.ExpandMacros(ap.StreamName, False))).Escape
             End If
 
             If ap.Delay <> 0 AndAlso Not ap.HandlesDelay AndAlso Not (ap.HasStream AndAlso ap.Stream.Delay <> 0) Then

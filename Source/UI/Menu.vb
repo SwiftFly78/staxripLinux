@@ -1,6 +1,5 @@
-﻿
+
 Imports System.ComponentModel
-Imports System.Drawing.Design
 
 Namespace UI
     <Serializable()>
@@ -159,34 +158,41 @@ Namespace UI
         End Sub
     End Class
 
+    'Builds an Eto menu (menu bar or context menu) from a CustomMenuItem definition.
     Public Class CustomMenu
         Private Items As New List(Of CustomMenuItem)
 
-        Property Menu As Menu
-        Property MenuStrip As MenuStrip
-        Property ToolStrip As ToolStrip
         Property MenuItems As New List(Of MenuItemEx)
         Property ActionDictionary As New Dictionary(Of String, MenuItemEx)
         Property TextDictionary As New Dictionary(Of String, MenuItemEx)
         Property DefaultMenu As Func(Of CustomMenuItem)
         Property MenuItem As CustomMenuItem
         Property CommandManager As CommandManager
+        Property Target As MenuItemCollection
+        Property Form As Window
+
+        'shortcuts are handled by the form key handler instead of native accelerators
+        Property HandleShortcutsManually As Boolean
+
+        'top level items of a menu bar don't show the shortcut key in the text
+        Property IsMenuBar As Boolean
 
         Event Command(e As CustomMenuItemEventArgs)
 
         Sub New(defaultMenu As Func(Of CustomMenuItem),
                 menuItem As CustomMenuItem,
                 commandManager As CommandManager,
-                toolStrip As ToolStrip)
+                target As MenuItemCollection)
 
             Me.CommandManager = commandManager
             Me.DefaultMenu = defaultMenu
             Me.MenuItem = menuItem
-            Me.ToolStrip = toolStrip
+            Me.Target = target
         End Sub
 
-        Sub AddKeyDownHandler(form As Form)
-            form.KeyPreview = True
+        Sub AddKeyDownHandler(form As Window)
+            Me.Form = form
+            HandleShortcutsManually = True
             AddHandler form.KeyDown, AddressOf OnKeyDown
         End Sub
 
@@ -253,8 +259,12 @@ Namespace UI
         End Function
 
         Sub OnKeyDown(sender As Object, e As KeyEventArgs)
+            If e.Handled Then
+                Exit Sub
+            End If
+
             For Each i As CustomMenuItem In Items
-                If i.KeyData = e.KeyData AndAlso i.MenuItem.Enabled Then
+                If i.KeyData <> Keys.None AndAlso i.KeyData = e.KeyData AndAlso i.MenuItem IsNot Nothing AndAlso i.MenuItem.Enabled Then
                     e.Handled = True
                     OnCommand(i)
                     Exit For
@@ -263,8 +273,10 @@ Namespace UI
         End Sub
 
         Sub MenuClick(sender As Object, e As EventArgs)
-            If TypeOf sender Is MenuItemEx Then
-                OnCommand(DirectCast(sender, MenuItemEx).CustomMenuItem)
+            Dim mi = TryCast(sender, MenuItemEx)
+
+            If mi IsNot Nothing Then
+                OnCommand(mi.CustomMenuItem)
             End If
         End Sub
 
@@ -277,11 +289,7 @@ Namespace UI
                     Process(item)
                 End If
 
-                Dim form = ToolStrip.FindForm
-
-                If Not form Is Nothing Then
-                    form.Refresh()
-                End If
+                Form?.Invalidate()
             End If
         End Sub
 
@@ -290,63 +298,79 @@ Namespace UI
         End Sub
 
         Sub BuildMenu()
-            ToolStrip.Items.ClearAndDisplose
+            Target.Clear()
             Items.Clear()
             MenuItems.Clear()
             ActionDictionary.Clear()
             TextDictionary.Clear()
-            Application.DoEvents()
-            BuildMenu(ToolStrip, MenuItem)
+            BuildMenu(Target, MenuItem)
         End Sub
 
-        Sub BuildMenu(menu As Object, item As CustomMenuItem)
+        Sub BuildMenu(collection As MenuItemCollection, item As CustomMenuItem)
             For Each cmi In item.SubItems
                 cmi.CustomMenu = Me
-                Dim tsi As ToolStripItem
 
                 If cmi.Text = "-" Then
-                    tsi = New ToolStripSeparator
-                Else
-                    Dim mi As New MenuItemEx()
-                    MenuItems.Add(mi)
+                    collection.Add(New SeparatorMenuItem)
+                    Items.Add(cmi)
+                    Continue For
+                End If
 
-                    If cmi.MethodName <> "" Then
-                        ActionDictionary(cmi.MethodName) = mi
+                Dim mi As New MenuItemEx()
+                MenuItems.Add(mi)
+
+                If cmi.MethodName <> "" Then
+                    ActionDictionary(cmi.MethodName) = mi
+                End If
+
+                If cmi.Text <> "" Then
+                    TextDictionary(cmi.Text) = mi
+                End If
+
+                mi.CustomMenuItem = cmi
+                cmi.MenuItem = mi
+                mi.Text = cmi.Text
+
+                If cmi.KeyData <> Keys.None Then
+                    If IsMenuBar AndAlso collection Is Target Then
+                        mi.Help = If(mi.Help = "", KeysHelp.GetKeyString(cmi.KeyData), mi.Help)
+                    ElseIf HandleShortcutsManually Then
+                        mi.ShortcutKeyDisplayString = KeysHelp.GetKeyString(cmi.KeyData)
+                    Else
+                        mi.SetNativeShortcut(cmi.KeyData)
                     End If
+                End If
 
-                    If cmi.Text <> "" Then
-                        TextDictionary(cmi.Text) = mi
+                If cmi.SubItems.Count = 0 Then
+                    AddHandler mi.Click, AddressOf MenuClick
+
+                    If IsMenuBar AndAlso collection Is Target Then
+                        EnableDirectClick(mi)
                     End If
-
-                    tsi = mi
-                    mi.CustomMenuItem = cmi
-                    cmi.MenuItem = mi
-
-                    Dim keys = KeysHelp.GetKeyString(cmi.KeyData)
-
-                    If keys <> "" Then
-                        mi.ShortcutKeyDisplayString = keys
-                    End If
-
-                    If cmi.Symbol <> Symbol.None Then
-                        mi.ImageScaling = ToolStripItemImageScaling.None
-                        mi.SetImage(cmi.Symbol)
-                    End If
-
-                    AddHandler tsi.Click, AddressOf MenuClick
                 End If
 
                 Items.Add(cmi)
-                tsi.Text = cmi.Text
-
-                If TypeOf menu Is ToolStripMenuItem Then
-                    DirectCast(menu, ToolStripMenuItem).DropDownItems.Add(tsi)
-                ElseIf TypeOf menu Is ToolStrip Then
-                    DirectCast(menu, ToolStrip).Items.Add(tsi)
-                End If
-
-                BuildMenu(tsi, cmi)
+                collection.Add(mi)
+                BuildMenu(mi.Items, cmi)
             Next
+        End Sub
+
+        'GTK activates menu bar items without submenu only if the button is held down for a while
+        Shared Sub EnableDirectClick(mi As MenuItemEx)
+            Dim item = TryCast(mi.ControlObject, Global.Gtk.MenuItem)
+
+            If item Is Nothing Then
+                Exit Sub
+            End If
+
+            AddHandler item.ButtonPressEvent, Sub(sender, e) e.RetVal = True
+            AddHandler item.ButtonReleaseEvent, Sub(sender, e)
+                                                    e.RetVal = True
+
+                                                    If e.Event.Button = 1 AndAlso mi.Enabled Then
+                                                        mi.PerformClick()
+                                                    End If
+                                                End Sub
         End Sub
     End Class
 
@@ -362,22 +386,18 @@ Namespace UI
     End Class
 
     Public Class MenuItemEx
-        Inherits ToolStripMenuItem
+        Inherits ButtonMenuItem
 
-        Shared Property UseTooltips As Boolean
+        Shared Property UseTooltips As Boolean = True
 
         Private Action As Action
+        Private FormValue As Window
+        Private ShortcutValue As Keys
+        Private ShortcutKeyDisplayStringValue As String = ""
+        Private TextValue As String = ""
 
-        <DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)>
-        Property Form As Form
-
-        <DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)>
         Property EnabledFunc As Func(Of Boolean)
-
-        <DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)>
         Property VisibleFunc As Func(Of Boolean)
-
-        <DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)>
         Property Path As String
 
         Sub New()
@@ -385,7 +405,8 @@ Namespace UI
         End Sub
 
         Sub New(text As String)
-            MyBase.New(text)
+            MyBase.New()
+            Me.Text = text
         End Sub
 
         Sub New(text As String, a As Action)
@@ -397,53 +418,146 @@ Namespace UI
                 Optional tooltip As String = Nothing,
                 Optional enabled As Boolean = True)
 
+            MyBase.New()
             Me.Text = text
             Me.Action = action
             Me.Help = tooltip
             Me.Enabled = enabled
         End Sub
 
-        Private ShortcutValue As Keys
-
-        <DefaultValue(GetType(Keys), "None")>
-        Property Shortcut As Keys
+        'the text without the shortcut display string
+        Shadows Property Text As String
             Get
-                Return ShortcutValue
+                Return TextValue
             End Get
-            Set(value As Keys)
-                If value <> Keys.None Then
-                    ShortcutValue = value
-                    ShortcutKeyDisplayString = KeysHelp.GetKeyString(value)
-                    AddHandler Form.KeyDown, AddressOf KeyDown
+            Set(value As String)
+                TextValue = If(value, "")
+                UpdateText()
+            End Set
+        End Property
+
+        Property ShortcutKeyDisplayString As String
+            Get
+                Return ShortcutKeyDisplayStringValue
+            End Get
+            Set(value As String)
+                ShortcutKeyDisplayStringValue = If(value, "")
+                UpdateText()
+            End Set
+        End Property
+
+        Private MarkedValue As Boolean
+
+        'marks the currently selected value in menus of menu buttons
+        Property Marked As Boolean
+            Get
+                Return MarkedValue
+            End Get
+            Set(value As Boolean)
+                If value <> MarkedValue Then
+                    MarkedValue = value
+                    UpdateText()
                 End If
             End Set
         End Property
 
+        Sub UpdateText()
+            Dim value = TextValue.Replace("&", "&&")
+
+            If MarkedValue Then
+                value = "✓ " + value
+            End If
+
+            If ShortcutKeyDisplayStringValue.Trim <> "" Then
+                value += "    " + ShortcutKeyDisplayStringValue.Trim
+            End If
+
+            MyBase.Text = value
+        End Sub
+
+        Property Form As Window
+            Get
+                Return FormValue
+            End Get
+            Set(value As Window)
+                If FormValue IsNot Nothing Then
+                    RemoveHandler FormValue.KeyDown, AddressOf KeyDown
+                End If
+
+                FormValue = value
+
+                If FormValue IsNot Nothing AndAlso ShortcutValue <> Keys.None Then
+                    AddHandler FormValue.KeyDown, AddressOf KeyDown
+                End If
+            End Set
+        End Property
+
+        'context menu shortcuts are handled by the form key handler, the menu only shows the key
+        Shadows Property Shortcut As Keys
+            Get
+                Return ShortcutValue
+            End Get
+            Set(value As Keys)
+                If FormValue IsNot Nothing AndAlso ShortcutValue <> Keys.None Then
+                    RemoveHandler FormValue.KeyDown, AddressOf KeyDown
+                End If
+
+                ShortcutValue = value
+
+                If value <> Keys.None Then
+                    ShortcutKeyDisplayString = KeysHelp.GetKeyString(value)
+
+                    If FormValue IsNot Nothing Then
+                        AddHandler FormValue.KeyDown, AddressOf KeyDown
+                    End If
+                End If
+            End Set
+        End Property
+
+        'native accelerator, used for menu bar items
+        Sub SetNativeShortcut(value As Keys)
+            MyBase.Shortcut = value
+        End Sub
+
         Sub KeyDown(sender As Object, e As KeyEventArgs)
-            If e.KeyData = Shortcut Then
-                If Not EnabledFunc Is Nothing Then
+            If e.Handled OrElse ShortcutValue = Keys.None Then
+                Exit Sub
+            End If
+
+            If e.KeyData = ShortcutValue Then
+                If EnabledFunc IsNot Nothing Then
                     Enabled = EnabledFunc.Invoke
                 End If
 
                 If Enabled AndAlso (VisibleFunc Is Nothing OrElse VisibleFunc.Invoke) Then
-                    PerformClick()
                     e.Handled = True
+                    PerformClick()
                 End If
             End If
         End Sub
 
-        Sub Opening(sender As Object, e As CancelEventArgs)
-            If Not EnabledFunc Is Nothing Then
+        Sub Opening(sender As Object, e As EventArgs)
+            If EnabledFunc IsNot Nothing Then
                 Enabled = EnabledFunc.Invoke
             End If
 
-            If Not VisibleFunc Is Nothing Then
+            If VisibleFunc IsNot Nothing Then
                 Visible = VisibleFunc.Invoke
             End If
         End Sub
 
+        'kept for compatibility, symbol images aren't used on Linux
+        Sub SetImage(symbol As Symbol, Optional color As Color = Nothing)
+        End Sub
+
+        ReadOnly Property DropDownItems As MenuItemCollection
+            Get
+                Return Items
+            End Get
+        End Property
+
         Shared Function Add(Of T)(
-            items As ToolStripItemCollection,
+            items As MenuItemCollection,
             path As String,
             action As Action(Of T),
             value As T,
@@ -452,23 +566,23 @@ Namespace UI
             Return Add(items, path, value, Sub() action(value), help)
         End Function
 
-        Shared Function Add(items As ToolStripItemCollection, path As String, Optional help As String = Nothing) As MenuItemEx
+        Shared Function Add(items As MenuItemCollection, path As String, Optional help As String = Nothing) As MenuItemEx
             Return Add(items, path, path, help)
         End Function
 
-        Shared Function Add(items As ToolStripItemCollection, path As String, tag As Object, Optional help As String = Nothing) As MenuItemEx
+        Shared Function Add(items As MenuItemCollection, path As String, tag As Object, Optional help As String = Nothing) As MenuItemEx
             Return Add(items, path, tag, Nothing, help)
         End Function
 
-        Shared Function Add(items As ToolStripItemCollection, path As String, action As Action, Optional help As String = Nothing) As MenuItemEx
+        Shared Function Add(items As MenuItemCollection, path As String, action As Action, Optional help As String = Nothing) As MenuItemEx
             Return Add(items, path, path, action, help)
         End Function
 
-        Shared Function Add(items As ToolStripItemCollection, path As String, tag As Object, action As Action, Optional help As String = Nothing) As MenuItemEx
+        Shared Function Add(items As MenuItemCollection, path As String, tag As Object, action As Action, Optional help As String = Nothing) As MenuItemEx
             Return Add(items, path, tag, action, Symbol.None, help)
         End Function
 
-        Shared Function Add(items As ToolStripItemCollection, path As String, tag As Object, action As Action, symbol As Symbol, Optional help As String = Nothing) As MenuItemEx
+        Shared Function Add(items As MenuItemCollection, path As String, tag As Object, action As Action, symbol As Symbol, Optional help As String = Nothing) As MenuItemEx
             Dim a = path.SplitNoEmpty(" | ")
             Dim l = items
             Dim p = ""
@@ -477,11 +591,11 @@ Namespace UI
                 p += If(x = 0, "", " | ") + a(x)
                 Dim found = False
 
-                For Each i In l.OfType(Of ToolStripMenuItem)()
+                For Each i In l.OfType(Of MenuItemEx)()
                     If x < a.Length - 1 Then
                         If i.Text = a(x) Then
                             found = True
-                            l = i.DropDownItems
+                            l = i.Items
                             Exit For
                         End If
                     End If
@@ -490,12 +604,11 @@ Namespace UI
                 If Not found Then
                     If x = a.Length - 1 Then
                         If a(x) = "-" Then
-                            l.Add(New ToolStripSeparator)
+                            l.Add(New SeparatorMenuItem)
                         Else
                             Dim item As New MenuItemEx(a(x), action, help)
                             item.Path = p
                             item.Tag = tag
-                            item.SetImage(symbol)
                             l.Add(item)
                             Return item
                         End If
@@ -505,51 +618,11 @@ Namespace UI
                         item.Path = p
                         item.Tag = Nothing
                         l.Add(item)
-                        l = item.DropDownItems
+                        l = item.Items
                     End If
                 End If
             Next
         End Function
-
-        Overrides Function GetPreferredSize(constrainingSize As Size) As Size
-            Dim ret = MyBase.GetPreferredSize(constrainingSize)
-            ret.Height = CInt(Font.Height * 1.4)
-            Return ret
-        End Function
-
-        Sub SetImage(symbol As Symbol, Optional color As Color = Nothing)
-            SetImageAsync(symbol, Me, color)
-        End Sub
-
-        Shared Async Sub SetImageAsync(symbol As Symbol, mi As ToolStripMenuItem, Optional color As Color = Nothing)
-            If symbol = Symbol.None Then
-                mi.Image = Nothing
-                Exit Sub
-            End If
-
-            Dim img = Await ImageHelp.GetSymbolImageAsync(symbol, color)
-
-            Try
-                If Not mi.IsDisposed Then
-                    mi.ImageScaling = ToolStripItemImageScaling.None
-                    mi.Image = img
-                End If
-            Catch
-            End Try
-        End Sub
-
-        Protected Overrides Sub Dispose(disposing As Boolean)
-            MyBase.Dispose(disposing)
-
-            If Not Form Is Nothing Then
-                RemoveHandler Form.KeyDown, AddressOf KeyDown
-            End If
-
-            Action = Nothing
-            EnabledFunc = Nothing
-            VisibleFunc = Nothing
-            Form = Nothing
-        End Sub
 
         Function GetHelp() As StringPair
             If Not CustomMenuItem Is Nothing AndAlso Not CustomMenuItem.CustomMenu Is Nothing AndAlso
@@ -577,8 +650,6 @@ Namespace UI
 
         Private CustomMenuItemValue As CustomMenuItem
 
-        <Browsable(False)>
-        <DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)>
         Property CustomMenuItem() As CustomMenuItem
             Get
                 Return CustomMenuItemValue
@@ -603,14 +674,8 @@ Namespace UI
             End Set
         End Property
 
-        Private Function ShouldSerializeHelpText() As Boolean
-            Return HelpValue <> ""
-        End Function
-
         Private HelpValue As String
 
-        <Editor(GetType(StringEditor), GetType(UITypeEditor))>
-        <DefaultValue("")>
         Property Help() As String
             Get
                 Return HelpValue
@@ -618,64 +683,32 @@ Namespace UI
             Set(Value As String)
                 HelpValue = Value
 
-                If UseTooltips Then
-                    If HelpValue <> "" Then
-                        If HelpValue.Length < 80 Then
-                            ToolTipText = HelpValue.TrimEnd("."c)
-                        Else
-                            ToolTipText = "Right-click for help"
-                        End If
-                    End If
+                If UseTooltips AndAlso HelpValue <> "" Then
+                    ToolTip = HelpDocument.ConvertMarkup(HelpValue, True)
                 End If
             End Set
         End Property
 
-        Protected Overrides Sub OnMouseDown(e As MouseEventArgs)
-            If e.Button = MouseButtons.Right AndAlso Help <> "" Then
-                CloseAll(Me)
-                Dim title = Text
-
-                If ShortcutKeyDisplayString <> "" Then
-                    title += $" ({ShortcutKeyDisplayString})"
-                End If
-
-                g.ShowHelp(title, Help)
-            End If
-
-            MyBase.OnMouseDown(e)
-        End Sub
-
-        Sub CloseAll(item As Object)
-            If TypeOf item Is ToolStripItem Then
-                Dim d = DirectCast(item, ToolStripItem)
-                CloseAll(d.Owner)
-            End If
-
-            If TypeOf item Is ToolStripDropDown Then
-                Dim d = DirectCast(item, ToolStripDropDown)
-                d.Close()
-                CloseAll(d.OwnerItem)
-            End If
-        End Sub
-
         Protected Overrides Sub OnClick(e As EventArgs)
-            Application.DoEvents()
-
-            If Not Action Is Nothing Then
-                Action()
-            End If
-
+            Action?.Invoke()
             MyBase.OnClick(e)
+        End Sub
+
+        Sub ClearAction()
+            Action = Nothing
+            EnabledFunc = Nothing
+            VisibleFunc = Nothing
+            Form = Nothing
         End Sub
     End Class
 
     Public Class TextCustomMenu
-        Shared Function EditMenu(value As String, defaults As String, owner As Form) As String
+        Shared Function EditMenu(value As String, defaults As String, owner As Window) As String
             Using dialog As New MacroEditorDialog
                 dialog.SetMacroDefaults()
                 dialog.MacroEditorControl.Value = value
                 dialog.MacroEditorControl.rtbDefaults.Text = defaults
-                dialog.Text = $"Menu Editor -  - {g.DefaultCommands.GetApplicationDetails()}"
+                dialog.Text = $"Menu Editor - {g.DefaultCommands.GetApplicationDetails()}"
 
                 If defaults <> "" Then
                     dialog.bnContext.Text = " Restore Defaults... "
@@ -696,13 +729,13 @@ Namespace UI
             Return value
         End Function
 
-        Shared Function GetMenu(definition As String, owner As Control, components As IContainer, action As Action(Of String)) As ContextMenuStripEx
+        Shared Function GetMenu(definition As String, owner As IContextMenuOwner, action As Action(Of String)) As ContextMenuStripEx
             If owner.ContextMenuStrip Is Nothing Then
-                owner.ContextMenuStrip = New ContextMenuStripEx(components)
+                owner.ContextMenuStrip = New ContextMenuStripEx()
             End If
 
-            Dim ret = DirectCast(owner.ContextMenuStrip, ContextMenuStripEx)
-            ret.Items.ClearAndDisplose
+            Dim ret = owner.ContextMenuStrip
+            ret.Items.Clear()
 
             If Not String.IsNullOrWhiteSpace(definition) Then
                 For Each i In definition.SplitKeepEmpty(BR)
@@ -712,7 +745,7 @@ Namespace UI
                     ElseIf i.EndsWith("-") Then
                         MenuItemEx.Add(ret.Items, i)
                     ElseIf i = "" Then
-                        ret.Items.Add(New ToolStripSeparator)
+                        ret.Items.Add(New SeparatorMenuItem)
                     End If
                 Next
             End If
@@ -721,64 +754,49 @@ Namespace UI
         End Function
     End Class
 
-    Public Class ContextMenuStripEx
-        Inherits ContextMenuStrip
+    'implemented by controls that expose a WinForms like ContextMenuStrip property
+    Public Interface IContextMenuOwner
+        Property ContextMenuStrip As ContextMenuStripEx
+    End Interface
 
-        Private FormValue As Form
+    'owns a menu that is shown manually
+    Public Class MenuHolder
+        Implements IContextMenuOwner
+
+        Property ContextMenuStrip As ContextMenuStripEx Implements IContextMenuOwner.ContextMenuStrip
+    End Class
+
+    Public Class ContextMenuStripEx
+        Inherits ContextMenu
+
+        Private FormValue As Window
 
         Sub New()
             MyBase.New()
-            ApplyTheme()
-            AddHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
         End Sub
 
         Sub New(container As IContainer)
-            MyBase.New(container)
-            ApplyTheme()
-            AddHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
+            MyBase.New()
         End Sub
 
-        Protected Overrides Sub Dispose(disposing As Boolean)
-            RemoveHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
-            MyBase.Dispose(disposing)
-        End Sub
-
-        Sub OnThemeChanged(theme As Theme)
-            ApplyTheme(theme)
-        End Sub
-
-        Sub ApplyTheme()
-            ApplyTheme(ThemeManager.CurrentTheme)
-        End Sub
-
-        Sub ApplyTheme(theme As Theme)
-            If DesignHelp.IsDesignMode Then
-                Exit Sub
-            End If
-
-            SuspendLayout()
-            BackColor = theme.General.Controls.ToolStrip.DropdownBackgroundDefaultColor
-            ResumeLayout()
-        End Sub
-
-
-        Protected Overrides Sub OnHandleCreated(e As EventArgs)
-            MyBase.OnHandleCreated(e)
-            g.SetRenderer(Me)
-            Font = FontManager.GetDefaultFont()
-        End Sub
-
-        <DefaultValue(GetType(Form), Nothing)>
-        Property Form As Form
+        Property Form As Window
             Get
                 Return FormValue
             End Get
-            Set(value As Form)
-                AddHandler value.Disposed, Sub() Dispose()
+            Set(value As Window)
                 FormValue = value
-                value.KeyPreview = True
+
+                For Each i In GetItems.OfType(Of MenuItemEx)
+                    If i.Shortcut <> Keys.None Then
+                        i.Form = value
+                    End If
+                Next
             End Set
         End Property
+
+        Overloads Sub Show(control As Control, x As Integer, y As Integer)
+            MyBase.Show(control, New PointF(x, y))
+        End Sub
 
         Function Add(path As String) As MenuItemEx
             Return Add(path, Nothing)
@@ -848,18 +866,13 @@ Namespace UI
             ret.Enabled = enabled
             ret.EnabledFunc = enabledFunc
             ret.Help = help
-            ret.SetImage(symbol)
 
             AddHandler Opening, AddressOf ret.Opening
 
             Return ret
         End Function
 
-        'I wasn't able to find out why it's only needed in some menus 
         Sub ApplyMarginFix()
-            For Each i In GetItems.OfType(Of MenuItemEx)
-                i.ShortcutKeyDisplayString += " ".Multiply(CInt(g.DPI / 96))
-            Next
         End Sub
 
         Function GetTips() As StringPairList
@@ -904,18 +917,20 @@ Namespace UI
             Return ret
         End Function
 
-        Function GetItems() As List(Of ToolStripItem)
-            Dim ret As New List(Of ToolStripItem)
+        Function GetItems() As List(Of MenuItem)
+            Dim ret As New List(Of MenuItem)
             AddItemsRecursive(Items, ret)
             Return ret
         End Function
 
-        Shared Sub AddItemsRecursive(searchList As ToolStripItemCollection, returnList As List(Of ToolStripItem))
-            For Each i As ToolStripItem In searchList
+        Shared Sub AddItemsRecursive(searchList As MenuItemCollection, returnList As List(Of MenuItem))
+            For Each i As MenuItem In searchList
                 returnList.Add(i)
 
-                If TypeOf i Is ToolStripDropDownItem Then
-                    AddItemsRecursive(DirectCast(i, ToolStripDropDownItem).DropDownItems, returnList)
+                Dim bmi = TryCast(i, ButtonMenuItem)
+
+                If bmi IsNot Nothing Then
+                    AddItemsRecursive(bmi.Items, returnList)
                 End If
             Next
         End Sub

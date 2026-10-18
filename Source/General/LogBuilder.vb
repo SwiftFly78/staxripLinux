@@ -1,8 +1,6 @@
-﻿
+
 Imports System.Globalization
 Imports System.Text
-Imports Microsoft.VisualBasic.Devices
-Imports Microsoft.Win32
 
 <Serializable>
 Public Class LogBuilder
@@ -93,24 +91,59 @@ Public Class LogBuilder
 
     Shared EnvironmentString As String 'cached due to bug report
 
+    Shared Function GetCpuName() As String
+        Try
+            For Each line In File.ReadLines("/proc/cpuinfo")
+                If line.StartsWith("model name") Then
+                    Return line.Right(":").Trim
+                End If
+            Next
+        Catch
+        End Try
+
+        Return Runtime.InteropServices.RuntimeInformation.ProcessArchitecture.ToString
+    End Function
+
+    Shared Function GetTotalMemory() As Long
+        Try
+            For Each line In File.ReadLines("/proc/meminfo")
+                If line.StartsWith("MemTotal:") Then
+                    Return line.Right(":").Replace("kB", "").Trim.ToLong * 1024
+                End If
+            Next
+        Catch
+        End Try
+
+        Return GC.GetGCMemoryInfo().TotalAvailableMemoryBytes
+    End Function
+
     Sub WriteEnvironment()
         If ToString.Contains("- System Environment -") Then Exit Sub
 
         WriteHeader("System Environment")
 
-        Dim computerInfo = New ComputerInfo()
+        If EnvironmentString = "" Then
+            Dim resolution = UIInvoke(Function()
+                                          Try
+                                              Dim bounds = Screen.PrimaryScreen.Bounds
+                                              Return CInt(bounds.Width) & " x " & CInt(bounds.Height)
+                                          Catch
+                                              Return ""
+                                          End Try
+                                      End Function)
 
-        If EnvironmentString = "" Then EnvironmentString =
-            "StaxRip:" + g.DefaultCommands.GetApplicationDetails(False, True) + BR +
-            $"Settings: v{s.Version.Major}.{s.Version.Minor}.{s.Version.Build}{BR}" +
-            $"Windows: {OSVersion.VersionString}" + BR +
-            "Language:" + CultureInfo.CurrentCulture.EnglishName + BR +
-            "CPU:" + Registry.LocalMachine.GetString("HARDWARE\DESCRIPTION\System\CentralProcessor\0", "ProcessorNameString") + BR +
-            $"RAM:{computerInfo.TotalPhysicalMemory / 1024 ^ 3:0}GB" + BR +
-            "GPU:" + String.Join(", ", OS.VideoControllers) + BR +
-            "Resolution:" & Screen.PrimaryScreen.Bounds.Width & " x " & Screen.PrimaryScreen.Bounds.Height & BR +
-            "DPI:" & g.DPI & BR &
-            "Code Page:" & TextEncoding.CodePageOfSystem
+            EnvironmentString =
+                "StaxRip:" + g.DefaultCommands.GetApplicationDetails(False, True) + BR +
+                $"Settings: v{s.Version.Major}.{s.Version.Minor}.{s.Version.Build}{BR}" +
+                $"OS: {OSVersion.VersionString}" + BR +
+                ".NET:" + Environment.Version.ToString + BR +
+                "Desktop:" + Environment.GetEnvironmentVariable("XDG_CURRENT_DESKTOP") + " (" + Environment.GetEnvironmentVariable("XDG_SESSION_TYPE") + ")" + BR +
+                "Language:" + CultureInfo.CurrentCulture.EnglishName + BR +
+                "CPU:" + GetCpuName() + BR +
+                $"RAM:{GetTotalMemory() / 1024 ^ 3:0}GB" + BR +
+                "GPU:" + String.Join(", ", OS.VideoControllers) + BR +
+                "Resolution:" & resolution
+        End If
 
         WriteLine(EnvironmentString.FormatColumn(":"))
     End Sub
@@ -122,7 +155,8 @@ Public Class LogBuilder
         For i = 1 To p.AudioTracksAvailable
             Dim at = p.AudioTracks(i - 1)
             If Not at.IsRelevant Then Continue For
-            sb.AppendLine($"{i,3}. {at.AudioProfile.Name} ({at.AudioProfile.AudioCodec}) [{at.AudioProfile.Language.Name}]: {at.TextEdit.Text}")
+            Dim text = UIInvoke(Function() at.TextEdit.Text)
+            sb.AppendLine($"{i,3}. {at.AudioProfile.Name} ({at.AudioProfile.AudioCodec}) [{at.AudioProfile.Language.Name}]: {text}")
         Next
         Dim audioConfig = sb.ToString()
 

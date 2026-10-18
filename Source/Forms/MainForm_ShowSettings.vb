@@ -1,4 +1,4 @@
-﻿Imports StaxRip.UI
+Imports StaxRip.UI
 
 Partial Public Class MainForm
     Inherits FormBase
@@ -99,10 +99,6 @@ Partial Public Class MainForm
             b = ui.AddBool
             b.Text = "Start without focus"
             b.Field = NameOf(s.StartWithoutFocus)
-
-            b = ui.AddBool
-            b.Text = "Check for Long Path Support"
-            b.Field = NameOf(s.CheckForLongPathSupport)
 
             b = ui.AddBool()
             b.Text = "Check for updates approx. once per day"
@@ -229,6 +225,13 @@ Partial Public Class MainForm
             cmdline.Expanded = True
             cmdline.Field = NameOf(s.CommandLinePreview)
 
+            Dim terminal = ui.AddText()
+            terminal.Text = "Terminal"
+            terminal.Help = "Terminal emulator used to run console apps, for example kitty or konsole. If empty, the terminal defined by the TERMINAL environment variable or a common installed terminal is used."
+            terminal.Edit.Expand = True
+            terminal.Edit.Text = s.TerminalEmulator
+            terminal.Edit.SaveAction = Sub(value) s.TerminalEmulator = value.Trim
+
             n = ui.AddNum
             n.Text = "Minimum Disk Space"
             n.Help = "Minimum allowed disk space in GB before StaxRip shows an error message."
@@ -258,20 +261,12 @@ Partial Public Class MainForm
             b.Field = NameOf(s.MinimizeToTray)
 
             b = ui.AddBool
-            b.Text = "Extend error messages with the help of 'Err'"
-            b.Field = NameOf(s.ErrorMessageExtendedByErr)
-
-            b = ui.AddBool
             b.Text = "Force close running apps at shutdown or in hybrid mode"
             b.Field = NameOf(s.ShutdownForce)
 
             b = ui.AddBool
             b.Text = "Prevent system from entering standby mode while encoding"
             b.Field = NameOf(s.PreventStandby)
-
-            b = ui.AddBool
-            b.Text = "Prefer Windows Terminal over Powershell if present"
-            b.Field = NameOf(s.PreferWindowsTerminal)
 #End Region
 
 #Region "User Interface"
@@ -279,6 +274,7 @@ Partial Public Class MainForm
 
             Dim theme = ui.AddMenu(Of String)
             theme.Text = "Theme"
+            theme.Help = "Colors of highlighting and other custom drawn content, only used with a dark GTK theme."
             theme.Expanded = True
             theme.Field = NameOf(s.ThemeName)
             theme.Add(ThemeManager.Themes.Select(Function(x) x.Name))
@@ -327,7 +323,7 @@ Partial Public Class MainForm
                                                   defaultFont.Edit.Text = td.SelectedText
                                                   Dim family = defaultFontfamilies.FirstOrDefault(Function(x) x.Name = td.SelectedText)
                                                   If family IsNot Nothing Then
-                                                      For Each control As Control In form.GetAllControls()
+                                                      For Each control In form.GetAllControls().OfType(Of CommonControl)
                                                           control.ReplaceFontFamily(family)
                                                       Next
                                                   End If
@@ -337,7 +333,7 @@ Partial Public Class MainForm
             defaultFont.Edit.TextChangedAction = Sub(value As String)
                                                      Dim family = defaultFontfamilies.FirstOrDefault(Function(x) x.Name = value)
                                                      If family IsNot Nothing Then
-                                                         For Each control As Control In form.GetAllControls()
+                                                         For Each control In form.GetAllControls().OfType(Of CommonControl)
                                                              control.ReplaceFontFamily(family)
                                                          Next
                                                      End If
@@ -417,10 +413,17 @@ Partial Public Class MainForm
 
             Dim avsMode = ui.AddMenu(Of FrameServerMode)()
             avsMode.Text = "AviSynth Mode"
-            avsMode.Field = NameOf(s.AviSynthMode)
 
             Dim vsMode = ui.AddMenu(Of FrameServerMode)()
             vsMode.Text = "VapourSynth Mode"
+
+            'VFW doesn't exist on Linux
+            For Each mode In {FrameServerMode.Portable, FrameServerMode.Installed}
+                avsMode.Add(DispNameAttribute.GetValueForEnum(mode), mode)
+                vsMode.Add(DispNameAttribute.GetValueForEnum(mode), mode)
+            Next
+
+            avsMode.Field = NameOf(s.AviSynthMode)
             vsMode.Field = NameOf(s.VapourSynthMode)
 
             b = ui.AddBool()
@@ -449,7 +452,7 @@ Partial Public Class MainForm
             l = ui.AddLabel("Don't change Danger Zone settings unless you are" + BR +
                                 "a power user with debugging experience." + BR)
 
-            l.Margin = New Padding(0, 50, 0, 50)
+            l.MarginTop = FontHeight
             l.BackColor = ThemeManager.CurrentTheme.General.DangerBackColor
             l.ForeColor = ThemeManager.CurrentTheme.General.DangerForeColor
 
@@ -470,12 +473,11 @@ Partial Public Class MainForm
             ui.SelectLast("last settings page")
 
             If form.ShowDialog() = DialogResult.OK Then
-                s.AviSynthFilterPreferences = DirectCast(bsAVS.DataSource, StringPairList)
+                s.AviSynthFilterPreferences = New StringPairList(bsAVS.Where(Function(i) i.Name <> ""))
                 s.AviSynthFilterPreferences.Sort()
-                s.VapourSynthFilterPreferences = DirectCast(bsVS.DataSource, StringPairList)
+                s.VapourSynthFilterPreferences = New StringPairList(bsVS.Where(Function(i) i.Name <> ""))
                 s.VapourSynthFilterPreferences.Sort()
                 ui.Save()
-                g.SetRenderer(MenuStrip)
                 s.UpdateRecentProjects(Nothing)
                 UpdateRecentProjectsMenu()
                 UpdateNextButton()
@@ -485,9 +487,9 @@ Partial Public Class MainForm
                 End If
 
                 Dim newDefaultFont = FontManager.GetDefaultFont()
-                If Not oldDefaultFont.FontFamily.Equals(newDefaultFont.FontFamily) Then
-                    For Each control As Control In GetAllControls()
-                        control.ReplaceFontFamily(newDefaultFont.FontFamily)
+                If Not oldDefaultFont.Family.Equals(newDefaultFont.Family) Then
+                    For Each control In GetAllControls().OfType(Of CommonControl)
+                        control.ReplaceFontFamily(newDefaultFont.Family)
                     Next
                     SetAudioTracks()
                 End If
@@ -512,7 +514,7 @@ Partial Public Class MainForm
         Return s.AviSynthMode & s.VapourSynthMode
     End Function
 
-    Function AddFilterPreferences(ui As SimpleUI, pagePath As String, preferences As StringPairList, profiles As List(Of FilterCategory)) As BindingSource
+    Function AddFilterPreferences(ui As SimpleUI, pagePath As String, preferences As StringPairList, profiles As List(Of FilterCategory)) As ObjectModel.ObservableCollection(Of StringPair)
         Dim filterPage = ui.CreateDataPage(pagePath)
 
         Dim fn = Function() As StringPairList
@@ -529,31 +531,19 @@ Partial Public Class MainForm
 
         filterPage.TipProvider.TipsFunc = fn
 
-        Dim c1 = filterPage.AddTextBoxColumn()
-        c1.DataPropertyName = "Name"
-        c1.HeaderText = "Extension[:Format]"
-
-        Dim c2 = filterPage.AddComboBoxColumn
-        c2.DataPropertyName = "Value"
-        c2.HeaderText = "Source Filter"
-
         Dim filterNames = profiles.Where(
             Function(v) v.Name = "Source").First.Filters.Where(
                 Function(v) v.Name <> "Automatic" AndAlso
                             v.Name <> "Manual" AndAlso Not v.Name.EndsWith("...")).Select(
                                 Function(v) v.Name).Sort.ToArray
 
-        c2.Items.AddRange(filterNames)
+        Dim items As New ObjectModel.ObservableCollection(Of StringPair)(ObjectHelp.GetCopy(
+            New StringPairList(preferences.Where(Function(a) filterNames.Contains(a.Value) AndAlso a.Name <> ""))))
 
-        filterPage.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells
-
-        Dim ret2 As New BindingSource With {
-                .DataSource = ObjectHelp.GetCopy(
-                    New StringPairList(preferences.Where(
-                        Function(a) filterNames.Contains(a.Value) AndAlso a.Name <> "")))
-                }
-
-        filterPage.DataSource = ret2
-        Return ret2
+        filterPage.NewItemFunc = Function() New StringPair("", filterNames.FirstOrDefault)
+        filterPage.Grid.Columns.Add(New GridColumn With {.HeaderText = "Extension[:Format]", .Editable = True, .Width = FH(12), .DataCell = New TextBoxCell("Name")})
+        filterPage.Grid.Columns.Add(New GridColumn With {.HeaderText = "Source Filter", .Editable = True, .Expand = True, .DataCell = New ComboBoxCell("Value") With {.DataStore = filterNames}})
+        filterPage.Grid.DataStore = items
+        Return items
     End Function
 End Class

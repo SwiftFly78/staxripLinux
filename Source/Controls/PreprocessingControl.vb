@@ -2,218 +2,50 @@
 Imports StaxRip.UI
 
 Public Class PreprocessingControl
-    Inherits UserControl
-    Implements IPage
+    Inherits Panel
+    Implements IPage, ISaveValues
 
-#Region " Designer "
-    Friend WithEvents lv As StaxRip.UI.ListViewEx
-    Friend WithEvents bnDown As ButtonEx
-    Friend WithEvents bnEdit As ButtonEx
-    Friend WithEvents bnRemove As ButtonEx
-    Friend WithEvents bnUp As ButtonEx
-    Friend WithEvents bnAdd As ButtonEx
-    Friend WithEvents ColumnHeader1 As System.Windows.Forms.ColumnHeader
-    Friend WithEvents bnRestore As ButtonEx
-    Friend WithEvents flpButtons As FlowLayoutPanel
-    Friend WithEvents tlpMain As TableLayoutPanel
-    Private components As System.ComponentModel.IContainer
-
-    <DebuggerStepThrough()>
-    Private Sub InitializeComponent()
-        Me.flpButtons = New System.Windows.Forms.FlowLayoutPanel()
-        Me.bnAdd = New StaxRip.UI.ButtonEx()
-        Me.bnRemove = New StaxRip.UI.ButtonEx()
-        Me.bnEdit = New StaxRip.UI.ButtonEx()
-        Me.bnUp = New StaxRip.UI.ButtonEx()
-        Me.bnDown = New StaxRip.UI.ButtonEx()
-        Me.bnRestore = New StaxRip.UI.ButtonEx()
-        Me.tlpMain = New System.Windows.Forms.TableLayoutPanel()
-        Me.lv = New StaxRip.UI.ListViewEx()
-        Me.ColumnHeader1 = CType(New System.Windows.Forms.ColumnHeader(), System.Windows.Forms.ColumnHeader)
-        Me.flpButtons.SuspendLayout()
-        Me.tlpMain.SuspendLayout()
-        Me.SuspendLayout()
-        '
-        'flpButtons
-        '
-        Me.flpButtons.AutoSize = True
-        Me.flpButtons.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink
-        Me.flpButtons.Controls.Add(Me.bnAdd)
-        Me.flpButtons.Controls.Add(Me.bnRemove)
-        Me.flpButtons.Controls.Add(Me.bnEdit)
-        Me.flpButtons.Controls.Add(Me.bnUp)
-        Me.flpButtons.Controls.Add(Me.bnDown)
-        Me.flpButtons.Controls.Add(Me.bnRestore)
-        Me.flpButtons.FlowDirection = System.Windows.Forms.FlowDirection.TopDown
-        Me.flpButtons.Location = New System.Drawing.Point(227, 0)
-        Me.flpButtons.Margin = New System.Windows.Forms.Padding(0)
-        Me.flpButtons.Name = "flpButtons"
-        Me.flpButtons.Size = New System.Drawing.Size(260, 540)
-        Me.flpButtons.TabIndex = 6
-        '
-        'bnAdd
-        '
-        Me.bnAdd.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
-        Me.bnAdd.Location = New System.Drawing.Point(0, 0)
-        Me.bnAdd.Margin = New System.Windows.Forms.Padding(0, 0, 0, 10)
-        Me.bnAdd.Size = New System.Drawing.Size(260, 80)
-        Me.bnAdd.Text = " Add..."
-        '
-        'bnRemove
-        '
-        Me.bnRemove.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
-        Me.bnRemove.Location = New System.Drawing.Point(0, 90)
-        Me.bnRemove.Margin = New System.Windows.Forms.Padding(0, 0, 0, 10)
-        Me.bnRemove.Size = New System.Drawing.Size(260, 80)
-        Me.bnRemove.Text = "    Remove"
-        '
-        'bnEdit
-        '
-        Me.bnEdit.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
-        Me.bnEdit.Location = New System.Drawing.Point(0, 180)
-        Me.bnEdit.Margin = New System.Windows.Forms.Padding(0, 0, 0, 10)
-        Me.bnEdit.Size = New System.Drawing.Size(260, 80)
-        Me.bnEdit.Text = " Edit..."
-        '
-        'bnUp
-        '
-        Me.bnUp.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
-        Me.bnUp.Location = New System.Drawing.Point(0, 270)
-        Me.bnUp.Margin = New System.Windows.Forms.Padding(0, 0, 0, 10)
-        Me.bnUp.Size = New System.Drawing.Size(260, 80)
-        Me.bnUp.Text = "Up"
-        '
-        'bnDown
-        '
-        Me.bnDown.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
-        Me.bnDown.Location = New System.Drawing.Point(0, 360)
-        Me.bnDown.Margin = New System.Windows.Forms.Padding(0, 0, 0, 10)
-        Me.bnDown.Size = New System.Drawing.Size(260, 80)
-        Me.bnDown.Text = "Down"
-        '
-        'bnRestore
-        '
-        Me.bnRestore.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
-        Me.bnRestore.Location = New System.Drawing.Point(0, 450)
-        Me.bnRestore.Margin = New System.Windows.Forms.Padding(0, 0, 0, 10)
-        Me.bnRestore.Size = New System.Drawing.Size(260, 80)
-        Me.bnRestore.Text = "Restore..."
-        '
-        'tlpMain
-        '
-        Me.tlpMain.ColumnCount = 2
-        Me.tlpMain.ColumnStyles.Add(New System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50.0!))
-        Me.tlpMain.ColumnStyles.Add(New System.Windows.Forms.ColumnStyle())
-        Me.tlpMain.Controls.Add(Me.flpButtons, 1, 0)
-        Me.tlpMain.Controls.Add(Me.lv, 0, 0)
-        Me.tlpMain.Dock = System.Windows.Forms.DockStyle.Fill
-        Me.tlpMain.Location = New System.Drawing.Point(0, 0)
-        Me.tlpMain.Margin = New System.Windows.Forms.Padding(0)
-        Me.tlpMain.Name = "tlpMain"
-        Me.tlpMain.RowCount = 1
-        Me.tlpMain.RowStyles.Add(New System.Windows.Forms.RowStyle())
-        Me.tlpMain.Size = New System.Drawing.Size(487, 626)
-        Me.tlpMain.TabIndex = 7
-        '
-        'lv
-        '
-        Me.lv.AllowDrop = True
-        Me.lv.Anchor = CType((((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Bottom) _
-            Or System.Windows.Forms.AnchorStyles.Left) _
-            Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
-        Me.lv.CheckBoxes = True
-        Me.lv.Columns.AddRange(New System.Windows.Forms.ColumnHeader() {Me.ColumnHeader1})
-        Me.lv.DownButton = Me.bnDown
-        Me.lv.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.None
-        Me.lv.Location = New System.Drawing.Point(0, 0)
-        Me.lv.Margin = New System.Windows.Forms.Padding(0, 0, 10, 0)
-        Me.lv.MultiSelect = False
-        Me.lv.Name = "lv"
-        Me.lv.RemoveButton = Me.bnRemove
-        Me.lv.Size = New System.Drawing.Size(217, 626)
-        Me.lv.TabIndex = 0
-        Me.lv.UpButton = Me.bnUp
-        Me.lv.UseCompatibleStateImageBehavior = False
-        Me.lv.View = System.Windows.Forms.View.Details
-        '
-        'DemuxingControl
-        '
-        Me.AutoScaleDimensions = New System.Drawing.SizeF(288.0!, 288.0!)
-        Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi
-        Me.Controls.Add(Me.tlpMain)
-        Me.Margin = New System.Windows.Forms.Padding(6)
-        Me.Name = "DemuxingControl"
-        Me.Size = New System.Drawing.Size(487, 626)
-        Me.flpButtons.ResumeLayout(False)
-        Me.tlpMain.ResumeLayout(False)
-        Me.tlpMain.PerformLayout()
-        Me.ResumeLayout(False)
-
-    End Sub
-
-#End Region
+    Public WithEvents lv As ListViewEx
+    Public WithEvents bnAdd As ButtonEx
+    Public WithEvents bnRemove As ButtonEx
+    Public WithEvents bnEdit As ButtonEx
+    Public WithEvents bnUp As ButtonEx
+    Public WithEvents bnDown As ButtonEx
+    Public WithEvents bnRestore As ButtonEx
 
     Property Node As TreeNode Implements IPage.Node
     Property Path As String Implements IPage.Path
     Property TipProvider As TipProvider Implements IPage.TipProvider
-
-    Public Property FormSizeScaleFactor As SizeF Implements IPage.FormSizeScaleFactor
+    Property FormSizeScaleFactor As SizeF Implements IPage.FormSizeScaleFactor
 
     Sub New()
-        MyBase.New()
-        InitializeComponent()
+        lv = New ListViewEx With {.CheckBoxes = True, .View = View.Details, .HeaderStyle = ColumnHeaderStyle.None, .FullRowSelect = True}
+        lv.Columns.Add("Demuxer")
+        bnAdd = New ButtonEx("Add...")
+        bnRemove = New ButtonEx("Remove")
+        bnEdit = New ButtonEx("Edit...")
+        bnUp = New ButtonEx("Up")
+        bnDown = New ButtonEx("Down")
+        bnRestore = New ButtonEx("Restore...")
+
+        lv.UpButton = bnUp
+        lv.DownButton = bnDown
+        lv.RemoveButton = bnRemove
+
+        Content = New TableLayout(
+            New TableRow(lv) With {.ScaleHeight = True},
+            New TableRow(HRow(bnAdd, bnRemove, bnEdit, bnUp, bnDown, bnRestore))) With {.Spacing = DefaultSpacing}
 
         TipProvider = New TipProvider(Nothing)
-        AddHandler Disposed, Sub() TipProvider.Dispose()
 
         For Each i In ObjectHelp.GetCopy(Of List(Of Demuxer))(s.Demuxers)
             AddItem(i)
-        Next
-
-        bnAdd.Image = ImageHelp.GetSymbolImage(Symbol.Add)
-        bnRemove.Image = ImageHelp.GetSymbolImage(Symbol.Remove)
-        bnUp.Image = ImageHelp.GetSymbolImage(Symbol.Up)
-        bnDown.Image = ImageHelp.GetSymbolImage(Symbol.Down)
-        bnEdit.Image = ImageHelp.GetSymbolImage(Symbol.Repair)
-
-        For Each bn In {bnAdd, bnRemove, bnUp, bnDown, bnEdit}
-            bn.TextImageRelation = TextImageRelation.Overlay
-            bn.ImageAlign = ContentAlignment.MiddleLeft
-            Dim pad = bn.Padding
-            pad.Left = Control.DefaultFont.Height \ 10
-            pad.Right = pad.Left
-            bn.Padding = pad
         Next
 
         TipProvider.TipsFunc = AddressOf GetTips
 
         lv.SingleSelectionButtons = {bnEdit}
         lv.UpdateControls()
-
-        ApplyTheme()
-
-        AddHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
-    End Sub
-
-    Protected Overrides Sub Dispose(disposing As Boolean)
-        RemoveHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
-        MyBase.Dispose(disposing)
-    End Sub
-
-    Sub OnThemeChanged(theme As Theme)
-        ApplyTheme(theme)
-    End Sub
-
-    Sub ApplyTheme()
-        ApplyTheme(ThemeManager.CurrentTheme)
-    End Sub
-
-    Sub ApplyTheme(theme As Theme)
-        If DesignHelp.IsDesignMode Then
-            Exit Sub
-        End If
-
-        BackColor = theme.General.BackColor
     End Sub
 
     Function GetTips() As StringPairList
@@ -242,27 +74,19 @@ Public Class PreprocessingControl
         Return ret
     End Function
 
-    Protected Overrides Sub OnHandleDestroyed(e As EventArgs)
-        If FindForm.DialogResult = DialogResult.OK Then
-            s.Demuxers.Clear()
+    Sub SaveValues() Implements ISaveValues.SaveValues
+        s.Demuxers.Clear()
 
-            For Each i As ListViewItem In lv.Items
-                Dim demuxer = DirectCast(i.Tag, Demuxer)
-                demuxer.Active = i.Checked
-                s.Demuxers.Add(demuxer)
-            Next
-        End If
-
-        MyBase.OnHandleDestroyed(e)
+        For Each i As ListViewItem In lv.Items
+            Dim demuxer = DirectCast(i.Tag, Demuxer)
+            demuxer.Active = i.Checked
+            s.Demuxers.Add(demuxer)
+        Next
     End Sub
 
     Sub lv_SelectedIndexChanged(sender As Object, e As EventArgs) Handles lv.SelectedIndexChanged
         bnEdit.Enabled = lv.SelectedItems.Count = 1 AndAlso
             DirectCast(lv.SelectedItems(0).Tag, Demuxer).HasConfigDialog
-    End Sub
-
-    Sub lv_Layout(sender As Object, e As LayoutEventArgs) Handles lv.Layout
-        lv.Columns(0).Width = lv.Width - 5
     End Sub
 
     Sub bnAdd_Click(sender As Object, e As EventArgs) Handles bnAdd.Click

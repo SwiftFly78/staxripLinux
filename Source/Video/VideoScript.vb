@@ -75,7 +75,171 @@ Public Class VideoScript
     End Function
 
     Function GetFullScript() As String
-        Return Macro.Expand(ModifyScript(GetScript, Engine)).Trim
+        Return ExpandMacros(ModifyScript(GetScript, Engine), Engine).Trim
+    End Function
+
+    'file names on Linux can contain quotes, line breaks and percent signs,
+    'the literals are valid for every path and contain no macros
+    Shared Function ToPythonString(value As String) As String
+        value = If(value, "")
+        Dim isSpecial = Function(c As Char) c = """"c OrElse c = "\"c OrElse c = "%"c OrElse Char.IsControl(c)
+
+        If Not value.Any(isSpecial) Then
+            Return "r""" + value + """"
+        End If
+
+        Dim sb As New StringBuilder("""")
+
+        For Each c In value
+            If isSpecial(c) Then
+                sb.Append("\x" + VB.AscW(c).ToString("x2"))
+            Else
+                sb.Append(c)
+            End If
+        Next
+
+        Return sb.Append(""""c).ToString
+    End Function
+
+    Shared Function ToAviSynthString(value As String) As String
+        value = If(value, "")
+        Dim isSpecial = Function(c As Char) c = """"c OrElse c = "%"c OrElse VB.AscW(c) < 32 OrElse VB.AscW(c) = 127
+
+        If Not value.Any(isSpecial) Then
+            Return """" + value + """"
+        End If
+
+        Dim parts As New List(Of String)
+        Dim sb As New StringBuilder
+
+        For Each c In value
+            If isSpecial(c) Then
+                If sb.Length > 0 Then
+                    parts.Add("""" + sb.ToString + """")
+                    sb.Clear()
+                End If
+
+                parts.Add("Chr(" & VB.AscW(c) & ")")
+            Else
+                sb.Append(c)
+            End If
+        Next
+
+        If sb.Length > 0 Then
+            parts.Add("""" + sb.ToString + """")
+        End If
+
+        Return "(" + String.Join(" + ", parts) + ")"
+    End Function
+
+    Shared Function ToScriptString(value As String, engine As ScriptEngine) As String
+        Return If(engine = ScriptEngine.VapourSynth, ToPythonString(value), ToAviSynthString(value))
+    End Function
+
+    'macros in simple string literals like r"%source_file%" are expanded to safe literals
+    Shared Function ExpandMacros(code As String, engine As ScriptEngine) As String
+        If code = "" Then Return ""
+
+        Dim isVS = engine = ScriptEngine.VapourSynth
+        Dim sb As New StringBuilder
+        Dim i = 0
+
+        While i < code.Length
+            Dim c = code(i)
+            Dim rest = code.Length - i
+
+            If c = "#"c Then
+                Dim lineEnd = code.IndexOf(VB.ChrW(10), i)
+                If lineEnd < 0 Then lineEnd = code.Length
+                sb.Append(code, i, lineEnd - i)
+                i = lineEnd
+                Continue While
+            End If
+
+            If Not isVS AndAlso rest > 1 AndAlso (code.Substring(i, 2) = "/*" OrElse code.Substring(i, 2) = "[*") Then
+                Dim closing = If(code.Substring(i, 2) = "/*", "*/", "*]")
+                Dim commentEnd = code.IndexOf(closing, i + 2, StringComparison.Ordinal)
+                commentEnd = If(commentEnd < 0, code.Length, commentEnd + 2)
+                sb.Append(code, i, commentEnd - i)
+                i = commentEnd
+                Continue While
+            End If
+
+            Dim prefix = ""
+
+            If Char.IsLetter(c) OrElse c = "_"c Then
+                Dim wordEnd = i
+
+                While wordEnd < code.Length AndAlso (Char.IsLetterOrDigit(code(wordEnd)) OrElse code(wordEnd) = "_"c)
+                    wordEnd += 1
+                End While
+
+                Dim word = code.Substring(i, wordEnd - i)
+                Dim prefixes = If(isVS, {"r", "u", "b", "f", "rb", "br", "fr", "rf"}, {"e"})
+
+                If wordEnd < code.Length AndAlso (code(wordEnd) = """"c OrElse (isVS AndAlso code(wordEnd) = "'"c)) AndAlso
+                    prefixes.Contains(word.ToLowerInvariant) Then
+
+                    prefix = word
+                    i = wordEnd
+                    c = code(i)
+                Else
+                    sb.Append(word)
+                    i = wordEnd
+                    Continue While
+                End If
+            End If
+
+            If c = """"c OrElse (isVS AndAlso c = "'"c) Then
+                Dim raw = Not isVS OrElse prefix.ToLowerInvariant.Contains("r")
+                Dim escapes = If(isVS, Not raw, prefix <> "")
+                Dim quote = If(code.Length - i >= 3 AndAlso code.Substring(i, 3) = New String(c, 3), New String(c, 3), c.ToString)
+                Dim j = i + quote.Length
+                Dim closed = False
+
+                While j < code.Length
+                    If escapes AndAlso code(j) = "\"c Then
+                        j += 2
+                        Continue While
+                    End If
+
+                    If quote.Length = 1 AndAlso (code(j) = VB.ChrW(10) OrElse code(j) = VB.ChrW(13)) Then Exit While
+
+                    If String.CompareOrdinal(code, j, quote, 0, quote.Length) = 0 Then
+                        closed = True
+                        Exit While
+                    End If
+
+                    j += 1
+                End While
+
+                If Not closed Then
+                    sb.Append(prefix + code.Substring(i, Math.Min(j, code.Length) - i))
+                    i = Math.Min(j, code.Length)
+                    Continue While
+                End If
+
+                Dim literal = code.Substring(i, j + quote.Length - i)
+                Dim content = code.Substring(i + quote.Length, j - i - quote.Length)
+                Dim simple = quote.Length = 1 AndAlso content.Contains("%") AndAlso
+                    If(isVS, {"", "r", "u"}.Contains(prefix.ToLowerInvariant) AndAlso (raw OrElse Not content.Contains("\")), prefix = "")
+
+                If simple Then
+                    Dim expanded = Macro.Expand(content)
+                    sb.Append(If(expanded = content, prefix + literal, ToScriptString(expanded, engine)))
+                Else
+                    sb.Append(prefix + literal)
+                End If
+
+                i = j + quote.Length
+                Continue While
+            End If
+
+            sb.Append(c)
+            i += 1
+        End While
+
+        Return Macro.Expand(sb.ToString)
     End Function
 
     Sub RemoveFilter(category As String, Optional name As String = Nothing)
@@ -241,7 +405,7 @@ p_709 = 1
 p_470bg = 5
 p_2020 = 9
 
-props = clip.get_frame(0).props
+props = clipname.get_frame(0).props
 
 if '_Matrix' in props and props['_Matrix'] != m_unspec and props['_Matrix'] < 15:
     matrix = props['_Matrix']
@@ -274,17 +438,14 @@ else:
     else:
         primaries = p_709
 
-clipname = clipname.resize.Bicubic(matrix_in = matrix, transfer_in = transfer, primaries_in = primaries, format = vs.RGB24)"
-                If Not vsCode.ContainsEx(Package.LibP2P.Filename) Then vsCode += BR + "core.std.LoadPlugin(r""" + Package.LibP2P.Path + """, altsearchpath=True)"
-                vsCode += "
-clipname = clipname.libp2p.Pack()
+clipname = clipname.resize.Bicubic(matrix_in = matrix, transfer_in = transfer, primaries_in = primaries, format = vs.RGB24)
 clipname.set_output()" + BR
                 vsCode = vsCode.Replace("clipname", clipname)
                 code = code.Replace(match.Value, vsCode).Trim
             End If
         End If
 
-        code = Macro.Expand(code)
+        code = ExpandMacros(code, Engine)
 
         If Me.Error <> "" OrElse code <> LastCode OrElse (comparePath AndAlso Path <> LastPath) Then
             If Path.Dir.DirExists Then
@@ -328,19 +489,27 @@ clipname.set_output()" + BR
         Dim ret = New StringBuilder
 
         If FrameServerHelp.IsPortable Then
-            Dim folders = {IO.Path.Combine(Folder.Settings, "Plugins", "VapourSynth"),
-                           IO.Path.Combine(Folder.Settings, "Plugins", "Dual")}
-
-            For Each folder In folders
+            For Each folder In GetVsPortablePluginFolders()
                 If folder.DirExists Then
-                    For Each file In Directory.GetFiles(folder, "*.dll")
-                        ret.AppendLine("core.std.LoadPlugin(r""" + file + """, altsearchpath=True)")
+                    For Each file In Directory.GetFiles(folder, "*.so")
+                        If Not IsVsPluginAutoloaded(file.FileName) Then
+                            ret.AppendLine("core.std.LoadPlugin(" + ToPythonString(file) + ", altsearchpath=True)")
+                        End If
                     Next
                 End If
             Next
         End If
 
         Return ret.ToString()
+    End Function
+
+    Shared Function GetVsPortablePluginFolders() As String()
+        Return {IO.Path.Combine(Folder.Settings, "Plugins", "VapourSynth"),
+                IO.Path.Combine(Folder.Settings, "Plugins", "Dual")}
+    End Function
+
+    Shared Function GetVsScriptFolders() As String()
+        Return LinuxNames.VapourSynthPluginDirs.Select(Function(i) IO.Path.Combine(i, "Scripts")).Where(Function(i) i.DirExists).ToArray
     End Function
 
     Shared Function ModifyVSScript(script As String) As String
@@ -354,7 +523,10 @@ clipname.set_output()" + BR
             clip.AppendLine("import vapoursynth as vs")
             clip.AppendLine("core = vs.core")
             clip.AppendLine(GetVsPortableAutoLoadPluginCode())
-            clip.AppendLine("sys.path.append(r""" + IO.Path.Combine(Folder.Startup, "Apps", "Plugins", "VS", "Scripts") + """)")
+
+            For Each folder In GetVsScriptFolders()
+                clip.AppendLine("sys.path.append(" + ToPythonString(folder) + ")")
+            Next
         End If
 
         If Not script.Contains("import importlib.machinery") AndAlso code.Contains("SourceFileLoader") Then
@@ -401,7 +573,7 @@ clipname.set_output()" + BR
 
     Shared Sub WriteVSCode(ByRef script As String, ByRef code As String, ByRef filterName As String, plugin As PluginPackage)
         If plugin.Filename.Ext = "py" Then
-            Dim line = plugin.Name + " = importlib.machinery.SourceFileLoader('" + plugin.Name + "', r""" + plugin.Path + """).load_module()"
+            Dim line = plugin.Name + " = importlib.machinery.SourceFileLoader('" + plugin.Name + "', " + ToPythonString(plugin.Path) + ").load_module()"
 
             If Not code.Contains(line) Then
                 If Not script.Contains(line) Then
@@ -415,8 +587,8 @@ clipname.set_output()" + BR
         Else
             If s.LoadVapourSynthPlugins AndAlso Not IsVsPluginInAutoLoadFolder(plugin.Filename) AndAlso Not script.Contains(plugin.Filename) AndAlso Not code.Contains(plugin.Filename) Then
                 Dim line = If(script.Contains(".avs." + filterName) OrElse code.Contains(".avs." + filterName),
-                    "core.avs.LoadPlugin(r""" + plugin.Path + """)",
-                    "core.std.LoadPlugin(r""" + plugin.Path + """, altsearchpath=True)")
+                    "core.avs.LoadPlugin(" + ToPythonString(plugin.Path) + ")",
+                    "core.std.LoadPlugin(" + ToPythonString(plugin.Path) + ", altsearchpath=True)")
 
                 If Not plugin.RequirementsFulfilled Then
                     code += "# !! The following line is commented out by StaxRip, because the system does not fulfill all requirements to execute it !!" & BR & "# "
@@ -429,20 +601,19 @@ clipname.set_output()" + BR
 
     Shared Function IsVsPluginInAutoLoadFolder(filename As String) As Boolean
         If FrameServerHelp.IsPortable Then
-            Dim folders = {
-                IO.Path.Combine(Package.VapourSynth.Directory, "vapoursynth64", "plugins"),
-                IO.Path.Combine(Package.VapourSynth.Directory, "vapoursynth64", "coreplugins"),
-                IO.Path.Combine(Folder.Settings, "Plugins", "VapourSynth"),
-                IO.Path.Combine(Folder.Settings, "Plugins", "Dual")}
-
-            For Each folder In folders
+            For Each folder In GetVsPortablePluginFolders()
                 If File.Exists(IO.Path.Combine(folder, filename)) Then
                     Return True
                 End If
             Next
-        Else
-            Return IO.Path.Combine(Folder.Plugins, filename).FileExists()
         End If
+
+        Return IsVsPluginAutoloaded(filename)
+    End Function
+
+    'VapourSynth fails loading a plugin twice, so plugins it loads itself must be skipped
+    Shared Function IsVsPluginAutoloaded(filename As String) As Boolean
+        Return VapourSynthInfo.GetAutoloadedPlugins().Any(Function(i) i.FileName = filename)
     End Function
 
     Shared Function IsAvsPluginInAutoLoadFolder(filename As String) As Boolean
@@ -476,8 +647,8 @@ clipname.set_output()" + BR
                 If plugin.AvsFilterNames IsNot Nothing Then
                     For Each filterName In plugin.AvsFilterNames
                         If s.LoadAviSynthPlugins AndAlso functions.Contains(filterName.ToLowerInvariant) Then
-                            If plugin.Filename.Ext = "dll" Then
-                                Dim load = "LoadPlugin(""" + fp + """)" + BR
+                            If plugin.Filename.Ext.EqualsAny("dll", "so") Then
+                                Dim load = "LoadPlugin(" + ToAviSynthString(fp) + ")" + BR
 
                                 If Not scriptLower.Contains(load.ToLowerInvariant) AndAlso
                                     Not loadCode.ToLowerInvariant.Contains(load.ToLowerInvariant) AndAlso
@@ -492,8 +663,8 @@ clipname.set_output()" + BR
                                         Dim dep = Package.Items.Values.OfType(Of PluginPackage).FirstOrDefault(Function(pack) pack.Filename.ToLowerEx() = iDependency.ToLowerEx())
                                         Dim fp2 = dep?.Path
 
-                                        If fp2.Ext = "dll" Then
-                                            load = "LoadPlugin(""" + fp2 + """)" + BR
+                                        If fp2.Ext.EqualsAny("dll", "so") Then
+                                            load = "LoadPlugin(" + ToAviSynthString(fp2) + ")" + BR
 
                                             If Not dep.RequirementsFulfilled Then
                                                 load = "# !! The following line is commented out by StaxRip, because the system does not fulfill all requirements to execute it !!" & BR & "# " & load
@@ -506,7 +677,7 @@ clipname.set_output()" + BR
                                                 loadCode += load
                                             End If
                                         ElseIf fp2.Ext = "avsi" Then
-                                            Dim avsiImport = "Import(""" + fp2 + """)" + BR
+                                            Dim avsiImport = "Import(" + ToAviSynthString(fp2) + ")" + BR
 
                                             If Not scriptLower.Contains(avsiImport.ToLowerInvariant) AndAlso
                                                 Not loadCode.ToLowerInvariant.Contains(avsiImport.ToLowerInvariant) AndAlso
@@ -518,7 +689,7 @@ clipname.set_output()" + BR
                                     Next
                                 End If
                             ElseIf plugin.Filename.Ext = "avsi" Then
-                                Dim avsiImport = "Import(""" + fp + """)" + BR
+                                Dim avsiImport = "Import(" + ToAviSynthString(fp) + ")" + BR
 
                                 If Not scriptLower.Contains(avsiImport.ToLowerInvariant) AndAlso
                                     Not loadCode.ToLowerInvariant.Contains(avsiImport.ToLowerInvariant) AndAlso
@@ -533,8 +704,8 @@ clipname.set_output()" + BR
                                         Dim dep = Package.Items.Values.OfType(Of PluginPackage).FirstOrDefault(Function(pack) pack.Filename.ToLowerEx() = iDependency.ToLowerEx())
                                         Dim fp2 = dep?.Path
 
-                                        If fp2.Ext = "dll" Then
-                                            Dim load = "LoadPlugin(""" + fp2 + """)" + BR
+                                        If fp2.Ext.EqualsAny("dll", "so") Then
+                                            Dim load = "LoadPlugin(" + ToAviSynthString(fp2) + ")" + BR
 
                                             If Not dep.RequirementsFulfilled Then
                                                 load = "# !! The following line is commented out by StaxRip, because the system does not fulfill all requirements to execute it !!" & BR & "# " & load
@@ -547,7 +718,7 @@ clipname.set_output()" + BR
                                                 loadCode += load
                                             End If
                                         ElseIf fp2.Ext = "avsi" Then
-                                            avsiImport = "Import(""" + fp2 + """)" + BR
+                                            avsiImport = "Import(" + ToAviSynthString(fp2) + ")" + BR
 
                                             If Not scriptLower.Contains(avsiImport.ToLowerInvariant) AndAlso
                                                 Not loadCode.ToLowerInvariant.Contains(avsiImport.ToLowerInvariant) AndAlso
@@ -604,6 +775,28 @@ clipname.set_output()" + BR
         End While
 
         Return functionTokens
+    End Function
+
+    'plugins are installed separately on Linux, so a preferred source filter can be missing
+    Shared Function IsInstalled(script As String, engine As ScriptEngine) As Boolean
+        Dim isVS = engine = ScriptEngine.VapourSynth
+        'AviSynth function names are case insensitive
+        Dim comparer = If(isVS, StringComparer.Ordinal, StringComparer.OrdinalIgnoreCase)
+        Dim functions = If(isVS, FindFunctionsVS(script), FindFunctionsAVS(script))
+        Dim plugins = Package.Items.Values.OfType(Of PluginPackage)().ToArray
+
+        For Each func In functions
+            Dim providers = plugins.Where(Function(plugin)
+                                              Dim names = If(isVS, plugin.VsFilterNames, plugin.AvsFilterNames)
+                                              Return names IsNot Nothing AndAlso names.Contains(func, comparer)
+                                          End Function).ToArray
+
+            If providers.Length > 0 AndAlso providers.All(Function(plugin) plugin.Path = "") Then
+                Return False
+            End If
+        Next
+
+        Return True
     End Function
 
     Shared Function IsFunctionCommented(script As String, index As Integer) As Boolean
@@ -762,7 +955,6 @@ clipname.set_output()" + BR
 
     Overrides Function Edit() As DialogResult
         Using form As New CodeEditor(Me)
-            form.StartPosition = FormStartPosition.CenterParent
 
             If form.ShowDialog() = DialogResult.OK Then
                 Filters = form.GetFilters

@@ -282,11 +282,11 @@ Public Class Audio
     Shared Function GetNicAudioCode(ap As AudioProfile) As String
         Select Case ap.File.Ext
             Case "ac3"
-                Return "AudioDub(last, NicAC3Source(""" + ap.File + """, Channels = " & ap.Channels & "))"
+                Return "AudioDub(last, NicAC3Source(" + VideoScript.ToAviSynthString(ap.File) + ", Channels = " & ap.Channels & "))"
             Case "mpa", "mp2", "mp3"
-                Return "AudioDub(last, NicMPASource(""" + ap.File + """))"
+                Return "AudioDub(last, NicMPASource(" + VideoScript.ToAviSynthString(ap.File) + "))"
             Case "wav"
-                Return "AudioDub(last, RaWavSource(""" + ap.File + """, Channels = " & ap.Channels & "))"
+                Return "AudioDub(last, RaWavSource(" + VideoScript.ToAviSynthString(ap.File) + ", Channels = " & ap.Channels & "))"
         End Select
     End Function
 
@@ -500,7 +500,7 @@ Public Class Audio
         d.RemoveFilter("Cutting")
         Dim outPath = Path.Combine(p.TempDir, ap.File.Base + "_convDSS." + ap.ConvertExt)
         d.Path = Path.Combine(p.TempDir, ap.File.Base + "_DecDSS.avs")
-        d.Filters.Insert(1, New VideoFilter("AudioDub(last,DirectShowSource(""" + ap.File + """, video=false))"))
+        d.Filters.Insert(1, New VideoFilter("AudioDub(last,DirectShowSource(" + VideoScript.ToAviSynthString(ap.File) + ", video=false))"))
 
         If ap.Channels = 2 Then
             d.Filters.Add(New VideoFilter(GetDown2Code))
@@ -545,7 +545,7 @@ Public Class Audio
         d.RemoveFilter("Cutting")
         Dim outPath = Path.Combine(p.TempDir, ap.File.Base + "_convFFAudioSource." + ap.ConvertExt)
         d.Path = Path.Combine(p.TempDir, ap.File.Base + "_DecodeFFAudioSource.avs")
-        d.Filters.Insert(1, New VideoFilter("AudioDub(last,FFAudioSource(""" + ap.File + """, cachefile=""" + cachefile + """))"))
+        d.Filters.Insert(1, New VideoFilter("AudioDub(last,FFAudioSource(" + VideoScript.ToAviSynthString(ap.File) + ", cachefile=" + VideoScript.ToAviSynthString(cachefile) + "))"))
 
         If ap.Channels = 2 Then
             d.Filters.Add(New VideoFilter(GetDown2Code))
@@ -587,7 +587,7 @@ Public Class Audio
         d.Filters.AddRange(p.Script.Filters)
         Dim wavPath = Path.Combine(p.TempDir, ap.File.Base + "_cut_ds.wav")
         d.Path = Path.Combine(p.TempDir, ap.File.Base + "_cut_ds.avs")
-        d.Filters.Insert(1, New VideoFilter("AudioDub(last,DirectShowSource(""" + ap.File + """, video=false))"))
+        d.Filters.Insert(1, New VideoFilter("AudioDub(last,DirectShowSource(" + VideoScript.ToAviSynthString(ap.File) + ", video=false))"))
 
         If ap.Channels = 2 Then
             d.Filters.Add(New VideoFilter(GetDown2Code))
@@ -631,7 +631,7 @@ Public Class Audio
         d.Filters.AddRange(p.Script.Filters)
         Dim wavPath = Path.Combine(p.TempDir, ap.File.Base + "_cut_ff.wav")
         d.Path = Path.Combine(p.TempDir, ap.File.Base + "_cut_ff.avs")
-        d.Filters.Insert(1, New VideoFilter("AudioDub(last,FFAudioSource(""" + ap.File + """, cachefile=""" + cachefile + """))"))
+        d.Filters.Insert(1, New VideoFilter("AudioDub(last,FFAudioSource(" + VideoScript.ToAviSynthString(ap.File) + ", cachefile=" + VideoScript.ToAviSynthString(cachefile) + "))"))
 
         If ap.Channels = 2 Then
             d.Filters.Add(New VideoFilter(GetDown2Code))
@@ -695,7 +695,7 @@ Public Class Audio
 
         Dim args2 = "-o " + mkvPath.Escape + " " + aviPath.Escape + " " + ap.File.Escape
         args2 += " --split parts-frames:" + p.Ranges.Select(Function(v) v.Start & "-" & (v.End + 1)).Join(",+")
-        args2 += " --engage append_and_split_flac --ui-language en"
+        args2 += " --engage append_and_split_flac --ui-language en_US"
 
         Using proc As New Proc
             proc.Header = "Cut Audio " & (ap.GetTrackIndex + 1)

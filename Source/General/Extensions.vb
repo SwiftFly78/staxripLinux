@@ -1,6 +1,4 @@
-﻿
-Imports System.Drawing.Drawing2D
-Imports System.Drawing.Text
+
 Imports System.Globalization
 Imports System.Reflection
 Imports System.Runtime.CompilerServices
@@ -10,7 +8,6 @@ Imports System.Text.RegularExpressions
 Imports System.Threading
 Imports System.Threading.Tasks
 
-Imports Microsoft.Win32
 Imports StaxRip.UI
 Imports VB6 = Microsoft.VisualBasic
 
@@ -83,17 +80,18 @@ Module StringExtensions
         Return If(instance = "", "", instance.Trim)
     End Function
 
+    'Linux file systems are case sensitive
     <Extension>
     Function PathStartsWith(instance As String, value As String) As Boolean
         If instance <> "" AndAlso value <> "" Then
-            Return instance.ToLowerInvariant.StartsWith(value.ToLowerInvariant)
+            Return instance.StartsWith(value, StringComparison.Ordinal)
         End If
     End Function
 
     <Extension>
     Function PathEquals(instance As String, value As String) As Boolean
         If instance <> "" AndAlso value <> "" Then
-            Return instance.ToLowerInvariant = value.ToLowerInvariant
+            Return String.Equals(instance, value, StringComparison.Ordinal)
         End If
     End Function
 
@@ -215,7 +213,12 @@ Module StringExtensions
         If instance = "" Then Return ""
         If instance(0) = """" AndAlso instance(instance.Length - 1) = """" Then Return instance
 
-        For Each i In " ;=~*$%()&"
+        'command lines can be executed by /bin/sh, which interprets $, ` and \ in double quotes
+        If instance.IndexOfAny({"$"c, "`"c, """"c, "\"c}) > -1 Then
+            Return ShellHelp.Quote(instance)
+        End If
+
+        For Each i In " ;=~*$%()&'!#[]{}<>|?`" + VB6.vbTab
             If instance.Contains(i) Then
                 Return """" + instance + """"
             End If
@@ -228,6 +231,7 @@ Module StringExtensions
     Function Unescape(instance As String) As String
         If instance.Length < 2 Then Return instance
         If instance(0) = """" AndAlso instance(instance.Length - 1) = """" Then Return instance.Substring(1, instance.Length - 2)
+        If instance(0) = "'"c AndAlso instance(instance.Length - 1) = "'"c Then Return String.Concat(ShellHelp.SplitArguments(instance))
         Return instance
     End Function
 
@@ -324,61 +328,20 @@ Module StringExtensions
         Return Path.GetDirectoryName(instance.TrimQuotes())
     End Function
 
+    'Windows long path prefixes and short names don't exist on Linux
     <Extension()>
     Function LongPathPrefix(instance As String) As String
-        If instance = "" Then Return ""
-
-        Dim prefix = "\\?\"
-        Dim isEscaped = instance(0) = """"c
-
-        Return If(instance.Length > GlobalClass.MAX_PATH AndAlso Not instance.TrimQuotes().StartsWith(prefix),
-                        If(isEscaped, (prefix + instance.TrimQuotes()).Escape(), prefix + instance),
-                        instance)
+        Return If(instance, "")
     End Function
 
     <Extension()>
     Function ToShortFilePath(instance As String) As String
-        If instance = "" Then
-            Return ""
-        End If
-
-        If instance.StartsWith("\\?\") Then
-            instance = instance.Substring(4)
-        End If
-
-        If instance.Length <= GlobalClass.MAX_PATH Then
-            Return instance
-        End If
-
-        Dim sb As New StringBuilder(GlobalClass.MAX_PATH)
-        Native.GetShortPathName(instance.Dir, sb, sb.Capacity)
-        Dim ret = Path.Combine(sb.ToString, instance.FileName)
-
-        If ret.Length <= GlobalClass.MAX_PATH Then
-            Return ret
-        End If
-
-        Native.GetShortPathName(instance, sb, sb.Capacity)
-        Return sb.ToString
+        Return If(instance, "")
     End Function
 
     <Extension()>
     Function ToShortFolderPath(instance As String) As String
-        If instance = "" Then
-            Return ""
-        End If
-
-        If instance.StartsWith("\\?\") Then
-            instance = instance.Substring(4)
-        End If
-
-        If instance.Length <= GlobalClass.MAX_PATH Then
-            Return instance
-        End If
-
-        Dim sb As New StringBuilder(GlobalClass.MAX_PATH)
-        Native.GetShortPathName(instance, sb, sb.Capacity)
-        Return sb.ToString
+        Return If(instance, "")
     End Function
 
     <Extension()>
@@ -541,11 +504,13 @@ Module StringExtensions
 
     <Extension()>
     Function ToColor(str As String, Optional defaultColor As Color = Nothing) As Color
-        Try
-            Return ColorTranslator.FromHtml(str)
-        Catch ex As Exception
-            Return defaultColor
-        End Try
+        Dim ret As Color
+
+        If str <> "" AndAlso Color.TryParse(str, ret) Then
+            Return ret
+        End If
+
+        Return defaultColor
     End Function
 
     <Extension()>
@@ -808,7 +773,8 @@ Module StringExtensions
 
     <Extension()>
     Function SplitLinesNoEmpty(value As String) As String()
-        Return SplitNoEmpty(value, Environment.NewLine)
+        If value Is Nothing Then Return {}
+        Return value.Split({VB6.vbCrLf, VB6.vbLf, VB6.vbCr}, StringSplitOptions.RemoveEmptyEntries)
     End Function
 
     <Extension()>
@@ -903,23 +869,19 @@ Module StringExtensions
 
     <Extension()>
     Sub ToClipboard(value As String)
-        If value <> "" Then
-            Clipboard.SetText(value)
-        Else
-            Clipboard.Clear()
-        End If
+        UIInvoke(Sub()
+                     If value <> "" Then
+                         Clipboard.Instance.Text = value
+                     Else
+                         Clipboard.Instance.Clear()
+                     End If
+                 End Sub)
     End Sub
 End Module
 
 Module MiscExtensions
     <Extension()>
-    Sub CenterScreen(instance As Form)
-        If instance IsNot Nothing Then
-            instance.StartPosition = FormStartPosition.Manual
-            Dim wa = Screen.FromControl(instance).WorkingArea
-            instance.Left = (wa.Width - instance.Width) \ 2
-            instance.Top = (wa.Height - instance.Height) \ 2
-        End If
+    Sub CenterScreen(instance As Window)
     End Sub
 
     <Extension()>
@@ -1271,110 +1233,37 @@ Module MiscExtensions
     End Function
 End Module
 
-Module RegistryKeyExtensions
-    Function GetValue(Of T)(root As RegistryKey, path As String, name As String) As T
-        Using key = root.OpenSubKey(path)
-            If key IsNot Nothing Then
-                Dim value = key.GetValue(name)
-
-                If value IsNot Nothing Then
-                    Try
-                        Return CType(value, T)
-                    Catch
-                    End Try
-                End If
-            End If
-        End Using
-    End Function
-
-    <Extension()>
-    Function GetString(root As RegistryKey, path As String, name As String) As String
-        Return GetValue(Of String)(root, path, name)
-    End Function
-
-    <Extension()>
-    Function GetInt(root As RegistryKey, path As String, name As String) As Integer
-        Return GetValue(Of Integer)(root, path, name)
-    End Function
-
-    <Extension()>
-    Function GetLong(root As RegistryKey, path As String, name As String) As Long
-        Dim value = GetValue(Of Long)(root, path, name)
-        Return BitConverter.ToUInt32(BitConverter.GetBytes(value), 0)
-    End Function
-
-    <Extension()>
-    Function GetBoolean(root As RegistryKey, path As String, name As String) As Boolean
-        Return GetValue(Of Boolean)(root, path, name)
-    End Function
-
-    <Extension()>
-    Function GetKeyNames(root As RegistryKey, path As String) As String()
-        Using subKey = root.OpenSubKey(path)
-            If subKey IsNot Nothing Then
-                Return subKey.GetSubKeyNames
-            End If
-        End Using
-
-        Return {}
-    End Function
-
-    <Extension()>
-    Function GetValueNames(root As RegistryKey, path As String) As String()
-        Using subKey = root.OpenSubKey(path)
-            If subKey IsNot Nothing Then
-                Return subKey.GetValueNames
-            End If
-        End Using
-
-        Return {}
-    End Function
-
-    <Extension()>
-    Sub Write(root As RegistryKey, path As String, name As String, value As Object)
-        Dim subKey = If(root.OpenSubKey(path, True), root.CreateSubKey(path, RegistryKeyPermissionCheck.ReadWriteSubTree))
-
-        subKey.SetValue(name, value)
-        subKey.Close()
-    End Sub
-
-    <Extension()>
-    Sub DeleteValue(root As RegistryKey, path As String, name As String)
-        Using key = root.OpenSubKey(path, True)
-            key?.DeleteValue(name, False)
-        End Using
-    End Sub
-End Module
-
 Module ControlExtensions
     <Extension()>
-    Sub ScaleClientSize(instance As Control, width As Single, height As Single)
-        instance.ClientSize = New Size(CInt(instance.Font.Height * width / s.UIScaleFactor), CInt(instance.Font.Height * height / s.UIScaleFactor))
+    Sub ScaleClientSize(instance As Window, width As Single, height As Single)
+        instance.ClientSize = New Size(CInt(FontHeight * width), CInt(FontHeight * height))
     End Sub
 
     <Extension()>
     Sub ScaleSize(instance As Control, width As Single, height As Single)
-        instance.Size = New Size(CInt(instance.Font.Height * width), CInt(instance.Font.Height * height))
+        instance.Size = New Size(CInt(FontHeight * width), CInt(FontHeight * height))
     End Sub
 
     <Extension()>
-    Sub ReplaceFontFamily(instance As Control, newFamily As FontFamily)
-        instance.Font = New Font(newFamily, instance.Font.Size, instance.Font.Style, instance.Font.Unit, instance.Font.GdiCharSet)
+    Sub ReplaceFontFamily(instance As CommonControl, newFamily As FontFamily)
+        If newFamily IsNot Nothing Then
+            instance.Font = New Font(newFamily, instance.Font.Size, instance.Font.FontStyle)
+        End If
     End Sub
 
     <Extension()>
-    Sub SetFontStyle(instance As Control, style As FontStyle)
-        instance.Font = New Font(instance.Font, style)
+    Sub SetFontStyle(instance As CommonControl, style As FontStyle)
+        instance.Font = New Font(instance.Font.Family, instance.Font.Size, style)
     End Sub
 
     <Extension()>
-    Sub SetFontSize(instance As Control, fontSize As Single)
-        instance.Font = New Font(instance.Font.FontFamily, fontSize * s.UIScaleFactor, instance.Font.Style, instance.Font.Unit, instance.Font.GdiCharSet)
+    Sub SetFontSize(instance As CommonControl, fontSize As Single)
+        instance.Font = New Font(instance.Font.Family, fontSize * s.UIScaleFactor, instance.Font.FontStyle)
     End Sub
 
     <Extension()>
-    Function ClientMousePos(instance As Control) As Point
-        Return instance.PointToClient(Control.MousePosition)
+    Function ClientMousePos(instance As Control) As PointF
+        Return instance.PointFromScreen(Mouse.Position)
     End Function
 
     <Extension()>
@@ -1383,9 +1272,8 @@ Module ControlExtensions
 
         For x = 4 To 2 Step -1
             ret = values.Where(Function(val) val <> "").Join("".PadRight(x))
-            Dim testWidth = TextRenderer.MeasureText(ret, instance.Font).Width
 
-            If testWidth < instance.Width Then
+            If MeasureTextWidth(ret) < instance.Width Then
                 Return ret
             End If
         Next
@@ -1393,214 +1281,65 @@ Module ControlExtensions
         Return ret
     End Function
 
+    'icon fonts aren't available, the button keeps its text
     <Extension()>
     Function SetSymbolAsText(instance As ButtonEx, symbol As Symbol) As ButtonEx
-        Dim awesomePath As String = Path.Combine(Folder.Fonts, "Icons", "FontAwesome.ttf")
-        Dim segoePath As String = Path.Combine(Folder.Fonts, "Icons", "Segoe-MDL2-Assets.ttf")
-
-        Dim fontFilesExist As Boolean = File.Exists(awesomePath) AndAlso File.Exists(segoePath)
-        If Not fontFilesExist Then Return Nothing
-
-        Dim fontCollection As New PrivateFontCollection()
-        Dim family As FontFamily = Nothing
-        Dim legacy = OSVersion.VersionInfo.dwMajorVersion < 10
-
-        fontCollection.AddFontFile(awesomePath)
-        If legacy Then fontCollection.AddFontFile(segoePath)
-
-        If symbol > 61400 Then
-            If fontCollection.Families.Count > 0 Then family = fontCollection.Families(0)
-        Else
-            If legacy Then
-                If fontCollection.Families.Count > 1 Then family = fontCollection.Families(1)
-            Else
-                family = New FontFamily("Segoe MDL2 Assets")
-            End If
-        End If
-
-        If family IsNot Nothing Then
-            instance.Font = New Font(family, instance.Font.Size)
-            instance.Text = Convert.ToChar(symbol).ToString()
-        End If
-
+        instance.Symbol = symbol
         Return instance
     End Function
 
     <Extension()>
-    Function GetAllControls(instance As Control) As IEnumerable(Of Control)
-        Dim controls = instance.Controls.Cast(Of Control)
-        Return controls.SelectMany(Function(x) x.GetAllControls()).Concat(controls)
+    Function GetAllControls(instance As Container) As IEnumerable(Of Control)
+        Return instance.Children
     End Function
 
     <Extension()>
-    Function GetAllControls(Of T)(instance As Control) As IEnumerable(Of T)
-        Return instance.GetAllControls.OfType(Of T)
+    Function GetAllControls(Of T)(instance As Container) As IEnumerable(Of T)
+        Return instance.Children.OfType(Of T)
     End Function
 
     <Extension()>
-    Sub ClearAllFormatting(instance As RichTextBox)
-        instance.Text = instance.Text.ToString()
+    Sub ClearAllFormatting(instance As RichTextBoxEx)
+        instance.ClearAllFormatting()
     End Sub
 
     <Extension()>
-    Sub SelectionFormat(instance As RichTextBox, index As Integer, length As Integer, backColor As ColorHSL, foreColor As ColorHSL, ParamArray fontStyles() As FontStyle)
+    Sub SelectionFormat(instance As RichTextBoxEx, index As Integer, length As Integer, backColor As ColorHSL, foreColor As ColorHSL, ParamArray fontStyles() As FontStyle)
         If instance Is Nothing Then Return
-
-        instance.SuspendLayout()
-        instance.Select(index, length)
-        instance.SelectionBackColor = If(backColor.A = 0, instance.SelectionBackColor, backColor.ToColor())
-        instance.SelectionColor = foreColor
-
-        If fontStyles IsNot Nothing AndAlso fontStyles.Length > 0 Then
-            instance.SelectionFont = New Font(instance.Font, fontStyles.Aggregate(instance.Font.Style, Function(a, n) a Or n))
-        End If
-        instance.ResumeLayout()
+        instance.SetFormat(index, length, foreColor.ToColor, If(backColor.A = 0, CType(Nothing, Color?), backColor.ToColor), fontStyles IsNot Nothing AndAlso fontStyles.Contains(FontStyle.Bold))
     End Sub
 End Module
 
 Module UIExtensions
     <Extension()>
-    Sub ClearAndDisplose(instance As ToolStripItemCollection)
-        For Each i In instance.OfType(Of IDisposable).ToArray
-            i.Dispose()
-        Next
-
+    Sub ClearAndDisplose(instance As MenuItemCollection)
         instance.Clear()
     End Sub
 
     <Extension()>
-    Function ResizeToSmallIconSize(img As Image) As Image
-        If img IsNot Nothing AndAlso img.Size <> SystemInformation.SmallIconSize Then
-            Dim s = SystemInformation.SmallIconSize
-            Dim r As New Bitmap(s.Width, s.Height)
-
-            Using g = Graphics.FromImage(DirectCast(r, Image))
-                g.SmoothingMode = SmoothingMode.AntiAlias
-                g.InterpolationMode = InterpolationMode.HighQualityBicubic
-                g.PixelOffsetMode = PixelOffsetMode.HighQuality
-                g.DrawImage(img, 0, 0, s.Width, s.Height)
-            End Using
-
-            Return r
-        End If
-
-        Return img
-    End Function
-
-    <Extension()>
-    Function ResizeImage(image As Image, ByVal height As Integer) As Image
-        Dim percentHeight = height / image.Height
-        Dim ret = New Bitmap(CInt(image.Width * percentHeight), CInt(height))
-
-        Using g = Graphics.FromImage(ret)
-            g.InterpolationMode = InterpolationMode.HighQualityBicubic
-            g.DrawImage(image, 0, 0, ret.Width, ret.Height)
-        End Using
-
-        Return ret
-    End Function
-
-    <Extension()>
-    Sub SetSelectedPath(d As FolderBrowserDialog, path As String)
-        If Not Directory.Exists(path) Then
-            path = path.ExistingParent
-        End If
-
-        If Directory.Exists(path) Then
-            d.SelectedPath = path
-        End If
-    End Sub
-
-    <Extension()>
-    Sub SetInitDir(dialog As FileDialog, ParamArray paths As String())
-        For Each path In paths
-            If Not Directory.Exists(path) Then
-                path = path.ExistingParent
-            End If
-
-            If Directory.Exists(path) Then
-                dialog.InitialDirectory = path
-                Exit For
-            End If
+    Sub AddRange(instance As ObjectModel.Collection(Of Object), items As IEnumerable)
+        For Each i In items
+            instance.Add(i)
         Next
     End Sub
 
     <Extension()>
-    Sub SetFilter(dialog As FileDialog, values As IEnumerable(Of String))
-        dialog.Filter = FileTypes.GetFilter(values)
-    End Sub
+    Function ResizeImage(image As Image, height As Integer) As Image
+        If image Is Nothing OrElse image.Height = 0 Then
+            Return image
+        End If
+
+        Dim percentHeight = height / image.Height
+        Return New Bitmap(image, CInt(image.Width * percentHeight), height, ImageInterpolation.High)
+    End Function
 
     <Extension()>
     Sub SendMessageCue(te As TextEdit, value As String, hideWhenFocused As Boolean)
-        SendMessageCue(te.TextBox, value, hideWhenFocused)
-    End Sub
-
-    <Extension()>
-    Sub SendMessageCue(tb As TextBox, value As String, hideWhenFocused As Boolean)
-        Dim wParam = If(hideWhenFocused, 0, 1)
-        Native.SendMessage(tb.Handle, Native.EM_SETCUEBANNER, wParam, value)
+        te.SendMessageCue(value, hideWhenFocused)
     End Sub
 
     <Extension()>
     Sub SendMessageCue(c As ComboBox, value As String)
-        Native.SendMessage(c.Handle, Native.CB_SETCUEBANNER, 1, value)
-    End Sub
-
-    Function GetPropertyValue(obj As String, propertyName As String) As Object
-        obj.GetType.GetProperty(propertyName).GetValue(obj)
-    End Function
-
-    <Extension()>
-    Sub RemoveSelection(dgv As DataGridView)
-        For Each i As DataGridViewRow In dgv.SelectedRows
-            dgv.Rows.Remove(i)
-        Next
-
-        If dgv.SelectedRows.Count = 0 AndAlso dgv.RowCount > 0 Then
-            dgv.Rows(dgv.RowCount - 1).Selected = True
-        End If
-    End Sub
-
-    <Extension()>
-    Function CanMoveUp(dgv As DataGridView) As Boolean
-        Return dgv.SelectedRows.Count > 0 AndAlso dgv.SelectedRows(0).Index > 0
-    End Function
-
-    <Extension()>
-    Function CanMoveDown(dgv As DataGridView) As Boolean
-        Return dgv.SelectedRows.Count > 0 AndAlso dgv.SelectedRows(0).Index < dgv.RowCount - 1
-    End Function
-
-    <Extension()>
-    Sub MoveSelectionUp(dgv As DataGridView)
-        If CanMoveUp(dgv) Then
-            Dim bs = DirectCast(dgv.DataSource, BindingSource)
-            Dim pos = bs.Position
-            bs.RaiseListChangedEvents = False
-            Dim current = bs.Current
-            bs.Remove(current)
-            pos -= 1
-            bs.Insert(pos, current)
-            bs.Position = pos
-            bs.RaiseListChangedEvents = True
-            bs.ResetBindings(False)
-        End If
-    End Sub
-
-    <Extension()>
-    Sub MoveSelectionDown(dgv As DataGridView)
-        If CanMoveDown(dgv) Then
-            Dim bs = DirectCast(dgv.DataSource, BindingSource)
-            Dim pos = bs.Position
-            bs.RaiseListChangedEvents = False
-            Dim current = bs.Current
-            bs.Remove(current)
-            pos += 1
-            bs.Insert(pos, current)
-            bs.Position = pos
-            bs.RaiseListChangedEvents = True
-            bs.ResetBindings(False)
-        End If
     End Sub
 End Module
 
@@ -1614,27 +1353,11 @@ End Module
 Module FontExtensions
     <Extension()>
     Function IsMonospace(fontFamily As FontFamily) As Boolean
-        Using bmp As New Bitmap(1, 1)
-            Using g As Graphics = Graphics.FromImage(bmp)
-                Using f = New Font(fontFamily.Name, 20)
-                    Dim w1 = g.MeasureString("ii", f).Width
-                    Dim w2 = g.MeasureString("WW", f).Width
-                    Return w1 = w2
-                End Using
-            End Using
-        End Using
+        Return FontManager.IsMonospace(fontFamily)
     End Function
 
     <Extension()>
     Function IsMonospace(font As Font) As Boolean
-        Using bmp As New Bitmap(1, 1)
-            Using g As Graphics = Graphics.FromImage(bmp)
-                Using f = New Font(font.Name, 20)
-                    Dim w1 = g.MeasureString("ii", f).Width
-                    Dim w2 = g.MeasureString("WW", f).Width
-                    Return w1 = w2
-                End Using
-            End Using
-        End Using
+        Return FontManager.IsMonospace(font.Family)
     End Function
 End Module

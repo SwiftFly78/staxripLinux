@@ -1,4 +1,4 @@
-﻿
+
 Imports System.Text
 Imports StaxRip.UI
 
@@ -77,8 +77,7 @@ Public Class Rav1e
             proc.Encoding = Encoding.UTF8
             proc.Priority = priority
             proc.SkipString = "encoded "
-            proc.File = "cmd.exe"
-            proc.Arguments = "/S /C """ + commandLine + """"
+            proc.SetShellCommand(commandLine)
             proc.Start()
         End Using
     End Sub
@@ -339,7 +338,12 @@ Public Class Rav1eParams
         Dim sb As New StringBuilder
 
         If includePaths AndAlso includeExecutable Then
-            sb.Append(Package.ffmpeg.Path.Escape + $" -loglevel fatal -hide_banner{If(script.Path.Ext = "vpy", " -f vapoursynth", "")} -i " + script.Path.Escape + " -f yuv4mpegpipe -strict -1 - | " + Package.Rav1e.Path.Escape)
+            'many FFmpeg builds can't read VapourSynth scripts
+            If script.Path.Ext = "vpy" Then
+                sb.Append(Package.vspipe.Path.Escape + " " + script.Path.Escape + " - --container y4m | " + Package.Rav1e.Path.Escape)
+            Else
+                sb.Append(Package.ffmpeg.Path.Escape + " -loglevel fatal -hide_banner -i " + script.Path.Escape + " -f yuv4mpegpipe -strict -1 - | " + Package.Rav1e.Path.Escape)
+            End If
         End If
 
         If includePaths AndAlso Passes.Visible AndAlso Passes.Value = 1 Then

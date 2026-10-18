@@ -1,2511 +1,136 @@
-﻿
+
+Imports System.Collections.ObjectModel
 Imports System.ComponentModel
-Imports System.Runtime.InteropServices
-Imports System.Windows.Forms.VisualStyles
-Imports System.Threading
-Imports System.Threading.Tasks
-Imports System.Drawing.Drawing2D
 Imports System.Text.RegularExpressions
-Imports System.Reflection
 
 Namespace UI
-    Public Class TreeViewEx
-        Inherits TreeView
-
-        Private _backAlternateColor As Color
-        Private _backExpandableColor As Color
-        Private _backExpandedColor As Color
-        Private _backHighlightColor As Color
-        Private _backSelectedColor As Color
-        Private _foreExpandableColor As Color
-        Private _foreExpandedColor As Color
-        Private _foreHighlightColor As Color
-        Private _foreSelectedColor As Color
-
-        <DefaultValue(False)>
-        Property AutoCollaps As Boolean
-
-        <DefaultValue(GetType(TreeNodeExpandMode), "Disabled")>
-        Property ExpandMode As TreeNodeExpandMode
-
-        <DefaultValue(False)>
-        Property SelectOnMouseDown() As Boolean
-
-        <DefaultValue(True)>
-        Property UseSystemScrollBars As Boolean
-
-        ReadOnly Property MaxVisibleNodes As Integer
-            Get
-                Return ClientSize.Height \ ItemHeight
-            End Get
-        End Property
-
-        Private _wheelScrollLines As Integer
-
-        ReadOnly Property WheelScrollLines() As Integer
-            Get
-                If _wheelScrollLines < 1 Then
-                    _wheelScrollLines = OS.Hardware.Mouse.WheelScrollLines
-                End If
-
-                Return _wheelScrollLines
-            End Get
-        End Property
-
-
-        Public Property BackAlternateColor As Color
-            Get
-                Return _backAlternateColor
-            End Get
-            Set(value As Color)
-                _backAlternateColor = value
-            End Set
-        End Property
-
-        Private Function ShouldSerializeBackAlternateColor() As Boolean
-            Return BackAlternateColor <> Color.Empty
-        End Function
-
-        Public Property BackExpandableColor As Color
-            Get
-                Return _backExpandableColor
-            End Get
-            Set(value As Color)
-                _backExpandableColor = value
-            End Set
-        End Property
-
-        Private Function ShouldSerializeBackExpandableColor() As Boolean
-            Return BackExpandableColor <> Color.Empty
-        End Function
-
-        Public Property BackExpandedColor As Color
-            Get
-                Return _backExpandedColor
-            End Get
-            Set(value As Color)
-                _backExpandedColor = value
-            End Set
-        End Property
-
-        Private Function ShouldSerializeBackExpandedColor() As Boolean
-            Return BackExpandedColor <> Color.Empty
-        End Function
-
-        Public Property BackHighlightColor As Color
-            Get
-                Return _backHighlightColor
-            End Get
-            Set(value As Color)
-                _backHighlightColor = value
-                Invalidate()
-            End Set
-        End Property
-
-        Private Function ShouldSerializeBackHighlightColor() As Boolean
-            Return BackHighlightColor <> Color.Empty
-        End Function
-
-        Public Property BackSelectedColor As Color
-            Get
-                Return _backSelectedColor
-            End Get
-            Set(value As Color)
-                _backSelectedColor = value
-                Invalidate()
-            End Set
-        End Property
-
-        Private Function ShouldSerializeBackSelectedColor() As Boolean
-            Return BackSelectedColor <> Color.Empty
-        End Function
-
-        Public Property ForeExpandableColor As Color
-            Get
-                Return _foreExpandableColor
-            End Get
-            Set(value As Color)
-                _foreExpandableColor = value
-                Invalidate()
-            End Set
-        End Property
-
-        Private Function ShouldSerializeForeExpandableColor() As Boolean
-            Return ForeExpandableColor <> Color.Empty
-        End Function
-
-        Public Property ForeExpandedColor As Color
-            Get
-                Return _foreExpandedColor
-            End Get
-            Set(value As Color)
-                _foreExpandedColor = value
-                Invalidate()
-            End Set
-        End Property
-
-        Private Function ShouldSerializeForeExpandedColor() As Boolean
-            Return ForeExpandedColor <> Color.Empty
-        End Function
-
-        Public Property ForeHighlightColor As Color
-            Get
-                Return _foreHighlightColor
-            End Get
-            Set(value As Color)
-                _foreHighlightColor = value
-                Invalidate()
-            End Set
-        End Property
-
-        Private Function ShouldSerializeForeHighlightColor() As Boolean
-            Return ForeHighlightColor <> Color.Empty
-        End Function
-
-        Public Property ForeSelectedColor As Color
-            Get
-                Return _foreSelectedColor
-            End Get
-            Set(value As Color)
-                _foreSelectedColor = value
-                Invalidate()
-            End Set
-        End Property
-
-        Private Function ShouldSerializeForeSelectedColor() As Boolean
-            Return ForeSelectedColor <> Color.Empty
-        End Function
-
-        Sub New()
-            MyBase.New()
-            DrawMode = TreeViewDrawMode.OwnerDrawAll
-
-            ApplyTheme()
-
-            AddHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
-        End Sub
-
-        Protected Overrides Sub Dispose(disposing As Boolean)
-            RemoveHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
-            MyBase.Dispose(disposing)
-        End Sub
-
-        Sub OnThemeChanged(theme As Theme)
-            ApplyTheme(theme)
-        End Sub
-
-        Sub ApplyTheme()
-            ApplyTheme(ThemeManager.CurrentTheme)
-        End Sub
-
-        Sub ApplyTheme(theme As Theme)
-            If DesignHelp.IsDesignMode Then
-                Exit Sub
-            End If
-
-            SuspendLayout()
-            BackColor = theme.General.Controls.TreeView.BackColor
-            BackAlternateColor = theme.General.Controls.TreeView.BackAlternateColor
-            BackExpandableColor = theme.General.Controls.TreeView.BackExpandableColor
-            BackExpandedColor = theme.General.Controls.TreeView.BackExpandedColor
-            BackHighlightColor = theme.General.Controls.TreeView.BackHighlightColor
-            BackSelectedColor = theme.General.Controls.TreeView.BackSelectedColor
-            ForeColor = theme.General.Controls.TreeView.ForeColor
-            ForeExpandableColor = theme.General.Controls.TreeView.ForeExpandableColor
-            ForeExpandedColor = theme.General.Controls.TreeView.ForeExpandedColor
-            ForeHighlightColor = theme.General.Controls.TreeView.ForeHighlightColor
-            ForeSelectedColor = theme.General.Controls.TreeView.ForeSelectedColor
-            LineColor = theme.General.Controls.TreeView.LineColor
-            ResumeLayout()
-        End Sub
-
-        Protected Overrides Sub OnDrawNode(e As DrawTreeNodeEventArgs)
-            'MyBase.OnDrawNode(e)
-
-            e.DrawDefault = False
-            Dim font = If(e.Node.NodeFont, e.Node.TreeView.Font)
-            Dim state = e.State
-            Dim text = New String(" "c, e.Node.Level * 4) + e.Node.Text
-            Dim textSize = TextRenderer.MeasureText(text, font)
-            Dim bounds = e.Bounds
-            Dim textFlags = TextFormatFlags.GlyphOverhangPadding Or TextFormatFlags.VerticalCenter Or TextFormatFlags.SingleLine
-
-            Dim triangleIndent = textSize.Width
-            Dim triangleOffset = New Point(e.Bounds.Left + triangleIndent, e.Bounds.Height \ 6)
-            Dim triangleSize = CInt(e.Bounds.Height / 2.3)
-            Dim trianglePoints = {
-                New Point(triangleOffset.X, e.Bounds.Bottom - triangleOffset.Y),
-                New Point(triangleOffset.X + triangleSize, e.Bounds.Bottom - triangleOffset.Y),
-                New Point(triangleOffset.X + triangleSize, e.Bounds.Bottom - triangleOffset.Y - triangleSize)
-            }
-
-            If e.Node.IsSelected Then
-                e.Graphics.FillRectangle(New SolidBrush(BackSelectedColor), bounds)
-                'ControlPaint.DrawFocusRectangle(e.Graphics, bounds, ForeSelectedColor, BackSelectedColor)
-                TextRenderer.DrawText(e.Graphics, text, font, bounds, ForeSelectedColor, BackSelectedColor, textFlags)
-            ElseIf e.Node.IsExpanded Then
-                e.Graphics.FillRectangle(New SolidBrush(BackExpandedColor), bounds)
-                TextRenderer.DrawText(e.Graphics, text, font, bounds, ForeExpandedColor, BackExpandedColor, textFlags)
-            ElseIf Not e.Node.IsExpanded AndAlso e.Node.Nodes.Count > 0 Then
-                e.Graphics.FillRectangle(New SolidBrush(BackExpandableColor), bounds)
-                e.Graphics.FillPolygon(New SolidBrush(BackSelectedColor), trianglePoints)
-                TextRenderer.DrawText(e.Graphics, text, font, bounds, ForeExpandableColor, BackExpandableColor, textFlags)
-            Else
-                e.Graphics.FillRectangle(New SolidBrush(BackColor), bounds)
-                TextRenderer.DrawText(e.Graphics, text, font, bounds, ForeColor, BackColor, textFlags)
-            End If
-            MyBase.OnDrawNode(e)
-        End Sub
-
-        Protected Overrides Sub OnAfterSelect(e As TreeViewEventArgs)
-            If AutoCollaps Then
-                For Each i As TreeNode In If(e.Node.Parent Is Nothing, Nodes, e.Node.Parent.Nodes)
-                    If Not i Is e.Node Then
-                        i.Collapse()
-                    End If
-                Next
-            End If
-
-            Select Case ExpandMode
-                Case TreeNodeExpandMode.Normal
-                    e.Node.Expand()
-                Case TreeNodeExpandMode.InclusiveChilds
-                    e.Node.ExpandAll()
-            End Select
-
-            MyBase.OnAfterSelect(e)
-        End Sub
-
-        Protected Overrides Sub WndProc(ByRef m As Message)
-            If SelectOnMouseDown AndAlso m.Msg = &H201 Then 'WM_LBUTTONDOWN
-                Dim n = GetNodeAt(ClientMousePos)
-
-                If Not n Is Nothing AndAlso n.Nodes.Count = 0 Then
-                    SelectedNode = n
-                    Focus()
-                    Exit Sub
-                End If
-            End If
-
-            If Not UseSystemScrollBars AndAlso m.Msg = &H83 Then 'WM_NCCALCSIZE
-                Exit Sub
-            End If
-
-            MyBase.WndProc(m)
-        End Sub
-
-        Sub MoveSelectedNodeLeft()
-            Dim n As TreeNode = SelectedNode
-
-            If Not n Is Nothing AndAlso Not n.Parent Is Nothing Then
-                Dim parentParentNodes As TreeNodeCollection = GetParentParentNodes(n)
-                Dim parentIndex As Integer = n.Parent.Index
-
-                If Not parentParentNodes Is Nothing Then
-                    n.Remove()
-                    parentParentNodes.Insert(parentIndex + 1, n)
-                    SelectedNode = n
-                End If
-            End If
-        End Sub
-
-        Sub MoveSelectedNodeUp()
-            Dim n As TreeNode = SelectedNode
-
-            If Not n Is Nothing Then
-                If n.Index = 0 Then
-                    Dim parentParentNodes As TreeNodeCollection = GetParentParentNodes(n)
-
-                    If Not parentParentNodes Is Nothing Then
-                        Dim index As Integer = n.Parent.Index
-                        n.Remove()
-                        parentParentNodes.Insert(index, n)
-                    End If
-                Else
-                    Dim index As Integer = n.Index
-                    Dim parentNodes As TreeNodeCollection = GetParentNodes(n)
-                    n.Remove()
-                    parentNodes.Insert(index - 1, n)
-                End If
-
-                SelectedNode = n
-            End If
-        End Sub
-
-        Sub MoveSelectedNodeRight()
-            Dim n As TreeNode = SelectedNode
-
-            If Not n Is Nothing Then
-                If n.Index > 0 Then
-                    Dim previousNode As TreeNode = n.PrevNode
-                    n.Remove()
-                    previousNode.Nodes.Add(n)
-                    SelectedNode = n
-                End If
-            End If
-        End Sub
-
-        Sub MoveSelectedNodeDown()
-            Dim n As TreeNode = SelectedNode
-
-            If Not n Is Nothing Then
-                If n.NextNode Is Nothing Then
-                    Dim parentParentNodes As TreeNodeCollection = GetParentParentNodes(n)
-
-                    If Not parentParentNodes Is Nothing Then
-                        Dim index As Integer = n.Parent.Index
-                        n.Remove()
-                        parentParentNodes.Insert(index + 1, n)
-                    End If
-                Else
-                    Dim index As Integer = n.Index
-                    Dim parentNodes As TreeNodeCollection = GetParentNodes(n)
-                    n.Remove()
-                    parentNodes.Insert(index + 1, n)
-                End If
-
-                SelectedNode = n
-            End If
-        End Sub
-
-        Sub MoveSelectionDown()
-            If SelectedNode?.NextNode IsNot Nothing Then
-                SelectedNode = SelectedNode.NextNode
-            End If
-        End Sub
-
-        Sub MoveSelectionUp()
-            If SelectedNode?.PrevNode IsNot Nothing Then
-                SelectedNode = SelectedNode.PrevNode
-            End If
-        End Sub
-
-        Function GetParentParentNodes(n As TreeNode) As TreeNodeCollection
-            Dim parent = n.Parent
-
-            If parent Is Nothing Then
-                Return Nothing
-            End If
-
-            If parent.Parent Is Nothing Then
-                Return Nodes
-            Else
-                Return parent.Parent.Nodes
-            End If
-        End Function
-
-        Function GetParentNodes(n As TreeNode) As TreeNodeCollection
-            Dim parent As TreeNode = n.Parent
-
-            If parent Is Nothing Then
-                Return Nodes
-            Else
-                Return parent.Nodes
-            End If
-        End Function
-
-        Protected Overrides Sub OnHandleCreated(e As EventArgs)
-            MyBase.OnHandleCreated(e)
-            Native.SetWindowTheme(Handle, "explorer", Nothing)
-        End Sub
-
-        Function AddNode(path As String) As TreeNode
-            Dim pathElements = path.SplitNoEmptyAndWhiteSpace("|")
-            Dim currentNodeList = Nodes
-            Dim currentPath = ""
-            Dim ret As TreeNode = Nothing
-
-            For Each iNodeName In pathElements
-                If currentPath <> "" Then
-                    currentPath += "|"
-                End If
-
-                currentPath += iNodeName
-                Dim found = False
-
-                For Each iNode As TreeNode In currentNodeList
-                    If iNode.Text = " " + iNodeName Then
-                        ret = iNode
-                        currentNodeList = iNode.Nodes
-                        found = True
-                    End If
-                Next
-
-                If Not found Then
-                    ret = New TreeNode With {
-                        .Text = " " + iNodeName
-                    }
-                    currentNodeList.Add(ret)
-                    currentNodeList = ret.Nodes
-                End If
-            Next
-
-            Return ret
-        End Function
-
-        Function GetNodes() As List(Of TreeNode)
-            Dim ret As New List(Of TreeNode)
-            AddNodesRecursive(Nodes, ret)
-            Return ret
-        End Function
-
-        Shared Sub AddNodesRecursive(searchList As TreeNodeCollection, returnList As List(Of TreeNode))
-            For Each i As TreeNode In searchList
-                returnList.Add(i)
-                AddNodesRecursive(i.Nodes, returnList)
-            Next
-        End Sub
-
-        Public Function GetAllVisibleNodes() As List(Of TreeNode)
-            Dim list As New List(Of TreeNode)
-
-            For Each node As TreeNode In Nodes
-                GetVisibleNodes(list, node)
-            Next
-
-            Return list
-        End Function
-
-        Shared Sub GetVisibleNodes(ByRef list As List(Of TreeNode), node As TreeNode)
-            list.Add(node)
-
-            If node.IsExpanded Then
-                For Each subNode As TreeNode In node.Nodes
-                    GetVisibleNodes(list, subNode)
-                Next
-            End If
-        End Sub
-    End Class
-
-    Public Class VScrollBarEx
-        Inherits VScrollBar
-
-    End Class
-
-    Public Enum TreeNodeExpandMode
-        Disabled
-        Normal
-        InclusiveChilds
-    End Enum
-
-    Public Class ToolStripEx
-        Inherits ToolStrip
-
-        Sub New()
-            MyBase.New()
-        End Sub
-
-        Sub New(ParamArray items As ToolStripItem())
-            MyBase.New(items)
-        End Sub
-
-        <DefaultValue(False), Description("Overdraws a weird grey line visible at the bottom in some configurations.")>
-        Property OverdrawLine As Boolean
-
-        <DefaultValue(False), Description("Only one button can be checked at the same time.")>
-        Property SingleAutoChecked As Boolean
-
-        <DefaultValue(False), Description("Shows a themed control border.")>
-        Property ShowControlBorder As Boolean
-
-        Protected Overrides Sub OnPaint(e As PaintEventArgs)
-            MyBase.OnPaint(e)
-
-            If OverdrawLine Then
-                Dim b As New SolidBrush(BackColor)
-                e.Graphics.FillRectangle(b, 0, Height - 2, Width, 2)
-                b.Dispose()
-            End If
-
-            If ShowControlBorder AndAlso VisualStyleInformation.IsEnabledByUser Then
-                ControlPaint.DrawBorder(e.Graphics,
-                                        ClientRectangle,
-                                        VisualStyleInformation.TextControlBorder,
-                                        ButtonBorderStyle.Solid)
-            End If
-        End Sub
-
-        Protected Overrides Sub OnItemClicked(e As ToolStripItemClickedEventArgs)
-            If SingleAutoChecked Then
-                For Each i In Items.OfType(Of ToolStripButton)()
-                    i.Checked = i Is e.ClickedItem
-                Next
-            End If
-
-            MyBase.OnItemClicked(e)
-        End Sub
-
-        Protected Overrides ReadOnly Property CreateParams() As CreateParams
-            Get
-                Dim ret = MyBase.CreateParams
-
-                If ShowControlBorder AndAlso Not VisualStyleInformation.IsEnabledByUser Then
-                    ret.ExStyle = ret.ExStyle Or &H200 'WS_EX_CLIENTEDGE
-                End If
-
-                Return ret
-            End Get
-        End Property
-    End Class
-
-
-    Public Class ToolStripButtonEx
-        Inherits ToolStripButton
-
-        Sub New()
-            ApplyTheme()
-
-            AddHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
-        End Sub
-
-        Protected Overrides Sub Dispose(disposing As Boolean)
-            RemoveHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
-            MyBase.Dispose(disposing)
-        End Sub
-
-        Sub OnThemeChanged(theme As Theme)
-            ApplyTheme(theme)
-        End Sub
-
-        Sub ApplyTheme()
-            ApplyTheme(ThemeManager.CurrentTheme)
-        End Sub
-
-        Sub ApplyTheme(theme As Theme)
-            If DesignHelp.IsDesignMode Then
-                Exit Sub
-            End If
-
-            BackColor = theme.General.Controls.ToolStripButton.BackColor
-            ForeColor = theme.General.Controls.ToolStripButton.ForeColor
-        End Sub
-    End Class
-
-
-    Public Class LineControl
-        Inherits Control
-
-        Private _lineColor1 As Color
-        Private _lineColor2 As Color
-
-        Sub New()
-            Margin = New Padding(4, 2, 5, 2)
-            Padding = New Padding(5, 2, 5, 2)
-            Anchor = AnchorStyles.Left Or AnchorStyles.Bottom Or AnchorStyles.Right
-            SetStyle(ControlStyles.SupportsTransparentBackColor, True)
-            ApplyTheme()
-
-            AddHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
-        End Sub
-
-        Sub OnThemeChanged(theme As Theme)
-            ApplyTheme(theme)
-        End Sub
-
-        Sub ApplyTheme()
-            ApplyTheme(ThemeManager.CurrentTheme)
-        End Sub
-
-        Sub ApplyTheme(theme As Theme)
-            If DesignHelp.IsDesignMode Then
-                Exit Sub
-            End If
-
-            BackColor = theme.General.Controls.Line.BackColor
-            ForeColor = theme.General.Controls.Line.ForeColor
-            _lineColor1 = theme.General.Controls.Line.LineColor1
-            _lineColor2 = theme.General.Controls.Line.LineColor2
-        End Sub
-        Protected Overrides Sub OnPaint(e As PaintEventArgs)
-            MyBase.OnPaint(e)
-
-            e.Graphics.TextRenderingHint = Drawing.Text.TextRenderingHint.AntiAlias
-
-            Dim textOffset As Integer
-            Dim lineHeight = CInt(Height / 2)
-
-            If Text <> "" Then
-                Dim textSize = e.Graphics.MeasureString(Text, Font)
-                textOffset = CInt(textSize.Width + textSize.Height)
-
-                Using brush = New SolidBrush(If(Enabled, ForeColor, SystemColors.GrayText))
-                    e.Graphics.DrawString(Text, Font, brush, Padding.Left, CInt((Height - textSize.Height) / 2) - 1)
-                End Using
-            End If
-
-            If Enabled Then
-                e.Graphics.DrawLine(New Pen(_lineColor1), textOffset, lineHeight, Width, lineHeight)
-                e.Graphics.DrawLine(New Pen(_lineColor2), textOffset, lineHeight + 1, Width, lineHeight + 1)
-            Else
-                e.Graphics.DrawLine(SystemPens.InactiveBorder, textOffset, lineHeight, Width, lineHeight)
-            End If
-        End Sub
-    End Class
-
-    Public Class CommandLink
-        Inherits Button
-
-        Const BS_COMMANDLINK As Integer = &HE
-
-        Const BCM_SETNOTE As Integer = &H1609
-
-        Sub New()
-            FlatStyle = FlatStyle.System
-        End Sub
-
-        Protected Overloads Overrides ReadOnly Property CreateParams() As CreateParams
-            Get
-                Dim params = MyBase.CreateParams
-                params.Style = params.Style Or BS_COMMANDLINK
-                Return params
-            End Get
-        End Property
-
-        Private NoteValue As String = ""
-
-        <DefaultValue("")>
-        Property Note() As String
-            Get
-                Return NoteValue
-            End Get
-            Set(value As String)
-                Native.SendMessage(Handle, BCM_SETNOTE, 0, value)
-                NoteValue = value
-            End Set
-        End Property
-
-        Protected Overrides Sub OnCreateControl()
-            MyBase.OnCreateControl()
-
-            If Note <> "" Then
-                Text += BR2 + Note
-            End If
-        End Sub
-    End Class
-
-    Public Class TextBoxEx
-        Inherits TextBox
-
-        'Private Const WM_NCPAINT As UInteger = &H85
-        'Private Const RDW_INVALIDATE As UInteger = &H1
-        'Private Const RDW_IUPDATENOW As UInteger = &H100
-        'Private Const RDW_FRAME = &H400
-
-        Private _blockOnTextChanged As Boolean = False
-        Private _borderColor As Color
-        Private _borderFocusedColor As Color
-
-        Public Property BorderColor As Color
-            Get
-                Return _borderColor
-            End Get
-            Set(value As Color)
-                _borderColor = value
-                'Native.RedrawWindow(Handle, IntPtr.Zero, IntPtr.Zero, RDW_FRAME Or RDW_IUPDATENOW Or RDW_INVALIDATE)
-            End Set
-        End Property
-
-        Private Function ShouldSerializeBorderColor() As Boolean
-            Return BorderColor <> Color.Empty
-        End Function
-
-        Public Property BorderFocusedColor As Color
-            Get
-                Return _borderFocusedColor
-            End Get
-            Set(value As Color)
-                _borderFocusedColor = value
-                'Native.RedrawWindow(Handle, IntPtr.Zero, IntPtr.Zero, RDW_FRAME Or RDW_IUPDATENOW Or RDW_INVALIDATE)
-            End Set
-        End Property
-
-        Private Function ShouldSerializeBorderFocusedColor() As Boolean
-            Return BorderFocusedColor <> Color.Empty
-        End Function
-
-        <DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)>
-        Shadows Property Name() As String
-            Get
-                Return MyBase.Name
-            End Get
-            Set(value As String)
-                MyBase.Name = value
-            End Set
-        End Property
-
-        <DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)>
-        Shadows Property TabIndex As Integer
-            Get
-                Return MyBase.TabIndex
-            End Get
-            Set(value As Integer)
-                MyBase.TabIndex = value
-            End Set
-        End Property
-
-        Sub New()
-            Font = FontManager.GetDefaultFont()
-            ApplyTheme()
-            BorderStyle = BorderStyle.None
-
-            AddHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
-        End Sub
-
-        Protected Overrides Sub Dispose(disposing As Boolean)
-            RemoveHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
-            MyBase.Dispose(disposing)
-        End Sub
-
-        Sub OnThemeChanged(theme As Theme)
-            ApplyTheme(theme)
-        End Sub
-
-        Sub ApplyTheme()
-            ApplyTheme(ThemeManager.CurrentTheme)
-        End Sub
-
-        Sub ApplyTheme(theme As Theme)
-            If DesignHelp.IsDesignMode Then
-                Exit Sub
-            End If
-
-            SuspendLayout()
-            BackColor = theme.General.Controls.TextBox.BackColor
-            ForeColor = theme.General.Controls.TextBox.ForeColor
-            BorderColor = theme.General.Controls.TextBox.BorderColor
-            BorderFocusedColor = theme.General.Controls.TextBox.BorderFocusedColor
-            ResumeLayout()
-        End Sub
-
-        Public Sub SetTextWithoutTextChangedEvent(text As String)
-            _blockOnTextChanged = True
-            Me.Text = text
-            _blockOnTextChanged = False
-        End Sub
-
-        Protected Overrides Sub OnTextChanged(e As EventArgs)
-            If Not _blockOnTextChanged Then
-                MyBase.OnTextChanged(e)
-            End If
-        End Sub
-
-        'Protected Overrides Sub WndProc(ByRef m As Message)
-        '    MyBase.WndProc(m)
-
-        '    If BorderColor <> Color.Empty AndAlso BorderColor <> Color.Transparent AndAlso BorderStyle = BorderStyle.Fixed3D Then
-        '        If m.Msg = WM_NCPAINT Then
-        '            Dim hDC = Native.GetWindowDC(Handle)
-        '            If Me.Focused Then
-        '                Using g = Graphics.FromHdc(hDC)
-        '                    Using p = New Pen(BorderFocusedColor, 2)
-        '                        Dim rect = New Rectangle(1, 1, Me.Width - 2, Me.Height - 2)
-        '                        g.DrawRectangle(p, rect)
-        '                    End Using
-        '                End Using
-        '            Else
-        '                Using g = Graphics.FromHdc(hDC)
-        '                    Using p = New Pen(BorderColor, 2)
-        '                        Dim rect = New Rectangle(1, 1, Me.Width - 2, Me.Height - 2)
-        '                        g.DrawRectangle(p, rect)
-        '                    End Using
-        '                End Using
-        '            End If
-        '            Native.ReleaseDC(Handle, hDC)
-        '        End If
-        '    End If
-        'End Sub
-
-        'Protected Overrides Sub OnSizeChanged(e As EventArgs)
-        '    MyBase.OnSizeChanged(e)
-        '    Native.RedrawWindow(Handle, IntPtr.Zero, IntPtr.Zero, RDW_FRAME Or RDW_IUPDATENOW Or RDW_INVALIDATE)
-        'End Sub
-    End Class
-
-    Public Class PanelEx
-        Inherits Panel
-
-        Private ShowNiceBorderValue As Boolean
-
-        Sub New()
-            SetStyle(ControlStyles.ResizeRedraw, True)
-        End Sub
-
-        <DefaultValue(False), Description("Nicer border if themes are enabled.")>
-        Property ShowNiceBorder() As Boolean
-            Get
-                Return ShowNiceBorderValue
-            End Get
-            Set(Value As Boolean)
-                ShowNiceBorderValue = Value
-                Invalidate()
-            End Set
-        End Property
-
-        Protected Overrides Sub OnPaint(e As PaintEventArgs)
-            MyBase.OnPaint(e)
-
-            If ShowNiceBorder AndAlso VisualStyleInformation.IsEnabledByUser Then
-                ControlPaint.DrawBorder(e.Graphics, ClientRectangle,
-                    VisualStyleInformation.TextControlBorder, ButtonBorderStyle.Solid)
-            End If
-        End Sub
-    End Class
-
-    Public Class CheckBoxEx
-        Inherits CheckBox
-
-        Private _theme As Theme
-
-        Public ReadOnly Property Theme As Theme
-            Get
-                Return _theme
-            End Get
-        End Property
-
-        <DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)>
-        Shadows Property Name() As String
-            Get
-                Return MyBase.Name
-            End Get
-            Set(value As String)
-                MyBase.Name = value
-            End Set
-        End Property
-
-        <DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)>
-        Shadows Property TabIndex As Integer
-            Get
-                Return MyBase.TabIndex
-            End Get
-            Set(value As Integer)
-                MyBase.TabIndex = value
-            End Set
-        End Property
-
-        Sub New()
-            SetStyle(ControlStyles.ResizeRedraw, True)
-            SetStyle(ControlStyles.UserPaint, True)
-            UseVisualStyleBackColor = False
-            FlatStyle = FlatStyle.Standard
-            FlatAppearance.BorderSize = 2
-
-            ApplyTheme()
-            AddHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
-        End Sub
-
-        Protected Overrides Sub Dispose(disposing As Boolean)
-            RemoveHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
-            MyBase.Dispose(disposing)
-        End Sub
-
-        Sub OnThemeChanged(theme As Theme)
-            ApplyTheme(theme)
-        End Sub
-
-        Sub ApplyTheme()
-            ApplyTheme(ThemeManager.CurrentTheme)
-        End Sub
-
-        Sub ApplyTheme(theme As Theme)
-            _theme = theme
-
-            If DesignHelp.IsDesignMode Then
-                Exit Sub
-            End If
-
-            SuspendLayout()
-            If Appearance.HasFlag(Appearance.Normal) Then
-                FlatStyle = FlatStyle.Standard
-                FlatAppearance.BorderSize = 0
-
-                BackColor = theme.General.Controls.CheckBox.BackColor
-                ForeColor = theme.General.Controls.CheckBox.ForeColor
-                FlatAppearance.BorderColor = theme.General.Controls.CheckBox.BorderColor
-                FlatAppearance.CheckedBackColor = theme.General.Controls.CheckBox.BackColor
-                FlatAppearance.MouseOverBackColor = theme.General.Controls.CheckBox.BackHighlightColor
-            Else
-                FlatStyle = FlatStyle.Flat
-                FlatAppearance.BorderSize = 0
-
-                BackColor = theme.General.Controls.CheckBox.BackColor
-                ForeColor = theme.General.Controls.Button.ForeColor
-                FlatAppearance.BorderColor = theme.General.Controls.Button.BorderColor
-                FlatAppearance.CheckedBackColor = theme.General.Controls.Button.BackColor
-                FlatAppearance.MouseOverBackColor = theme.General.Controls.CheckBox.BackHoverColor
-            End If
-            ResumeLayout()
-        End Sub
-
-        Protected Overrides Sub OnPaint(pevent As PaintEventArgs)
-            InvokePaintBackground(Me, pevent)
-
-            pevent.Graphics.SmoothingMode = SmoothingMode.HighQuality
-            Dim state As CheckBoxState = If(CheckState = CheckState.Checked, CheckBoxState.CheckedNormal, CheckBoxState.UncheckedNormal)
-            Dim glyphSize As Size = CheckBoxRendererEx.GetGlyphSize(pevent.Graphics, state)
-            Dim vPos As Integer = (Height - glyphSize.Height) \ 2
-            Const hPos As Integer = 1
-            Dim glyphLocation As New Point(hPos, vPos)
-            Dim textLocation As New Point(hPos + glyphSize.Width + hPos, If(g.IsRunningUnderWine, CInt(Height / 2.0F - pevent.Graphics.MeasureString(Text, Font).Height / 2.0F), Height))
-            Const textFlags As TextFormatFlags = TextFormatFlags.SingleLine Or TextFormatFlags.VerticalCenter
-            Dim fColor As ColorHSL = If(Checked, _theme.General.Controls.CheckBox.ForeCheckedColor, _theme.General.Controls.CheckBox.ForeColor)
-            fColor = If(Enabled, fColor, _theme.General.Controls.CheckBox.ForeDisabledColor)
-
-            CheckBoxRendererEx.DrawCheckBox(pevent.Graphics, glyphLocation, state)
-
-            If g.IsRunningUnderWine Then
-                pevent.Graphics.DrawString(Text, Font, New SolidBrush(fColor), textLocation)
-            Else
-                TextRenderer.DrawText(pevent.Graphics, Text, Font, textLocation, fColor, textFlags)
-            End If
-        End Sub
-
-        Protected Overrides Sub OnPaintBackground(pevent As PaintEventArgs)
-            MyBase.OnPaintBackground(pevent)
-        End Sub
-
-        Protected Overrides Sub OnCheckedChanged(e As EventArgs)
-            MyBase.OnCheckedChanged(e)
-        End Sub
-
-        <CodeAnalysis.SuppressMessage("CodeQuality", "IDE0051:Remove unused private members", Justification:="<Pending>")>
-        Private Function ShouldSerializeUseVisualStyleBackColor() As Boolean
-            Return False
-        End Function
-    End Class
-
-    Public Class ComboBoxEx
-        Inherits ComboBox
-
-        Sub New()
-            ApplyTheme()
-            AddHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
-        End Sub
-
-        Protected Overrides Sub Dispose(disposing As Boolean)
-            RemoveHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
-            MyBase.Dispose(disposing)
-        End Sub
-
-        Sub OnThemeChanged(theme As Theme)
-            ApplyTheme(theme)
-        End Sub
-
-        Sub ApplyTheme()
-            ApplyTheme(ThemeManager.CurrentTheme)
-        End Sub
-
-        Sub ApplyTheme(theme As Theme)
-            If DesignHelp.IsDesignMode Then
-                Exit Sub
-            End If
-
-            SuspendLayout()
-            BackColor = theme.General.Controls.ComboBox.BackColor
-            FlatStyle = theme.General.Controls.ComboBox.FlatStyle
-            ForeColor = theme.General.Controls.ComboBox.ForeColor
-            ResumeLayout()
-        End Sub
-
-        <DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)>
-        Shadows Property Name() As String
-            Get
-                Return MyBase.Name
-            End Get
-            Set(value As String)
-                MyBase.Name = value
-            End Set
-        End Property
-
-        <DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)>
-        Shadows Property TabIndex As Integer
-            Get
-                Return MyBase.TabIndex
-            End Get
-            Set(value As Integer)
-                MyBase.TabIndex = value
-            End Set
-        End Property
-    End Class
-
-    Public Class RichTextBoxEx
-        Inherits RichTextBox
-
-        Private BorderRect As Native.RECT
-
-        Private _backReadonlyColor As Color
-        Private _borderColor As Color
-        Private _borderFocusedColor As Color
-        Private _borderHoverColor As Color
-
-        <Browsable(False)>
-        <DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)>
-        Property BlockPaint As Boolean
-        ReadOnly Property Transparent As Boolean
-
-        Public Property BackReadonlyColor As Color
-            Get
-                Return _backReadonlyColor
-            End Get
-            Set(value As Color)
-                _backReadonlyColor = value
-            End Set
-        End Property
-
-        Private Function ShouldSerializeBackReadonlyColor() As Boolean
-            Return BackReadonlyColor <> Color.Empty
-        End Function
-
-        Public Property BorderColor As Color
-            Get
-                Return _borderColor
-            End Get
-            Set(value As Color)
-                _borderColor = value
-                Invalidate()
-            End Set
-        End Property
-
-        Private Function ShouldSerializeBorderColor() As Boolean
-            Return BorderColor <> Color.Empty
-        End Function
-
-        Public Property BorderFocusedColor As Color
-            Get
-                Return _borderFocusedColor
-            End Get
-            Set(value As Color)
-                _borderFocusedColor = value
-                Invalidate()
-            End Set
-        End Property
-
-        Private Function ShouldSerializeBorderFocusedColor() As Boolean
-            Return BorderFocusedColor <> Color.Empty
-        End Function
-
-        Public Property BorderHoverColor As Color
-            Get
-                Return _borderHoverColor
-            End Get
-            Set(value As Color)
-                _borderHoverColor = value
-                Invalidate()
-            End Set
-        End Property
-
-        Private Function ShouldSerializeBorderHoverColor() As Boolean
-            Return BorderHoverColor <> Color.Empty
-        End Function
-
-        Public Event AfterThemeApplied(text As String, theme As Theme)
-
-        Sub New()
-            MyClass.New(True, False)
-        End Sub
-
-        Sub New(createMenu As Boolean, transparent As Boolean)
-            Font = FontManager.GetCodeFont()
-
-            If createMenu Then
-                InitMenu()
-            End If
-
-            If VisualStyleInformation.IsEnabledByUser Then
-                BorderStyle = BorderStyle.None
-            End If
-
-            If transparent Then
-                SetStyle(ControlStyles.Opaque, True)
-                SetStyle(ControlStyles.OptimizedDoubleBuffer, False)
-                Me.Transparent = transparent
-            End If
-
-            ApplyTheme()
-            AddHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
-        End Sub
-
-        Protected Overrides Sub Dispose(disposing As Boolean)
-            RemoveHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
-            MyBase.Dispose(disposing)
-            ContextMenuStrip?.Dispose()
-        End Sub
-
-        Sub OnThemeChanged(theme As Theme)
-            ApplyTheme(theme)
-        End Sub
-
-        Sub ApplyTheme()
-            ApplyTheme(ThemeManager.CurrentTheme)
-        End Sub
-
-        Sub ApplyTheme(theme As Theme)
-            If DesignHelp.IsDesignMode Then
-                Exit Sub
-            End If
-
-            SuspendLayout()
-            BackColor = theme.General.Controls.RichTextBox.BackColor
-            BackReadonlyColor = theme.General.Controls.RichTextBox.BackReadonlyColor
-            ForeColor = theme.General.Controls.RichTextBox.ForeColor
-            BorderColor = theme.General.Controls.RichTextBox.BorderColor
-            BorderFocusedColor = theme.General.Controls.RichTextBox.BorderFocusedColor
-            ResumeLayout()
-            RaiseEvent AfterThemeApplied(Nothing, theme)
-        End Sub
-
-        Protected Overrides ReadOnly Property CreateParams As CreateParams
-            Get
-                Dim parms = MyBase.CreateParams
-
-                If Transparent Then
-                    parms.ExStyle = parms.ExStyle Or &H20  'Turn on WS_EX_TRANSPARENT
-                End If
-
-                Return parms
-            End Get
-        End Property
-
-        Sub InitMenu()
-            If DesignHelp.IsDesignMode Then
-                Exit Sub
-            End If
-
-            Dim cms As New ContextMenuStripEx()
-
-            Dim cutItem = cms.Add("Cut")
-            cutItem.SetImage(Symbol.Cut)
-            cutItem.ShortcutKeyDisplayString = "Ctrl+X"
-
-            Dim copyItem = cms.Add("Copy", Sub() Clipboard.SetText(SelectedText))
-            copyItem.SetImage(Symbol.Copy)
-            copyItem.ShortcutKeyDisplayString = "Ctrl+C"
-
-            Dim pasteItem = cms.Add("Paste")
-            pasteItem.SetImage(Symbol.Paste)
-            pasteItem.ShortcutKeyDisplayString = "Ctrl+V"
-
-            cms.Add("Copy Everything", Sub() Clipboard.SetText(Text))
-
-            AddHandler cutItem.Click, Sub()
-                                          Clipboard.SetText(SelectedText)
-                                          SelectedText = ""
-                                      End Sub
-
-            AddHandler pasteItem.Click, Sub()
-                                            SelectedText = Clipboard.GetText
-                                            ScrollToCaret()
-                                        End Sub
-
-            AddHandler cms.Opening, Sub()
-                                        cutItem.Visible = SelectionLength > 0 AndAlso Not Me.ReadOnly
-                                        copyItem.Visible = SelectionLength > 0
-                                        pasteItem.Visible = Clipboard.GetText <> "" AndAlso Not Me.ReadOnly
-                                    End Sub
-
-            ContextMenuStrip = cms
-        End Sub
-
-        Protected Overrides Sub OnKeyDown(e As KeyEventArgs)
-            If e.KeyData = (Keys.Control Or Keys.V) Then
-                e.SuppressKeyPress = True
-                SelectedText = Clipboard.GetText
-            End If
-
-            MyBase.OnKeyDown(e)
-        End Sub
-
-        Protected Overrides Sub WndProc(ByRef m As Message)
-            Const WM_NCPAINT = &H85
-            Const WM_NCCALCSIZE = &H83
-            Const WM_THEMECHANGED = &H31A
-
-            Select Case m.Msg
-                Case 15, 20 'WM_PAINT, WM_ERASEBKGND
-                    If BlockPaint Then
-                        Exit Sub
-                    End If
-                Case Else
-            End Select
-
-            MyBase.WndProc(m)
-
-            Select Case m.Msg
-                Case WM_NCPAINT
-                    WmNcpaint(m)
-                Case WM_NCCALCSIZE
-                    WmNccalcsize(m)
-                Case WM_THEMECHANGED
-                    UpdateStyles()
-            End Select
-        End Sub
-
-        Sub WmNccalcsize(ByRef m As Message)
-            If Not VisualStyleInformation.IsEnabledByUser Then
-                Return
-            End If
-
-            Dim par As New Native.NCCALCSIZE_PARAMS()
-            Dim windowRect As Native.RECT
-
-            If m.WParam <> IntPtr.Zero Then
-                par = CType(Marshal.PtrToStructure(m.LParam, GetType(Native.NCCALCSIZE_PARAMS)), Native.NCCALCSIZE_PARAMS)
-                windowRect = par.rgrc0
-            End If
-
-            Dim clientRect = windowRect
-
-            clientRect.Left += 1
-            clientRect.Top += 1
-            clientRect.Right -= 1
-            clientRect.Bottom -= 1
-
-            BorderRect = New Native.RECT(clientRect.Left - windowRect.Left,
-                                         clientRect.Top - windowRect.Top,
-                                         windowRect.Right - clientRect.Right,
-                                         windowRect.Bottom - clientRect.Bottom)
-
-            If m.WParam = IntPtr.Zero Then
-                Marshal.StructureToPtr(clientRect, m.LParam, False)
-            Else
-                par.rgrc0 = clientRect
-                Marshal.StructureToPtr(par, m.LParam, False)
-            End If
-
-            Const WVR_HREDRAW = &H100
-            Const WVR_VREDRAW = &H200
-            Const WVR_REDRAW = (WVR_HREDRAW Or WVR_VREDRAW)
-
-            m.Result = New IntPtr(WVR_REDRAW)
-        End Sub
-
-        Sub WmNcpaint(ByRef m As Message)
-            If Not VisualStyleInformation.IsEnabledByUser Then
-                Return
-            End If
-
-            Dim rect As Native.RECT
-            Native.GetWindowRect(Handle, rect)
-
-            rect.Right -= rect.Left
-            rect.Bottom -= rect.Top
-            rect.Top = 0
-            rect.Left = 0
-
-            rect.Left += BorderRect.Left
-            rect.Top += BorderRect.Top
-            rect.Right -= BorderRect.Right
-            rect.Bottom -= BorderRect.Bottom
-
-            Dim hDC = Native.GetWindowDC(Handle)
-            Native.ExcludeClipRect(hDC, rect.Left, rect.Top, rect.Right, rect.Bottom)
-
-            Using g = Graphics.FromHdc(hDC)
-                g.Clear(BorderColor)
-            End Using
-
-            Native.ReleaseDC(Handle, hDC)
-            m.Result = IntPtr.Zero
-        End Sub
-
-        Protected Overrides Sub OnHandleCreated(e As EventArgs)
-            MyBase.OnHandleCreated(e)
-            AutoWordSelection = False
-        End Sub
-    End Class
-
-    Public Class TrackBarEx
-        Inherits TrackBar
-
-        <DefaultValue(False)>
-        Property NoMouseWheelEvent As Boolean
-
-        Shadows Property Value As Integer
-            Get
-                Return MyBase.Value
-            End Get
-            Set(value As Integer)
-                If value > Maximum Then value = Maximum
-                If value < Minimum Then value = Minimum
-                If value <> MyBase.Value Then MyBase.Value = value
-            End Set
-        End Property
-    End Class
-
-    Public Class LabelEx
-        Inherits Label
-
-        Sub New()
-            TextAlign = Drawing.ContentAlignment.MiddleLeft
-            UseCompatibleTextRendering = True
-
-            ApplyTheme()
-
-            AddHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
-        End Sub
-
-        Protected Overrides Sub Dispose(disposing As Boolean)
-            RemoveHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
-            MyBase.Dispose(disposing)
-        End Sub
-
-        Sub OnThemeChanged(theme As Theme)
-            ApplyTheme(theme)
-        End Sub
-
-        Sub ApplyTheme()
-            ApplyTheme(ThemeManager.CurrentTheme)
-        End Sub
-
-        Sub ApplyTheme(theme As Theme)
-            If DesignHelp.IsDesignMode Then
-                Exit Sub
-            End If
-
-            SuspendLayout()
-            BackColor = theme.General.Controls.Label.BackColor
-            ForeColor = theme.General.Controls.Label.ForeColor
-            ResumeLayout()
-        End Sub
-
-
-        <DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)>
-        Shadows Property Name() As String
-            Get
-                Return MyBase.Name
-            End Get
-            Set(value As String)
-                MyBase.Name = value
-            End Set
-        End Property
-
-        <DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)>
-        Shadows Property TabIndex As Integer
-            Get
-                Return MyBase.TabIndex
-            End Get
-            Set(value As Integer)
-                MyBase.TabIndex = value
-            End Set
-        End Property
-
-
-        Public Overrides Function GetPreferredSize(proposedSize As Size) As Size
-            Return MyBase.GetPreferredSize(proposedSize)
-        End Function
-    End Class
-
-    Public Class PropertyGridEx
-        Inherits PropertyGrid
-
-        Private Description As String
-
-        Sub New()
-            ToolbarVisible = False 'GridView is not ready when PropertySortChanged happens so Init fails
-
-            ApplyTheme()
-
-            AddHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
-        End Sub
-
-        Protected Overrides Sub Dispose(disposing As Boolean)
-            RemoveHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
-            MyBase.Dispose(disposing)
-        End Sub
-
-        Sub OnThemeChanged(theme As Theme)
-            ApplyTheme(theme)
-        End Sub
-
-        Sub ApplyTheme()
-            ApplyTheme(ThemeManager.CurrentTheme)
-        End Sub
-
-        Sub ApplyTheme(theme As Theme)
-            If DesignHelp.IsDesignMode Then
-                Exit Sub
-            End If
-
-            SuspendLayout()
-            BackColor = theme.General.Controls.PropertyGrid.BackColor
-            CategoryForeColor = theme.General.Controls.PropertyGrid.CategoryForeColor
-            CategorySplitterColor = theme.General.Controls.PropertyGrid.CategorySplitterColor
-            CommandsActiveLinkColor = theme.General.Controls.PropertyGrid.CommandsActiveLinkColor
-            CommandsBackColor = theme.General.Controls.PropertyGrid.CommandsBackColor
-            CommandsBorderColor = theme.General.Controls.PropertyGrid.CommandsBorderColor
-            CommandsDisabledLinkColor = theme.General.Controls.PropertyGrid.CommandsDisabledLinkColor
-            CommandsForeColor = theme.General.Controls.PropertyGrid.CommandsForeColor
-            CommandsLinkColor = theme.General.Controls.PropertyGrid.CommandsLinkColor
-            DisabledItemForeColor = theme.General.Controls.PropertyGrid.DisabledItemForeColor
-            ForeColor = theme.General.Controls.PropertyGrid.ForeColor
-            HelpBackColor = theme.General.Controls.PropertyGrid.HelpBackColor
-            HelpBorderColor = theme.General.Controls.PropertyGrid.HelpBorderColor
-            HelpForeColor = theme.General.Controls.PropertyGrid.HelpForeColor
-            LineColor = theme.General.Controls.PropertyGrid.LineColor
-            SelectedItemWithFocusBackColor = theme.General.Controls.PropertyGrid.SelectedItemWithFocusBackColor
-            SelectedItemWithFocusForeColor = theme.General.Controls.PropertyGrid.SelectedItemWithFocusForeColor
-            ViewBackColor = theme.General.Controls.PropertyGrid.ViewBackColor
-            ViewBorderColor = theme.General.Controls.PropertyGrid.ViewBorderColor
-            ViewForeColor = theme.General.Controls.PropertyGrid.ViewForeColor
-
-            ResumeLayout()
-        End Sub
-
-        Protected Overrides Sub OnSelectedGridItemChanged(e As SelectedGridItemChangedEventArgs)
-            MyBase.OnSelectedGridItemChanged(e)
-            Description = e.NewSelection.PropertyDescriptor.Description
-            SetHelpHeight()
-        End Sub
-
-        Protected Overrides Sub OnLayout(e As LayoutEventArgs)
-            SetHelpHeight()
-            MyBase.OnLayout(e)
-        End Sub
-
-        Sub SetHelpHeight()
-            If Description <> "" Then
-                HelpVisible = True
-
-                Dim lines = CInt(Math.Ceiling(CreateGraphics.MeasureString(
-                    Description, Font, Width).Height / Font.Height))
-
-                Dim grid As New Reflector(Me, GetType(PropertyGrid))
-                Dim doc = grid.Invoke("doccomment")
-                doc.Invoke("Lines", lines + 1)
-                doc.Invoke("userSized", True)
-                grid.Invoke("OnLayoutInternal", False)
-            Else
-                HelpVisible = False
-            End If
-        End Sub
-
-        Sub MoveSplitter(x As Integer)
-            Dim grid As New Reflector(Me, GetType(PropertyGrid))
-            grid.Invoke("gridView").Invoke("MoveSplitterTo", x)
-        End Sub
-    End Class
-
-    Public Class ButtonLabel
-        Inherits LabelEx
-
-        Property LinkColor As Color
-        Property LinkHoverColor As Color
-        Property ClickAction As Action
-
-        Sub New()
-            ApplyTheme()
-
-            AddHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
-        End Sub
-
-        Protected Overrides Sub Dispose(disposing As Boolean)
-            RemoveHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
-            MyBase.Dispose(disposing)
-        End Sub
-
-        Private Function ShouldSerializeLinkColor() As Boolean
-            Return LinkColor <> Color.Empty
-        End Function
-
-        Private Function ShouldSerializeLinkHoverColor() As Boolean
-            Return LinkHoverColor <> Color.Empty
-        End Function
-
-        Overloads Sub OnThemeChanged(theme As Theme)
-            ApplyTheme(theme)
-        End Sub
-
-        Overloads Sub ApplyTheme()
-            ApplyTheme(ThemeManager.CurrentTheme)
-        End Sub
-
-        Overloads Sub ApplyTheme(theme As Theme)
-            If DesignHelp.IsDesignMode Then
-                Exit Sub
-            End If
-
-            SuspendLayout()
-            BackColor = theme.General.Controls.ButtonLabel.BackColor
-            ForeColor = theme.General.Controls.ButtonLabel.ForeColor
-            LinkColor = theme.General.Controls.ButtonLabel.LinkForeColor
-            LinkHoverColor = theme.General.Controls.ButtonLabel.LinkForeHoverColor
-            ResumeLayout()
-        End Sub
-
-        Protected Overrides Sub OnMouseEnter(e As EventArgs)
-            ForeColor = LinkHoverColor
-            MyBase.OnMouseEnter(e)
-        End Sub
-
-        Protected Overrides Sub OnMouseLeave(e As EventArgs)
-            ForeColor = LinkColor
-            MyBase.OnMouseLeave(e)
-        End Sub
-
-        Protected Overrides Sub OnClick(e As EventArgs)
-            MyBase.OnClick(e)
-            ClickAction?.Invoke
-        End Sub
-    End Class
-
-    Public Class ToggleButtonLabel
-        Inherits LabelEx
-
-        Private _state As Boolean = False
-        Private _stateChangeOnRightClick As Boolean = False
-
-        Property State As Boolean
-            Get
-                Return _state
-            End Get
-            Set(value As Boolean)
-                If _state <> value Then
-                    _state = value
-                End If
-                ForeColor = If(_state, LinkOnColor, LinkOffColor)
-            End Set
-        End Property
-
-        Property StateChangeOnRightClick As Boolean
-            Get
-                Return _stateChangeOnRightClick
-            End Get
-            Set(value As Boolean)
-                If _stateChangeOnRightClick <> value Then
-                    _stateChangeOnRightClick = value
-                End If
-            End Set
-        End Property
-
-        Property LinkOnColor As Color
-        Property LinkOffColor As Color
-        Property LinkHoverColor As Color
-        Property LeftClickAction As Action(Of Boolean)
-        Property RightClickAction As Action(Of Boolean)
-
-        Sub New()
-            ApplyTheme()
-
-            AddHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
-        End Sub
-
-        Sub New(state As Boolean)
-            _state = state
-            ApplyTheme()
-
-            AddHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
-        End Sub
-
-        Protected Overrides Sub Dispose(disposing As Boolean)
-            RemoveHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
-            MyBase.Dispose(disposing)
-        End Sub
-
-        Private Function ShouldSerializeLinkOnColor() As Boolean
-            Return LinkOnColor <> Color.Empty
-        End Function
-
-        Private Function ShouldSerializeLinkOffColor() As Boolean
-            Return LinkOffColor <> Color.Empty
-        End Function
-
-        Private Function ShouldSerializeLinkHoverColor() As Boolean
-            Return LinkHoverColor <> Color.Empty
-        End Function
-
-        Overloads Sub OnThemeChanged(theme As Theme)
-            ApplyTheme(theme)
-        End Sub
-
-        Overloads Sub ApplyTheme()
-            ApplyTheme(ThemeManager.CurrentTheme)
-        End Sub
-
-        Overloads Sub ApplyTheme(theme As Theme)
-            If DesignHelp.IsDesignMode Then Exit Sub
-
-            SuspendLayout()
-            BackColor = theme.General.Controls.ToggleButtonLabel.BackColor
-            ForeColor = theme.General.Controls.ToggleButtonLabel.ForeColor
-            LinkOnColor = theme.General.Controls.ToggleButtonLabel.LinkOnForeColor
-            LinkOffColor = theme.General.Controls.ToggleButtonLabel.LinkOffForeColor
-            LinkHoverColor = theme.General.Controls.ToggleButtonLabel.LinkForeHoverColor
-            ForeColor = If(_state, LinkOnColor, LinkOffColor)
-            ResumeLayout()
-        End Sub
-
-        Protected Overrides Sub OnMouseEnter(e As EventArgs)
-            ForeColor = LinkHoverColor
-            MyBase.OnMouseEnter(e)
-        End Sub
-
-        Protected Overrides Sub OnMouseLeave(e As EventArgs)
-            ForeColor = If(_state, LinkOnColor, LinkOffColor)
-            MyBase.OnMouseLeave(e)
-        End Sub
-
-        Protected Overrides Sub OnMouseClick(e As MouseEventArgs)
-            MyBase.OnMouseClick(e)
-            If e.Button = MouseButtons.Left Then
-                State = Not State
-                LeftClickAction?.Invoke(State)
-            ElseIf e.Button = MouseButtons.Right Then
-                If StateChangeOnRightClick Then State = Not State
-                RightClickAction?.Invoke(State)
-            End If
-        End Sub
-
-        Protected Overrides Sub OnClick(e As EventArgs)
-            MyBase.OnClick(e)
-        End Sub
-    End Class
-
-    <DefaultEvent("LinkClick")>
-    Public Class LinkGroupBox
-        Inherits GroupBoxEx
-
-        Public WithEvents Label As New ButtonLabel
-        Event LinkClick()
-
-        Sub New()
-            Label.Left = 14
-            Label.AutoSize = True
-            Controls.Add(Label)
-        End Sub
-
-        Property Color As Color
-
-        Private Function ShouldSerializeColor() As Boolean
-            Return Color <> Color.Empty
-        End Function
-
-        Overrides Property Text() As String
-            Get
-                Return Label.Text
-            End Get
-            Set(value As String)
-                Label.Text = value.TrimEx
-            End Set
-        End Property
-
-        Sub Label_Click() Handles Label.Click
-            ShowContext()
-            RaiseEvent LinkClick()
-        End Sub
-
-        Sub ShowContext()
-            Label.ContextMenuStrip?.Show(Label, 0, 16)
-        End Sub
-    End Class
-
-    Public Class GroupBoxEx
-        Inherits GroupBox
-
-        Sub New()
-            ApplyTheme()
-
-            AddHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
-        End Sub
-
-        Protected Overrides Sub Dispose(disposing As Boolean)
-            RemoveHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
-            MyBase.Dispose(disposing)
-        End Sub
-
-        Sub OnThemeChanged(theme As Theme)
-            ApplyTheme(theme)
-        End Sub
-
-        Sub ApplyTheme()
-            ApplyTheme(ThemeManager.CurrentTheme)
-        End Sub
-
-        Sub ApplyTheme(theme As Theme)
-            If DesignHelp.IsDesignMode Then
-                Exit Sub
-            End If
-
-            SuspendLayout()
-            BackColor = theme.General.Controls.GroupBox.BackColor
-            ForeColor = theme.General.Controls.GroupBox.ForeColor
-            ResumeLayout()
-        End Sub
-    End Class
-
-    Public Class MenuButton
-        Inherits ButtonEx
-
-        Event ValueChangedUser(value As Object)
-
-        <DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)>
-        Property Items As New List(Of Object)
-        Property Menu As New ContextMenuStripEx
-        Property ShowPath As Boolean
-
-        Sub New()
-            Menu.ShowCheckMargin = True
-            Menu.ShowImageMargin = False
-            ShowMenuSymbol = True
-            Padding = New Padding(4, 0, 0, 0)
-            AddHandler Menu.Opening, AddressOf MenuOpening
-        End Sub
-
-        Sub MenuOpening(sender As Object, e As CancelEventArgs)
-            Menu.MinimumSize = New Size(Width, 0)
-            Dim minItemSize As Integer = Menu.MinimumSize.Width
-
-            Dim allItems = Menu.GetItems().OfType(Of MenuItemEx).ToList()
-            Dim selectedItem = allItems.Where(Function(x) Value IsNot Nothing AndAlso Value.Equals(x.Tag)).OrderBy(Function(x) x.Path.Length).FirstOrDefault()
-            Dim selectedSubPath = If(selectedItem IsNot Nothing, selectedItem.Path.LeftLast(" | "), "")
-            Dim selectedSubSubPath = selectedSubPath.LeftLast(" | ")
-            Dim selectedPathLevel = If(selectedItem IsNot Nothing, Regex.Matches(selectedItem.Path, " \| ").Count, 0)
-
-            For Each item As MenuItemEx In allItems.Where(Function(x) Not String.IsNullOrEmpty(x.Path))
-                Dim sameLevel = Regex.Matches(item.Path, " \| ").Count = selectedPathLevel
-
-                item.CheckState = CheckState.Unchecked
-                item.CheckState = If(Not sameLevel AndAlso (selectedSubPath.Equals(item.Path) OrElse (selectedPathLevel > 1 AndAlso selectedSubSubPath.StartsWith(item.Path))), CheckState.Indeterminate, item.CheckState)
-                item.CheckState = If(item.Path = selectedItem?.Path, CheckState.Checked, item.CheckState)
-
-                Dim desiredFont = FontManager.GetDefaultFont(0, If(item.CheckState = CheckState.Checked, FontStyle.Bold, FontStyle.Regular))
-
-                If Not item.Font.Equals(desiredFont) Then item.Font = desiredFont
-            Next
-
-            For Each item As MenuItemEx In Menu.Items
-                item.AutoSize = True
-                minItemSize = Math.Max(minItemSize, item.Width)
-            Next
-
-            For Each item As MenuItemEx In Menu.Items
-                item.AutoSize = False
-                item.Width = minItemSize
-            Next
-        End Sub
-
-        Private ValueValue As Object
-
-        <DefaultValue(CStr(Nothing))>
-        Property Value As Object
-            Get
-                Return ValueValue
-            End Get
-            Set(value As Object)
-                If Menu.Items.Count = 0 Then
-                    If TypeOf value Is System.Enum Then
-                        For Each i In System.Enum.GetValues(value.GetType)
-                            Dim text = DispNameAttribute.GetValueForEnum(i)
-                            Dim temp = i
-
-                            MenuItemEx.Add(Menu.Items, text, Sub(o As Object) OnAction(text, o), temp, Nothing).Tag = temp
-                        Next
-                    End If
-                End If
-
-                If value IsNot Nothing Then
-                    For Each i In Menu.Items.OfType(Of MenuItemEx)()
-                        If value.Equals(i.Tag) Then Text = i.Text
-
-                        If i.DropDownItems.Count > 0 Then
-                            For Each i2 In i.DropDownItems.OfType(Of MenuItemEx)()
-                                If value.Equals(i2.Tag) Then
-                                    Text = If(ShowPath, i2.Path, i2.Text)
-                                End If
-                            Next
-                        End If
-                    Next
-                End If
-
-                If Text = "" AndAlso value IsNot Nothing Then
-                    Text = value.ToString
-                End If
-
-                ValueValue = value
-            End Set
-        End Property
-
-        Protected Overrides Sub OnMouseDown(e As MouseEventArgs)
-            If e.Button = MouseButtons.Left Then
-                Menu.Show(Me, 0, Height)
-            Else
-                MyBase.OnMouseDown(e)
-            End If
-        End Sub
-
-        Protected Overridable Sub OnValueChanged(value As Object)
-            RaiseEvent ValueChangedUser(value)
-        End Sub
-
-        Sub AddRange(items As IEnumerable(Of Object))
-            For Each i In items
-                Add(i.ToString, i, Nothing)
-            Next
-        End Sub
-
-        Function Add(path As String, obj As Object, Optional tip As String = Nothing) As MenuItemEx
-            Items.Add(obj)
-            Dim name = path
-
-            If name.Contains("|") Then
-                name = name.RightLast("|").Trim
-            End If
-
-            Dim ret = MenuItemEx.Add(Menu.Items, path, Sub(o As Object) OnAction(name, o), obj, tip)
-            ret.Tag = obj
-            ret.Path = path
-            Return ret
-        End Function
-
-        Sub Clear()
-            Items.Clear()
-            Menu.Items.ClearAndDisplose
-        End Sub
-
-        Sub OnAction(text As String, value As Object)
-            Me.Text = text
-            Me.Value = value
-            OnValueChanged(value)
-        End Sub
-
-        Function GetValue(Of T)() As T
-            Return DirectCast(Value, T)
-        End Function
-
-        Function GetInt() As Integer
-            Return DirectCast(Value, Integer)
-        End Function
-
-        Protected Overrides Sub Dispose(disposing As Boolean)
-            Menu.Dispose()
-            MyBase.Dispose(disposing)
-        End Sub
-    End Class
-
-    Public Class CommandLineRichTextBox
-        Inherits RichTextBoxEx
-
-        Property LastCommandLine As String
-
-        Sub SetText(commandLine As String)
-            If commandLine = LastCommandLine Then
-                Exit Sub
-            End If
-
-            If commandLine = "" Then
-                Text = ""
-                LastCommandLine = ""
-                Exit Sub
-            End If
-
-            Format(commandLine)
-        End Sub
-
-        Sub Format(commandLine As String)
-            BlockPaint = True
-            Text = commandLine
-
-            ClearAllFormatting()
-
-            If LastCommandLine <> "" Then
-                Dim selStart = GetCompareIndex(commandLine, LastCommandLine)
-                Dim selEnd = commandLine.Length - GetCompareIndex(commandLine.Reverse(), LastCommandLine.Reverse())
-
-                If selEnd > selStart AndAlso selEnd - selStart < commandLine.Length - 1 Then
-                    While selStart > 0 AndAlso selStart + 1 < commandLine.Length AndAlso
-                        Not commandLine(selStart - 1) + commandLine(selStart) = " -"
-
-                        selStart -= 1
-                    End While
-
-                    If selEnd - selStart < 25 Then
-                        SelectionStart = selStart
-                        SelectionLength = If(selEnd - selStart = commandLine.Length, 0, selEnd - selStart)
-                        SelectionFont = New Font(Font, FontStyle.Bold)
-                    End If
-                End If
-            End If
-
-            If s.CommandLineHighlighting Then
-                Dim th = ThemeManager.CurrentTheme.General.Controls.CommandLineRichTextBox
-                Dim matches = Regex.Matches(Me.Text, "(?<=\s|^)(--?\w[^\s=]*)([\s=]((?!--?\D)[^""\s]+|""[^""\n]*"")?)?", RegexOptions.IgnoreCase)
-                For Each m As Match In matches
-                    Me.SelectionFormat(m.Groups(1).Index, m.Groups(1).Length, th.ParameterBackColor, th.ParameterForeColor, th.ParameterFontStyles)
-
-                    If m.Groups.Count > 3 Then
-                        Me.SelectionFormat(m.Groups(3).Index, m.Groups(3).Length, th.ParameterValueBackColor, th.ParameterValueForeColor, th.ParameterValueFontStyles)
-                    End If
-                Next
-            End If
-
-            SelectionStart = commandLine.Length
-            BlockPaint = False
-            Refresh()
-            LastCommandLine = commandLine
-        End Sub
-
-        Function GetCompareIndex(a As String, b As String) As Integer
-            For x = 0 To a.Length - 1
-                If x > b.Length - 1 OrElse x > a.Length - 1 OrElse a(x) <> b(x) Then
-                    Return x
-                End If
-            Next
-
-            Return 0
-        End Function
-
-        Sub CommandLineRichTextBox_HandleCreated(sender As Object, e As EventArgs) Handles Me.HandleCreated
-            If Not DesignMode Then
-                Font = FontManager.GetCodeFont()
-            End If
-        End Sub
-
-        Sub UpdateHeight()
-            Using graphics = CreateGraphics()
-                Dim stringSize = graphics.MeasureString(Text, Font, Size.Width)
-                Dim h = CInt(stringSize.Height) + 1
-
-                If h > Font.Height * 9.1 Then
-                    h = CInt(Font.Height * 9.1)
-                    ScrollBars = RichTextBoxScrollBars.Vertical
-                End If
-
-                Size = New Size(Size.Width, h)
-            End Using
-        End Sub
-    End Class
-
-    <ProvideProperty("Expand", GetType(Control))>
-    Public Class FlowLayoutPanelEx
-        Inherits FlowLayoutPanel
-
-        <DefaultValue(False)>
-        Property UseParentWidth As Boolean
-
-        Property AutomaticOffset As Boolean
-
-        Sub New()
-            WrapContents = False
-        End Sub
-
-        Protected Overrides Sub OnLayout(levent As LayoutEventArgs)
-            MyBase.OnLayout(levent)
-
-            If Not WrapContents AndAlso FlowDirection = FlowDirection.LeftToRight Then
-                Dim nextPos As Integer
-
-                For Each ctrl As Control In Controls
-                    If ctrl.Visible Then
-                        nextPos += ctrl.Margin.Left + ctrl.Width + ctrl.Margin.Right
-
-                        Dim expandetControl = TryCast(ctrl, SimpleUI.ISimpleUIControl)
-
-                        If Not expandetControl Is Nothing AndAlso expandetControl.Expand Then
-                            Dim diff = Aggregate i2 In Controls.OfType(Of Control)() Into Sum(If(i2.Visible, i2.Width + i2.Margin.Left + i2.Margin.Right, 0))
-
-                            Dim hostWidth = Width - 1
-
-                            If ctrl.AutoSize Then
-                                nextPos += hostWidth - diff
-                            Else
-                                ctrl.Width += hostWidth - diff
-                                nextPos += hostWidth - diff
-                            End If
-                        End If
-                    End If
-
-                    Dim index = Controls.IndexOf(ctrl)
-
-                    If index < Controls.Count - 1 Then
-                        Dim ctrl2 = Controls(index + 1)
-                        ctrl2.Left = nextPos
-                    End If
-                Next
-            End If
-
-            'vertical align middles
-            If Not WrapContents AndAlso
-                (FlowDirection = FlowDirection.LeftToRight OrElse
-                FlowDirection = FlowDirection.RightToLeft) Then
-
-                For Each ctrl As Control In Controls
-                    Dim offset = 0
-
-                    If TypeOf ctrl Is CheckBox Then
-                        offset = 1
-                    End If
-
-                    ctrl.Top = CInt((Height - ctrl.Height) / 2) + offset
-                Next
-            End If
-
-            Dim labelBlocks = From block In Controls.OfType(Of SimpleUI.LabelBlock)() Where block.Label.Offset = 0
-
-            If labelBlocks.Count > 0 Then
-                Dim hMax = Aggregate i In labelBlocks Into Max(TextRenderer.MeasureText(i.Text + " ", i.Font).Width)
-
-                For Each lb In labelBlocks
-                    lb.Label.Offset = hMax / lb.Label.Font.Height
-                Next
-            End If
-        End Sub
-
-        Protected Overrides ReadOnly Property DefaultMargin As Padding
-            Get
-                Return New Padding(0)
-            End Get
-        End Property
-
-        Public Overrides Function GetPreferredSize(proposedSize As Size) As Size
-            Dim ret = MyBase.GetPreferredSize(proposedSize)
-
-            If UseParentWidth Then
-                ret.Width = Parent.Width
-            End If
-
-            Return ret
-        End Function
-    End Class
-
     Public Class ButtonEx
         Inherits Button
+        Implements IContextMenuOwner
 
-        Private _backDisabledColor As Color
-        Private _foreDisabledColor As Color
-        Private _text As String = ""
+        Private TextValue As String = ""
+        Private ShowMenuSymbolValue As Boolean
+        Private SymbolValue As Symbol
+        Private SymbolButtonValue As ButtonSymbol
 
-        <DefaultValue(ButtonSymbol.None)>
-        Property SymbolButton As ButtonSymbol
-
-        <DefaultValue(False)>
-        Property ShowMenuSymbol As Boolean
-
-        <Browsable(False)>
-        <DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)>
         Property ClickAction As Action
+        Property ContextMenuStrip As ContextMenuStripEx Implements IContextMenuOwner.ContextMenuStrip
 
-        <Browsable(False)>
-        <DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)>
-        Property EnabledImage As Image
+        'closes the parent dialog with this result after the click handlers ran
+        Property DialogResult As DialogResult = DialogResult.None
 
-        <Browsable(False)>
-        <DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)>
-        Property DisabledImage As Image
-
-        Private _Symbol As Symbol
-
-        Property Symbol As Symbol
-            Get
-                Return _Symbol
-            End Get
-            Set(value As Symbol)
-                _Symbol = value
-
-                If Enabled Then
-                    EnabledImage = ImageHelp.GetSymbolImage(value)
-                    Image = EnabledImage
-                Else
-                    DisabledImage = ImageHelp.GetSymbolImage(value, ControlPaint.DarkDark(ForeDisabledColor))
-                    Image = DisabledImage
-                End If
-
-                If value = Symbol.None Then
-                    Image = Nothing
-                End If
-            End Set
-        End Property
-
-        Protected Overrides Sub OnEnabledChanged(e As EventArgs)
-            MyBase.OnEnabledChanged(e)
-
-            If Symbol <> Symbol.None Then
-                If Enabled Then
-                    If EnabledImage Is Nothing Then
-                        EnabledImage = ImageHelp.GetSymbolImage(Symbol)
-                    End If
-
-                    Image = EnabledImage
-                Else
-                    If DisabledImage Is Nothing Then
-                        DisabledImage = ImageHelp.GetSymbolImage(Symbol, ControlPaint.DarkDark(ForeDisabledColor))
-                    End If
-
-                    Image = DisabledImage
-                End If
-            End If
+        Sub New()
+            MyBase.New()
         End Sub
 
-        Public Property BackDisabledColor As Color
-            Get
-                Return _backDisabledColor
-            End Get
-            Set(value As Color)
-                _backDisabledColor = value
-            End Set
-        End Property
-
-        Private Function ShouldSerializeBackDisabledColor() As Boolean
-            Return BackDisabledColor <> Color.Empty
-        End Function
-
-        Public Property ForeDisabledColor As Color
-            Get
-                Return _foreDisabledColor
-            End Get
-            Set(value As Color)
-                _foreDisabledColor = value
-            End Set
-        End Property
-
-        Private Function ShouldSerializeForeDisabledColor() As Boolean
-            Return ForeDisabledColor <> Color.Empty
-        End Function
-
-        <DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)>
-        Shadows Property Name As String
-            Get
-                Return MyBase.Name
-            End Get
-            Set(value As String)
-                MyBase.Name = value
-            End Set
-        End Property
-
-        <DefaultValue(0), Browsable(False),
-        DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)>
-        Shadows Property TabIndex As Integer
-            Get
-                Return MyBase.TabIndex
-            End Get
-            Set(value As Integer)
-                MyBase.TabIndex = value
-            End Set
-        End Property
-
-        Protected Overrides ReadOnly Property ShowFocusCues As Boolean
-            Get
-                Return True
-            End Get
-        End Property
-
-        'The designer is not able to serialize the Text property probably
-        'because it shadows the base Text property, Text2 is used as workaround
-        Property Text2 As String
-            Get
-                Return _text
-            End Get
-            Set(value As String)
-                _text = value
-            End Set
-        End Property
+        Sub New(text As String)
+            MyBase.New()
+            Me.Text = text
+        End Sub
 
         Shadows Property Text As String
             Get
-                Return _text
+                Return TextValue
             End Get
             Set(value As String)
-                _text = value
-
-                If AutoSize Then
-                    Dim textSize = TextRenderer.MeasureText(_text, Font)
-                    Dim fh = Font.Height
-                    MinimumSize = New Size(CInt(fh * 2.2), fh)
-                    AutoSizeMode = AutoSizeMode.GrowOnly
-                    Size = New Size(textSize.Width + Padding.Horizontal + fh, textSize.Height + CInt(fh * 0.45))
-                End If
-
-                Invalidate(True)
+                TextValue = If(value, "")
+                UpdateText()
             End Set
         End Property
 
-        <CodeAnalysis.SuppressMessage("CodeQuality", "IDE0051:Remove unused private members", Justification:="<Pending>")>
-        Private Function ShouldSerializeUseVisualStyleBackColor() As Boolean
-            Return False
-        End Function
-
-        Protected Overrides ReadOnly Property DefaultSize As Size
+        Property ShowMenuSymbol As Boolean
             Get
-                Return New Size(250, 70)
+                Return ShowMenuSymbolValue
             End Get
+            Set(value As Boolean)
+                ShowMenuSymbolValue = value
+                UpdateText()
+            End Set
         End Property
 
-        Sub New()
-            SetStyle(ControlStyles.ResizeRedraw, True)
+        Property Symbol As Symbol
+            Get
+                Return SymbolValue
+            End Get
+            Set(value As Symbol)
+                SymbolValue = value
+                UpdateText()
+            End Set
+        End Property
 
-            Padding = New Padding(0)
+        Property SymbolButton As ButtonSymbol
+            Get
+                Return SymbolButtonValue
+            End Get
+            Set(value As ButtonSymbol)
+                SymbolButtonValue = value
+                UpdateText()
+            End Set
+        End Property
 
-            If Not DesignHelp.IsDesignMode Then
-                MinimumSize = New Size(20, 20)
-                UseCompatibleTextRendering = True
-                UseVisualStyleBackColor = False
-                FlatStyle = FlatStyle.Flat
+        Sub UpdateText()
+            Dim value = TextValue.Trim
+
+            If value = "" Then
+                value = GetSymbolText()
             End If
 
-            FlatAppearance.BorderSize = 2
-
-            ApplyTheme()
-
-            AddHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
-        End Sub
-
-        Protected Overrides Sub Dispose(disposing As Boolean)
-            RemoveHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
-            MyBase.Dispose(disposing)
-        End Sub
-
-        Sub OnThemeChanged(theme As Theme)
-            ApplyTheme(theme)
-        End Sub
-
-        Sub ApplyTheme()
-            ApplyTheme(ThemeManager.CurrentTheme)
-        End Sub
-
-        Sub ApplyTheme(theme As Theme)
-            If DesignHelp.IsDesignMode Then
-                Exit Sub
+            If ShowMenuSymbol Then
+                value = If(value = "", "▾", value + "  ▾")
             End If
 
-            SuspendLayout()
-            BackColor = theme.General.Controls.Button.BackColor
-            BackDisabledColor = theme.General.Controls.Button.BackDisabledColor
-            ForeColor = theme.General.Controls.Button.ForeColor
-            ForeDisabledColor = theme.General.Controls.Button.ForeDisabledColor
-            FlatAppearance.BorderColor = theme.General.Controls.Button.BorderColor
-            ResumeLayout()
+            MyBase.Text = value
+
+            'Eto ellipsizes button texts, so buttons in tight layouts get too narrow
+            Dim label = TryCast(TryCast(ControlObject, Global.Gtk.Bin)?.Child, Global.Gtk.Label)
+            If label IsNot Nothing Then label.Ellipsize = Pango.EllipsizeMode.None
         End Sub
+
+        Function GetSymbolText() As String
+            Select Case SymbolButton
+                Case ButtonSymbol.Left1 : Return "<"
+                Case ButtonSymbol.Left2 : Return "<<"
+                Case ButtonSymbol.Left3 : Return "<<<"
+                Case ButtonSymbol.Right1 : Return ">"
+                Case ButtonSymbol.Right2 : Return ">>"
+                Case ButtonSymbol.Right3 : Return ">>>"
+                Case ButtonSymbol.Open : Return "["
+                Case ButtonSymbol.Close : Return "]"
+                Case ButtonSymbol.Delete : Return "×"
+                Case ButtonSymbol.Menu : Return "▾"
+            End Select
+
+            Return SymbolHelp.GetText(Symbol)
+        End Function
 
         Protected Overrides Sub OnClick(e As EventArgs)
+            Dim dialog = TryCast(ParentWindow, DialogBase)
+
+            If DialogResult <> DialogResult.None AndAlso dialog IsNot Nothing Then
+                dialog.PerformButtonClose(DialogResult, Sub() RaiseClick(e))
+            Else
+                RaiseClick(e)
+            End If
+        End Sub
+
+        Private Sub RaiseClick(e As EventArgs)
             ClickAction?.Invoke()
-            ContextMenuStrip?.Show(Me, 0, Height)
+
+            If ContextMenuStrip IsNot Nothing Then
+                ContextMenuStrip.Show(Me, New PointF(0, Height))
+            End If
+
             MyBase.OnClick(e)
         End Sub
 
-        Protected Overrides Sub OnPaint(e As PaintEventArgs)
-            MyBase.OnPaint(e)
-
-            e.Graphics.SmoothingMode = SmoothingMode.AntiAlias
-
-            Dim fore = If(Enabled, ForeColor, ForeDisabledColor)
-            Dim flags As TextFormatFlags
-
-            Select Case TextAlign
-                Case Drawing.ContentAlignment.BottomCenter
-                    flags = TextFormatFlags.Bottom Or TextFormatFlags.HorizontalCenter
-                Case Drawing.ContentAlignment.BottomLeft
-                    flags = TextFormatFlags.Bottom Or TextFormatFlags.Left
-                Case Drawing.ContentAlignment.BottomRight
-                    flags = TextFormatFlags.Bottom Or TextFormatFlags.Right
-                Case Drawing.ContentAlignment.MiddleCenter
-                    flags = TextFormatFlags.VerticalCenter Or TextFormatFlags.HorizontalCenter
-                Case Drawing.ContentAlignment.MiddleLeft
-                    flags = TextFormatFlags.VerticalCenter Or TextFormatFlags.Left
-                Case Drawing.ContentAlignment.MiddleRight
-                    flags = TextFormatFlags.VerticalCenter Or TextFormatFlags.Right
-                Case Drawing.ContentAlignment.TopCenter
-                    flags = TextFormatFlags.Top Or TextFormatFlags.HorizontalCenter
-                Case Drawing.ContentAlignment.TopLeft
-                    flags = TextFormatFlags.Top Or TextFormatFlags.Left
-                Case Drawing.ContentAlignment.TopRight
-                    flags = TextFormatFlags.Top Or TextFormatFlags.Right
-            End Select
-
-            Using foreBrush = New SolidBrush(fore)
-                Dim rect = ClientRectangle
-                rect.Offset(0, Padding.Top - If(FlatStyle.HasFlag(FlatStyle.Flat), FlatAppearance.BorderSize \ 2, 0))
-
-                TextRenderer.DrawText(e.Graphics, Text, Font, rect, fore, flags)
-            End Using
-
-            If ShowMenuSymbol Then
-                Dim h = CInt(Font.Height * 0.3)
-                Dim w = h * 2
-
-                Dim x1 = If(Text = "", Width \ 2 - w \ 2, Width - w - CInt(w * 0.7))
-                Dim y1 = CInt(Height / 2 - h / 2)
-
-                Dim x2 = CInt(x1 + w / 2)
-                Dim y2 = y1 + h
-
-                Dim x3 = x1 + w
-                Dim y3 = y1
-
-                Using pen = New Pen(fore, Font.Height / 16.0F)
-                    e.Graphics.DrawLine(pen, x1, y1, x2, y2)
-                    e.Graphics.DrawLine(pen, x2, y2, x3, y3)
-                End Using
-            End If
-
-            If SymbolButton <> ButtonSymbol.None Then
-                Dim p = New Pen(ForeColor)
-                p.Alignment = PenAlignment.Center
-                p.EndCap = LineCap.Round
-                p.StartCap = LineCap.Round
-                p.Width = CInt(Height / 14)
-
-                Dim d As New SymbolDrawer With {
-                    .Graphics = e.Graphics,
-                    .Pen = p
-                }
-
-                d.Point1.Width = ClientSize.Width
-                d.Point2.Width = ClientSize.Width
-                d.Point1.Height = ClientSize.Height
-                d.Point2.Height = ClientSize.Height
-
-                Select Case SymbolButton
-                    Case ButtonSymbol.Open
-                        d.Point1.MoveRight(0.6)
-                        d.Point1.MoveDown(0.3)
-                        d.Point2.MoveDown(0.3)
-                        d.Point2.MoveRight(0.4)
-                        d.Draw()
-                        d.Point1.MoveDown(0.4)
-                        d.Point2.MoveDown(0.4)
-                        d.Draw()
-                        d.Point1.MoveLeft(0.2)
-                        d.Point1.MoveUp(0.4)
-                        d.Draw()
-                    Case ButtonSymbol.Close
-                        d.Point1.MoveRight(0.6)
-                        d.Point1.MoveDown(0.3)
-                        d.Point2.MoveDown(0.3)
-                        d.Point2.MoveRight(0.4)
-                        d.Draw()
-                        d.Point1.MoveDown(0.4)
-                        d.Point2.MoveDown(0.4)
-                        d.Draw()
-                        d.Point2.MoveRight(0.2)
-                        d.Point2.MoveUp(0.4)
-                        d.Draw()
-                    Case ButtonSymbol.Left3
-                        d.Point1.MoveRight(0.2)
-                        d.Point1.MoveDown(0.5)
-                        d.Point2.MoveDown(0.3)
-                        d.Point2.MoveRight(0.4)
-                        d.Draw()
-                        d.Point1.MoveRight(0.2)
-                        d.Point2.MoveRight(0.2)
-                        d.Draw()
-                        d.Point1.MoveRight(0.2)
-                        d.Point2.MoveRight(0.2)
-                        d.Draw()
-                        d.Reset()
-                        d.Point1.MoveRight(0.2)
-                        d.Point1.MoveDown(0.5)
-                        d.Point2.MoveDown(0.7)
-                        d.Point2.MoveRight(0.4)
-                        d.Draw()
-                        d.Point1.MoveRight(0.2)
-                        d.Point2.MoveRight(0.2)
-                        d.Draw()
-                        d.Point1.MoveRight(0.2)
-                        d.Point2.MoveRight(0.2)
-                        d.Draw()
-                    Case ButtonSymbol.Left2
-                        d.Point1.MoveRight(0.3)
-                        d.Point1.MoveDown(0.5)
-                        d.Point2.MoveDown(0.3)
-                        d.Point2.MoveRight(0.5)
-                        d.Draw()
-                        d.Point1.MoveRight(0.2)
-                        d.Point2.MoveRight(0.2)
-                        d.Draw()
-                        d.Reset()
-                        d.Point1.MoveRight(0.3)
-                        d.Point1.MoveDown(0.5)
-                        d.Point2.MoveDown(0.7)
-                        d.Point2.MoveRight(0.5)
-                        d.Draw()
-                        d.Point1.MoveRight(0.2)
-                        d.Point2.MoveRight(0.2)
-                        d.Draw()
-                    Case ButtonSymbol.Left1
-                        d.Point1.MoveRight(0.4)
-                        d.Point1.MoveDown(0.5)
-                        d.Point2.MoveDown(0.3)
-                        d.Point2.MoveRight(0.6)
-                        d.Draw()
-                        d.Point2.MoveDown(0.4)
-                        d.Draw()
-                    Case ButtonSymbol.Right1
-                        d.Point1.MoveRight(0.6)
-                        d.Point1.MoveDown(0.5)
-                        d.Point2.MoveDown(0.3)
-                        d.Point2.MoveRight(0.4)
-                        d.Draw()
-                        d.Point2.MoveDown(0.4)
-                        d.Draw()
-                    Case ButtonSymbol.Right2
-                        d.Point1.MoveRight(0.5)
-                        d.Point1.MoveDown(0.5)
-                        d.Point2.MoveDown(0.3)
-                        d.Point2.MoveRight(0.3)
-                        d.Draw()
-                        d.Point1.MoveRight(0.2)
-                        d.Point2.MoveRight(0.2)
-                        d.Draw()
-                        d.Reset()
-                        d.Point1.MoveRight(0.5)
-                        d.Point1.MoveDown(0.5)
-                        d.Point2.MoveDown(0.7)
-                        d.Point2.MoveRight(0.3)
-                        d.Draw()
-                        d.Point1.MoveRight(0.2)
-                        d.Point2.MoveRight(0.2)
-                        d.Draw()
-                    Case ButtonSymbol.Right3
-                        d.Point1.MoveRight(0.4)
-                        d.Point1.MoveDown(0.5)
-                        d.Point2.MoveDown(0.3)
-                        d.Point2.MoveRight(0.2)
-                        d.Draw()
-                        d.Point1.MoveRight(0.2)
-                        d.Point2.MoveRight(0.2)
-                        d.Draw()
-                        d.Point1.MoveRight(0.2)
-                        d.Point2.MoveRight(0.2)
-                        d.Draw()
-                        d.Reset()
-                        d.Point1.MoveRight(0.4)
-                        d.Point1.MoveDown(0.5)
-                        d.Point2.MoveDown(0.7)
-                        d.Point2.MoveRight(0.2)
-                        d.Draw()
-                        d.Point1.MoveRight(0.2)
-                        d.Point2.MoveRight(0.2)
-                        d.Draw()
-                        d.Point1.MoveRight(0.2)
-                        d.Point2.MoveRight(0.2)
-                        d.Draw()
-                    Case ButtonSymbol.Delete
-                        d.Point1.MoveRight(0.3)
-                        d.Point1.MoveDown(0.3)
-                        d.Point2.MoveRight(0.7)
-                        d.Point2.MoveDown(0.7)
-                        d.Draw()
-                        d.Point1.MoveRight(0.4)
-                        d.Point2.MoveLeft(0.4)
-                        d.Draw()
-                    Case ButtonSymbol.Menu
-                        d.Point1.MoveRight(0.2)
-                        d.Point1.MoveDown(0.35)
-                        d.Point2.MoveRight(0.5)
-                        d.Point2.MoveDown(0.65)
-                        d.Draw()
-                        d.Point1.MoveRight(0.6)
-                        d.Draw()
-                End Select
-            End If
+        Sub ShowBold()
         End Sub
 
-        Sub ShowBold()
-            SetFontStyle(FontStyle.Bold)
+        Sub SetFontStyle(style As FontStyle)
+            Font = FontManager.GetDefaultFont(0, style)
+        End Sub
 
-            For i = 0 To 20
-                Application.DoEvents()
-                Thread.Sleep(10)
-            Next
-
-            SetFontStyle(FontStyle.Regular)
+        Sub SetFontSize(size As Single)
         End Sub
 
         Enum ButtonSymbol
@@ -2521,983 +146,1046 @@ Namespace UI
             Delete
             Menu
         End Enum
-
-        Class SymbolDrawer
-            Property Point1 As New Point
-            Property Point2 As New Point
-            Property Pen As Pen = New Pen(Color.OrangeRed, 4)
-            Property Graphics As Graphics
-
-            Sub Draw()
-                Graphics.DrawLine(Pen, Point1.X, Point1.Y, Point2.X, Point2.Y)
-            End Sub
-
-            Sub Reset()
-                Point1.X = 0
-                Point2.X = 0
-                Point1.Y = 0
-                Point2.Y = 0
-            End Sub
-
-            Class Point
-                Property Width As Single
-                Property Height As Single
-                Property X As Single
-                Property Y As Single
-
-                Sub MoveLeft(value As Single)
-                    X -= Width * value
-                End Sub
-
-                Sub MoveRight(value As Single)
-                    X += Width * value
-                End Sub
-
-                Sub MoveUp(value As Single)
-                    Y -= Height * value
-                End Sub
-
-                Sub MoveDown(value As Single)
-                    Y += Height * value
-                End Sub
-            End Class
-        End Class
     End Class
 
-    Public Class ListBoxEx
-        Inherits ListBox
+    Public Class SymbolHelp
+        Shared Function GetText(symbol As Symbol) As String
+            Select Case symbol
+                Case Symbol.Up, Symbol.ChevronUp
+                    Return "↑"
+                Case Symbol.Down, Symbol.ChevronDown
+                    Return "↓"
+                Case Symbol.Back, Symbol.ChevronLeft
+                    Return "←"
+                Case Symbol.Forward, Symbol.ChevronRight
+                    Return "→"
+                Case Symbol.Add
+                    Return "+"
+                Case Symbol.Remove, Symbol.Delete
+                    Return "−"
+                Case Symbol.Edit
+                    Return "✎"
+                Case Symbol.Copy
+                    Return "⧉"
+                Case Symbol.Search, Symbol.Zoom
+                    Return "⌕"
+                Case Symbol.Help
+                    Return "?"
+                Case Symbol.Play
+                    Return "▶"
+                Case Symbol.Settings
+                    Return "⚙"
+            End Select
 
-        Private _backAlternateColor As Color
-        Private _backHighlightColor As Color
-        Private _backSelectedColor As Color
-        Private _foreHighlightColor As Color
-        Private _foreSelectedColor As Color
-        Private _symbolImageColor As Color
-
-        Private BlockOnSelectedIndexChanged As Boolean
-
-        <DefaultValue(GetType(ButtonEx), Nothing)> Property UpButton As ButtonEx
-        <DefaultValue(GetType(ButtonEx), Nothing)> Property DownButton As ButtonEx
-        <DefaultValue(GetType(ButtonEx), Nothing)> Property RemoveButton As ButtonEx
-        <DefaultValue(GetType(ButtonEx), Nothing)> Property Button1 As ButtonEx
-        <DefaultValue(GetType(ButtonEx), Nothing)> Property Button2 As ButtonEx
-
-        Public Property BackAlternateColor As Color
-            Get
-                Return _backAlternateColor
-            End Get
-            Set(value As Color)
-                _backAlternateColor = value
-                Invalidate()
-            End Set
-        End Property
-
-        Private Function ShouldSerializeBackAlternateColor() As Boolean
-            Return BackAlternateColor <> Color.Empty
+            Return ""
         End Function
+    End Class
 
-        Public Property BackHighlightColor As Color
-            Get
-                Return _backHighlightColor
-            End Get
-            Set(value As Color)
-                _backHighlightColor = value
-                Invalidate()
-            End Set
-        End Property
+    'single or multi line text control with a WinForms TextBox like API,
+    'the TextBox property returns the control itself for compatibility
+    Public Class TextEdit
+        Inherits Panel
+        Implements IContextMenuOwner
 
-        Private Function ShouldSerializeBackHighlightColor() As Boolean
-            Return BackHighlightColor <> Color.Empty
-        End Function
+        Private SingleLineBox As TextBox
+        Private MultiLineBox As TextArea
+        Private BlockTextChanged As Boolean
+        Private ContextMenuValue As ContextMenuStripEx
+        Private FontValue As Font
+        Private ReadOnlyValue As Boolean
+        Private TextAlignValue As HorizontalAlignment = HorizontalAlignment.Left
+        Private PlaceholderValue As String
 
-        Public Property BackSelectedColor As Color
-            Get
-                Return _backSelectedColor
-            End Get
-            Set(value As Color)
-                _backSelectedColor = value
-                Invalidate()
-            End Set
-        End Property
-
-        Private Function ShouldSerializeBackSelectedColor() As Boolean
-            Return BackSelectedColor <> Color.Empty
-        End Function
-
-        Public Property ForeHighlightColor As Color
-            Get
-                Return _foreHighlightColor
-            End Get
-            Set(value As Color)
-                _foreHighlightColor = value
-                Invalidate()
-            End Set
-        End Property
-
-        Private Function ShouldSerializeForeHighlightColor() As Boolean
-            Return ForeHighlightColor <> Color.Empty
-        End Function
-
-        Public Property ForeSelectedColor As Color
-            Get
-                Return _foreSelectedColor
-            End Get
-            Set(value As Color)
-                _foreSelectedColor = value
-                Invalidate()
-            End Set
-        End Property
-
-        Private Function ShouldSerializeForeSelectedColor() As Boolean
-            Return ForeSelectedColor <> Color.Empty
-        End Function
-
-        Public Property SymbolImageColor As Color
-            Get
-                Return _symbolImageColor
-            End Get
-            Set(value As Color)
-                _symbolImageColor = value
-                Invalidate()
-            End Set
-        End Property
-
-        Private Function ShouldSerializeSymbolImageColor() As Boolean
-            Return SymbolImageColor <> Color.Empty
-        End Function
+        Shadows Event TextChanged(sender As Object, e As EventArgs)
+        Shadows Event KeyDown(sender As Object, e As KeyEventArgs)
+        Shadows Event KeyUp(sender As Object, e As KeyEventArgs)
+        Shadows Event MouseDown(sender As Object, e As MouseEventArgs)
+        Shadows Event MouseUp(sender As Object, e As MouseEventArgs)
+        Shadows Event MouseWheel(sender As Object, e As MouseEventArgs)
+        Shadows Event GotFocus(sender As Object, e As EventArgs)
+        Shadows Event LostFocus(sender As Object, e As EventArgs)
+        Event DoubleClick(sender As Object, e As EventArgs)
+        Event Click(sender As Object, e As EventArgs)
 
         Sub New()
-            MyBase.New()
-            DrawMode = DrawMode.OwnerDrawFixed
-            ApplyTheme()
-
-            AddHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
+            CreateSingleLine()
         End Sub
 
-        Protected Overrides Sub Dispose(disposing As Boolean)
-            RemoveHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
-            MyBase.Dispose(disposing)
+        ReadOnly Property TextBox As TextEdit
+            Get
+                Return Me
+            End Get
+        End Property
+
+        ReadOnly Property InnerControl As TextControl
+            Get
+                Return If(DirectCast(MultiLineBox, TextControl), SingleLineBox)
+            End Get
+        End Property
+
+        Private Sub CreateSingleLine()
+            SingleLineBox = New TextBox
+            WireEvents(SingleLineBox)
+            Content = SingleLineBox
         End Sub
 
-        Sub OnThemeChanged(theme As Theme)
-            ApplyTheme(theme)
+        Private Sub WireEvents(c As TextControl)
+            AddHandler c.TextChanged, Sub(sender, e)
+                                          If Not BlockTextChanged Then
+                                              OnTextChanged(e)
+                                          End If
+                                      End Sub
+            AddHandler c.KeyDown, Sub(sender, e) RaiseEvent KeyDown(Me, e)
+            AddHandler c.KeyUp, Sub(sender, e) RaiseEvent KeyUp(Me, e)
+            AddHandler c.MouseDown, Sub(sender, e) RaiseEvent MouseDown(Me, e)
+            AddHandler c.MouseUp, Sub(sender, e)
+                                      RaiseEvent MouseUp(Me, e)
+
+                                      If e.Buttons = MouseButtons.Primary Then
+                                          RaiseEvent Click(Me, EventArgs.Empty)
+                                      End If
+                                  End Sub
+            AddHandler c.MouseDoubleClick, Sub(sender, e) RaiseEvent DoubleClick(Me, e)
+            AddHandler c.MouseWheel, Sub(sender, e) RaiseEvent MouseWheel(Me, e)
+            AddHandler c.GotFocus, Sub(sender, e) RaiseEvent GotFocus(Me, e)
+            AddHandler c.LostFocus, Sub(sender, e) RaiseEvent LostFocus(Me, e)
         End Sub
 
-        Sub ApplyTheme()
-            ApplyTheme(ThemeManager.CurrentTheme)
+        Protected Overridable Sub OnTextChanged(e As EventArgs)
+            RaiseEvent TextChanged(Me, e)
         End Sub
 
-        Sub ApplyTheme(theme As Theme)
-            If DesignHelp.IsDesignMode Then
-                Exit Sub
-            End If
-
-            SuspendLayout()
-            BackColor = theme.General.Controls.ListBox.BackColor
-            BackAlternateColor = theme.General.Controls.ListBox.BackAlternateColor
-            BackHighlightColor = theme.General.Controls.ListBox.BackHighlightColor
-            BackSelectedColor = theme.General.Controls.ListBox.BackSelectedColor
-            ForeColor = theme.General.Controls.ListBox.ForeColor
-            ForeHighlightColor = theme.General.Controls.ListBox.ForeHighlightColor
-            ForeSelectedColor = theme.General.Controls.ListBox.ForeSelectedColor
-            SymbolImageColor = theme.General.Controls.ListBox.SymbolImageColor
-            ResumeLayout()
-        End Sub
-
-        Protected Overrides Sub OnFontChanged(e As EventArgs)
-            ItemHeight = CInt(Font.Height * 1.4)
-            MyBase.OnFontChanged(e)
-        End Sub
-
-        Protected Overrides Sub OnDrawItem(e As DrawItemEventArgs)
-            If Items.Count = 0 OrElse e.Index < 0 Then Exit Sub
-
-            Dim back As Color = BackColor
-            Dim fore As Color = ForeColor
-            Dim r = e.Bounds
-            Dim g = e.Graphics
-            g.TextRenderingHint = Drawing.Text.TextRenderingHint.AntiAlias
-
-            If (e.State And DrawItemState.Selected) = DrawItemState.Selected Then
-                fore = ForeSelectedColor
-                back = BackSelectedColor
-
-                r.Width -= 1
-                r.Height -= 1
-                r.Inflate(-1, -1)
-            End If
-
-            Using backBrush As New SolidBrush(back)
-                g.FillRectangle(backBrush, r)
-            End Using
-
-            Dim sf As New StringFormat
-            sf.FormatFlags = StringFormatFlags.NoWrap
-            sf.LineAlignment = StringAlignment.Center
-
-            Dim r2 = e.Bounds
-            r2.X = 2
-            r2.Width = e.Bounds.Width
-
-            Dim caption As String
-
-            If DisplayMember <> "" Then
-                Try
-                    caption = Items(e.Index).GetType.GetProperty(DisplayMember).GetValue(Items(e.Index), Nothing).ToString
-                Catch ex As Exception
-                    caption = Items(e.Index).ToString()
-                End Try
-            Else
-                caption = Items(e.Index).ToString()
-            End If
-
-            Using foreBrush = New SolidBrush(fore)
-                e.Graphics.DrawString(caption, Font, foreBrush, r2, sf)
-            End Using
-        End Sub
-
-        Protected Overrides Sub OnSelectedValueChanged(e As EventArgs)
-            MyBase.OnSelectedValueChanged(e)
-            UpdateControls()
-        End Sub
-
-        Sub UpdateSelection()
-            If SelectedIndex > -1 Then
-                BlockOnSelectedIndexChanged = True
-                Items(SelectedIndex) = SelectedItem
-                BlockOnSelectedIndexChanged = False
-
-                If Sorted Then
-                    Sorted = False
-                    Sorted = True
+        Property Multiline As Boolean
+            Get
+                Return MultiLineBox IsNot Nothing
+            End Get
+            Set(value As Boolean)
+                If value = Multiline Then
+                    Exit Property
                 End If
-            End If
-        End Sub
 
-        Private SavedSelection As New List(Of Integer)
+                Dim text = Me.Text
 
-        Sub SaveSelection()
-            SavedSelection.Clear()
-
-            For Each i As Integer In SelectedIndices
-                SavedSelection.Add(i)
-            Next
-        End Sub
-
-        Sub RestoreSelection()
-            For Each i In SavedSelection
-                SetSelected(i, True)
-            Next
-        End Sub
-
-        Sub DeleteItem(text As String)
-            If FindStringExact(text) > -1 Then Items.RemoveAt(FindStringExact(text))
-        End Sub
-
-        Sub RemoveSelection()
-            If SelectedIndex > -1 Then
-                If SelectionMode = Windows.Forms.SelectionMode.One Then
-                    Dim index = SelectedIndex
-
-                    If Items.Count - 1 > SelectedIndex Then
-                        SelectedIndex += 1
-                    Else
-                        SelectedIndex -= 1
-                    End If
-
-                    Items.RemoveAt(index)
+                If value Then
+                    MultiLineBox = New TextArea With {.Wrap = True, .AcceptsTab = False}
+                    WireEvents(MultiLineBox)
+                    SingleLineBox = Nothing
+                    Content = MultiLineBox
                 Else
-                    Dim iFirst = Items.IndexOf(SelectedItems(0))
+                    MultiLineBox = Nothing
+                    CreateSingleLine()
+                End If
 
-                    For i = SelectedItems.Count - 1 To 0 Step -1
-                        Items.Remove(SelectedItems(i))
-                    Next
+                BlockTextChanged = True
+                InnerControl.Text = text
+                BlockTextChanged = False
+                ApplyProperties()
+            End Set
+        End Property
 
-                    SelectedIndex = If(iFirst > Items.Count - 1, Items.Count - 1, iFirst)
+        Private Sub ApplyProperties()
+            If FontValue IsNot Nothing Then
+                InnerControl.Font = FontValue
+            End If
+
+            If SingleLineBox IsNot Nothing Then
+                SingleLineBox.ReadOnly = ReadOnlyValue
+                SingleLineBox.TextAlignment = If(TextAlignValue = HorizontalAlignment.Center, TextAlignment.Center,
+                    If(TextAlignValue = HorizontalAlignment.Right, TextAlignment.Right, TextAlignment.Left))
+
+                If PlaceholderValue <> "" Then
+                    SingleLineBox.PlaceholderText = PlaceholderValue
+                End If
+            Else
+                MultiLineBox.ReadOnly = ReadOnlyValue
+            End If
+
+            InnerControl.ContextMenu = ContextMenuValue
+        End Sub
+
+        Property Text As String
+            Get
+                Return If(InnerControl.Text, "")
+            End Get
+            Set(value As String)
+                If value <> InnerControl.Text Then
+                    InnerControl.Text = If(value, "")
+                End If
+            End Set
+        End Property
+
+        Sub SetTextWithoutTextChangedEvent(text As String)
+            BlockTextChanged = True
+            Me.Text = text
+            BlockTextChanged = False
+        End Sub
+
+        Property [ReadOnly] As Boolean
+            Get
+                Return ReadOnlyValue
+            End Get
+            Set(value As Boolean)
+                ReadOnlyValue = value
+                ApplyProperties()
+            End Set
+        End Property
+
+        Property Font As Font
+            Get
+                Return If(FontValue, InnerControl.Font)
+            End Get
+            Set(value As Font)
+                FontValue = value
+                ApplyProperties()
+            End Set
+        End Property
+
+        Property TextAlign As HorizontalAlignment
+            Get
+                Return TextAlignValue
+            End Get
+            Set(value As HorizontalAlignment)
+                TextAlignValue = value
+                ApplyProperties()
+            End Set
+        End Property
+
+        Property BackColor As Color
+            Get
+                Return InnerControl.BackgroundColor
+            End Get
+            Set(value As Color)
+                InnerControl.BackgroundColor = value
+            End Set
+        End Property
+
+        Sub ResetBackColor()
+            ClearBackgroundColor(InnerControl)
+        End Sub
+
+        Property ForeColor As Color
+            Get
+                Return InnerControl.TextColor
+            End Get
+            Set(value As Color)
+                InnerControl.TextColor = value
+            End Set
+        End Property
+
+        Property AcceptsReturn As Boolean
+            Get
+                Return MultiLineBox Is Nothing OrElse MultiLineBox.AcceptsReturn
+            End Get
+            Set(value As Boolean)
+                If MultiLineBox IsNot Nothing Then MultiLineBox.AcceptsReturn = value
+            End Set
+        End Property
+
+        Property AcceptsTab As Boolean
+            Get
+                Return MultiLineBox IsNot Nothing AndAlso MultiLineBox.AcceptsTab
+            End Get
+            Set(value As Boolean)
+                If MultiLineBox IsNot Nothing Then MultiLineBox.AcceptsTab = value
+            End Set
+        End Property
+
+        Property WordWrap As Boolean
+            Get
+                Return MultiLineBox IsNot Nothing AndAlso MultiLineBox.Wrap
+            End Get
+            Set(value As Boolean)
+                If MultiLineBox IsNot Nothing Then MultiLineBox.Wrap = value
+            End Set
+        End Property
+
+        Property ContextMenuStrip As ContextMenuStripEx Implements IContextMenuOwner.ContextMenuStrip
+            Get
+                Return ContextMenuValue
+            End Get
+            Set(value As ContextMenuStripEx)
+                ContextMenuValue = value
+                ApplyProperties()
+            End Set
+        End Property
+
+        Sub SendMessageCue(value As String, Optional hideWhenFocused As Boolean = False)
+            PlaceholderValue = value
+            ApplyProperties()
+        End Sub
+
+        Property SelectionStart As Integer
+            Get
+                If SingleLineBox IsNot Nothing Then
+                    Return SingleLineBox.Selection.Start
+                End If
+
+                Return MultiLineBox.Selection.Start
+            End Get
+            Set(value As Integer)
+                [Select](value, 0)
+            End Set
+        End Property
+
+        Property SelectionLength As Integer
+            Get
+                If SingleLineBox IsNot Nothing Then
+                    Return SingleLineBox.Selection.Length()
+                End If
+
+                Return MultiLineBox.Selection.Length()
+            End Get
+            Set(value As Integer)
+                [Select](SelectionStart, value)
+            End Set
+        End Property
+
+        Property SelectedText As String
+            Get
+                If SingleLineBox IsNot Nothing Then
+                    Return SingleLineBox.SelectedText
+                End If
+
+                Return MultiLineBox.SelectedText
+            End Get
+            Set(value As String)
+                Dim start = SelectionStart
+                Dim length = SelectionLength
+                Dim txt = Text
+                start = Math.Min(start, txt.Length)
+                length = Math.Min(length, txt.Length - start)
+                Text = txt.Substring(0, start) + value + txt.Substring(start + length)
+                [Select](start + If(value, "").Length, 0)
+            End Set
+        End Property
+
+        Sub [Select](start As Integer, length As Integer)
+            start = Math.Max(0, Math.Min(start, Text.Length))
+            length = Math.Max(0, Math.Min(length, Text.Length - start))
+            Dim range = New Range(Of Integer)(start, start + length - 1)
+
+            If SingleLineBox IsNot Nothing Then
+                If length = 0 Then
+                    SingleLineBox.CaretIndex = start
+                Else
+                    SingleLineBox.Selection = range
+                End If
+            Else
+                If length = 0 Then
+                    MultiLineBox.CaretIndex = start
+                Else
+                    MultiLineBox.Selection = range
                 End If
             End If
         End Sub
 
-        Function CanMoveUp() As Boolean
-            Return SelectedIndices.Count > 0 AndAlso SelectedIndices(0) > 0
-        End Function
-
-        Function CanMoveDown() As Boolean
-            Return SelectedIndices.Count > 0 AndAlso SelectedIndices(SelectedIndices.Count - 1) < Items.Count - 1
-        End Function
-
-        Sub MoveSelectionUp()
-            If CanMoveUp() Then
-                Dim iAbove = SelectedIndices(0) - 1
-
-                If iAbove = -1 Then
-                    Exit Sub
-                End If
-
-                Dim itemAbove = Items(iAbove)
-                Items.RemoveAt(iAbove)
-                Dim iLastItem = SelectedIndices(SelectedIndices.Count - 1)
-                Items.Insert(iLastItem + 1, itemAbove)
-                SetSelected(SelectedIndex, True)
+        Sub SelectAll()
+            If SingleLineBox IsNot Nothing Then
+                SingleLineBox.SelectAll()
+            Else
+                MultiLineBox.SelectAll()
             End If
         End Sub
 
-        Sub MoveSelectionDown()
-            If CanMoveDown() Then
-                Dim iBelow = SelectedIndices(SelectedIndices.Count - 1) + 1
+        Sub Copy()
+            Clipboard.Instance.Text = SelectedText
+        End Sub
 
-                If iBelow >= Items.Count Then
-                    Exit Sub
-                End If
-
-                Dim itemBelow = Items(iBelow)
-                Items.RemoveAt(iBelow)
-                Dim iAbove = SelectedIndices(0) - 1
-                Items.Insert(iAbove + 1, itemBelow)
-                SetSelected(SelectedIndex, True)
+        Sub Paste()
+            If Not [ReadOnly] Then
+                SelectedText = Clipboard.Instance.Text
             End If
         End Sub
 
-        Protected Overrides Sub OnCreateControl()
-            MyBase.OnCreateControl()
-
-            If Not DesignMode Then
-                If Not UpButton Is Nothing Then UpButton.ClickAction = AddressOf MoveSelectionUp
-                If Not DownButton Is Nothing Then DownButton.ClickAction = AddressOf MoveSelectionDown
-                If Not RemoveButton Is Nothing Then RemoveButton.ClickAction = AddressOf RemoveSelection
-                UpdateControls()
-            End If
+        Shadows Sub Focus()
+            InnerControl.Focus()
         End Sub
 
-        Protected Overrides Sub OnSelectedIndexChanged(e As EventArgs)
-            If Not BlockOnSelectedIndexChanged Then
-                MyBase.OnSelectedIndexChanged(e)
-                'UpdateControls()
-            End If
+        ReadOnly Property Focused As Boolean
+            Get
+                Return InnerControl.HasFocus
+            End Get
+        End Property
+
+        Sub ScrollToCaret()
         End Sub
 
-        Sub UpdateControls()
-            If Not RemoveButton Is Nothing Then
-                RemoveButton.Enabled = Not SelectedItem Is Nothing
-            End If
-
-            If Not UpButton Is Nothing Then
-                UpButton.Enabled = SelectedIndex > 0
-            End If
-
-            If Not DownButton Is Nothing Then
-                DownButton.Enabled = SelectedIndex > -1 AndAlso SelectedIndex < Items.Count - 1
-            End If
-
-            If Not Button1 Is Nothing Then
-                Button1.Enabled = Not SelectedItem Is Nothing
-            End If
-
-            If Not Button2 Is Nothing Then
-                Button2.Enabled = Not SelectedItem Is Nothing
-            End If
-
-            If SelectedIndex = -1 AndAlso Items.Count > 0 Then
-                SelectedIndex = 0
-            End If
-        End Sub
+        'no-ops for WinForms theme properties
+        Property BorderColor As Color
+        Property BorderFocusedColor As Color
+        Property BorderHoverColor As Color
+        Property BackReadonlyColor As Color
     End Class
 
     Public Class NumEdit
-        Inherits UserControl
+        Inherits NumericStepper
 
-        WithEvents TextEdit As New TextEdit
+        Private BlockEvent As Boolean
+        Private UpIncrementValue As Double = 1
+        Private DownIncrementValue As Double = 1
+        Private LastValue As Double
 
-        Private UpControl As New UpDownButton(True)
-        Private DownControl As New UpDownButton(False)
-        Private TipProvider As TipProvider
-
-        Event ValueChanged(numEdit As NumEdit)
+        Shadows Event ValueChanged(numEdit As NumEdit)
 
         Sub New()
-            SetStyle(ControlStyles.ResizeRedraw, True)
-            BorderStyle = BorderStyle.FixedSingle
+            MinValue = -9000000000
+            MaxValue = 9000000000
+            Increment = 1
+            DecimalPlaces = 0
+            MaximumDecimalPlaces = 0
+            AddHandler MyBase.ValueChanged, Sub()
+                                                If BlockEvent Then
+                                                    Exit Sub
+                                                End If
 
-            TextEdit.BorderStyle = BorderStyle.None
-            TextEdit.TextBox.BorderStyle = BorderStyle.None
-            TextEdit.TextBox.TextAlign = HorizontalAlignment.Center
-            TextEdit.Text = "0"
-
-            Controls.Add(TextEdit)
-            Controls.Add(UpControl)
-            Controls.Add(DownControl)
-
-            UpControl.ClickAction = Sub()
-                                        Value += UpIncrement
-                                        Value = Math.Round(Value, DecimalPlaces)
-                                    End Sub
-
-            DownControl.ClickAction = Sub()
-                                          Value -= DownIncrement
-                                          Value = Math.Round(Value, DecimalPlaces)
-                                      End Sub
-
-            ApplyTheme()
-
-            AddHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
-            AddHandler UpControl.MouseDown, AddressOf Focus
-            AddHandler DownControl.MouseDown, AddressOf Focus
-            AddHandler TextEdit.LostFocus, AddressOf UpdateText
-            AddHandler TextEdit.GotFocus, AddressOf SetActive
-            AddHandler TextEdit.LostFocus, AddressOf SetNormal
-            AddHandler TextEdit.MouseWheel, AddressOf Wheel
+                                                CorrectStep()
+                                                LastValue = MyBase.Value
+                                                OnValueChanged(Me)
+                                            End Sub
         End Sub
 
-        Protected Overrides Sub Dispose(disposing As Boolean)
-            TipProvider?.Dispose()
-            RemoveHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
-            RemoveHandler UpControl.MouseDown, AddressOf Focus
-            RemoveHandler DownControl.MouseDown, AddressOf Focus
-            RemoveHandler TextEdit.LostFocus, AddressOf UpdateText
-            RemoveHandler TextEdit.GotFocus, AddressOf SetActive
-            RemoveHandler TextEdit.LostFocus, AddressOf SetNormal
-            RemoveHandler TextEdit.MouseWheel, AddressOf Wheel
-            MyBase.Dispose(disposing)
-        End Sub
+        'the spin buttons step by Increment, a step down is corrected to use DownIncrement
+        Private Sub CorrectStep()
+            Dim delta = MyBase.Value - LastValue
 
-        Sub OnThemeChanged(theme As Theme)
-            ApplyTheme(theme)
-        End Sub
-
-        Sub ApplyTheme()
-            ApplyTheme(ThemeManager.CurrentTheme)
-        End Sub
-
-        Sub ApplyTheme(theme As Theme)
-            If DesignHelp.IsDesignMode Then
-                Exit Sub
-            End If
-
-            SuspendLayout()
-            BackColor = theme.General.Controls.NumEdit.BackColor
-            TextEdit.BackColor = theme.General.Controls.NumEdit.BackColor
-            TextEdit.TextBox.BackColor = theme.General.Controls.NumEdit.BackColor
-            TextEdit.TextBox.BorderColor = theme.General.Controls.NumEdit.BorderColor
-            'BorderColor = theme.General.Controls.NumEdit.BorderColor
-            'BorderNormalColor = theme.General.Controls.NumEdit.BorderColor
-            'BorderSelectedColor = theme.General.Controls.NumEdit.BorderSelectedColor
-            ResumeLayout()
-        End Sub
-
-        Overloads Sub Focus(sender As Object, e As MouseEventArgs)
-            Focus()
-        End Sub
-
-        WriteOnly Property Help As String
-            Set(value As String)
-                If TipProvider Is Nothing Then
-                    TipProvider = New TipProvider()
-                End If
-
-                TipProvider.SetTip(value, TextEdit, UpControl, DownControl)
-            End Set
-        End Property
-
-        <Category("Data")>
-        <DefaultValue(GetType(Double), "-9000000000")>
-        Property Minimum As Double = -9000000000
-
-        <Category("Data")>
-        <DefaultValue(GetType(Double), "9000000000")>
-        Property Maximum As Double = 9000000000
-
-        <Category("Data")>
-        <DefaultValue(GetType(Double), "1")>
-        Property UpIncrement As Double = 1
-
-        <Category("Data")>
-        <DefaultValue(GetType(Double), "1")>
-        Property DownIncrement As Double = 1
-
-        Property Increment As Double
-            Get
-                Return UpIncrement
-            End Get
-            Set(value As Double)
-                UpIncrement = value
-                DownIncrement = value
-            End Set
-        End Property
-
-        Private ValueValue As Double
-
-        <Category("Data")>
-        <DefaultValue(GetType(Double), "0")>
-        Property Value As Double
-            Get
-                Return ValueValue
-            End Get
-            Set(value As Double)
-                SetValue(value, True)
-            End Set
-        End Property
-
-        Private DecimalPlacesValue As Integer
-
-        <Category("Data")>
-        <DefaultValue(0)>
-        Property DecimalPlaces As Integer
-            Get
-                Return DecimalPlacesValue
-            End Get
-            Set(value As Integer)
-                DecimalPlacesValue = value
-                UpdateText()
-            End Set
-        End Property
-
-        Sub Wheel(sender As Object, e As MouseEventArgs)
-            If e.Delta > 0 Then
-                UpControl.ClickAction?.Invoke()
-            Else
-                DownControl.ClickAction?.Invoke()
-            End If
-        End Sub
-
-        'Sub SetColor(c As Color)
-        '    BorderColor = c
-        '    Invalidate()
-        'End Sub
-
-        Protected Overridable Sub OnValueChanged(numEdit As NumEdit)
-            RaiseEvent ValueChanged(Me)
-        End Sub
-
-
-        Protected Overrides Sub OnLayout(levent As LayoutEventArgs)
-            Dim h = (ClientSize.Height \ 2) - 1
-            h -= h Mod 2
-
-            If h > 20 Then
-                h -= 1
-            End If
-
-            UpControl.Width = CInt(Height * 0.8)
-            UpControl.Height = h
-            UpControl.Top = 1
-            UpControl.Left = ClientSize.Width - UpControl.Width - 1
-
-            DownControl.Width = UpControl.Width
-            DownControl.Left = UpControl.Left
-            DownControl.Top = ClientSize.Height - h - 1
-            DownControl.Height = h
-
-            TextEdit.Top = (ClientSize.Height - TextEdit.Height) \ 2 + 1
-            TextEdit.Left = 2
-            TextEdit.Width = DownControl.Left - 3
-            TextEdit.Height = TextRenderer.MeasureText("gG", TextEdit.Font).Height
-
-            MyBase.OnLayout(levent)
-        End Sub
-
-        Protected Overrides Sub OnPaint(e As PaintEventArgs)
-            MyBase.OnPaint(e)
-            'Dim r = ClientRectangle
-            'r.Inflate(-1, -1)
-            'e.Graphics.FillRectangle(If(Enabled, Brushes.White, SystemBrushes.Control), r)
-            'ControlPaint.DrawBorder(e.Graphics, ClientRectangle, BorderColor, ButtonBorderStyle.Solid)
-        End Sub
-
-        Protected Overrides ReadOnly Property DefaultSize() As Size
-            Get
-                Return New Size(250, 70)
-            End Get
-        End Property
-
-        Sub SetValue(value As Double, updateText As Boolean)
-            If value <> ValueValue Then
-                If value > Maximum Then
-                    value = Maximum
-                ElseIf value < Minimum Then
-                    value = Minimum
-                End If
-
-                ValueValue = value
-
-                If updateText Then
-                    Me.UpdateText()
-                End If
-
-                OnValueChanged(Me)
+            If DownIncrementValue <> UpIncrementValue AndAlso delta < 0 AndAlso Math.Abs(-delta - Increment) < 0.000001 Then
+                Dim target = Math.Max(MinValue, LastValue - DownIncrementValue)
+                BlockEvent = True
+                MyBase.Value = target
+                BlockEvent = False
             End If
         End Sub
 
         Sub UpdateValue()
-            If ValueValue < Minimum Then
-                ValueValue = Minimum
-                UpdateText()
-                OnValueChanged(Me)
-            ElseIf ValueValue > Maximum Then
-                ValueValue = Maximum
-                UpdateText()
-                OnValueChanged(Me)
-            End If
+            Value = Value
         End Sub
 
-        Sub UpdateText()
-            TextEdit.TextBox.SetTextWithoutTextChangedEvent(ValueValue.ToInvariantString("F" & DecimalPlaces))
+        Protected Overridable Overloads Sub OnValueChanged(numEdit As NumEdit)
+            RaiseEvent ValueChanged(Me)
         End Sub
 
-        Sub UpdateText(sender As Object, e As EventArgs)
-            UpdateText()
-        End Sub
-
-        Sub TextBox_KeyDown(sender As Object, e As KeyEventArgs) Handles TextEdit.KeyDown
-            If e.KeyData = Keys.Up Then
-                UpControl.ClickAction?.Invoke()
-            ElseIf e.KeyData = Keys.Down Then
-                DownControl.ClickAction?.Invoke()
-            End If
-        End Sub
-
-        Sub TextBox_TextChanged(sender As Object, e As EventArgs) Handles TextEdit.TextChanged
-            If TextEdit.Text.IsDouble Then
-                SetValue(TextEdit.Text.ToDouble, False)
-            End If
-        End Sub
-
-        Sub SetNormal(sender As Object, e As EventArgs)
-            'DownControl.SetNormal()
-            'UpControl.SetNormal()
-        End Sub
-
-        Sub SetActive(sender As Object, e As EventArgs)
-            'DownControl.SetActive()
-            'UpControl.SetActive()
-        End Sub
-
-        'Class Edit
-        '    Inherits TextEdit
-
-        '    Private BlockTextChanged As Boolean
-
-        '    Sub SetTextWithoutTextChanged(val As String)
-        '        BlockTextChanged = True
-        '        Text = val
-        '        BlockTextChanged = False
-        '    End Sub
-
-        '    Protected Overrides Sub OnTextChanged(e As EventArgs)
-        '        If Not BlockTextChanged Then
-        '            MyBase.OnTextChanged(e)
-        '        End If
-        '    End Sub
-        'End Class
-
-        Class UpDownButton
-            Inherits Control
-
-            Private IsUp As Boolean
-            Private IsHot As Boolean
-            Private IsPressed As Boolean
-            Private LastMouseDownTick As Integer
-
-            Property ClickAction As Action
-
-            Sub New(isUp As Boolean)
-                Me.IsUp = isUp
-                TabStop = False
-
-                SetStyle(ControlStyles.ResizeRedraw, True)
-                SetStyle(ControlStyles.OptimizedDoubleBuffer, True)
-            End Sub
-
-            Protected Overrides Sub OnMouseEnter(e As EventArgs)
-                MyBase.OnMouseEnter(e)
-                IsHot = True
-                Invalidate()
-            End Sub
-
-            Protected Overrides Sub OnMouseLeave(e As EventArgs)
-                MyBase.OnMouseLeave(e)
-                IsHot = False
-                Invalidate()
-            End Sub
-
-            Protected Overrides Sub OnMouseDown(e As MouseEventArgs)
-                MyBase.OnMouseDown(e)
-                IsPressed = True
-                Invalidate()
-                ClickAction.Invoke()
-                LastMouseDownTick = Environment.TickCount
-                MouseDownClicks(750, LastMouseDownTick)
-            End Sub
-
-            Protected Overrides Sub OnMouseUp(e As MouseEventArgs)
-                MyBase.OnMouseUp(e)
-                IsPressed = False
-                Invalidate()
-            End Sub
-
-            Protected Overrides Sub OnPaint(e As PaintEventArgs)
-                MyBase.OnPaint(e)
-
-                Dim gx = e.Graphics
-                gx.SmoothingMode = SmoothingMode.HighQuality
-
-                If IsPressed Then
-                    gx.Clear(ThemeManager.CurrentTheme.General.Controls.NumEdit.UpDownButton.BackPressedColor)
-                ElseIf IsHot Then
-                    gx.Clear(ThemeManager.CurrentTheme.General.Controls.NumEdit.UpDownButton.BackHotColor)
-                Else
-                    gx.Clear(ThemeManager.CurrentTheme.General.Controls.NumEdit.UpDownButton.BackColor)
-                End If
-
-                'ControlPaint.DrawBorder(gx, ClientRectangle, ThemeManager.CurrentTheme.General.Controls.NumEdit.UpDownButton.BorderColor, ButtonBorderStyle.Solid)
-
-                Dim h = CInt(Font.Height * 0.2)
-                Dim w = h * 2
-
-                Dim x1 = Width \ 2 - w \ 2
-                Dim y1 = CInt(Height / 2 - h / 2)
-
-                Dim x2 = CInt(x1 + w / 2)
-                Dim y2 = y1 + h
-
-                Dim x3 = x1 + w
-                Dim y3 = y1
-
-                If IsUp Then
-                    y1 = y2
-                    y2 = y3
-                    y3 = y1
-                End If
-
-                Using pen = New Pen(If(Enabled, ThemeManager.CurrentTheme.General.Controls.NumEdit.UpDownButton.ForeColor, ThemeManager.CurrentTheme.General.Controls.NumEdit.UpDownButton.ForeDisabledColor), Font.Height / 20.0F)
-                    gx.DrawLine(pen, x1, y1, x2, y2)
-                    gx.DrawLine(pen, x2, y2, x3, y3)
-                End Using
-            End Sub
-
-            Async Sub MouseDownClicks(sleep As Integer, tick As Integer)
-                Await Task.Run(Sub() Thread.Sleep(sleep))
-
-                If IsPressed AndAlso LastMouseDownTick = tick Then
-                    ClickAction.Invoke()
-                    MouseDownClicks(20, tick)
-                End If
-            End Sub
-
-            Public Sub SetNormal()
-                Invalidate()
-            End Sub
-
-            Public Sub SetActive()
-                Invalidate()
-            End Sub
-        End Class
-    End Class
-
-    Public Class TextEdit
-        Inherits UserControl
-
-        Private _backReadonlyColor As Color
-        Private _borderColor As Color
-        Private _borderFocusedColor As Color
-        Private _borderHoverColor As Color
-        Private _drawBorder As Integer = -1
-
-        Public WithEvents TextBox As New TextBoxEx
-
-        Public Shadows Event DoubleClick(sender As Object, e As EventArgs)
-        Public Shadows Event KeyDown(sender As Object, e As KeyEventArgs)
-        Public Shadows Event KeyPress(sender As Object, e As KeyPressEventArgs)
-        Public Shadows Event KeyUp(sender As Object, e As KeyEventArgs)
-        Public Shadows Event MouseDown(sender As Object, e As MouseEventArgs)
-        Public Shadows Event MouseWheel(sender As Object, e As MouseEventArgs)
-        Public Shadows Event TextChanged(sender As Object, e As EventArgs)
-
-        Public Property BackReadonlyColor As Color
+        Property Minimum As Double
             Get
-                Return _backReadonlyColor
+                Return MinValue
             End Get
-            Set(value As Color)
-                _backReadonlyColor = value
-                Invalidate()
+            Set(value As Double)
+                MinValue = value
             End Set
         End Property
 
-        Private Function ShouldSerializeBackReadonlyColor() As Boolean
-            Return BackReadonlyColor <> Color.Empty
-        End Function
-
-        Public Property BorderColor As Color
+        Property Maximum As Double
             Get
-                Return _borderColor
+                Return MaxValue
             End Get
-            Set(value As Color)
-                _borderColor = value
-                Invalidate()
+            Set(value As Double)
+                MaxValue = value
             End Set
         End Property
 
-        Private Function ShouldSerializeBorderColor() As Boolean
-            Return BorderColor <> Color.Empty
-        End Function
-
-        Public Property BorderFocusedColor As Color
+        Shadows Property Increment As Double
             Get
-                Return _borderFocusedColor
+                Return MyBase.Increment
             End Get
-            Set(value As Color)
-                _borderFocusedColor = value
-                Invalidate()
+            Set(value As Double)
+                MyBase.Increment = value
+                UpIncrementValue = value
+                DownIncrementValue = value
             End Set
         End Property
 
-        Private Function ShouldSerializeBorderFocusedColor() As Boolean
-            Return BorderFocusedColor <> Color.Empty
-        End Function
-
-        Public Property BorderHoverColor As Color
+        Property UpIncrement As Double
             Get
-                Return _borderHoverColor
+                Return UpIncrementValue
             End Get
-            Set(value As Color)
-                _borderHoverColor = value
-                Invalidate()
+            Set(value As Double)
+                UpIncrementValue = value
+                MyBase.Increment = value
             End Set
         End Property
 
-        Private Function ShouldSerializeBorderHoverColor() As Boolean
-            Return BorderHoverColor <> Color.Empty
-        End Function
-
-        ReadOnly Property DrawBorder As Integer
+        Property DownIncrement As Double
             Get
-                If _drawBorder < 0 Then
-                    _drawBorder = If(Parent IsNot Nothing, If(TypeOf Parent Is NumEdit, 0, 1), 1)
-                End If
-                Return _drawBorder
+                Return DownIncrementValue
             End Get
-        End Property
-
-        <DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)>
-        Property [ReadOnly] As Boolean
-            Get
-                Return TextBox.ReadOnly
-            End Get
-            Set(value As Boolean)
-                TextBox.ReadOnly = value
-                Invalidate()
+            Set(value As Double)
+                DownIncrementValue = value
             End Set
         End Property
 
-        <Browsable(True)>
-        <DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)>
-        Overrides Property Text As String
+        Shadows Property DecimalPlaces As Integer
             Get
-                Return TextBox.Text
-            End Get
-            Set(value As String)
-                TextBox.Text = value
-                MyBase.Text = value
-            End Set
-        End Property
-
-        <DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)>
-        Shadows Property TabIndex As Integer
-            Get
-                Return MyBase.TabIndex
+                Return MyBase.DecimalPlaces
             End Get
             Set(value As Integer)
-                MyBase.TabIndex = value
+                MyBase.DecimalPlaces = value
+                MaximumDecimalPlaces = value
             End Set
         End Property
 
+        Shadows Property Value As Double
+            Get
+                Return MyBase.Value
+            End Get
+            Set(value As Double)
+                If value > MaxValue Then value = MaxValue
+                If value < MinValue Then value = MinValue
+                LastValue = value
+                MyBase.Value = value
+            End Set
+        End Property
+
+        Sub SetValue(value As Double, updateText As Boolean)
+            Me.Value = value
+        End Sub
+
+        WriteOnly Property Help As String
+            Set(value As String)
+                ToolTip = TipProvider.FormatTip(value)
+            End Set
+        End Property
+
+        Property BackColor As Color
+        Property BorderColor As Color
+        Property BorderSelectedColor As Color
+    End Class
+
+    Public Class CheckBoxEx
+        Inherits CheckBox
+
         Sub New()
-            SetStyle(ControlStyles.ResizeRedraw, True)
-            TextBox.BorderStyle = BorderStyle.None
-            Controls.Add(TextBox)
-
-            AddHandler TextBox.DoubleClick, Sub(sender As Object, e As EventArgs) RaiseEvent DoubleClick(sender, e)
-            AddHandler TextBox.KeyDown, Sub(sender As Object, e As KeyEventArgs) RaiseEvent KeyDown(sender, e)
-            AddHandler TextBox.KeyPress, Sub(sender As Object, e As KeyPressEventArgs) RaiseEvent KeyPress(sender, e)
-            AddHandler TextBox.KeyUp, Sub(sender As Object, e As KeyEventArgs) RaiseEvent KeyUp(sender, e)
-            AddHandler TextBox.MouseDown, Sub(sender As Object, e As MouseEventArgs) RaiseEvent MouseDown(sender, e)
-            AddHandler TextBox.MouseWheel, Sub(sender As Object, e As MouseEventArgs) RaiseEvent MouseWheel(sender, e)
-            AddHandler TextBox.TextChanged, Sub(sender As Object, e As EventArgs) RaiseEvent TextChanged(sender, e)
-            AddHandler TextBox.GotFocus, AddressOf TextBox_GotFocus
-            AddHandler TextBox.LostFocus, AddressOf TextBox_LostFocus
-            AddHandler TextBox.MouseEnter, AddressOf TextBox_GotFocus
-            AddHandler TextBox.MouseLeave, AddressOf TextBox_LostFocus
-
-            ApplyTheme()
-
-            AddHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
+            MyBase.New()
         End Sub
 
-        Protected Overrides Sub Dispose(disposing As Boolean)
-            RemoveHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
-            MyBase.Dispose(disposing)
+        Shadows Property Checked As Boolean
+            Get
+                Return MyBase.Checked.GetValueOrDefault()
+            End Get
+            Set(value As Boolean)
+                MyBase.Checked = value
+            End Set
+        End Property
+
+        Property BackColor As Color
+        Property ForeColor As Color
+    End Class
+
+    'Combo box with a WinForms like API, items are arbitrary objects shown with ToString
+    Public Class ComboBoxEx
+        Inherits ComboBox
+
+        Private ReadOnly ItemsValue As New ObservableCollection(Of Object)
+        Private DropDownStyleValue As ComboBoxStyle = ComboBoxStyle.DropDownList
+
+        Event SelectedIndexChangedEx(sender As Object, e As EventArgs)
+
+        Sub New()
+            MyBase.New()
+            ItemTextBinding = New DelegateBinding(Of Object, String)(Function(x) If(x?.ToString, ""))
+            DataStore = ItemsValue
+            [ReadOnly] = True
         End Sub
 
-        Sub OnThemeChanged(theme As Theme)
-            ApplyTheme(theme)
-        End Sub
+        Shadows ReadOnly Property Items As ObservableCollection(Of Object)
+            Get
+                Return ItemsValue
+            End Get
+        End Property
 
-        Sub ApplyTheme()
-            ApplyTheme(ThemeManager.CurrentTheme)
-        End Sub
+        Property DropDownStyle As ComboBoxStyle
+            Get
+                Return DropDownStyleValue
+            End Get
+            Set(value As ComboBoxStyle)
+                DropDownStyleValue = value
+                [ReadOnly] = value = ComboBoxStyle.DropDownList
+            End Set
+        End Property
 
-        Sub ApplyTheme(theme As Theme)
-            If DesignHelp.IsDesignMode Then
-                Exit Sub
-            End If
+        Property SelectedItem As Object
+            Get
+                Return SelectedValue
+            End Get
+            Set(value As Object)
+                SelectedValue = value
+            End Set
+        End Property
 
-            SuspendLayout()
-            BackColor = theme.General.Controls.TextEdit.BackColor
-            BackReadonlyColor = theme.General.Controls.TextEdit.BackReadonlyColor
-            ForeColor = theme.General.Controls.TextEdit.ForeColor
-            BorderColor = theme.General.Controls.TextEdit.BorderColor
-            BorderFocusedColor = theme.General.Controls.TextEdit.BorderFocusedColor
-            BorderHoverColor = theme.General.Controls.TextEdit.BorderHoverColor
-            ResumeLayout()
-        End Sub
-
-        Sub TextBox_GotFocus(sender As Object, e As EventArgs)
-            Invalidate()
-        End Sub
-
-        Sub TextBox_LostFocus(sender As Object, e As EventArgs)
-            Invalidate()
-        End Sub
-
-        Protected Overrides Sub OnLayout(args As LayoutEventArgs)
-            MyBase.OnLayout(args)
-
-            If TextBox.Multiline Then
-                TextBox.Top = 2
-                TextBox.Left = 2
-                TextBox.Width = ClientSize.Width - 4
-                TextBox.Height = ClientSize.Height - 4
-            Else
-                TextBox.Top = ((ClientSize.Height - TextBox.Height) \ 2)
-                TextBox.Left = 2
-                TextBox.Width = ClientSize.Width - 4
-                Dim h = TextRenderer.MeasureText("gG", TextBox.Font).Height
-
-                If TextBox.Height < h Then
-                    TextBox.Multiline = True
-                    TextBox.MinimumSize = New Size(0, h)
-                    TextBox.Multiline = False
+        'in drop down list mode setting the text selects the item with this text
+        Shadows Property Text As String
+            Get
+                If DropDownStyleValue = ComboBoxStyle.DropDownList Then
+                    Return If(SelectedValue?.ToString, "")
                 End If
+
+                Return MyBase.Text
+            End Get
+            Set(value As String)
+                If DropDownStyleValue = ComboBoxStyle.DropDownList Then
+                    SelectedValue = ItemsValue.FirstOrDefault(Function(i) i?.ToString = value)
+                Else
+                    MyBase.Text = value
+                End If
+            End Set
+        End Property
+
+        Property BackColor As Color
+        Property ForeColor As Color
+    End Class
+
+    Public Enum ComboBoxStyle
+        Simple
+        DropDown
+        DropDownList
+    End Enum
+
+    Public Class LabelEx
+        Inherits Label
+
+        Event Click(sender As Object, e As EventArgs)
+
+        'like auto sized WinForms labels, wrapping must be enabled explicitly
+        Sub New()
+            MyBase.New()
+            VerticalAlignment = VerticalAlignment.Center
+            Wrap = WrapMode.None
+        End Sub
+
+        Protected Overrides Sub OnMouseUp(e As MouseEventArgs)
+            MyBase.OnMouseUp(e)
+
+            If e.Buttons = MouseButtons.Primary Then
+                RaiseEvent Click(Me, EventArgs.Empty)
             End If
+        End Sub
+
+        Shadows Property Text As String
+            Get
+                Return MyBase.Text
+            End Get
+            Set(value As String)
+                MyBase.Text = value
+                UpdateMinimumWidth()
+            End Set
+        End Property
+
+        Shadows Property Wrap As WrapMode
+            Get
+                Return MyBase.Wrap
+            End Get
+            Set(value As WrapMode)
+                MyBase.Wrap = value
+                UpdateMinimumWidth()
+            End Set
+        End Property
+
+        Protected Overrides Sub OnLoadComplete(e As EventArgs)
+            MyBase.OnLoadComplete(e)
+            UpdateMinimumWidth()
+        End Sub
+
+        'Eto labels report no minimum width, so GTK cuts them in tight layouts
+        Sub UpdateMinimumWidth()
+            Dim w = If(MyBase.Wrap = WrapMode.None AndAlso MyBase.Text <> "", MeasureTextWidth(MyBase.Text, Font) + 1, -1)
+            TryCast(ControlObject, Global.Gtk.Widget)?.SetSizeRequest(w, -1)
+        End Sub
+
+        Property BackColor As Color
+            Get
+                Return BackgroundColor
+            End Get
+            Set(value As Color)
+                BackgroundColor = value
+            End Set
+        End Property
+
+        Property ForeColor As Color
+            Get
+                Return TextColor
+            End Get
+            Set(value As Color)
+                TextColor = value
+            End Set
+        End Property
+    End Class
+
+    Public Class ButtonLabel
+        Inherits LinkButton
+        Implements IContextMenuOwner
+
+        Property ClickAction As Action
+        Property ContextMenuStrip As ContextMenuStripEx Implements IContextMenuOwner.ContextMenuStrip
+
+        Sub New()
+            MyBase.New()
+        End Sub
+
+        Protected Overrides Sub OnClick(e As EventArgs)
+            MyBase.OnClick(e)
+            ClickAction?.Invoke()
+        End Sub
+
+        Protected Overrides Sub OnMouseDown(e As MouseEventArgs)
+            MyBase.OnMouseDown(e)
+
+            If e.Buttons = MouseButtons.Alternate AndAlso ContextMenuStrip IsNot Nothing Then
+                e.Handled = True
+                ContextMenuStrip.Show(Me)
+            End If
+        End Sub
+
+        Sub ShowContext()
+            ContextMenuStrip?.Show(Me, New PointF(0, Height))
+        End Sub
+
+        Property ForeColor As Color
+            Get
+                Return TextColor
+            End Get
+            Set(value As Color)
+                TextColor = value
+            End Set
+        End Property
+
+        Property LinkColor As Color
+        Property LinkHoverColor As Color
+    End Class
+
+    Public Class ToggleButtonLabel
+        Inherits LinkButton
+
+        Private StateValue As Boolean
+
+        Property StateChangeOnRightClick As Boolean
+        Property LeftClickAction As Action(Of Boolean)
+        Property RightClickAction As Action(Of Boolean)
+
+        Sub New()
+            MyBase.New()
+            UpdateColor()
+        End Sub
+
+        Sub New(state As Boolean)
+            Me.New()
+            StateValue = state
+            UpdateColor()
+        End Sub
+
+        Property State As Boolean
+            Get
+                Return StateValue
+            End Get
+            Set(value As Boolean)
+                StateValue = value
+                UpdateColor()
+            End Set
+        End Property
+
+        Sub UpdateColor()
+            TextColor = If(StateValue, Color.FromArgb(40, 160, 70), SystemColors.DisabledText)
+        End Sub
+
+        Protected Overrides Sub OnClick(e As EventArgs)
+            MyBase.OnClick(e)
+            State = Not State
+            LeftClickAction?.Invoke(State)
+        End Sub
+
+        Protected Overrides Sub OnMouseDown(e As MouseEventArgs)
+            MyBase.OnMouseDown(e)
+
+            If e.Buttons = MouseButtons.Alternate Then
+                e.Handled = True
+                If StateChangeOnRightClick Then State = Not State
+                RightClickAction?.Invoke(State)
+            End If
+        End Sub
+    End Class
+
+    'Horizontal line with optional caption
+    Public Class LineControl
+        Inherits Drawable
+
+        Private TextValue As String = ""
+
+        Sub New()
+            Height = FontHeight
+        End Sub
+
+        Property Text As String
+            Get
+                Return TextValue
+            End Get
+            Set(value As String)
+                TextValue = If(value, "")
+                Invalidate()
+            End Set
+        End Property
+
+        Protected Overrides Sub OnPaint(e As PaintEventArgs)
+            MyBase.OnPaint(e)
+
+            Dim gx = e.Graphics
+            Dim textOffset As Single = 0
+            Dim lineY = CSng(Math.Floor(Height / 2) + 0.5)
+            Dim font = FontManager.GetDefaultFont()
+            Dim fore = If(Enabled, SystemColors.ControlText, SystemColors.DisabledText)
+
+            If TextValue <> "" Then
+                Dim size = gx.MeasureString(font, TextValue)
+                gx.DrawText(font, fore, 0, (Height - size.Height) / 2, TextValue)
+                textOffset = size.Width + font.LineHeight / 2
+            End If
+
+            Dim lineColor = If(IsDarkMode, Color.FromArgb(255, 255, 255, 50), Color.FromArgb(0, 0, 0, 50))
+            gx.DrawLine(lineColor, textOffset, lineY, Width, lineY)
+        End Sub
+    End Class
+
+    Public Class GroupBoxEx
+        Inherits GroupBox
+    End Class
+
+    'group box with a clickable caption that shows a menu, an optional control is shown right of the caption
+    Public Class LinkGroupBox
+        Inherits GroupBox
+
+        Public WithEvents Label As New ButtonLabel
+        Event LinkClick()
+
+        Private ReadOnly HeaderRightPanel As New Panel
+        Private ReadOnly ContentPanel As New Panel
+
+        Sub New()
+            Dim header As New TableLayout(New TableRow(New TableCell(Label), New TableCell(Nothing, True), New TableCell(HeaderRightPanel)))
+
+            MyBase.Content = New TableLayout(
+                New TableRow(header),
+                New TableRow(ContentPanel) With {.ScaleHeight = True}) With {.Spacing = New Size(0, FH(0.15))}
+        End Sub
+
+        Property HeaderRight As Control
+            Get
+                Return HeaderRightPanel.Content
+            End Get
+            Set(value As Control)
+                HeaderRightPanel.Content = value
+            End Set
+        End Property
+
+        Shadows Property Content As Control
+            Get
+                Return ContentPanel.Content
+            End Get
+            Set(value As Control)
+                ContentPanel.Content = value
+            End Set
+        End Property
+
+        Shadows Property Text As String
+            Get
+                Return Label.Text
+            End Get
+            Set(value As String)
+                Label.Text = value.TrimEx
+            End Set
+        End Property
+
+        Sub Label_Click(sender As Object, e As EventArgs) Handles Label.Click
+            If LinkClickEvent IsNot Nothing Then
+                RaiseEvent LinkClick()
+            Else
+                ShowContext()
+            End If
+        End Sub
+
+        Sub ShowContext()
+            Label.ContextMenuStrip?.Show(Label, New PointF(0, Label.Height))
+        End Sub
+    End Class
+
+    Public Class PanelEx
+        Inherits Panel
+
+        Property ShowNiceBorder As Boolean
+    End Class
+
+    Public Class TrackBarEx
+        Inherits Slider
+
+        Property NoMouseWheelEvent As Boolean
+
+        'raised for changes made by the user only
+        Event Scroll(sender As Object, e As EventArgs)
+
+        Private BlockScroll As Boolean
+
+        Sub New()
+            AddHandler ValueChanged, Sub()
+                                         If Not BlockScroll Then
+                                             RaiseEvent Scroll(Me, EventArgs.Empty)
+                                         End If
+                                     End Sub
+        End Sub
+
+        Property Minimum As Integer
+            Get
+                Return MinValue
+            End Get
+            Set(value As Integer)
+                MinValue = value
+            End Set
+        End Property
+
+        Property Maximum As Integer
+            Get
+                Return MaxValue
+            End Get
+            Set(value As Integer)
+                MaxValue = value
+            End Set
+        End Property
+
+        Shadows Property Value As Integer
+            Get
+                Return MyBase.Value
+            End Get
+            Set(value As Integer)
+                If value > MaxValue Then value = MaxValue
+                If value < MinValue Then value = MinValue
+
+                If value <> MyBase.Value Then
+                    BlockScroll = True
+                    MyBase.Value = value
+                    BlockScroll = False
+                End If
+            End Set
+        End Property
+    End Class
+
+    'Progress bar showing a progress fill and a single line of optionally colored text
+    Public Class LabelProgressBar
+        Inherits Drawable
+
+        Private MinimumValue As Double
+        Private MaximumValue As Double = 100
+        Private ProgressValue As Double
+        Private TextValue As String = ""
+        Private Segments As List(Of (Text As String, Color As Color?, Bold As Boolean))
+
+        Property ProgressColor As Color = Color.FromArgb(60, 140, 200, 90)
+        Property Font As Font = FontManager.GetCodeFont(-1)
+
+        Sub New()
+            Height = CInt(FontHeight * 1.6)
+        End Sub
+
+        Property Minimum As Double
+            Get
+                Return MinimumValue
+            End Get
+            Set(value As Double)
+                MinimumValue = value
+                Invalidate()
+            End Set
+        End Property
+
+        Property Maximum As Double
+            Get
+                Return MaximumValue
+            End Get
+            Set(value As Double)
+                MaximumValue = value
+                Invalidate()
+            End Set
+        End Property
+
+        Property Value As Double
+            Get
+                Return ProgressValue
+            End Get
+            Set(value As Double)
+                If ProgressValue <> value Then
+                    ProgressValue = value
+                    Invalidate()
+                End If
+            End Set
+        End Property
+
+        Property Text As String
+            Get
+                Return TextValue
+            End Get
+            Set(value As String)
+                TextValue = If(value, "")
+                Segments = Nothing
+                Invalidate()
+            End Set
+        End Property
+
+        Sub SetSegments(value As List(Of (Text As String, Color As Color?, Bold As Boolean)))
+            Segments = value
+            TextValue = String.Join("", value.Select(Function(x) x.Text))
+            Invalidate()
         End Sub
 
         Protected Overrides Sub OnPaint(e As PaintEventArgs)
             MyBase.OnPaint(e)
 
-            If Not [ReadOnly] AndAlso DrawBorder > 0 Then
-                Dim borderCol = If(TextBox.Focused OrElse Not GetChildAtPoint(PointToClient(Cursor.Position)) Is Nothing, BorderFocusedColor, BorderColor)
-                borderCol = If(GetChildAtPoint(PointToClient(Cursor.Position)) IsNot Nothing, BorderHoverColor, borderCol)
-                ControlPaint.DrawBorder(e.Graphics, ClientRectangle, borderCol, ButtonBorderStyle.Solid)
+            Dim gx = e.Graphics
+            Dim range = MaximumValue - MinimumValue
+
+            If range > 0 Then
+                Dim w = CSng(Width * Math.Max(0, Math.Min(1, (ProgressValue - MinimumValue) / range)))
+                gx.FillRectangle(ProgressColor, 0, 0, w, Height)
             End If
+
+            Dim fore = SystemColors.ControlText
+            Dim y = (Height - Font.LineHeight) / 2
+            Dim x As Single = Font.LineHeight / 3
+
+            If Segments Is Nothing Then
+                gx.DrawText(Font, fore, x, y, TextValue)
+            Else
+                For Each seg In Segments
+                    Dim f = If(seg.Bold, New Font(Font.Family, Font.Size, FontStyle.Bold), Font)
+                    gx.DrawText(f, If(seg.Color, fore), x, y, seg.Text)
+                    x += gx.MeasureString(f, seg.Text).Width
+                Next
+            End If
+        End Sub
+    End Class
+
+    Public Class TabControlEx
+        Inherits TabControl
+
+        ReadOnly Property TabPages As Collection(Of TabPage)
+            Get
+                Return Pages
+            End Get
+        End Property
+
+        Property SelectedTab As TabPage
+            Get
+                Return SelectedPage
+            End Get
+            Set(value As TabPage)
+                SelectedPage = value
+            End Set
+        End Property
+    End Class
+
+    Public Class SearchTextBox
+        Inherits SearchBox
+
+        Shadows Event TextChanged()
+
+        Sub New()
+            MyBase.New()
+            AddHandler MyBase.TextChanged, Sub() RaiseEvent TextChanged()
+        End Sub
+
+        Sub SendMessageCue(value As String)
+            PlaceholderText = value
         End Sub
     End Class
 
@@ -3508,456 +1196,93 @@ Namespace UI
         Property FormSizeScaleFactor As SizeF
     End Interface
 
-    Public Class DataGridViewEx
-        Inherits DataGridView
-
-        Sub New()
-            MyBase.New()
-
-            ApplyTheme()
-            AddHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
-        End Sub
-
-        Protected Overrides Sub Dispose(disposing As Boolean)
-            RemoveHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
-            MyBase.Dispose(disposing)
-        End Sub
-
-        Sub OnThemeChanged(theme As Theme)
-            ApplyTheme(theme)
-        End Sub
-
-        Sub ApplyTheme()
-            ApplyTheme(ThemeManager.CurrentTheme)
-        End Sub
-
-        Sub ApplyTheme(theme As Theme)
-            If DesignHelp.IsDesignMode Then
-                Exit Sub
-            End If
-
-            If Not Disposing AndAlso Not IsDisposed Then
-                SuspendLayout()
-                BackgroundColor = theme.General.Controls.GridView.BackColor
-                ForeColor = theme.General.Controls.GridView.ForeColor
-                GridColor = theme.General.Controls.GridView.GridColor
-                ResumeLayout()
-            End If
-        End Sub
-
-        Function AddTextBoxColumn() As DataGridViewTextBoxColumn
-            Dim ret As New DataGridViewTextBoxColumn
-            Columns.Add(ret)
-            Return ret
-        End Function
-
-        Function AddComboBoxColumn() As DataGridViewComboBoxColumn
-            Dim ret As New DataGridViewComboBoxColumn
-            Columns.Add(ret)
-            Return ret
-        End Function
-    End Class
-
-    Public Class TabControlEx
-        Inherits TabControl
-
-        Private DragStartPosition As Point = Point.Empty
-        'Private ItemArgs As Dictionary(Of Integer, DrawItemEventArgs) = New Dictionary(Of Integer, DrawItemEventArgs)
-        Private TabType As Type
-
-        Sub New()
-            MyBase.New()
-
-            ApplyTheme()
-            AddHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
-
-            'AddHandler DrawItem, AddressOf DrawItemHandler
-        End Sub
-
-        Protected Overrides Sub Dispose(disposing As Boolean)
-            RemoveHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
-            MyBase.Dispose(disposing)
-        End Sub
-
-        Sub OnThemeChanged(theme As Theme)
-            ApplyTheme(theme)
-        End Sub
-
-        Sub ApplyTheme()
-            ApplyTheme(ThemeManager.CurrentTheme)
-        End Sub
-
-        Sub ApplyTheme(theme As Theme)
-            If DesignHelp.IsDesignMode Then
-                Exit Sub
-            End If
-
-            If Not Disposing AndAlso Not IsDisposed Then
-                SuspendLayout()
-                BackColor = theme.General.Controls.TabControl.BackColor
-                ForeColor = theme.General.Controls.TabControl.ForeColor
-                ResumeLayout()
-            End If
-        End Sub
-
-        Protected Overrides Sub OnMouseDown(e As MouseEventArgs)
-            DragStartPosition = New Point(e.X, e.Y)
-            MyBase.OnMouseDown(e)
-        End Sub
-
-        Protected Overrides Sub OnMouseMove(e As MouseEventArgs)
-            If e.Button <> MouseButtons.Left Then Return
-
-            Dim rect = New Rectangle(DragStartPosition, Size.Empty)
-            rect.Inflate(SystemInformation.DragSize)
-
-            Dim page = HoverTab()
-
-            If Not page Is Nothing AndAlso Not rect.Contains(e.X, e.Y) Then
-                TabType = page.GetType
-                DoDragDrop(page, DragDropEffects.All)
-            End If
-
-            DragStartPosition = Point.Empty
-            MyBase.OnMouseMove(e)
-        End Sub
-
-        Protected Overrides Sub OnDragOver(e As DragEventArgs)
-            Dim hoverTab = Me.HoverTab()
-
-            If hoverTab IsNot Nothing Then
-                If e.Data.GetDataPresent(TabType) Then
-                    e.Effect = DragDropEffects.Move
-                    Dim dragTab = DirectCast(e.Data.GetData(TabType), TabPage)
-
-                    If hoverTab Is dragTab Then Return
-
-                    Dim tabRect = GetTabRect(TabPages.IndexOf(hoverTab))
-                    tabRect.Inflate(-3, -3)
-
-                    If tabRect.Contains(PointToClient(New Point(e.X, e.Y))) Then
-                        SwapTabPages(dragTab, hoverTab)
-                        SelectedTab = dragTab
-                    End If
-                End If
-            End If
-
-            MyBase.OnDragOver(e)
-        End Sub
-
-        Function HoverTab() As TabPage
-            For index = 0 To TabCount - 1
-                If GetTabRect(index).Contains(PointToClient(Cursor.Position)) Then
-                    Return TabPages(index)
-                End If
-            Next
-        End Function
-
-        Sub SwapTabPages(ByVal tp1 As TabPage, ByVal tp2 As TabPage)
-            Dim index1 = TabPages.IndexOf(tp1)
-            Dim index2 = TabPages.IndexOf(tp2)
-            TabPages(index1) = tp2
-            TabPages(index2) = tp1
-        End Sub
-
-
-        'Private Sub DrawItemHandler(sender As Object, e As DrawItemEventArgs)
-        '    If Not ItemArgs.ContainsKey(e.Index) Then
-        '        ItemArgs.Add(e.Index, e)
-        '    Else
-        '        ItemArgs(e.Index) = e
-        '    End If
-        'End Sub
-
-        'Protected Overrides Sub WndProc(ByRef m As Message)
-        '    MyBase.WndProc(m)
-
-        '    If m.Msg = 15 Then  'WM_PAINT
-        '        Using g = Me.CreateGraphics()
-        '            Dim bufferedGraph = BufferedGraphicsManager.Current.Allocate(g, ClientRectangle)
-        '            Dim rect = ClientRectangle
-        '            rect.Height = DisplayRectangle.Height + 1
-        '            rect.Y = DisplayRectangle.Y - 1
-        '            rect.Width -= 5
-        '            rect.X += 1
-
-        '            If Enabled Then
-        '                bufferedGraph.Graphics.FillRectangle(New SolidBrush(ThemeManager.CurrentTheme.General.Controls.TabControl.BackColor), rect)
-        '                bufferedGraph.Graphics.DrawRectangle(New Pen(ThemeManager.CurrentTheme.General.Controls.TabControl.BorderColor), rect)
-        '            Else
-        '                bufferedGraph.Graphics.FillRectangle(Brushes.LightGray, rect)
-        '                bufferedGraph.Graphics.DrawRectangle(Pens.DarkGray, rect)
-        '            End If
-
-        '            bufferedGraph.Render()
-        '            bufferedGraph.Dispose()
-
-        '            For Each index In ItemArgs.Keys
-        '                OnDrawItem(ItemArgs(index))
-        '            Next
-        '        End Using
-        '    End If
-        'End Sub
-
-    End Class
-
-    Public Class LabelProgressBar
-        Inherits Control
-
-        Property ProgressColor As Color
-        Property Rtb As RichTextBoxEx
-
-        Sub New()
-            SetStyle(ControlStyles.ResizeRedraw, True)
-            SetStyle(ControlStyles.Selectable, False)
-            SetStyle(ControlStyles.OptimizedDoubleBuffer, True)
-
-            Rtb = New RichTextBoxEx(False, True) With {
-                .BorderStyle = BorderStyle.None,
-                .Dock = DockStyle.Fill,
-                .Font = FontManager.GetCodeFont(-1),
-                .Padding = New Padding(5, 5, 5, 0)
-            }
-
-            Controls.Add(Rtb)
-
-            ApplyTheme()
-
-            AddHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
-        End Sub
-
-        Protected Overrides Sub Dispose(disposing As Boolean)
-            RemoveHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
-            MyBase.Dispose(disposing)
-        End Sub
-
-        Sub OnThemeChanged(theme As Theme)
-            ApplyTheme(theme)
-        End Sub
-
-        Sub ApplyTheme()
-            ApplyTheme(ThemeManager.CurrentTheme)
-        End Sub
-
-        Sub ApplyTheme(theme As Theme)
-            If DesignHelp.IsDesignMode Then Exit Sub
-
-            SuspendLayout()
-            BackColor = theme.General.Controls.LabelProgressBar.BackColor
-            ForeColor = theme.General.Controls.LabelProgressBar.ForeColor
-            ProgressColor = theme.General.Controls.LabelProgressBar.ProgressColor
-
-            Rtb.ForeColor = theme.General.Controls.LabelProgressBar.ForeColor
-            ResumeLayout()
-        End Sub
-
-        Private Function ShouldSerializeProgressColor() As Boolean
-            Return ProgressColor <> Color.Empty
-        End Function
-
-        Private _Minimum As Double
-
-        Public Property Minimum As Double
-            Get
-                Return _Minimum
-            End Get
-            Set
-                If _Minimum <> Value Then
-                    _Minimum = Value
-                    Invalidate()
-                End If
-            End Set
-        End Property
-
-        Private _Maximum As Double = 100
-
-        Public Property Maximum As Double
-            Get
-                Return _Maximum
-            End Get
-            Set
-                If _Maximum <> Value Then
-                    _Maximum = Value
-                    Invalidate()
-                End If
-            End Set
-        End Property
-
-        Private _Value As Double
-
-        Public Property Value As Double
-            Get
-                Return _Value
-            End Get
-            Set
-                If _Value <> Value Then
-                    _Value = Value
-                    Invalidate()
-                End If
-            End Set
-        End Property
-
-        Public Overrides Property Text As String
-            Get
-                Return MyBase.Text
-            End Get
-            Set
-                MyBase.Text = Value
-                Invalidate()
-            End Set
-        End Property
-
-        Protected Overrides Sub OnPaint(e As PaintEventArgs)
-            Dim g = e.Graphics
-            g.TextRenderingHint = Drawing.Text.TextRenderingHint.AntiAlias
-
-            Using foreBrush = New SolidBrush(ForeColor)
-                Using progressBrush = New SolidBrush(ProgressColor)
-                    g.FillRectangle(progressBrush, New RectangleF(0, 0, CSng(Width * (Value - Minimum) / Maximum), Height))
-                    g.DrawString(Text, Font, foreBrush, 0, CInt((Height - FontHeight) / 2))
-                End Using
-            End Using
-
-            MyBase.OnPaint(e)
-        End Sub
-    End Class
-
-    Public Class StackPanel
-        Inherits FlowLayoutPanel
-
-        Protected Overrides Sub OnLayout(levent As LayoutEventArgs)
-            MyBase.OnLayout(levent)
-
-            If Not WrapContents AndAlso (FlowDirection = FlowDirection.TopDown OrElse FlowDirection = FlowDirection.BottomUp) Then
-                For Each i As Control In Controls
-                    If (i.Anchor And AnchorStyles.Right) = AnchorStyles.Right AndAlso (i.Anchor And AnchorStyles.Left) = AnchorStyles.Left Then
-                        i.Left = i.Margin.Left
-                        i.Width = ClientSize.Width - i.Margin.Horizontal
-                    ElseIf (i.Anchor And AnchorStyles.Right) = AnchorStyles.Right Then
-                        i.Left = ClientSize.Width - (i.Width + i.Margin.Right)
-                    End If
-                Next
-            End If
-        End Sub
-    End Class
-
-
-    <Serializable()>
+    'pages that store their values when the settings dialog is confirmed
+    Public Interface ISaveValues
+        Sub SaveValues()
+    End Interface
+
+    'Labels and edits of the audio rows of the main window
     Public Class AudioTextEdit
         Inherits TextEdit
 
-        Public Sub New()
-            AutoSize = True
-            Anchor = AnchorStyles.Left Or AnchorStyles.Top Or AnchorStyles.Right
-            Location = New Point(6, 7)
-            Margin = New Padding(FontHeight \ 3, FontHeight \ 6, FontHeight \ 3, FontHeight \ 4)
-            [ReadOnly] = False
+        Sub New()
+            MyBase.New()
         End Sub
 
-        Public Sub New(row As Integer)
+        Sub New(row As Integer)
             Me.New()
         End Sub
     End Class
 
-    <Serializable()>
     Public Class AudioRowLabel
         Inherits Label
 
-        Private _row As Integer = 0
-
-        Public Sub New(row As Integer)
+        Sub New(row As Integer)
             MyBase.New()
-            _row = row
-            AutoSize = True
-            Anchor = AnchorStyles.Left Or AnchorStyles.Top
-            BorderStyle = BorderStyle.None
-            Location = New Point(0, 0)
-            Margin = New Padding(FontHeight \ 13, FontHeight \ 3, 0, FontHeight \ 10)
-            TabStop = False
             Text = (row + 1) & "."
-            TextAlign = Drawing.ContentAlignment.BottomRight
-            Visible = p.AudioTracksAvailable > 5
+            VerticalAlignment = VerticalAlignment.Center
         End Sub
     End Class
 
-    <Serializable()>
     Public Class AudioLanguageLabel
-        Inherits Label
+        Inherits ButtonLabel
 
-        Private _contextMenuStripEx As ContextMenuStripEx
-        Public Property ContextMenuStripEx As ContextMenuStripEx
+        Property ContextMenuStripEx As ContextMenuStripEx
             Get
-                Return _contextMenuStripEx
+                Return ContextMenuStrip
             End Get
-            Set(ByVal value As ContextMenuStripEx)
-                _contextMenuStripEx = value
+            Set(value As ContextMenuStripEx)
+                ContextMenuStrip = value
             End Set
         End Property
 
-        Public Sub New()
-            AutoSize = True
-            Anchor = AnchorStyles.Left Or AnchorStyles.Top Or AnchorStyles.Right
-            BorderStyle = BorderStyle.None
-            Location = New Point(1687, 7)
-            Margin = New Padding(0, FontHeight \ 6, 0, FontHeight \ 4)
-            TabStop = True
+        Sub New()
+            MyBase.New()
             Text = "Audio Language"
-            TextAlign = Drawing.ContentAlignment.BottomLeft
         End Sub
 
-        Public Sub New(row As Integer)
+        Sub New(row As Integer)
             Me.New()
+        End Sub
+
+        Protected Overrides Sub OnClick(e As EventArgs)
+            MyBase.OnClick(e)
+            ShowContext()
         End Sub
     End Class
 
-    <Serializable()>
     Public Class AudioNameButtonLabel
         Inherits ButtonLabel
 
-        Private _contextMenuStripEx As ContextMenuStripEx
-        Public Property ContextMenuStripEx As ContextMenuStripEx
+        Property ContextMenuStripEx As ContextMenuStripEx
             Get
-                Return _contextMenuStripEx
+                Return ContextMenuStrip
             End Get
-            Set(ByVal value As ContextMenuStripEx)
-                _contextMenuStripEx = value
+            Set(value As ContextMenuStripEx)
+                ContextMenuStrip = value
             End Set
         End Property
 
-        Public Sub New()
-            AutoSize = True
-            Anchor = AnchorStyles.Left Or AnchorStyles.Top Or AnchorStyles.Right
-            BorderStyle = BorderStyle.None
-            Location = New Point(1887, 7)
-            Margin = New Padding(0, FontHeight \ 6, 0, FontHeight \ 4)
-            TabStop = True
+        Sub New()
+            MyBase.New()
             Text = "Audio Profile"
-            TextAlign = Drawing.ContentAlignment.BottomLeft
         End Sub
 
-        Public Sub New(row As Integer)
+        Sub New(row As Integer)
             Me.New()
         End Sub
     End Class
 
-    <Serializable()>
     Public Class AudioEditButtonLabel
         Inherits AudioNameButtonLabel
 
-        Public Sub New()
-            AutoSize = True
-            Anchor = AnchorStyles.Left Or AnchorStyles.Top Or AnchorStyles.Right
-            BorderStyle = BorderStyle.None
-            Location = New Point(1933, 7)
-            Margin = New Padding(FontHeight \ 3, FontHeight \ 6, FontHeight \ 3, FontHeight \ 4)
-            TabStop = True
+        Sub New()
+            MyBase.New()
             Text = "Edit"
-            TextAlign = Drawing.ContentAlignment.BottomLeft
         End Sub
 
-        Public Sub New(row As Integer)
+        Sub New(row As Integer)
             Me.New()
         End Sub
     End Class
-
 End Namespace

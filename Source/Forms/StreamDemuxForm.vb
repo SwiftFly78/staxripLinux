@@ -1,9 +1,54 @@
-﻿
+
 Imports System.Globalization
 
 Imports StaxRip.UI
 
 Public Class StreamDemuxForm
+    Inherits DialogBase
+
+    Public WithEvents lvAudio, lvSubtitles, lvAttachments As ListViewEx
+    Public WithEvents bnAudioAll, bnAudioNone, bnAudioEnglish, bnAudioNative As ButtonEx
+    Public WithEvents bnSubtitleAll, bnSubtitleNone, bnSubtitleEnglish, bnSubtitleNative As ButtonEx
+    Public WithEvents bnAllAttachments, bnNoneAttachments As ButtonEx
+    Public WithEvents cbDemuxVideo, cbDemuxChapters As CheckBoxEx
+    Public WithEvents bnOK, bnCancel As ButtonEx
+
+    Private Sub InitializeComponent()
+        lvAudio = New ListViewEx
+        lvSubtitles = New ListViewEx
+        lvAttachments = New ListViewEx
+        bnAudioAll = New ButtonEx("All")
+        bnAudioNone = New ButtonEx("None")
+        bnAudioEnglish = New ButtonEx("English")
+        bnAudioNative = New ButtonEx("Native")
+        bnSubtitleAll = New ButtonEx("All")
+        bnSubtitleNone = New ButtonEx("None")
+        bnSubtitleEnglish = New ButtonEx("English")
+        bnSubtitleNative = New ButtonEx("Native")
+        bnAllAttachments = New ButtonEx("All")
+        bnNoneAttachments = New ButtonEx("None")
+        cbDemuxVideo = New CheckBoxEx With {.Text = "Demux Video"}
+        cbDemuxChapters = New CheckBoxEx With {.Text = "Demux Chapters"}
+        bnOK = CreateButton("OK", DialogResult.OK)
+        bnCancel = CreateButton("Cancel", DialogResult.Cancel)
+
+        Dim group = Function(title As String, lv As ListViewEx, buttons As Control()) As GroupBox
+                        Return New GroupBox With {
+                            .Text = title,
+                            .Content = New TableLayout(ScaledRow(lv), Row(HRow(buttons))) With {.Spacing = DefaultSpacing}}
+                    End Function
+
+        Content = PaddedTable(
+            ScaledRow(group("Audio", lvAudio, {bnAudioAll, bnAudioNone, bnAudioEnglish, bnAudioNative})),
+            ScaledRow(group("Subtitles", lvSubtitles, {bnSubtitleAll, bnSubtitleNone, bnSubtitleEnglish, bnSubtitleNative})),
+            ScaledRow(group("Attachments", lvAttachments, {bnAllAttachments, bnNoneAttachments})),
+            Row(SplitRow({cbDemuxVideo, cbDemuxChapters}, {bnOK, bnCancel})))
+
+        DefaultButton = bnOK
+        AbortButton = bnCancel
+        Text = $"Demux - {g.DefaultCommands.GetApplicationDetails()}"
+    End Sub
+
     Private _audioStreams As New List(Of AudioStream)
     Private _subtitles As New List(Of Subtitle)
 
@@ -22,33 +67,16 @@ Public Class StreamDemuxForm
     Sub New(sourceFile As String, attachments As List(Of Attachment))
         InitializeComponent()
         ScaleClientSize(42, 30)
-        Owner = g.MainForm
-        StartPosition = FormStartPosition.CenterParent
 
-        lvAudio.View = View.Details
-        lvAudio.Columns.Add("")
-        lvAudio.CheckBoxes = True
-        lvAudio.HeaderStyle = ColumnHeaderStyle.None
-        lvAudio.ShowItemToolTips = True
-        lvAudio.FullRowSelect = True
-        lvAudio.MultiSelect = False
-        lvAudio.HideFocusRectange()
-        lvAudio.AutoCheckMode = AutoCheckMode.SingleClick
-        lvAudio.OwnerDraw = False
-
-        lvSubtitles.View = View.SmallIcon
-        lvSubtitles.CheckBoxes = True
-        lvSubtitles.HeaderStyle = ColumnHeaderStyle.None
-        lvSubtitles.AutoCheckMode = AutoCheckMode.SingleClick
-        lvSubtitles.OwnerDraw = False
-
-        lvAttachments.View = View.SmallIcon
-        lvAttachments.CheckBoxes = True
-        lvAttachments.HeaderStyle = ColumnHeaderStyle.None
-        lvAttachments.AutoCheckMode = AutoCheckMode.SingleClick
-        lvAttachments.OwnerDraw = False
-
-        AddHandler Load, Sub() lvAudio.Columns(0).Width = lvAudio.ClientSize.Width
+        For Each lv In {lvAudio, lvSubtitles, lvAttachments}
+            lv.View = View.Details
+            lv.Columns.Add("")
+            lv.CheckBoxes = True
+            lv.HeaderStyle = ColumnHeaderStyle.None
+            lv.FullRowSelect = True
+            lv.MultiSelect = False
+            lv.AutoCheckMode = AutoCheckMode.SingleClick
+        Next
 
         _audioStreams = MediaInfo.GetAudioStreams(sourceFile)
         _subtitles = MediaInfo.GetSubtitles(sourceFile)
@@ -86,48 +114,25 @@ Public Class StreamDemuxForm
 
         cbDemuxChapters.Checked = p.DemuxChapters
         cbDemuxVideo.Checked = p.DemuxVideo
-
-        ApplyTheme()
-
-        AddHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
+        IsInitialized = True
     End Sub
 
-    Protected Overrides Sub Dispose(disposing As Boolean)
-        RemoveHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
-        components?.Dispose()
-        MyBase.Dispose(disposing)
-    End Sub
-
-    Sub OnThemeChanged(theme As Theme)
-        ApplyTheme(theme)
-    End Sub
-
-    Sub ApplyTheme()
-        ApplyTheme(ThemeManager.CurrentTheme)
-    End Sub
-
-    Sub ApplyTheme(theme As Theme)
-        If DesignHelp.IsDesignMode Then
-            Exit Sub
-        End If
-
-        BackColor = theme.General.BackColor
-    End Sub
+    Private IsInitialized As Boolean
 
     Sub lvAudio_ItemChecked(sender As Object, e As ItemCheckedEventArgs) Handles lvAudio.ItemChecked
-        If Visible Then
+        If IsInitialized Then
             DirectCast(e.Item.Tag, AudioStream).Enabled = e.Item.Checked
         End If
     End Sub
 
     Sub lvSubtitles_ItemChecked(sender As Object, e As ItemCheckedEventArgs) Handles lvSubtitles.ItemChecked
-        If Visible Then
+        If IsInitialized Then
             DirectCast(e.Item.Tag, Subtitle).Enabled = e.Item.Checked
         End If
     End Sub
 
     Sub lvAttachments_ItemChecked(sender As Object, e As ItemCheckedEventArgs) Handles lvAttachments.ItemChecked
-        If Visible Then
+        If IsInitialized Then
             DirectCast(e.Item.Tag, Attachment).Enabled = e.Item.Checked
         End If
     End Sub

@@ -14,6 +14,8 @@ Therefore, installation of these tools is not required.
 
 At this point you are done with the installation and ready for the [First Start](../Usage/First-Start.md).
 
+For the Linux version see [Linux](Linux.md).
+
 
 > [!CAUTION]
 > **Windows 7** users can use StaxRip only partly. The following tools are included and don't have

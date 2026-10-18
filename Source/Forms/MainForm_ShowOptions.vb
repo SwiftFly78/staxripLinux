@@ -1,4 +1,4 @@
-﻿Imports StaxRip.UI
+Imports StaxRip.UI
 
 Partial Public Class MainForm
     Inherits FormBase
@@ -388,8 +388,6 @@ Partial Public Class MainForm
                 End If
             Next
 
-            Dim moreAudio = prefAudio.AddMenu("More", DirectCast(Nothing, Action))
-            Dim moreAudioFirst = prefAudio.AddMenu("More | temp", DirectCast(Nothing, Action))
 
             Dim moreAudioAction = Sub()
                                       For Each lng In Language.Languages
@@ -399,14 +397,7 @@ Partial Public Class MainForm
                                       Next
                                   End Sub
 
-            AddHandler moreAudio.DropDownOpened, Sub()
-                                                     If moreAudio.DropDownItems.Count > 1 Then
-                                                         Exit Sub
-                                                     End If
-
-                                                     moreAudioFirst.Visible = False
-                                                     moreAudioAction()
-                                                 End Sub
+            moreAudioAction()
 
             Dim cut = ui.AddMenu(Of CuttingMode)
             cut.Text = "Cutting Method"
@@ -473,8 +464,6 @@ Partial Public Class MainForm
                 End If
             Next
 
-            Dim moreSub = prefSub.AddMenu("More", DirectCast(Nothing, Action))
-            Dim moreSubFirst = prefSub.AddMenu("More | temp", DirectCast(Nothing, Action))
 
             Dim moreSubAction = Sub()
                                     For Each lng In Language.Languages
@@ -484,14 +473,7 @@ Partial Public Class MainForm
                                     Next
                                 End Sub
 
-            AddHandler moreSub.DropDownOpened, Sub()
-                                                   If moreSub.DropDownItems.Count > 1 Then
-                                                       Exit Sub
-                                                   End If
-
-                                                   moreSubFirst.Visible = False
-                                                   moreSubAction()
-                                               End Sub
+            moreSubAction()
 
             Dim tbm = ui.AddTextMenu(subPage)
             tbm.Text = "Track Name"
@@ -579,7 +561,6 @@ Partial Public Class MainForm
             thumbsImageFormat.Text = "Image Format"
             thumbsImageFormat.Expanded = True
             thumbsImageFormat.Add("BITMAP", "bmp")
-            thumbsImageFormat.Add("GIF", "gif")
             thumbsImageFormat.Add("JPEG", "jpg")
             thumbsImageFormat.Add("PNG", "png")
             thumbsImageFormat.Add("TIFF", "tif")
@@ -600,7 +581,7 @@ Partial Public Class MainForm
             thumbsImageBackColor.Text = "Background Color:"
             thumbsImageBackColor.Expanded = True
             thumbsImageBackColor.Color = p.ThumbnailerSettings.GetString("ImageBackColor", New ColorHSL(0, 0, 0.05, 1).ToHTML()).ToColor()
-            thumbsImageBackColor.SaveAction = Sub(value) p.ThumbnailerSettings.SetString("ImageBackColor", ColorTranslator.ToHtml(value))
+            thumbsImageBackColor.SaveAction = Sub(value) p.ThumbnailerSettings.SetString("ImageBackColor", value.ToHex(False))
             thumbsImageBackColor.ValueChangedAction = Sub(value) If thumbsHeaderBackColor IsNot Nothing Then thumbsHeaderBackColor.Color = value
 
             n = ui.AddNum()
@@ -623,7 +604,7 @@ Partial Public Class MainForm
             Dim headerFont = ui.AddTextButton()
             headerFont.Text = "Font Name:"
             headerFont.Expanded = True
-            headerFont.Edit.Text = p.ThumbnailerSettings.GetString("HeaderFontName", FontManager.GetThumbnailFont().Name)
+            headerFont.Edit.Text = p.ThumbnailerSettings.GetString("HeaderFontName", FontManager.GetThumbnailFont().FamilyName)
             headerFont.Edit.SaveAction = Sub(value) p.ThumbnailerSettings.SetString("HeaderFontName", value)
             headerFont.ClickAction = Sub()
                                          Using td As New TaskDialog(Of FontFamily)
@@ -644,7 +625,7 @@ Partial Public Class MainForm
             cp.Text = "Font Color:"
             cp.Expanded = True
             cp.Color = p.ThumbnailerSettings.GetString("HeaderFontColor", New ColorHSL(0, 0, 0.8, 1).ToHTML()).ToColor()
-            cp.SaveAction = Sub(value) p.ThumbnailerSettings.SetString("HeaderFontColor", ColorTranslator.ToHtml(value))
+            cp.SaveAction = Sub(value) p.ThumbnailerSettings.SetString("HeaderFontColor", value.ToHex(False))
 
             n = ui.AddNum()
             n.Text = "Font Size (%):"
@@ -655,8 +636,8 @@ Partial Public Class MainForm
             thumbsHeaderBackColor = ui.AddColorPicker()
             thumbsHeaderBackColor.Text = "Background Color:"
             thumbsHeaderBackColor.Expanded = True
-            thumbsHeaderBackColor.Color = p.ThumbnailerSettings.GetString("HeaderBackColor", ColorTranslator.ToHtml(thumbsImageBackColor.Color)).ToColor()
-            thumbsHeaderBackColor.SaveAction = Sub(value) p.ThumbnailerSettings.SetString("HeaderBackColor", ColorTranslator.ToHtml(value))
+            thumbsHeaderBackColor.Color = p.ThumbnailerSettings.GetString("HeaderBackColor", thumbsImageBackColor.Color.ToHex(False)).ToColor()
+            thumbsHeaderBackColor.SaveAction = Sub(value) p.ThumbnailerSettings.SetString("HeaderBackColor", value.ToHex(False))
 
             n = ui.AddNum()
             n.Text = "Separator Size (%):"
@@ -677,7 +658,7 @@ Partial Public Class MainForm
             Dim timestampFont = ui.AddTextButton()
             timestampFont.Text = "Timestamp Font Name:"
             timestampFont.Expanded = True
-            timestampFont.Edit.Text = p.ThumbnailerSettings.GetString("TimestampFontName", FontManager.GetThumbnailFont().Name)
+            timestampFont.Edit.Text = p.ThumbnailerSettings.GetString("TimestampFontName", FontManager.GetThumbnailFont().FamilyName)
             timestampFont.Edit.SaveAction = Sub(value) p.ThumbnailerSettings.SetString("TimestampFontName", value)
             timestampFont.ClickAction = Sub()
                                             Using td As New TaskDialog(Of FontFamily)
@@ -698,7 +679,7 @@ Partial Public Class MainForm
             cp.Text = "Timestamp Font Color:"
             cp.Expanded = True
             cp.Color = p.ThumbnailerSettings.GetString("TimestampFontColor", New ColorHSL(0, 0, 0.9, 1).ToHTML()).ToColor()
-            cp.SaveAction = Sub(value) p.ThumbnailerSettings.SetString("TimestampFontColor", ColorTranslator.ToHtml(value))
+            cp.SaveAction = Sub(value) p.ThumbnailerSettings.SetString("TimestampFontColor", value.ToHex(False))
 
             n = ui.AddNum()
             n.Text = "Timestamp Font Size (%):"
@@ -710,7 +691,7 @@ Partial Public Class MainForm
             cp.Text = "Timestamp Outline Color:"
             cp.Expanded = True
             cp.Color = p.ThumbnailerSettings.GetString("TimestampOutlineColor", New ColorHSL(0, 0, 0.1, 1).ToHTML()).ToColor()
-            cp.SaveAction = Sub(value) p.ThumbnailerSettings.SetString("TimestampOutlineColor", ColorTranslator.ToHtml(value))
+            cp.SaveAction = Sub(value) p.ThumbnailerSettings.SetString("TimestampOutlineColor", value.ToHex(False))
 
             n = ui.AddNum()
             n.Text = "Timestamp Outline Strength (%):"
@@ -780,7 +761,7 @@ Partial Public Class MainForm
 
             l = ui.AddLabel(pathPage, "Default Target Name:")
             l.Help = "Leave empty to use the source filename"
-            l.MarginTop = Font.Height
+            l.MarginTop = FontHeight
 
             tm = ui.AddTextMenu(pathPage)
             tm.Label.Visible = False
@@ -793,7 +774,7 @@ Partial Public Class MainForm
 
             l = ui.AddLabel(pathPage, If(p.DeleteTempFilesMode = DeleteMode.Disabled, "Temp Files Folder:", $"Temp Files Folder: (MUST end with '_temp{Path.DirectorySeparatorChar}' for Auto-Deletion!)"))
             l.Help = "Leave empty to use the source file folder."
-            l.MarginTop = Font.Height
+            l.MarginTop = FontHeight
 
             Dim tempDirFunc = Function()
                                   Dim tempDir = g.BrowseFolder(p.TempDir)
@@ -814,7 +795,7 @@ Partial Public Class MainForm
 
             l = ui.AddLabel(pathPage, "Default Thumbnails Path without extension:")
             l.Help = "Leave empty to save it next to the video file"
-            l.MarginTop = Font.Height
+            l.MarginTop = FontHeight
 
             tm = ui.AddTextMenu(pathPage)
             tm.Label.Visible = False
@@ -907,7 +888,7 @@ Partial Public Class MainForm
             deleteOnFrameMismatchPositive.Config = {-1, 999, 1, 0}
             deleteOnFrameMismatchPositive.Field = NameOf(p.DeleteTempFilesOnFrameMismatchPositive)
 
-            deleteCustomLabel.MarginTop = Font.Height \ 2
+            deleteCustomLabel.MarginTop = FontHeight \ 2
             deleteCustomLabel.Visible = p.DeleteTempFilesMode <> DeleteMode.Disabled AndAlso p.DeleteTempFilesSelection = DeleteSelection.Custom
 
             Dim customAddFunc = Function(extensions As String()) As String
@@ -932,7 +913,7 @@ Partial Public Class MainForm
 
             Dim selectiveVisible = p.DeleteTempFilesMode <> DeleteMode.Disabled AndAlso p.DeleteTempFilesSelection = DeleteSelection.Selective
 
-            deleteSelectiveLabel.MarginTop = Font.Height \ 2
+            deleteSelectiveLabel.MarginTop = FontHeight \ 2
             deleteSelectiveLabel.Visible = selectiveVisible
 
             deleteSelectiveProjects.Text = "Project files"
@@ -1033,7 +1014,7 @@ Partial Public Class MainForm
 
             l = ui.AddLabel(filtersCustomPage, "Code appended to trim functions:")
             l.Help = "Code appended to trim functions StaxRip generates using the cut feature."
-            l.MarginTop = Font.Height \ 2
+            l.MarginTop = FontHeight \ 2
 
             t = ui.AddText(filtersCustomPage)
             t.Label.Visible = False
@@ -1045,7 +1026,7 @@ Partial Public Class MainForm
 
             l = ui.AddLabel(filtersCustomPage, "Code inserted at top of scripts:")
             l.Help = "Code inserted at the top of every script StaxRip generates."
-            l.MarginTop = Font.Height \ 2
+            l.MarginTop = FontHeight \ 2
 
             t = ui.AddText(filtersCustomPage)
             t.Label.Visible = False
@@ -1057,7 +1038,7 @@ Partial Public Class MainForm
 
             l = ui.AddLabel(filtersCustomPage, "Code inserted at bottom of scripts:")
             l.Help = "Code inserted at the bottom of every script StaxRip generates."
-            l.MarginTop = Font.Height \ 2
+            l.MarginTop = FontHeight \ 2
 
             t = ui.AddText(filtersCustomPage)
             t.Label.Visible = False

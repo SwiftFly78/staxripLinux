@@ -1,11 +1,30 @@
-﻿
-Imports System.ComponentModel
 
 Namespace UI
-    <ToolboxItem(False)>
-    Class CriteriaItemControl
-        Sub New(allCriteria As List(Of Criteria))
-            InitializeComponent()
+    Public Class CriteriaItemControl
+        Inherits Panel
+
+        Public WithEvents mbProperties As MenuButton
+        Public WithEvents tePropertiesIdentifier As TextEdit
+        Public WithEvents mbCondition As MenuButton
+        Public WithEvents teValue As TextEdit
+        Public WithEvents bnRemove As ButtonEx
+
+        Private ReadOnly OwnerControl As CriteriaControl
+
+        Sub New(allCriteria As List(Of Criteria), owner As CriteriaControl)
+            OwnerControl = owner
+            mbProperties = New MenuButton With {.Width = FH(12)}
+            tePropertiesIdentifier = New TextEdit With {.Width = FH(6), .Enabled = False}
+            mbCondition = New MenuButton With {.Width = FH(8), .Enabled = False}
+            teValue = New TextEdit With {.Enabled = False}
+            bnRemove = New ButtonEx("Remove")
+
+            Content = New TableLayout(New TableRow(
+                New TableCell(mbProperties),
+                New TableCell(tePropertiesIdentifier),
+                New TableCell(mbCondition),
+                New TableCell(teValue, True),
+                New TableCell(bnRemove))) With {.Spacing = New Size(FH(0.3), 0)}
 
             For Each c In allCriteria
                 If c.Name?.StartsWith("Source ") Then
@@ -36,41 +55,6 @@ Namespace UI
                     mbProperties.Add("Files | " + c.Name, c, c.Description)
                 End If
             Next
-
-            ApplyTheme()
-
-            AddHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
-        End Sub
-
-        Protected Overrides Sub Dispose(disposing As Boolean)
-            RemoveHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
-            MyBase.Dispose(disposing)
-        End Sub
-
-        Sub OnThemeChanged(theme As Theme)
-            ApplyTheme(theme)
-        End Sub
-
-        Sub ApplyTheme()
-            ApplyTheme(ThemeManager.CurrentTheme)
-        End Sub
-
-        Sub ApplyTheme(theme As Theme)
-            If DesignHelp.IsDesignMode Then
-                Exit Sub
-            End If
-
-            BackColor = theme.General.Controls.CriteriaControl.BackColor
-            ForeColor = theme.General.Controls.CriteriaControl.ForeColor
-        End Sub
-
-        Protected Overrides Sub OnLayout(e As LayoutEventArgs)
-            Height = bnRemove.Height + 6
-            mbProperties.Height = bnRemove.Height
-            tePropertiesIdentifier.Height = bnRemove.Height
-            mbCondition.Height = bnRemove.Height
-            teValue.Height = bnRemove.Height
-            MyBase.OnLayout(e)
         End Sub
 
         Private CriteriaValue As Criteria
@@ -91,41 +75,42 @@ Namespace UI
                     Next
 
                     tePropertiesIdentifier.Enabled = CriteriaValue.PropertyIdentifierNeeded
-                    tePropertiesIdentifier.TextBox.SetTextWithoutTextChangedEvent(CriteriaValue.PropertyIdentifier)
+                    tePropertiesIdentifier.SetTextWithoutTextChangedEvent(CriteriaValue.PropertyIdentifier)
                     tePropertiesIdentifier_TextChanged()
 
                     mbCondition.Enabled = True
-                    mbCondition.Menu.Items.ClearAndDisplose
+                    mbCondition.Clear()
                     mbCondition.AddRange(CriteriaValue.ConditionNames)
                     mbCondition.Value = CriteriaValue.ConditionName
 
                     teValue.Enabled = True
-                    teValue.TextBox.SetTextWithoutTextChangedEvent(CriteriaValue.ValueString)
+                    teValue.SetTextWithoutTextChangedEvent(CriteriaValue.ValueString)
                 End If
             End Set
         End Property
 
-        Sub bnRemove_Click() Handles bnRemove.Click
-            Parent.Controls.Remove(Me)
+        Sub bnRemove_Click(sender As Object, e As EventArgs) Handles bnRemove.Click
+            OwnerControl.RemoveItem(Me)
         End Sub
 
         Sub teValue_TextChanged() Handles teValue.TextChanged
+            If Criteria Is Nothing Then Exit Sub
             Criteria.ValueString = teValue.Text
         End Sub
 
         Sub tePropertiesIdentifier_TextChanged() Handles tePropertiesIdentifier.TextChanged
+            If Criteria Is Nothing Then Exit Sub
             Criteria.PropertyIdentifier = tePropertiesIdentifier.Text
 
             If String.IsNullOrWhiteSpace(Criteria.PropertyIdentifier) AndAlso Criteria.PropertyIdentifierNeeded Then
                 tePropertiesIdentifier.BackColor = ThemeManager.CurrentTheme.General.DangerForeColor
-                tePropertiesIdentifier.TextBox.BackColor = ThemeManager.CurrentTheme.General.DangerForeColor
             Else
                 tePropertiesIdentifier.BackColor = teValue.BackColor
-                tePropertiesIdentifier.TextBox.BackColor = teValue.TextBox.BackColor
             End If
         End Sub
 
         Sub mbCondition_ValueChangedUser(value As Object) Handles mbCondition.ValueChangedUser
+            If Criteria Is Nothing Then Exit Sub
             Criteria.ConditionName = mbCondition.Value.ToString
         End Sub
 

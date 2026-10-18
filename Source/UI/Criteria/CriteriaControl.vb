@@ -1,68 +1,40 @@
-Imports System.ComponentModel
 
 Namespace UI
     Public Class CriteriaControl
-        Inherits FlowLayoutPanel
+        Inherits Scrollable
 
-        <Browsable(False),
-        DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)>
+        Private ReadOnly Stack As New StackLayout With {
+            .Orientation = Orientation.Vertical,
+            .HorizontalContentAlignment = HorizontalAlignment.Stretch,
+            .Spacing = FH(0.2)}
+
         Property AllCriteria As List(Of Criteria)
 
         Sub New()
-            FlowDirection = FlowDirection.TopDown
-            Dock = DockStyle.Fill
-            AutoSize = False
-            AutoScroll = False
-            AutoScrollMinSize = New Size(0, 800)
-            AutoSizeMode = AutoSizeMode.GrowAndShrink
-            HorizontalScroll.Enabled = False
-            HorizontalScroll.Visible = False
-            HorizontalScroll.Maximum = 0
-            VerticalScroll.Visible = True
-            AutoScroll = True
-
-            ApplyTheme()
-
-            AddHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
-        End Sub
-
-        Protected Overrides Sub Dispose(disposing As Boolean)
-            RemoveHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
-            MyBase.Dispose(disposing)
-        End Sub
-
-        Sub OnThemeChanged(theme As Theme)
-            ApplyTheme(theme)
-        End Sub
-
-        Sub ApplyTheme()
-            ApplyTheme(ThemeManager.CurrentTheme)
-        End Sub
-
-        Sub ApplyTheme(theme As Theme)
-            If DesignHelp.IsDesignMode Then
-                Exit Sub
-            End If
-
-            BackColor = theme.General.Controls.CriteriaControl.BackColor
-            ForeColor = theme.General.Controls.CriteriaControl.ForeColor
+            ExpandContentWidth = True
+            ExpandContentHeight = False
+            Border = BorderType.None
+            Content = Stack
         End Sub
 
         Sub AddItem(criteria As Criteria)
-            Dim c As New CriteriaItemControl(AllCriteria) With {
-                .Criteria = criteria,
-                .Width = ClientSize.Width
-            }
-            Controls.Add(c)
+            Dim c As New CriteriaItemControl(AllCriteria, Me) With {.Criteria = criteria}
+            Stack.Items.Add(New StackLayoutItem(c))
         End Sub
 
-        <Browsable(False),
-        DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)>
+        Sub RemoveItem(item As CriteriaItemControl)
+            Dim stackItem = Stack.Items.FirstOrDefault(Function(i) i.Control Is item)
+
+            If stackItem IsNot Nothing Then
+                Stack.Items.Remove(stackItem)
+            End If
+        End Sub
+
         Property CriteriaList() As List(Of Criteria)
             Get
                 Dim ret As New List(Of Criteria)
 
-                For Each i In Controls.OfType(Of CriteriaItemControl)
+                For Each i In Stack.Items.Select(Function(x) x.Control).OfType(Of CriteriaItemControl)
                     If i.Criteria IsNot Nothing Then
                         ret.Add(i.Criteria)
                     End If

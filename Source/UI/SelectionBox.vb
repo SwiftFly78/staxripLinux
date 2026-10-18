@@ -48,8 +48,8 @@ Public Class SelectionBox(Of T)
     Function Show() As DialogResult
         Using td As New TaskDialog(Of DialogResult)
             If Items.Count > 0 Then
-                td.MenuButton.AddRange(Items)
-                td.MenuButton.Value = SelectedBag
+                td.MenuItems.AddRange(Items)
+                td.MenuValue = SelectedBag
             End If
 
             td.Text = If(Title = "", g.DefaultCommands.GetApplicationDetails(), Title)
@@ -57,7 +57,7 @@ Public Class SelectionBox(Of T)
             td.Buttons = TaskButton.OkCancel
 
             If td.Show() = DialogResult.OK Then
-                SelectedBag = DirectCast(td.MenuButton.Value, ListBag(Of T))
+                SelectedBag = DirectCast(td.MenuValue, ListBag(Of T))
             End If
 
             Return td.SelectedValue

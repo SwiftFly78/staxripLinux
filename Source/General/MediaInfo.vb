@@ -2,22 +2,22 @@
 Imports System.Collections.Concurrent
 Imports System.Runtime.InteropServices
 Imports System.Text.RegularExpressions
+Imports Microsoft.VisualBasic
 
 Public Class MediaInfo
     Implements IDisposable
 
     Private ReadOnly Handle As IntPtr
-    Private Shared Loaded As Boolean
 
     Property Path As String = ""
 
     Sub New(path As String)
-        If Not Loaded Then
-            Native.LoadLibrary(Package.MediaInfo.Path)
-            Loaded = True
-        End If
-
         Handle = MediaInfo_New()
+
+        'UTF-8 strings and CRLF line breaks like the Windows version
+        MediaInfo_Option(Handle, "CharSet", "UTF-8")
+        MediaInfo_Option(Handle, "LineSeparator", vbCrLf)
+
         MediaInfo_Open(Handle, path)
         Me.Path = path
     End Sub
@@ -228,7 +228,7 @@ Public Class MediaInfo
     Shared Function GetSummary(path As String) As String
         Dim mi = GetMediaInfo(path)
         MediaInfo_Option(mi.Handle, "Complete", "0")
-        Dim ret = Marshal.PtrToStringUni(MediaInfo_Inform(mi.Handle, 0))
+        Dim ret = Marshal.PtrToStringUTF8(MediaInfo_Inform(mi.Handle, 0))
         If ret.Contains("UniqueID/String") Then ret = Regex.Replace(ret, "UniqueID/String +: .+\n", "")
         If ret.Contains("Unique ID") Then ret = Regex.Replace(ret, "Unique ID +: .+\n", "")
         If ret.Contains("Encoded_Library_Settings") Then ret = Regex.Replace(ret, "Encoded_Library_Settings +: .+\n", "")
@@ -240,23 +240,23 @@ Public Class MediaInfo
     Shared Function GetCompleteSummary(path As String) As String
         Dim mi = GetMediaInfo(path)
         MediaInfo_Option(mi.Handle, "Complete", "1")
-        Return Marshal.PtrToStringUni(MediaInfo_Inform(mi.Handle, 0))
+        Return Marshal.PtrToStringUTF8(MediaInfo_Inform(mi.Handle, 0))
     End Function
 
     Function GetInfo(streamKind As MediaInfoStreamKind, parameter As String) As String
-        Return Marshal.PtrToStringUni(MediaInfo_Get(Handle, streamKind, 0, parameter, MediaInfoInfoKind.Text, MediaInfoInfoKind.Name))
+        Return Marshal.PtrToStringUTF8(MediaInfo_Get(Handle, streamKind, 0, parameter, MediaInfoInfoKind.Text, MediaInfoInfoKind.Name))
     End Function
 
     Function GetAudio(streamNumber As Integer, parameter As String) As String
-        Return Marshal.PtrToStringUni(MediaInfo_Get(Handle, MediaInfoStreamKind.Audio, streamNumber, parameter, MediaInfoInfoKind.Text, MediaInfoInfoKind.Name))
+        Return Marshal.PtrToStringUTF8(MediaInfo_Get(Handle, MediaInfoStreamKind.Audio, streamNumber, parameter, MediaInfoInfoKind.Text, MediaInfoInfoKind.Name))
     End Function
 
     Function GetText(streamNumber As Integer, parameter As String) As String
-        Return Marshal.PtrToStringUni(MediaInfo_Get(Handle, MediaInfoStreamKind.Text, streamNumber, parameter, MediaInfoInfoKind.Text, MediaInfoInfoKind.Name))
+        Return Marshal.PtrToStringUTF8(MediaInfo_Get(Handle, MediaInfoStreamKind.Text, streamNumber, parameter, MediaInfoInfoKind.Text, MediaInfoInfoKind.Name))
     End Function
 
     Function GetInfo(streamKind As MediaInfoStreamKind, streamNumber As Integer, parameter As String) As String
-        Return Marshal.PtrToStringUni(MediaInfo_Get(Handle, streamKind, streamNumber, parameter, MediaInfoInfoKind.Text, MediaInfoInfoKind.Name))
+        Return Marshal.PtrToStringUTF8(MediaInfo_Get(Handle, streamKind, streamNumber, parameter, MediaInfoInfoKind.Text, MediaInfoInfoKind.Name))
     End Function
 
     Shared Function GetInfo(path As String, streamKind As MediaInfoStreamKind, parameter As String) As String
@@ -457,49 +457,90 @@ Public Class MediaInfo
 
 #Region "native"
 
-    <DllImport("MediaInfo.dll")>
-    Private Shared Function MediaInfo_New() As IntPtr
+    'On Linux wchar_t is 32 bit, so the char based API is used with UTF-8,
+    'size_t parameters are mapped to IntPtr.
+
+    <DllImport("MediaInfo")>
+    Private Shared Function MediaInfoA_New() As IntPtr
     End Function
 
-    <DllImport("MediaInfo.dll")>
-    Private Shared Sub MediaInfo_Delete(Handle As IntPtr)
+    <DllImport("MediaInfo")>
+    Private Shared Sub MediaInfoA_Delete(handle As IntPtr)
     End Sub
 
-    <DllImport("MediaInfo.dll", CharSet:=CharSet.Unicode)>
-    Private Shared Function MediaInfo_Open(Handle As IntPtr, FileName As String) As Integer
+    <DllImport("MediaInfo")>
+    Private Shared Function MediaInfoA_Open(handle As IntPtr, <MarshalAs(UnmanagedType.LPUTF8Str)> fileName As String) As IntPtr
     End Function
 
-    <DllImport("MediaInfo.dll")>
-    Private Shared Function MediaInfo_Close(Handle As IntPtr) As Integer
+    <DllImport("MediaInfo")>
+    Private Shared Sub MediaInfoA_Close(handle As IntPtr)
+    End Sub
+
+    <DllImport("MediaInfo")>
+    Private Shared Function MediaInfoA_Inform(handle As IntPtr, reserved As IntPtr) As IntPtr
     End Function
 
-    <DllImport("MediaInfo.dll")>
-    Private Shared Function MediaInfo_Inform(Handle As IntPtr,
-                                             Reserved As Integer) As IntPtr
+    <DllImport("MediaInfo")>
+    Private Shared Function MediaInfoA_Get(handle As IntPtr,
+                                           streamKind As MediaInfoStreamKind,
+                                           streamNumber As IntPtr,
+                                           <MarshalAs(UnmanagedType.LPUTF8Str)> parameter As String,
+                                           kindOfInfo As MediaInfoInfoKind,
+                                           kindOfSearch As MediaInfoInfoKind) As IntPtr
     End Function
 
-    <DllImport("MediaInfo.dll", CharSet:=CharSet.Unicode)>
-    Private Shared Function MediaInfo_Get(Handle As IntPtr,
-                                          StreamKind As MediaInfoStreamKind,
-                                          StreamNumber As Integer, Parameter As String,
-                                          KindOfInfo As MediaInfoInfoKind,
-                                          KindOfSearch As MediaInfoInfoKind) As IntPtr
+    <DllImport("MediaInfo")>
+    Private Shared Function MediaInfoA_Option(handle As IntPtr,
+                                              <MarshalAs(UnmanagedType.LPUTF8Str)> optionString As String,
+                                              <MarshalAs(UnmanagedType.LPUTF8Str)> value As String) As IntPtr
     End Function
 
-    <DllImport("MediaInfo.dll", CharSet:=CharSet.Unicode)>
-    Private Shared Function MediaInfo_Option(Handle As IntPtr,
-                                             OptionString As String,
-                                             Value As String) As IntPtr
+    <DllImport("MediaInfo")>
+    Private Shared Function MediaInfoA_State_Get(handle As IntPtr) As IntPtr
     End Function
 
-    <DllImport("MediaInfo.dll")>
-    Private Shared Function MediaInfo_State_Get(Handle As IntPtr) As Integer
+    <DllImport("MediaInfo")>
+    Private Shared Function MediaInfoA_Count_Get(handle As IntPtr,
+                                                 streamKind As MediaInfoStreamKind,
+                                                 streamNumber As IntPtr) As IntPtr
     End Function
 
-    <DllImport("MediaInfo.dll")>
-    Private Shared Function MediaInfo_Count_Get(Handle As IntPtr,
-                                                StreamKind As MediaInfoStreamKind,
-                                                StreamNumber As Integer) As Integer
+    Private Shared Function MediaInfo_New() As IntPtr
+        Return MediaInfoA_New()
+    End Function
+
+    Private Shared Sub MediaInfo_Delete(handle As IntPtr)
+        MediaInfoA_Delete(handle)
+    End Sub
+
+    Private Shared Function MediaInfo_Open(handle As IntPtr, fileName As String) As Integer
+        Return CInt(MediaInfoA_Open(handle, fileName))
+    End Function
+
+    Private Shared Sub MediaInfo_Close(handle As IntPtr)
+        MediaInfoA_Close(handle)
+    End Sub
+
+    Private Shared Function MediaInfo_Inform(handle As IntPtr, reserved As Integer) As IntPtr
+        Return MediaInfoA_Inform(handle, New IntPtr(reserved))
+    End Function
+
+    Private Shared Function MediaInfo_Get(handle As IntPtr,
+                                          streamKind As MediaInfoStreamKind,
+                                          streamNumber As Integer,
+                                          parameter As String,
+                                          kindOfInfo As MediaInfoInfoKind,
+                                          kindOfSearch As MediaInfoInfoKind) As IntPtr
+
+        Return MediaInfoA_Get(handle, streamKind, New IntPtr(streamNumber), parameter, kindOfInfo, kindOfSearch)
+    End Function
+
+    Private Shared Function MediaInfo_Option(handle As IntPtr, optionString As String, value As String) As IntPtr
+        Return MediaInfoA_Option(handle, optionString, value)
+    End Function
+
+    Private Shared Function MediaInfo_Count_Get(handle As IntPtr, streamKind As MediaInfoStreamKind, streamNumber As Integer) As Integer
+        Return CInt(MediaInfoA_Count_Get(handle, streamKind, New IntPtr(streamNumber)))
     End Function
 
 #End Region

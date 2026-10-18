@@ -1,10 +1,66 @@
-﻿
-Imports System.ComponentModel
+
+
 Imports System.Text.RegularExpressions
 
 Imports StaxRip.UI
 
 Public Class CodeEditor
+    Inherits DialogBase
+
+    Public WithEvents bnOK As ButtonEx
+    Public WithEvents bnCancel As ButtonEx
+    Public MainFlowLayoutPanel As StackLayout
+
+    Private Sub InitializeComponent()
+        bnOK = CreateButton("OK", DialogResult.OK)
+        bnCancel = CreateButton("Cancel", DialogResult.Cancel)
+        MainFlowLayoutPanel = New StackLayout With {
+            .Orientation = Orientation.Vertical,
+            .HorizontalContentAlignment = HorizontalAlignment.Stretch,
+            .Spacing = FH(0.4)}
+
+        Content = PaddedTable(
+            ScaledRow(New Scrollable With {.Content = MainFlowLayoutPanel, .Border = BorderType.None, .ExpandContentWidth = True}),
+            Row(ButtonRow(bnOK, bnCancel)))
+
+        AbortButton = bnCancel
+        Text = $"Code Editor - {g.DefaultCommands.GetApplicationDetails()}"
+    End Sub
+
+    ReadOnly Property Tables As List(Of FilterTable)
+        Get
+            Return MainFlowLayoutPanel.Items.Select(Function(i) i.Control).OfType(Of FilterTable).ToList
+        End Get
+    End Property
+
+    Sub AddTable(table As FilterTable, Optional index As Integer = -1)
+        table.Editor = Me
+        table.rtbScript.ContextMenuStrip = cmsMain
+
+        If index < 0 OrElse index >= MainFlowLayoutPanel.Items.Count Then
+            MainFlowLayoutPanel.Items.Add(New StackLayoutItem(table))
+        Else
+            MainFlowLayoutPanel.Items.Insert(index, New StackLayoutItem(table))
+        End If
+    End Sub
+
+    Sub RemoveTable(table As FilterTable)
+        Dim item = MainFlowLayoutPanel.Items.FirstOrDefault(Function(i) i.Control Is table)
+
+        If item IsNot Nothing Then
+            MainFlowLayoutPanel.Items.Remove(item)
+        End If
+    End Sub
+
+    Function IndexOfTable(table As FilterTable) As Integer
+        Return Tables.IndexOf(table)
+    End Function
+
+    Sub MoveTable(table As FilterTable, index As Integer)
+        RemoveTable(table)
+        AddTable(table, index)
+    End Sub
+
     Property ActiveTable As FilterTable
     Property Engine As ScriptEngine
     Property PreviewScript As VideoScript
@@ -17,55 +73,24 @@ Public Class CodeEditor
     Sub New(doc As VideoScript)
         InitializeComponent()
 
-        MainFlowLayoutPanel.Padding = New Padding(0, 0, 0, 0)
-        MainFlowLayoutPanel.SuspendLayout()
-
         Engine = doc.Engine
 
         cmsMain = New ContextMenuStripEx()
         CommandManager.AddCommandsFromObject(Me)
         CommandManager.AddCommandsFromObject(g.DefaultCommands)
 
-        CustomMenu = New CustomMenu(AddressOf GetDefaultMenu, s.CustomMenuCodeEditor, CommandManager, cmsMain)
+        CustomMenu = New CustomMenu(AddressOf GetDefaultMenu, s.CustomMenuCodeEditor, CommandManager, cmsMain.Items)
         CustomMenu.AddKeyDownHandler(Me)
         CustomMenu.BuildMenu()
 
         ModifyMenu()
 
         For Each i In doc.Filters
-            MainFlowLayoutPanel.Controls.Add(CreateFilterTable(i))
+            AddTable(CreateFilterTable(i))
         Next
 
-        MainFlowLayoutPanel.ResumeLayout()
-        AddHandler MainFlowLayoutPanel.Layout, AddressOf MainFlowLayoutPanelLayout
-
-        AutoSizeMode = AutoSizeMode.GrowAndShrink
-        AutoSize = True
-
-        ApplyTheme()
-        AddHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
-    End Sub
-
-    Protected Overrides Sub Dispose(disposing As Boolean)
-        RemoveHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
-        components?.Dispose()
-        MyBase.Dispose(disposing)
-    End Sub
-
-    Sub OnThemeChanged(theme As Theme)
-        ApplyTheme(theme)
-    End Sub
-
-    Sub ApplyTheme()
-        ApplyTheme(ThemeManager.CurrentTheme)
-    End Sub
-
-    Sub ApplyTheme(theme As Theme)
-        If DesignHelp.IsDesignMode Then
-            Exit Sub
-        End If
-
-        BackColor = theme.General.BackColor
+        Dim maxWidth = Tables.Select(Function(t) t.TextWidth).DefaultIfEmpty(0).Max
+        ClientSize = New Size(Math.Min(FH(70), Math.Max(FH(40), maxWidth + FH(14))), FH(30))
     End Sub
 
     Sub ModifyMenu()
@@ -73,23 +98,9 @@ Public Class CodeEditor
         CustomMenu.GetMenuItemByText("Copy").ShortcutKeyDisplayString = "Ctrl+C"
         CustomMenu.GetMenuItemByText("Paste").ShortcutKeyDisplayString = "Ctrl+V"
 
-        Dim helpMenuItem = cmsMain.Add("Help")
-        helpMenuItem.SetImage(Symbol.Help)
-        cmsMain.Add("Help | a")
-
-        Dim a = Sub(sender As Object, e As EventArgs)
-                    If helpMenuItem.DropDownItems.Count > 1 Then
-                        Exit Sub
-                    End If
-
-                    helpMenuItem.DropDownItems.RemoveAt(0)
-
-                    For Each pack In Package.Items.Values
-                        cmsMain.Add("Help | " + pack.Name.Substring(0, 1).ToUpperInvariant + " | " + pack.ID, Sub() pack.ShowHelp())
-                    Next
-                End Sub
-
-        AddHandler helpMenuItem.DropDownOpened, a
+        For Each pack In Package.Items.Values
+            cmsMain.Add("Help | " + pack.Name.Substring(0, 1).ToUpperInvariant + " | " + pack.ID, Sub() pack.ShowHelp())
+        Next
     End Sub
 
     <Command("Opens the menu editor.")>
@@ -116,10 +127,8 @@ Public Class CodeEditor
     Sub RemoveFilter()
         If Not ActiveTable Is Nothing Then
             If MsgQuestion("Remove?") = DialogResult.OK Then
-                If MainFlowLayoutPanel.Controls.Count > 1 Then
-                    ActiveTable.rtbScript.ContextMenuStrip = Nothing
-                    MainFlowLayoutPanel.Controls.Remove(ActiveTable)
-                    ActiveTable.Dispose()
+                If Tables.Count > 1 Then
+                    RemoveTable(ActiveTable)
                     ActiveTable = Nothing
                 End If
             End If
@@ -128,26 +137,28 @@ Public Class CodeEditor
 
     <Command("Moves a filter up.")>
     Sub MoveFilterUp()
-        Dim index = MainFlowLayoutPanel.Controls.IndexOf(ActiveTable)
+        If ActiveTable Is Nothing Then Exit Sub
+        Dim index = IndexOfTable(ActiveTable)
         index -= 1
 
         If index < 0 Then
             index = 0
         End If
 
-        MainFlowLayoutPanel.Controls.SetChildIndex(ActiveTable, index)
+        MoveTable(ActiveTable, index)
     End Sub
 
     <Command("Moves a filter down.")>
     Sub MoveFilterDown()
-        Dim index = MainFlowLayoutPanel.Controls.IndexOf(ActiveTable)
+        If ActiveTable Is Nothing Then Exit Sub
+        Dim index = IndexOfTable(ActiveTable)
         index += 1
 
-        If index >= MainFlowLayoutPanel.Controls.Count - 1 Then
-            index = MainFlowLayoutPanel.Controls.Count - 1
+        If index > Tables.Count - 1 Then
+            index = Tables.Count - 1
         End If
 
-        MainFlowLayoutPanel.Controls.SetChildIndex(ActiveTable, index)
+        MoveTable(ActiveTable, index)
     End Sub
 
     <Command("Shows a code preview with solved macros.")>
@@ -210,7 +221,7 @@ Public Class CodeEditor
         PopulateDynamicMenu(DynamicMenuItemID.ReplaceFilters)
     End Sub
 
-    <Command("Plays the script with mpv.net.")>
+    <Command("Plays the script with mpv.")>
     Sub PlayWithMpvnet()
         g.PlayScriptWithMPV(CreateTempScript())
     End Sub
@@ -242,7 +253,7 @@ Public Class CodeEditor
 
     <Command("Joins all active filters into one filter.")>
     Sub JoinActiveFilters()
-        Dim activeTables = MainFlowLayoutPanel.Controls?.OfType(Of FilterTable)?.Where(Function(i) i.cbActive.Checked AndAlso Not {"source", "crop", "cutting", "resize", "rotation"}.Contains(i.cbActive.Text.ToLowerInvariant()))
+        Dim activeTables = Tables.Where(Function(i) i.cbActive.Checked AndAlso Not {"source", "crop", "cutting", "resize", "rotation"}.Contains(i.cbActive.Text.ToLowerInvariant()))
         Dim firstActiveTable = activeTables?.FirstOrDefault()
 
         If firstActiveTable Is Nothing Then Return
@@ -252,29 +263,29 @@ Public Class CodeEditor
         firstActiveTable.rtbScript.Text = activeTables.Select(Function(arg) arg.rtbScript.Text.Trim).Join(BR) + BR
 
         For x = activeTables.Count() - 1 To 1 Step -1
-            MainFlowLayoutPanel.Controls.Remove(activeTables.ElementAt(x))
+            RemoveTable(activeTables.ElementAt(x))
         Next
     End Sub
 
     <Command("Joins all filters into one filter.")>
     Sub JoinAllFilters()
-        Dim tables = MainFlowLayoutPanel.Controls?.OfType(Of FilterTable)?.Where(Function(i) Not {"source", "crop", "cutting", "resize", "rotation"}.Contains(i.cbActive.Text.ToLowerInvariant()))
-        Dim firstTable = tables?.FirstOrDefault()
+        Dim joinTables = Tables.Where(Function(i) Not {"source", "crop", "cutting", "resize", "rotation"}.Contains(i.cbActive.Text.ToLowerInvariant())).ToList
+        Dim firstTable = joinTables.FirstOrDefault()
 
         If firstTable Is Nothing Then Return
 
         firstTable.tbName.Text = "Merged"
         firstTable.cbActive.Text = "Misc"
-        firstTable.rtbScript.Text = tables.Select(Function(arg) If(arg.cbActive.Checked, arg.rtbScript.Text.Trim, "# " + arg.rtbScript.Text.Trim.FixBreak.Replace(BR, BR + "# "))).Join(BR) + BR
+        firstTable.rtbScript.Text = joinTables.Select(Function(arg) If(arg.cbActive.Checked, arg.rtbScript.Text.Trim, "# " + arg.rtbScript.Text.Trim.FixBreak.Replace(BR, BR + "# "))).Join(BR) + BR
 
-        For x = tables.Count - 1 To 1 Step -1
-            MainFlowLayoutPanel.Controls.Remove(tables.ElementAt(x))
+        For x = joinTables.Count - 1 To 1 Step -1
+            RemoveTable(joinTables(x))
         Next
     End Sub
 
     <Command("Joins all inactive filters into one filter.")>
     Sub JoinInactiveFilters()
-        Dim inactiveTables = MainFlowLayoutPanel.Controls?.OfType(Of FilterTable)?.Where(Function(i) Not i.cbActive.Checked AndAlso Not {"source", "crop", "cutting", "resize", "rotation"}.Contains(i.cbActive.Text.ToLowerInvariant()))
+        Dim inactiveTables = Tables.Where(Function(i) Not i.cbActive.Checked AndAlso Not {"source", "crop", "cutting", "resize", "rotation"}.Contains(i.cbActive.Text.ToLowerInvariant()))
         Dim firstInactiveTable = inactiveTables?.FirstOrDefault()
 
         If firstInactiveTable Is Nothing Then Return
@@ -284,7 +295,7 @@ Public Class CodeEditor
         firstInactiveTable.rtbScript.Text = inactiveTables.Select(Function(arg) arg.rtbScript.Text.Trim).Join(BR) + BR
 
         For x = inactiveTables.Count() - 1 To 1 Step -1
-            MainFlowLayoutPanel.Controls.Remove(inactiveTables.ElementAt(x))
+            RemoveTable(inactiveTables.ElementAt(x))
         Next
     End Sub
 
@@ -292,15 +303,9 @@ Public Class CodeEditor
         ActiveTable?.SetParameters(parameters)
     End Sub
 
-    Protected Overrides Sub OnFormClosed(e As FormClosedEventArgs)
-        MyBase.OnFormClosed(e)
-        cmsMain.Dispose()
-    End Sub
-
     Protected Overrides Sub OnShown(e As EventArgs)
         MyBase.OnShown(e)
-        DirectCast(MainFlowLayoutPanel.Controls(0), FilterTable).rtbScript.Focus()
-        Refresh()
+        Tables.FirstOrDefault?.rtbScript.Focus()
         PopulateDynamicMenu(DynamicMenuItemID.AddFilters)
         PopulateDynamicMenu(DynamicMenuItemID.InsertFilters)
         PopulateDynamicMenu(DynamicMenuItemID.ReplaceFilters)
@@ -405,8 +410,6 @@ Public Class CodeEditor
     Shared Function CreateFilterTable(filter As VideoFilter) As FilterTable
         Dim ret As New FilterTable
 
-        ret.Margin = New Padding(0)
-        ret.Size = New Size(950, 50)
         ret.cbActive.Checked = filter.Active
         ret.cbActive.Text = filter.Category
         ret.tbName.Text = filter.Name
@@ -419,7 +422,7 @@ Public Class CodeEditor
     Function GetFilters() As List(Of VideoFilter)
         Dim ret As New List(Of VideoFilter)
 
-        For Each table As FilterTable In MainFlowLayoutPanel.Controls
+        For Each table As FilterTable In Tables
             Dim filter As New VideoFilter()
             filter.Active = table.cbActive.Checked
             filter.Category = table.cbActive.Text
@@ -446,25 +449,7 @@ Public Class CodeEditor
         Return script
     End Function
 
-    Sub MainFlowLayoutPanelLayout(sender As Object, e As LayoutEventArgs)
-        Dim filterTables = MainFlowLayoutPanel.Controls.OfType(Of FilterTable)
-        If filterTables.Count = 0 Then Exit Sub
-
-        Dim div = FontHeight * 3
-        Dim maxTextWidth = Aggregate i In filterTables Into Max(i.TrimmedTextSize.Width)
-        maxTextWidth = CInt(Math.Ceiling(maxTextWidth / div)) * div
-
-        For Each table In filterTables
-            Dim sizeRTB As Size
-            sizeRTB.Width = maxTextWidth
-            sizeRTB.Height = table.TrimmedTextSize.Height
-            sizeRTB.Height += If(table.TextSize.Height < table.MaxTextHeight, CInt(table.rtbScript.Font.Height * 1.1), 0)
-            table.rtbScript.Size = sizeRTB
-            table.rtbScript.Refresh()
-        Next
-    End Sub
-
-    Sub CodeEditor_HelpRequested(sender As Object, hlpevent As HelpEventArgs) Handles Me.HelpRequested
+    Sub CodeEditor_HelpRequested(sender As Object, e As EventArgs) Handles Me.HelpRequested
         Dim form As New HelpForm()
         form.Doc.WriteStart("Code Editor")
         form.Doc.WriteTips(CustomMenu.GetTips)
@@ -472,8 +457,16 @@ Public Class CodeEditor
         form.Show()
     End Sub
 
-    Sub cmsMain_Opening(sender As Object, e As CancelEventArgs) Handles cmsMain.Opening
-        Dim topItems = cmsMain.Items.OfType(Of MenuItemEx).Where(Function(item) CStr(item.Tag) = "top").ToArray
+    Sub cmsMain_Opening(sender As Object, e As EventArgs) Handles cmsMain.Opening
+        If ActiveTable Is Nothing Then
+            ActiveTable = Tables.FirstOrDefault
+        End If
+
+        If ActiveTable Is Nothing Then
+            Exit Sub
+        End If
+
+        Dim topItems = cmsMain.Items.OfType(Of MenuItemEx).Where(Function(item) TypeOf item.Tag Is String AndAlso CStr(item.Tag) = "top").ToArray
 
         For Each i In topItems
             cmsMain.Items.Remove(i)
@@ -493,11 +486,9 @@ Public Class CodeEditor
             End If
         Next
 
-        For Each i As ToolStripItem In tempItem.DropDownItems
-            i.Tag = "top"
-        Next
-
         For Each i In tempItem.DropDownItems.OfType(Of MenuItemEx).ToArray
+            i.Tag = "top"
+            tempItem.DropDownItems.Remove(i)
             cmsMain.Items.Insert(0, i)
         Next
 
@@ -511,221 +502,86 @@ Public Class CodeEditor
         CustomMenu.EnableMenuItemByActionName(NameOf(PlayWithMpvnet), p.SourceFile <> "")
         CustomMenu.EnableMenuItemByActionName(NameOf(ShowInfo), p.SourceFile <> "")
         CustomMenu.EnableMenuItemByActionName(NameOf(ShowAdvancedInfo), p.SourceFile <> "")
-        CustomMenu.EnableMenuItemByActionName(NameOf(JoinAllFilters), MainFlowLayoutPanel.Controls.OfType(Of FilterTable).Where(Function(i) Not {"source", "crop", "cutting", "resize", "rotation"}.Contains(i.cbActive.Text.ToLowerInvariant())).Count > 1)
-        CustomMenu.EnableMenuItemByActionName(NameOf(JoinActiveFilters), MainFlowLayoutPanel.Controls.OfType(Of FilterTable).Where(Function(i) i.cbActive.Checked AndAlso Not {"source", "crop", "cutting", "resize", "rotation"}.Contains(i.cbActive.Text.ToLowerInvariant())).Count() > 1)
-        CustomMenu.EnableMenuItemByActionName(NameOf(JoinInactiveFilters), MainFlowLayoutPanel.Controls.OfType(Of FilterTable).Where(Function(i) Not i.cbActive.Checked AndAlso Not {"source", "crop", "cutting", "resize", "rotation"}.Contains(i.cbActive.Text.ToLowerInvariant())).Count() > 1)
+        CustomMenu.EnableMenuItemByActionName(NameOf(JoinAllFilters), Tables.Where(Function(i) Not {"source", "crop", "cutting", "resize", "rotation"}.Contains(i.cbActive.Text.ToLowerInvariant())).Count > 1)
+        CustomMenu.EnableMenuItemByActionName(NameOf(JoinActiveFilters), Tables.Where(Function(i) i.cbActive.Checked AndAlso Not {"source", "crop", "cutting", "resize", "rotation"}.Contains(i.cbActive.Text.ToLowerInvariant())).Count() > 1)
+        CustomMenu.EnableMenuItemByActionName(NameOf(JoinInactiveFilters), Tables.Where(Function(i) Not i.cbActive.Checked AndAlso Not {"source", "crop", "cutting", "resize", "rotation"}.Contains(i.cbActive.Text.ToLowerInvariant())).Count() > 1)
         CustomMenu.EnableMenuItemByActionName(NameOf(Cut), ActiveTable.rtbScript.SelectionLength > 0 AndAlso Not ActiveTable.rtbScript.ReadOnly)
         CustomMenu.EnableMenuItemByActionName(NameOf(Copy), ActiveTable.rtbScript.SelectionLength > 0)
         CustomMenu.EnableMenuItemByActionName(NameOf(Paste), Clipboard.GetText <> "" AndAlso Not ActiveTable.rtbScript.ReadOnly)
     End Sub
 
-    Protected Overrides Sub Finalize()
-        MyBase.Finalize()
-    End Sub
-
     Public Class FilterTable
-        Inherits TableLayoutPanel
-
-        Private _theme As Theme
+        Inherits Panel
 
         Property tbName As New TextEdit
         Property rtbScript As RichTextBoxEx
         Property cbActive As New CheckBoxEx
-        Property LastTextSize As Size
         Property Editor As CodeEditor
-        Property SplitLeft As PanelEx
-        Property SplitRight As PanelEx
 
-        ReadOnly Property TextSize As Size
-            Get
-                Dim sz = TextRenderer.MeasureText(rtbScript.Text, rtbScript.Font, New Size(100000, 100000))
-                sz = New Size(sz.Width + SystemInformation.VerticalScrollBarWidth, sz.Height)
-                Return sz
-            End Get
-        End Property
-
-        ReadOnly Property MaxTextWidth As Integer
-            Get
-                Return CInt(rtbScript.Font.Height * 100 / s.UIScaleFactor)
-            End Get
-        End Property
-
-        ReadOnly Property MaxTextHeight As Integer
-            Get
-                Return CInt(rtbScript.Font.Height * 15 / s.UIScaleFactor)
-            End Get
-        End Property
-
-        ReadOnly Property TrimmedTextSize As Size
-            Get
-                Dim ret = TextSize
-
-                If ret.Width > MaxTextWidth Then
-                    ret.Width = MaxTextWidth
-                End If
-
-                If ret.Height > MaxTextHeight Then
-                    ret.Height = MaxTextHeight
-                End If
-
-                Return ret
-            End Get
-        End Property
+        Private ReadOnly Accent As New Panel With {.Width = FH(0.2)}
 
         ReadOnly Property Theme As Theme
             Get
-                If _theme Is Nothing Then _theme = ThemeManager.CurrentTheme
-                Return _theme
+                Return ThemeManager.CurrentTheme
+            End Get
+        End Property
+
+        ReadOnly Property TextWidth As Integer
+            Get
+                Dim lines = rtbScript.Text.FixBreak.Split({BR}, StringSplitOptions.None)
+                Dim longest = lines.OrderByDescending(Function(i) i.Length).FirstOrDefault
+
+                Return MeasureTextWidth(If(longest, ""), rtbScript.Font) + FH(2)
             End Get
         End Property
 
         Sub New()
-            AutoSize = True
+            rtbScript = New RichTextBoxEx(False, False) With {
+                .WordWrap = False,
+                .AcceptsTab = True,
+                .Font = FontManager.GetCodeFont()}
 
-            cbActive.AutoSize = True
-            cbActive.Anchor = AnchorStyles.Left Or AnchorStyles.Right
-            cbActive.Margin = New Padding(0)
-
-            tbName.Dock = DockStyle.Top
-            tbName.Margin = New Padding(0, 0, 0, 0)
-
-            rtbScript = New RichTextBoxEx(False, False)
-            rtbScript.EnableAutoDragDrop = False
-            rtbScript.Dock = DockStyle.Fill
-            rtbScript.WordWrap = False
-            rtbScript.ScrollBars = RichTextBoxScrollBars.Vertical
-            rtbScript.AcceptsTab = True
-            rtbScript.Margin = New Padding(0)
-            rtbScript.Font = FontManager.GetCodeFont()
+            tbName.Width = FH(9)
 
             AddHandler cbActive.CheckedChanged, Sub()
                                                     SetColor()
                                                     Editor?.ApplyFilters()
                                                 End Sub
 
-            AddHandler rtbScript.MouseDown, Sub() rtbScript.Focus()
+            AddHandler rtbScript.GotFocus, Sub()
+                                               If Editor Is Nothing Then Exit Sub
+                                               Editor.ActiveTable = Me
+                                               Editor.EnableMenuItems()
+                                               Editor.ApplyFilters()
+                                           End Sub
 
-            AddHandler rtbScript.Enter, Sub()
-                                            Editor.ActiveTable = Me
-                                            Editor.EnableMenuItems()
-                                            Editor.ApplyFilters()
-                                        End Sub
+            AddHandler rtbScript.TextChanged, Sub() UpdateHeight()
 
-            AddHandler rtbScript.TextChanged, Sub(sender As Object, e As EventArgs)
-                                                  If Parent Is Nothing Then Exit Sub
-                                                  Dim filterTables = Parent.Controls.OfType(Of FilterTable)
-                                                  Dim maxTextWidth = Aggregate i In filterTables Into Max(i.TrimmedTextSize.Width)
-                                                  Dim textSizeVar = TrimmedTextSize
+            Dim left As New TableLayout(Row(cbActive), Row(tbName), New TableRow With {.ScaleHeight = True}) With {
+                .Spacing = New Size(0, FH(0.2))}
 
-                                                  If textSizeVar.Width > maxTextWidth OrElse
-                                                      (textSizeVar.Width = maxTextWidth AndAlso
-                                                      textSizeVar.Width <> LastTextSize.Width) OrElse
-                                                      LastTextSize.Height <> textSizeVar.Height AndAlso
-                                                      textSizeVar.Height > rtbScript.Font.Height Then
+            Content = New TableLayout(New TableRow(New TableCell(Accent), New TableCell(left), New TableCell(rtbScript, True))) With {
+                .Spacing = New Size(FH(0.4), 0)}
 
-                                                      Parent.PerformLayout()
-                                                      LastTextSize = textSizeVar
-                                                  End If
-                                              End Sub
-
-            ColumnCount = 2
-            ColumnStyles.Add(New ColumnStyle(SizeType.AutoSize))
-            ColumnStyles.Add(New ColumnStyle(SizeType.AutoSize))
-            RowCount = 1
-            RowStyles.Add(New RowStyle(SizeType.AutoSize))
-
-            Dim t As New TableLayoutPanel
-            t.AutoSize = True
-            t.SuspendLayout()
-            t.Dock = DockStyle.Fill
-            t.Margin = New Padding(0)
-            t.ColumnCount = 1
-            t.ColumnStyles.Add(New ColumnStyle(SizeType.AutoSize))
-            t.RowCount = 2
-            t.RowStyles.Add(New RowStyle(SizeType.AutoSize))
-            t.RowStyles.Add(New RowStyle(SizeType.AutoSize))
-            t.Controls.Add(cbActive, 0, 0)
-            t.Controls.Add(tbName, 0, 1)
-            t.ResumeLayout()
-
-            SplitLeft = New PanelEx() With {
-                .AutoSize = True,
-                .Dock = DockStyle.Fill
-            }
-
-            SplitRight = New PanelEx() With {
-                .AutoSize = True,
-                .Dock = DockStyle.Fill
-            }
-
-            Controls.Add(SplitLeft, 0, 0)
-            Controls.Add(SplitRight, 1, 0)
-            Controls.Add(t, 0, 1)
-            Controls.Add(rtbScript, 1, 1)
-
-            ApplyTheme()
-
-            AddHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
+            UpdateHeight()
         End Sub
 
-        Protected Overrides Sub Dispose(disposing As Boolean)
-            RemoveHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
-            MyBase.Dispose(disposing)
-        End Sub
-
-        Sub OnThemeChanged(theme As Theme)
-            ApplyTheme(theme)
-        End Sub
-
-        Sub ApplyTheme()
-            ApplyTheme(ThemeManager.CurrentTheme)
-        End Sub
-
-        Sub ApplyTheme(theme As Theme)
-            If DesignHelp.IsDesignMode Then
-                Exit Sub
-            End If
-
-            _theme = theme
-
-            BackColor = theme.General.BackColor
-            ForeColor = theme.General.ForeColor
-        End Sub
-
-        Protected Overrides Sub OnLayout(levent As LayoutEventArgs)
-            tbName.Height = CInt(FontHeight * 1.2)
-            tbName.Width = FontHeight * 7
-            MyBase.OnLayout(levent)
-        End Sub
-
-        Protected Overrides Sub OnHandleCreated(e As EventArgs)
-            Editor = DirectCast(Parent.Parent.Parent, CodeEditor)
-            rtbScript.ContextMenuStrip = Editor.cmsMain
-            MyBase.OnHandleCreated(e)
+        Sub UpdateHeight()
+            Dim lineCount = Math.Max(1, rtbScript.Text.FixBreak.TrimEnd.Split({BR}, StringSplitOptions.None).Length)
+            lineCount = Math.Min(lineCount + 1, 16)
+            Dim lineHeight = rtbScript.Font.LineHeight
+            rtbScript.Height = CInt(Math.Max(FH(3.2), lineCount * lineHeight + FH(0.8)))
         End Sub
 
         Sub SetColor()
-            If Theme IsNot Nothing Then
-                If cbActive.Checked Then
-                    cbActive.ForeColor = Theme.CodeEditor.ForeAccentColor
-                    tbName.TextBox.ForeColor = Theme.CodeEditor.ForeAccentColor
-                    rtbScript.BackColor = Theme.CodeEditor.BackAccentColor
-                    rtbScript.BorderColor = Theme.CodeEditor.RichTextBoxBorderAccentColor
-                    rtbScript.ForeColor = Theme.CodeEditor.RichTextBoxForeAccentColor
-                    SplitLeft.BackColor = Theme.CodeEditor.ForeAccentColor
-                    SplitRight.BackColor = SplitLeft.BackColor
-                Else
-                    cbActive.ForeColor = Theme.CodeEditor.ForeColor
-                    tbName.TextBox.ForeColor = Theme.CodeEditor.ForeColor
-                    rtbScript.BackColor = Theme.General.Controls.RichTextBox.BackColor
-                    rtbScript.BorderColor = Theme.CodeEditor.RichTextBoxBorderColor
-                    rtbScript.ForeColor = Theme.CodeEditor.RichTextBoxForeColor
-                    SplitLeft.BackColor = Theme.CodeEditor.ForeColor
-                    SplitRight.BackColor = SplitLeft.BackColor
-                End If
+            If cbActive.Checked Then
+                Accent.BackgroundColor = Theme.CodeEditor.ForeAccentColor.ToColor
+                cbActive.TextColor = Theme.CodeEditor.ForeAccentColor.ToColor
+            Else
+                Accent.BackgroundColor = If(IsDarkMode, Color.FromArgb(90, 90, 90), Color.FromArgb(190, 190, 190))
+                cbActive.TextColor = SystemColors.ControlText
             End If
         End Sub
-
 
         Sub SetParameters(parameters As FilterParameters)
             Dim code = rtbScript.Text.FixBreak
@@ -779,12 +635,10 @@ Public Class CodeEditor
             End If
 
             filter.Script = tup.Value
-            Dim flow = DirectCast(Parent, FlowLayoutPanel)
             Dim filterTable = CodeEditor.CreateFilterTable(filter)
-            flow.Controls.Add(filterTable)
+            Editor.AddTable(filterTable)
             filterTable.rtbScript.SelectionStart = filterTable.rtbScript.Text.Length
             filterTable.rtbScript.Focus()
-            Application.DoEvents()
         End Sub
 
         Sub Insert(filter As VideoFilter)
@@ -803,16 +657,11 @@ Public Class CodeEditor
             End If
 
             filter.Script = tup.Value
-            Dim flow = DirectCast(Parent, FlowLayoutPanel)
-            Dim index = flow.Controls.IndexOf(Me)
+            Dim index = Editor.IndexOfTable(Me)
             Dim filterTable = CodeEditor.CreateFilterTable(filter)
-            flow.SuspendLayout()
-            flow.Controls.Add(filterTable)
-            flow.Controls.SetChildIndex(filterTable, index)
-            flow.ResumeLayout()
+            Editor.AddTable(filterTable, index)
             filterTable.rtbScript.SelectionStart = filterTable.rtbScript.Text.Length
             filterTable.rtbScript.Focus()
-            Application.DoEvents()
         End Sub
 
         Sub ReplaceFilter(filter As VideoFilter)
@@ -837,7 +686,6 @@ Public Class CodeEditor
 
             rtbScript.Text = tup.Value.TrimEnd + BR
             rtbScript.SelectionStart = rtbScript.Text.Length
-            Application.DoEvents()
         End Sub
     End Class
 End Class

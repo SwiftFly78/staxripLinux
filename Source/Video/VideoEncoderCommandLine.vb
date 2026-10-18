@@ -1,4 +1,4 @@
-﻿
+
 Imports System.Text
 Imports StaxRip.SimpleUI
 
@@ -63,6 +63,13 @@ Namespace VideoEncoderCommandLine
         Function GetNumParamByName(name As String) As NumParam
             Return Items.OfType(Of NumParam).Where(Function(item) item.Name = name).FirstOrDefault
         End Function
+
+        'releases the UI controls of a closed options dialog
+        Sub DetachControls()
+            For Each i In Items
+                i.DetachControls()
+            Next
+        End Sub
 
         Sub RaiseValueChanged(item As CommandLineParam)
             OnValueChanged(item)
@@ -152,20 +159,20 @@ Namespace VideoEncoderCommandLine
                 Dim targetPAR = Calc.GetTargetPAR
                 Dim val = Calc.ParseCustomAR(param.Value, targetPAR.X, targetPAR.Y)
 
-                If param?.Value = "auto" AndAlso val = New Point(1, 1) AndAlso
+                If param?.Value = "auto" AndAlso val = New System.Drawing.Point(1, 1) AndAlso
                     (p.CustomTargetPAR.TrimEx.EqualsAny("1:1", "1/1", "1") OrElse
                     p.CustomTargetPAR = "force" OrElse p.CustomSourcePAR = "force") Then
 
                     Return "--sar 1:1"
                 End If
 
-                If param?.Value = "force" AndAlso val = New Point(1, 1) Then
+                If param?.Value = "force" AndAlso val = New System.Drawing.Point(1, 1) Then
                     Return "--sar 1:1"
                 End If
 
                 Dim isInTolerance = val = targetPAR AndAlso Not Calc.IsARSignalingRequired
 
-                If val.X <> 0 AndAlso val <> New Point(1, 1) AndAlso Not isInTolerance Then
+                If val.X <> 0 AndAlso val <> New System.Drawing.Point(1, 1) AndAlso Not isInTolerance Then
                     Return "--sar " & val.X & ":" & val.Y
                 End If
             End If
@@ -182,17 +189,14 @@ Namespace VideoEncoderCommandLine
 
             p.Script.Synchronize()
 
-            If s.PreferWindowsTerminal AndAlso g.IsWindowsTerminalAvailable Then
-                cl = "cmd.exe /S /K --% """ + cl + """"
-                Dim base64 = Convert.ToBase64String(Encoding.Unicode.GetBytes(cl)) 'UTF16LE
-                g.Execute("wt.exe", "powershell.exe -NoLogo -NoExit -NoProfile -EncodedCommand """ + base64 + """")
-            Else
-                g.Execute("cmd.exe", "/S /K """ + cl + """")
-            End If
+            DesktopHelp.RunInTerminal(cl)
         End Sub
     End Class
 
     Public MustInherit Class CommandLineParam
+        Overridable Sub DetachControls()
+        End Sub
+
         Property AlwaysOn As Boolean
         Property ArgsFunc As Func(Of String)
         Property Help As String
@@ -256,8 +260,11 @@ Namespace VideoEncoderCommandLine
                     Dim c = GetControl()
 
                     If Not c Is Nothing Then
+                        'blocks host their controls in a layout
                         If TypeOf c.Parent Is SimpleUI.EmptyBlock Then
                             c = c.Parent
+                        ElseIf TypeOf c.Parent?.Parent Is SimpleUI.EmptyBlock Then
+                            c = c.Parent.Parent
                         End If
 
                         c.Visible = value
@@ -331,10 +338,13 @@ Namespace VideoEncoderCommandLine
             CheckBox = cb
             CheckBox.Checked = Value
             AddHandler CheckBox.CheckedChanged, AddressOf CheckedChanged
-            AddHandler CheckBox.Disposed, Sub()
-                                              RemoveHandler CheckBox.CheckedChanged, AddressOf CheckedChanged
-                                              CheckBox = Nothing
-                                          End Sub
+        End Sub
+
+        Overrides Sub DetachControls()
+            If CheckBox IsNot Nothing Then
+                RemoveHandler CheckBox.CheckedChanged, AddressOf CheckedChanged
+                CheckBox = Nothing
+            End If
         End Sub
 
         Sub CheckedChanged(sender As Object, e As EventArgs)
@@ -462,10 +472,13 @@ Namespace VideoEncoderCommandLine
             NumEdit = ne
             NumEdit.Value = Value
             AddHandler NumEdit.ValueChanged, AddressOf ValueChanged
-            AddHandler NumEdit.Disposed, Sub()
-                                             RemoveHandler NumEdit.ValueChanged, AddressOf ValueChanged
-                                             NumEdit = Nothing
-                                         End Sub
+        End Sub
+
+        Overrides Sub DetachControls()
+            If NumEdit IsNot Nothing Then
+                RemoveHandler NumEdit.ValueChanged, AddressOf ValueChanged
+                NumEdit = Nothing
+            End If
         End Sub
 
         Overrides Sub InitParam(store As PrimitiveStore, params As CommandLineParams)
@@ -564,7 +577,7 @@ Namespace VideoEncoderCommandLine
 
         Sub ShowOption(value As Integer, visible As Boolean)
             If MenuButton IsNot Nothing Then
-                For Each i In MenuButton.Menu.Items.OfType(Of ToolStripMenuItem)
+                For Each i In MenuButton.Menu.Items.OfType(Of MenuItem)
                     If value.Equals(i.Tag) Then i.Visible = visible
                 Next
             End If
@@ -574,10 +587,13 @@ Namespace VideoEncoderCommandLine
             MenuButton = mb
             MenuButton.Value = Value
             AddHandler MenuButton.ValueChangedUser, AddressOf ValueChangedUser
-            AddHandler MenuButton.Disposed, Sub()
-                                                RemoveHandler MenuButton.ValueChangedUser, AddressOf ValueChangedUser
-                                                MenuButton = Nothing
-                                            End Sub
+        End Sub
+
+        Overrides Sub DetachControls()
+            If MenuButton IsNot Nothing Then
+                RemoveHandler MenuButton.ValueChangedUser, AddressOf ValueChangedUser
+                MenuButton = Nothing
+            End If
         End Sub
 
         Overrides Sub InitParam(store As PrimitiveStore, params As CommandLineParams)
@@ -727,14 +743,15 @@ Namespace VideoEncoderCommandLine
             TextEdit = te.Edit
             TextEdit.Text = Value
             AddHandler TextEdit.TextBox.TextChanged, AddressOf TextChanged
-            AddHandler TextEdit.Disposed, Sub()
-                                              If Not TextEdit Is Nothing Then
-                                                  RemoveHandler TextEdit.TextChanged, AddressOf TextChanged
-                                                  TextEdit = Nothing
-                                              End If
-                                          End Sub
 
             If Not InitAction Is Nothing Then InitAction.Invoke(te)
+        End Sub
+
+        Overrides Sub DetachControls()
+            If TextEdit IsNot Nothing Then
+                RemoveHandler TextEdit.TextChanged, AddressOf TextChanged
+                TextEdit = Nothing
+            End If
         End Sub
 
         Sub TextChanged(sender As Object, e As EventArgs)
@@ -761,7 +778,7 @@ Namespace VideoEncoderCommandLine
                     If Switch = "" Then
                         If AlwaysOn Then
                             If Quotes = QuotesMode.Always Then
-                                Return """" + val + """"
+                                Return QuoteAlways(val)
                             ElseIf Quotes = QuotesMode.Auto Then
                                 Return val.Escape
                             Else
@@ -770,7 +787,7 @@ Namespace VideoEncoderCommandLine
                         End If
                     Else
                         If Quotes = QuotesMode.Always Then
-                            Return Switch + Params.Separator + """" + val + """"
+                            Return Switch + Params.Separator + QuoteAlways(val)
                         ElseIf Quotes = QuotesMode.Auto Then
                             Return Switch + Params.Separator + val.Escape
                         Else
@@ -779,6 +796,12 @@ Namespace VideoEncoderCommandLine
                     End If
                 End If
             End If
+        End Function
+
+        'values with characters /bin/sh interprets in double quotes get single quotes
+        Shared Function QuoteAlways(value As String) As String
+            Dim escaped = value.Escape
+            Return If(escaped.StartsWith("'"), escaped, """" + value + """")
         End Function
 
         Private ValueValue As String

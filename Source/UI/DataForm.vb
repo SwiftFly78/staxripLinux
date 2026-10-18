@@ -1,33 +1,52 @@
-﻿
+
 Imports StaxRip.UI
 
+'dialog with an editable grid, rows are added and removed with buttons
 Public Class DataForm
+    Inherits DialogBase
+
     Property HelpAction As Action
+    Property NewItemFunc As Func(Of Object)
+
+    Public Grid As GridView
+    Public WithEvents bnOK As ButtonEx
+    Public WithEvents bnCancel As ButtonEx
+    Public WithEvents bnAdd As ButtonEx
+    Public WithEvents bnRemove As ButtonEx
 
     Sub New()
-        InitializeComponent()
-        ApplyTheme()
+        Grid = New GridView With {.AllowMultipleSelection = False, .GridLines = GridLines.Both}
+        bnOK = CreateButton("OK", DialogResult.OK)
+        bnCancel = CreateButton("Cancel", DialogResult.Cancel)
+        bnAdd = New ButtonEx("Add")
+        bnRemove = New ButtonEx("Remove")
+        AbortButton = bnCancel
+        Resizable = True
 
-        AddHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
+        Content = PaddedTable(
+            ScaledRow(Grid),
+            Row(SplitRow({bnAdd, bnRemove}, {bnOK, bnCancel})))
+
+        ScaleClientSize(40, 22)
     End Sub
 
-    Sub OnThemeChanged(theme As Theme)
-        ApplyTheme(theme)
-    End Sub
+    Sub bnAdd_Click(sender As Object, e As EventArgs) Handles bnAdd.Click
+        Dim list = TryCast(Grid.DataStore, IList)
 
-    Sub ApplyTheme()
-        ApplyTheme(ThemeManager.CurrentTheme)
-    End Sub
-
-    Sub ApplyTheme(theme As Theme)
-        If DesignHelp.IsDesignMode Then
-            Exit Sub
+        If list IsNot Nothing AndAlso NewItemFunc IsNot Nothing Then
+            list.Add(NewItemFunc())
         End If
-
-        BackColor = theme.General.BackColor
     End Sub
 
-    Sub DataForm_HelpRequested(sender As Object, args As HelpEventArgs) Handles Me.HelpRequested
+    Sub bnRemove_Click(sender As Object, e As EventArgs) Handles bnRemove.Click
+        Dim list = TryCast(Grid.DataStore, IList)
+
+        If list IsNot Nothing AndAlso Grid.SelectedItem IsNot Nothing Then
+            list.Remove(Grid.SelectedItem)
+        End If
+    End Sub
+
+    Sub DataForm_HelpRequested(sender As Object, e As EventArgs) Handles Me.HelpRequested
         HelpAction?.Invoke
     End Sub
 End Class

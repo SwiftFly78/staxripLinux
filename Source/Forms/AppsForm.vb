@@ -1,4 +1,4 @@
-﻿
+
 Imports System.Runtime.InteropServices
 Imports System.Text
 Imports System.Text.RegularExpressions
@@ -11,426 +11,103 @@ Public Class AppsForm
     Inherits SizeSavingDialogBase
     Implements IUpdateUI
 
-#Region " Designer "
-    Private components As System.ComponentModel.IContainer
+    Public WithEvents tv As TreeViewEx
+    Public WithEvents tsbLaunch, tsbHelp, tsbWebsite, tsbDownload, tsbVersion, tsbExplore, ddbTools As ButtonEx
+    Public flp As StackLayout
+    Public WithEvents SearchTextBox As SearchTextBox
+    Public WithEvents cmsTools As ContextMenuStripEx
+    Public WithEvents miEditPath, miClearPaths, miFindPath, miShowGrid, miStatus, miStatusRequired, miAutoUpdate As MenuItemEx
+    Public WithEvents miEditVersion, miEditChangelog, miDownload, miWebsite, miExplore, miLaunch, miHelp, miCopyPath, miPATHEnvVar, miUpdateRequest As MenuItemEx
+    Private ToolBarRow As Control
 
-    Friend WithEvents tv As TreeViewEx
-    Friend WithEvents ToolStrip As ToolStrip
-    Friend WithEvents tsbLaunch As ToolStripButton
-    Friend WithEvents tsbHelp As ToolStripButton
-    Friend WithEvents flp As FlowLayoutPanel
-    Friend WithEvents flpOuter As FlowLayoutPanel
-    Friend WithEvents SearchTextBox As StaxRip.SearchTextBox
-    Friend WithEvents tsbWebsite As ToolStripButton
-    Friend WithEvents tlpMain As TableLayoutPanel
-    Friend WithEvents tsbDownload As ToolStripButton
-    Friend WithEvents tsbVersion As ToolStripButton
-    Friend WithEvents ddbTools As ToolStripDropDownButton
-    Friend WithEvents miEditPath As MenuItemEx
-    Friend WithEvents miClearPaths As MenuItemEx
-    Friend WithEvents miFindPath As MenuItemEx
-    Friend WithEvents miShowGrid As MenuItemEx
-    Friend WithEvents miStatus As MenuItemEx
-    Friend WithEvents miStatusRequired As MenuItemEx
-    Friend WithEvents ToolStripMenuItem1 As ToolStripSeparator
-    Friend WithEvents miAutoUpdate As MenuItemEx
-    Friend WithEvents miEditVersion As MenuItemEx
-    Friend WithEvents miEditChangelog As MenuItemEx
-    Friend WithEvents miDownload As MenuItemEx
-    Friend WithEvents miWebsite As MenuItemEx
-    Friend WithEvents miExplore As MenuItemEx
-    Friend WithEvents miLaunch As MenuItemEx
-    Friend WithEvents miHelp As MenuItemEx
-    Friend WithEvents miCopyPath As MenuItemEx
-    Friend WithEvents miPATHEnvVar As MenuItemEx
-    Friend WithEvents miUpdateRequest As MenuItemEx
-    Friend WithEvents tsbExplore As ToolStripButton
-    <System.Diagnostics.DebuggerStepThrough()> Private Sub InitializeComponent()
-        Dim resources As System.ComponentModel.ComponentResourceManager = New System.ComponentModel.ComponentResourceManager(GetType(AppsForm))
-        Me.tv = New StaxRip.UI.TreeViewEx()
-        Me.ToolStrip = New ToolStrip()
-        Me.tsbLaunch = New ToolStripButton()
-        Me.tsbExplore = New ToolStripButton()
-        Me.tsbWebsite = New ToolStripButton()
-        Me.tsbDownload = New ToolStripButton()
-        Me.tsbVersion = New ToolStripButton()
-        Me.ddbTools = New ToolStripDropDownButton()
-        Me.miEditPath = New StaxRip.UI.MenuItemEx()
-        Me.miFindPath = New StaxRip.UI.MenuItemEx()
-        Me.miClearPaths = New StaxRip.UI.MenuItemEx()
-        Me.miCopyPath = New StaxRip.UI.MenuItemEx()
-        Me.miPATHEnvVar = New StaxRip.UI.MenuItemEx()
-        Me.ToolStripMenuItem1 = New ToolStripSeparator()
-        Me.miEditVersion = New StaxRip.UI.MenuItemEx()
-        Me.miEditChangelog = New StaxRip.UI.MenuItemEx()
-        Me.miShowGrid = New StaxRip.UI.MenuItemEx()
-        Me.miStatus = New StaxRip.UI.MenuItemEx()
-        Me.miStatusRequired = New StaxRip.UI.MenuItemEx()
-        Me.miAutoUpdate = New StaxRip.UI.MenuItemEx()
-        Me.miUpdateRequest = New StaxRip.UI.MenuItemEx()
-        Me.miDownload = New StaxRip.UI.MenuItemEx()
-        Me.miWebsite = New StaxRip.UI.MenuItemEx()
-        Me.miExplore = New StaxRip.UI.MenuItemEx()
-        Me.miLaunch = New StaxRip.UI.MenuItemEx()
-        Me.miHelp = New StaxRip.UI.MenuItemEx()
-        Me.tsbHelp = New ToolStripButton()
-        Me.flp = New FlowLayoutPanel()
-        Me.flpOuter = New FlowLayoutPanel()
-        Me.SearchTextBox = New StaxRip.SearchTextBox()
-        Me.tlpMain = New TableLayoutPanel()
-        Me.ToolStrip.SuspendLayout()
-        Me.tlpMain.SuspendLayout()
-        Me.SuspendLayout()
-        '
-        'tv
-        '
-        Me.tv.Anchor = CType((((AnchorStyles.Top Or AnchorStyles.Bottom) _
-            Or AnchorStyles.Left) _
-            Or AnchorStyles.Right), AnchorStyles)
-        Me.tv.AutoCollaps = True
-        Me.tv.DrawMode = TreeViewDrawMode.OwnerDrawAll
-        Me.tv.ExpandMode = StaxRip.UI.TreeNodeExpandMode.InclusiveChilds
-        Me.tv.FullRowSelect = True
-        Me.tv.HideSelection = False
-        Me.tv.Location = New System.Drawing.Point(10, 101)
-        Me.tv.Margin = New Padding(10)
-        Me.tv.Name = "tv"
-        Me.tv.Scrollable = False
-        Me.tv.SelectOnMouseDown = True
-        Me.tv.ShowLines = False
-        Me.tv.ShowPlusMinus = False
-        Me.tv.Size = New System.Drawing.Size(453, 933)
-        Me.tv.Sorted = True
-        Me.tv.TabIndex = 0
-        '
-        'ToolStrip
-        '
-        Me.ToolStrip.Anchor = CType((AnchorStyles.Left Or AnchorStyles.Right), AnchorStyles)
-        Me.ToolStrip.AutoSize = False
-        Me.ToolStrip.Dock = DockStyle.None
-        Me.ToolStrip.GripStyle = ToolStripGripStyle.Hidden
-        Me.ToolStrip.ImageScalingSize = New System.Drawing.Size(48, 48)
-        Me.ToolStrip.Items.AddRange(New ToolStripItem() {Me.tsbLaunch, Me.tsbExplore, Me.tsbWebsite, Me.tsbDownload, Me.tsbVersion, Me.ddbTools, Me.tsbHelp})
-        Me.ToolStrip.Location = New System.Drawing.Point(473, 10)
-        Me.ToolStrip.Margin = New Padding(0, 10, 10, 0)
-        Me.ToolStrip.Name = "ToolStrip"
-        Me.ToolStrip.Padding = New Padding(5, 2, 2, 0)
-        Me.ToolStrip.Size = New System.Drawing.Size(1411, 81)
-        Me.ToolStrip.TabIndex = 1
-        Me.ToolStrip.Text = "tsMain"
-        '
-        'tsbLaunch
-        '
-        Me.tsbLaunch.DisplayStyle = ToolStripItemDisplayStyle.Text
-        Me.tsbLaunch.ImageTransparentColor = System.Drawing.Color.Magenta
-        Me.tsbLaunch.Name = "tsbLaunch"
-        Me.tsbLaunch.Size = New System.Drawing.Size(156, 70)
-        Me.tsbLaunch.Text = " Launch "
-        Me.tsbLaunch.ToolTipText = "Launches the app (Ctrl+L)"
-        '
-        'tsbExplore
-        '
-        Me.tsbExplore.DisplayStyle = ToolStripItemDisplayStyle.Text
-        Me.tsbExplore.ImageTransparentColor = System.Drawing.Color.Magenta
-        Me.tsbExplore.Name = "tsbExplore"
-        Me.tsbExplore.Size = New System.Drawing.Size(162, 70)
-        Me.tsbExplore.Text = " Explore "
-        Me.tsbExplore.ToolTipText = "Opens the apps folder in File Explorer (Ctrl+E)"
-        '
-        'tsbWebsite
-        '
-        Me.tsbWebsite.DisplayStyle = ToolStripItemDisplayStyle.Text
-        Me.tsbWebsite.ImageTransparentColor = System.Drawing.Color.Magenta
-        Me.tsbWebsite.Name = "tsbWebsite"
-        Me.tsbWebsite.Size = New System.Drawing.Size(137, 70)
-        Me.tsbWebsite.Text = "  Web  "
-        Me.tsbWebsite.ToolTipText = "Opens the apps website (Ctrl+W)"
-        '
-        'tsbDownload
-        '
-        Me.tsbDownload.DisplayStyle = ToolStripItemDisplayStyle.Text
-        Me.tsbDownload.ImageTransparentColor = System.Drawing.Color.Magenta
-        Me.tsbDownload.Name = "tsbDownload"
-        Me.tsbDownload.Size = New System.Drawing.Size(205, 70)
-        Me.tsbDownload.Text = " Download "
-        Me.tsbDownload.ToolTipText = "Opens the apps download web page (Ctrl+D)"
-        '
-        'tsbVersion
-        '
-        Me.tsbVersion.DisplayStyle = ToolStripItemDisplayStyle.Text
-        Me.tsbVersion.ImageTransparentColor = System.Drawing.Color.Magenta
-        Me.tsbVersion.Name = "tsbVersion"
-        Me.tsbVersion.Size = New System.Drawing.Size(181, 70)
-        Me.tsbVersion.Text = "  Version  "
-        Me.tsbVersion.ToolTipText = "Edits the apps version (F12)"
-        '
-        'ddbTools
-        '
-        Me.ddbTools.AutoToolTip = False
-        Me.ddbTools.DisplayStyle = ToolStripItemDisplayStyle.Text
-        Me.ddbTools.DropDownItems.AddRange(New ToolStripItem() {Me.miEditPath, Me.miFindPath, Me.miClearPaths, Me.miCopyPath, Me.miPATHEnvVar, Me.ToolStripMenuItem1, Me.miEditVersion, Me.miEditChangelog, Me.miShowGrid, Me.miStatus, Me.miStatusRequired, Me.miAutoUpdate, Me.miUpdateRequest, Me.miDownload, Me.miWebsite, Me.miExplore, Me.miLaunch, Me.miHelp})
-        Me.ddbTools.Image = CType(resources.GetObject("ddbTools.Image"), System.Drawing.Image)
-        Me.ddbTools.ImageTransparentColor = System.Drawing.Color.Magenta
-        Me.ddbTools.Name = "ddbTools"
-        Me.ddbTools.Size = New System.Drawing.Size(172, 70)
-        Me.ddbTools.Text = "  Tools  "
-        '
-        'miEditPath
-        '
-        Me.miEditPath.Help = Nothing
-        Me.miEditPath.Name = "miEditPath"
-        Me.miEditPath.ShortcutKeys = CType((Keys.Control Or Keys.P), Keys)
-        Me.miEditPath.Size = New System.Drawing.Size(594, 67)
-        Me.miEditPath.Text = "Edit Path..."
-        Me.miEditPath.ToolTipText = "Show Open File dialog to customize the path"
-        '
-        'miFindPath
-        '
-        Me.miFindPath.Help = Nothing
-        Me.miFindPath.Name = "miFindPath"
-        Me.miFindPath.ShortcutKeys = CType((Keys.Control Or Keys.F), Keys)
-        Me.miFindPath.Size = New System.Drawing.Size(594, 67)
-        Me.miFindPath.Text = "Find Path..."
-        Me.miFindPath.ToolTipText = "Find path using voidtools Everything"
-        '
-        'miClearPaths
-        '
-        Me.miClearPaths.Help = Nothing
-        Me.miClearPaths.Name = "miClearPaths"
-        Me.miClearPaths.ShortcutKeys = CType((Keys.Control Or Keys.X), Keys)
-        Me.miClearPaths.Size = New System.Drawing.Size(594, 67)
-        Me.miClearPaths.Text = "Clear Paths..."
-        Me.miClearPaths.ToolTipText = "Clear custom paths"
-        '
-        'miCopyPath
-        '
-        Me.miCopyPath.Help = Nothing
-        Me.miCopyPath.Name = "miCopyPath"
-        Me.miCopyPath.Size = New System.Drawing.Size(594, 67)
-        Me.miCopyPath.Text = "Copy Path"
-        '
-        'miPATHEnvVar
-        '
-        Me.miPATHEnvVar.Help = Nothing
-        Me.miPATHEnvVar.Name = "miPATHEnvVar"
-        Me.miPATHEnvVar.Size = New System.Drawing.Size(594, 67)
-        Me.miPATHEnvVar.Text = "PATH Env Var..."
-        '
-        'ToolStripMenuItem1
-        '
-        Me.ToolStripMenuItem1.Name = "ToolStripMenuItem1"
-        Me.ToolStripMenuItem1.Size = New System.Drawing.Size(591, 6)
-        '
-        'miEditVersion
-        '
-        Me.miEditVersion.Help = Nothing
-        Me.miEditVersion.Name = "miEditVersion"
-        Me.miEditVersion.ShortcutKeys = Keys.F12
-        Me.miEditVersion.Size = New System.Drawing.Size(594, 67)
-        Me.miEditVersion.Text = "Edit Version"
-        Me.miEditVersion.ToolTipText = "Edits the apps version"
-        '
-        'miEditChangelog
-        '
-        Me.miEditChangelog.Help = Nothing
-        Me.miEditChangelog.Name = "miEditChangelog"
-        Me.miEditChangelog.ShortcutKeys = Keys.F10
-        Me.miEditChangelog.Size = New System.Drawing.Size(594, 67)
-        Me.miEditChangelog.Text = "Edit Changelog"
-        '
-        'miShowGrid
-        '
-        Me.miShowGrid.Help = Nothing
-        Me.miShowGrid.Name = "miShowGrid"
-        Me.miShowGrid.ShortcutKeys = CType((Keys.Control Or Keys.G), Keys)
-        Me.miShowGrid.Size = New System.Drawing.Size(594, 67)
-        Me.miShowGrid.Text = "Show Grid"
-        Me.miShowGrid.ToolTipText = "Show tools in grid view"
-        '
-        'miStatus
-        '
-        Me.miStatus.Help = Nothing
-        Me.miStatus.Name = "miStatus"
-        Me.miStatus.ShortcutKeys = CType((Keys.Control Or Keys.S), Keys)
-        Me.miStatus.Size = New System.Drawing.Size(594, 67)
-        Me.miStatus.Text = "Check All"
-        Me.miStatus.ToolTipText = "Check status of all tools"
-        '
-        'miStatusRequired
-        '
-        Me.miStatusRequired.Help = Nothing
-        Me.miStatusRequired.Name = "miStatusRequired"
-        Me.miStatusRequired.ShortcutKeys = CType((Keys.Control Or Keys.Y), Keys)
-        Me.miStatusRequired.Size = New System.Drawing.Size(594, 67)
-        Me.miStatusRequired.Text = "Check Required Only"
-        Me.miStatusRequired.ToolTipText = "Check status of all required tools"
-        '
-        'miAutoUpdate
-        '
-        Me.miAutoUpdate.Help = Nothing
-        Me.miAutoUpdate.Name = "miAutoUpdate"
-        Me.miAutoUpdate.ShortcutKeys = CType((Keys.Control Or Keys.U), Keys)
-        Me.miAutoUpdate.Size = New System.Drawing.Size(594, 67)
-        Me.miAutoUpdate.Text = "Auto Update"
-        Me.miAutoUpdate.ToolTipText = "Full automatic update"
-        '
-        'miUpdateRequest
-        '
-        Me.miUpdateRequest.Name = "miUpdateRequest"
-        Me.miUpdateRequest.ShortcutKeys = CType((Keys.Control Or Keys.R), Keys)
-        Me.miUpdateRequest.Size = New System.Drawing.Size(594, 66)
-        Me.miUpdateRequest.Text = "Update Request"
-        '
-        'miDownload
-        '
-        Me.miDownload.Help = Nothing
-        Me.miDownload.Name = "miDownload"
-        Me.miDownload.ShortcutKeys = CType((Keys.Control Or Keys.D), Keys)
-        Me.miDownload.Size = New System.Drawing.Size(594, 67)
-        Me.miDownload.Text = "Download"
-        Me.miDownload.ToolTipText = "Opens the apps download web page"
-        '
-        'miWebsite
-        '
-        Me.miWebsite.Help = Nothing
-        Me.miWebsite.Name = "miWebsite"
-        Me.miWebsite.ShortcutKeys = CType((Keys.Control Or Keys.W), Keys)
-        Me.miWebsite.Size = New System.Drawing.Size(594, 67)
-        Me.miWebsite.Text = "Website"
-        Me.miWebsite.ToolTipText = "Opens the apps website"
-        '
-        'miExplore
-        '
-        Me.miExplore.Help = Nothing
-        Me.miExplore.Name = "miExplore"
-        Me.miExplore.ShortcutKeys = CType((Keys.Control Or Keys.E), Keys)
-        Me.miExplore.Size = New System.Drawing.Size(594, 67)
-        Me.miExplore.Text = "Explore"
-        Me.miExplore.ToolTipText = "Opens the apps folder in File Explorer"
-        '
-        'miLaunch
-        '
-        Me.miLaunch.Help = Nothing
-        Me.miLaunch.Name = "miLaunch"
-        Me.miLaunch.ShortcutKeys = CType((Keys.Control Or Keys.L), Keys)
-        Me.miLaunch.Size = New System.Drawing.Size(594, 67)
-        Me.miLaunch.Text = "Launch"
-        Me.miLaunch.ToolTipText = "Launches the app"
-        '
-        'miHelp
-        '
-        Me.miHelp.Help = Nothing
-        Me.miHelp.Name = "miHelp"
-        Me.miHelp.ShortcutKeys = Keys.F1
-        Me.miHelp.Size = New System.Drawing.Size(594, 67)
-        Me.miHelp.Text = "Help"
-        Me.miHelp.ToolTipText = "Opens the apps help"
-        '
-        'tsbHelp
-        '
-        Me.tsbHelp.DisplayStyle = ToolStripItemDisplayStyle.Text
-        Me.tsbHelp.ImageTransparentColor = System.Drawing.Color.Magenta
-        Me.tsbHelp.Name = "tsbHelp"
-        Me.tsbHelp.Size = New System.Drawing.Size(139, 70)
-        Me.tsbHelp.Text = "  Help  "
-        Me.tsbHelp.ToolTipText = "Opens the apps help (F1)"
-        '
-        'flp
-        '
-        Me.flp.Anchor = AnchorStyles.Top Or AnchorStyles.Bottom Or AnchorStyles.Left Or AnchorStyles.Right
-        Me.flp.AutoSize = True
-        Me.flp.BorderStyle = BorderStyle.None
-        Me.flp.Dock = DockStyle.Fill
-        Me.flp.FlowDirection = FlowDirection.TopDown
-        Me.flp.Location = New System.Drawing.Point(173, 101)
-        Me.flp.Margin = New Padding(0, 0, 0, 0)
-        Me.flp.Name = "flp"
-        Me.flp.TabIndex = 0
-        '
-        'flpOuter
-        '
-        Me.flpOuter.Anchor = AnchorStyles.Top Or AnchorStyles.Bottom Or AnchorStyles.Left Or AnchorStyles.Right
-        Me.flpOuter.BorderStyle = BorderStyle.FixedSingle
-        Me.flpOuter.Controls.Add(Me.flp)
-        Me.flpOuter.FlowDirection = FlowDirection.TopDown
-        Me.flpOuter.Location = New System.Drawing.Point(473, 101)
-        Me.flpOuter.Margin = New Padding(0, 10, 10, 10)
-        Me.flpOuter.Name = "flpOuter"
-        Me.flpOuter.Size = New System.Drawing.Size(1411, 933)
-        Me.flpOuter.TabIndex = 2
-        '
-        'SearchTextBox
-        '
-        Me.SearchTextBox.Anchor = CType((AnchorStyles.Left Or AnchorStyles.Right), AnchorStyles)
-        Me.SearchTextBox.Location = New System.Drawing.Point(10, 15)
-        Me.SearchTextBox.Margin = New Padding(10, 10, 10, 0)
-        Me.SearchTextBox.Name = "SearchTextBox"
-        Me.SearchTextBox.Size = New System.Drawing.Size(453, 70)
-        Me.SearchTextBox.TabIndex = 4
-        '
-        'tlpMain
-        '
-        Me.tlpMain.ColumnCount = 2
-        Me.tlpMain.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 25.0!))
-        Me.tlpMain.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 75.0!))
-        Me.tlpMain.Controls.Add(Me.SearchTextBox, 0, 0)
-        Me.tlpMain.Controls.Add(Me.ToolStrip, 1, 0)
-        Me.tlpMain.Controls.Add(Me.tv, 0, 1)
-        Me.tlpMain.Controls.Add(Me.flpOuter, 1, 1)
-        Me.tlpMain.Dock = DockStyle.Fill
-        Me.tlpMain.Location = New System.Drawing.Point(0, 0)
-        Me.tlpMain.Name = "tlpMain"
-        Me.tlpMain.RowCount = 3
-        Me.tlpMain.RowStyles.Add(New RowStyle())
-        Me.tlpMain.RowStyles.Add(New RowStyle(SizeType.Percent, 100.0!))
-        Me.tlpMain.RowStyles.Add(New RowStyle())
-        Me.tlpMain.Size = New System.Drawing.Size(1894, 1044)
-        Me.tlpMain.TabIndex = 6
-        '
-        'AppsForm
-        '
-        Me.AllowDrop = True
-        Me.AutoScaleDimensions = New System.Drawing.SizeF(288.0!, 288.0!)
-        Me.AutoScaleMode = AutoScaleMode.Dpi
-        Me.ClientSize = New System.Drawing.Size(1894, 1044)
-        Me.Controls.Add(Me.tlpMain)
-        Me.FormBorderStyle = FormBorderStyle.Sizable
-        Me.HelpButton = False
-        Me.KeyPreview = True
-        Me.Margin = New Padding(10)
-        Me.Name = "AppsForm"
-        Me.Text = $"Apps - {g.DefaultCommands.GetApplicationDetails()}"
-        Me.ToolStrip.ResumeLayout(False)
-        Me.ToolStrip.PerformLayout()
-        Me.tlpMain.ResumeLayout(False)
-        Me.ResumeLayout(False)
+    Private Sub InitializeComponent()
+        tv = New TreeViewEx
+        SearchTextBox = New SearchTextBox
+        flp = New StackLayout With {.Orientation = Orientation.Vertical, .Spacing = FH(0.15)}
 
+        Dim toolButton = Function(text As String, tip As String) New ButtonEx With {.Text = text, .ToolTip = tip}
+        tsbLaunch = toolButton("Launch", "Launches the app (Ctrl+L)")
+        tsbExplore = toolButton("Explore", "Opens the apps folder in the file manager (Ctrl+E)")
+        tsbWebsite = toolButton("Web", "Opens the apps website (Ctrl+W)")
+        tsbDownload = toolButton("Download", "Opens the apps download web page (Ctrl+D)")
+        tsbVersion = toolButton("Version", "Edits the apps version (F12)")
+        tsbHelp = toolButton("Help", "Opens the apps help (F1)")
+
+        Dim menuItem = Function(text As String, key As Keys, tip As String) As MenuItemEx
+                           Dim ret = New MenuItemEx(text) With {.Help = tip}
+                           ret.Form = Me
+                           ret.Shortcut = key
+                           Return ret
+                       End Function
+
+        miEditPath = menuItem("Edit Path...", Keys.Control Or Keys.P, "Show Open File dialog to customize the path")
+        miFindPath = menuItem("Find Path...", Keys.Control Or Keys.F, "Searches the file system for the app")
+        miClearPaths = menuItem("Clear Paths...", Keys.Control Or Keys.X, "Clear custom paths")
+        miCopyPath = menuItem("Copy Path", Keys.None, Nothing)
+        miPATHEnvVar = menuItem("PATH Env Var...", Keys.None, Nothing)
+        miEditVersion = menuItem("Edit Version", Keys.F12, "Edits the apps version")
+        miEditChangelog = menuItem("Edit Changelog", Keys.F10, Nothing)
+        miShowGrid = menuItem("Show Grid", Keys.Control Or Keys.G, "Show tools as CSV table")
+        miStatus = menuItem("Check All", Keys.Control Or Keys.S, "Check status of all tools")
+        miStatusRequired = menuItem("Check Required Only", Keys.Control Or Keys.Y, "Check status of all required tools")
+        miAutoUpdate = menuItem("Auto Update", Keys.Control Or Keys.U, "Full automatic update")
+        miUpdateRequest = menuItem("Update Request", Keys.Control Or Keys.R, Nothing)
+        miDownload = menuItem("Download", Keys.Control Or Keys.D, "Opens the apps download web page")
+        miWebsite = menuItem("Website", Keys.Control Or Keys.W, "Opens the apps website")
+        miExplore = menuItem("Explore", Keys.Control Or Keys.E, "Opens the apps folder in the file manager")
+        miLaunch = menuItem("Launch", Keys.Control Or Keys.L, "Launches the app")
+        miHelp = menuItem("Help", Keys.F1, "Opens the apps help")
+
+        cmsTools = New ContextMenuStripEx
+
+        For Each i In {miEditPath, miFindPath, miClearPaths, miCopyPath, miPATHEnvVar}
+            cmsTools.Items.Add(i)
+        Next
+
+        cmsTools.Items.Add(New SeparatorMenuItem)
+
+        For Each i In {miEditVersion, miEditChangelog, miShowGrid, miStatus, miStatusRequired, miAutoUpdate, miUpdateRequest, miDownload, miWebsite, miExplore, miLaunch, miHelp}
+            cmsTools.Items.Add(i)
+        Next
+
+        ddbTools = New ButtonEx With {.Text = "Tools", .ShowMenuSymbol = True, .ContextMenuStrip = cmsTools}
+        ToolBarRow = HRow(tsbLaunch, tsbExplore, tsbWebsite, tsbDownload, tsbVersion, ddbTools, tsbHelp)
+
+        Dim left As New TableLayout(Row(SearchTextBox), ScaledRow(tv)) With {.Spacing = DefaultSpacing}
+        Dim details As New Scrollable With {.Content = flp, .Border = BorderType.None, .Padding = New Padding(FH(0.4), 0)}
+
+        'wrapping labels in a scrollable area take the width of the whole text unless it's limited
+        AddHandler details.SizeChanged, Sub()
+                                            Dim width = details.Width - details.Padding.Horizontal - FH(1.5)
+
+                                            If width > FH(10) Then
+                                                For Each label In Contents.Values.OfType(Of LabelEx)().Where(Function(i) i.Wrap <> WrapMode.None)
+                                                    label.Width = width
+                                                Next
+                                            End If
+                                        End Sub
+        Dim right As New TableLayout(Row(ToolBarRow), ScaledRow(details)) With {.Spacing = DefaultSpacing}
+
+        left.Width = FH(15)
+        Content = New TableLayout(ScaledRow(left, Scaled(right))) With {.Spacing = New Size(FH(0.6), 0), .Padding = DefaultPadding}
+        Text = $"Apps - {g.DefaultCommands.GetApplicationDetails()}"
+        FileDrop = True
     End Sub
-
-#End Region
 
     Private CurrentPackage As Package
     Private ReadOnly Nodes As New List(Of TreeNode)
-    Private ReadOnly Headers As New Dictionary(Of String, LabelEx)
-    Private ReadOnly Contents As New Dictionary(Of String, LabelEx)
+    Private ReadOnly Headers As New Dictionary(Of String, Control)
+    Private ReadOnly Contents As New Dictionary(Of String, Control)
     Private ReadOnly SetupButton As New ButtonEx
     Private ToolUpdate As ToolUpdate
 
     Sub New()
         MyBase.New()
         InitializeComponent()
-        RestoreClientSize(48, 32)
-        tv.ItemHeight = CInt(FontHeight * 1.3)
-        tv.Scrollable = True
+        RestoreClientSize(56, 34)
+        SetMinimumSize(53, 20)
 
-        SearchTextBox_TextChanged()
-        SearchTextBox.Height = ToolStrip.Height - 2
-
-        AddHandler SearchTextBox.Edit.TextBox.KeyDown, AddressOf SearchTextBoxKeyDown
-        AddHandler tv.KeyDown, AddressOf TreeViewKeyDown
-
-        ToolStrip.Font = FontManager.GetDefaultFont()
-        g.SetRenderer(ToolStrip)
+        AddHandler SearchTextBox.KeyDown, AddressOf SearchTextBoxKeyDown
 
         miEditChangelog.Visible = g.IsDevelopmentPC
 
@@ -439,24 +116,16 @@ Public Class AppsForm
                                           ShowActivePackage()
                                       End Sub
 
-        SetupButton.ForeColor = Color.Red
-        SetupButton.TextImageRelation = TextImageRelation.ImageBeforeText
-        SetupButton.Image = StockIcon.GetSmallImage(StockIconIdentifier.Shield)
         SetupButton.Font = FontManager.GetDefaultFont(1)
-        SetupButton.Margin = New Padding(FontHeight \ 3)
-        SetupButton.Padding = New Padding(FontHeight \ 5)
-        SetupButton.AutoSizeMode = AutoSizeMode.GrowAndShrink
-        SetupButton.AutoSize = True
 
         Dim titleHeaderLabel = New LabelEx With {
-            .Font = FontManager.GetDefaultFont(5, FontStyle.Bold),
-            .AutoSize = True
+            .Font = FontManager.GetDefaultFont(5, FontStyle.Bold)
         }
 
         Headers("Title") = titleHeaderLabel
-        flp.Controls.Add(titleHeaderLabel)
+        flp.Items.Add(New StackLayoutItem(titleHeaderLabel))
         AddSection("Status")
-        flp.Controls.Add(SetupButton)
+        flp.Items.Add(New StackLayoutItem(SetupButton))
         AddSection("Location", Sub() tsbOpenDir_Click(Nothing, Nothing))
         AddSection("Version", Sub() tsbVersion_Click(Nothing, Nothing))
         AddSection("AviSynth Filters")
@@ -467,30 +136,7 @@ Public Class AppsForm
         AddSection("Help", Sub() g.ShellExecute(CurrentPackage.HelpURL))
         AddSection("Download", Sub() g.ShellExecute(CurrentPackage.DownloadURL))
 
-        ApplyTheme()
-        AddHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
-    End Sub
-
-    Protected Overrides Sub Dispose(disposing As Boolean)
-        RemoveHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
-        components?.Dispose()
-        MyBase.Dispose(disposing)
-    End Sub
-
-    Sub OnThemeChanged(theme As Theme)
-        ApplyTheme(theme)
-    End Sub
-
-    Sub ApplyTheme()
-        ApplyTheme(ThemeManager.CurrentTheme)
-    End Sub
-
-    Sub ApplyTheme(theme As Theme)
-        If DesignHelp.IsDesignMode Then
-            Exit Sub
-        End If
-
-        BackColor = theme.General.BackColor
+        SearchTextBox_TextChanged()
     End Sub
 
     Sub SearchTextBoxKeyDown(sender As Object, e As KeyEventArgs)
@@ -503,21 +149,44 @@ Public Class AppsForm
         End If
     End Sub
 
-    Sub TreeViewKeyDown(sender As Object, e As KeyEventArgs)
-        If Char.IsLetter(Chr(e.KeyCode)) Then
-            SearchTextBox.Text = If(e.Shift, ChrW(e.KeyCode), Char.ToLowerInvariant(Chr(e.KeyCode)))
-            SearchTextBox.Focus()
-            SearchTextBox.Edit.TextBox.Select(1, 0)
-            e.Handled = True
+    Sub SetText(key As String, value As String)
+        Dim c = Contents(key)
+
+        If TypeOf c Is LinkButton Then
+            DirectCast(c, LinkButton).Text = value
+        ElseIf TypeOf c Is Label Then
+            DirectCast(c, Label).Text = value
+        End If
+    End Sub
+
+    Function GetText(key As String) As String
+        Dim c = Contents(key)
+
+        If TypeOf c Is LinkButton Then
+            Return DirectCast(c, LinkButton).Text
+        ElseIf TypeOf c Is Label Then
+            Return DirectCast(c, Label).Text
+        End If
+
+        Return ""
+    End Function
+
+    Sub SetTextColor(key As String, color As Color)
+        Dim c = Contents(key)
+
+        If TypeOf c Is LinkButton Then
+            DirectCast(c, LinkButton).TextColor = color
+        ElseIf TypeOf c Is Label Then
+            DirectCast(c, Label).TextColor = color
         End If
     End Sub
 
     Sub ShowActivePackage()
-        If Disposing OrElse IsDisposed Then Exit Sub
+        If IsDisposed OrElse CurrentPackage Is Nothing OrElse Not Headers.ContainsKey("Title") Then Exit Sub
 
         Dim path = CurrentPackage.Path
 
-        Headers("Title").Text = CurrentPackage.Name
+        DirectCast(Headers("Title"), Label).Text = CurrentPackage.Name
 
         SetupButton.Text = "Install " + CurrentPackage.Name
         SetupButton.Visible = CurrentPackage.SetupAction IsNot Nothing AndAlso CurrentPackage.GetStatus <> ""
@@ -540,53 +209,40 @@ Public Class AppsForm
 
         s.StringDictionary("RecentExternalApplicationControl") = CurrentPackage.Name + CurrentPackage.Version
 
-        flp.SuspendLayout()
-
         Dim status = CurrentPackage.GetStatus()
-        Contents("Status").Text = CurrentPackage.GetStatusDisplay()
-        Contents("Status").ForeColor = If(status <> "",
-                                                If(CurrentPackage.Required, ThemeManager.CurrentTheme.AppsForm.AttentionForeColor, ThemeManager.CurrentTheme.AppsForm.MinorForeColor),
-                                                ThemeManager.CurrentTheme.AppsForm.OkayForeColor)
-        Contents("Status").Font = FontManager.GetDefaultFont(1, FontStyle.Bold)
+        SetText("Status", CurrentPackage.GetStatusDisplay())
+        SetTextColor("Status", If(status <> "",
+                                  If(CurrentPackage.Required, Color.FromArgb(220, 50, 50), Color.FromArgb(200, 140, 0)),
+                                  Color.FromArgb(40, 160, 70)))
 
         Dim correctVersion = CurrentPackage.IsVersionCorrect()
-        Contents("Version").Text = "-"
-        Contents("Version").ForeColor = ThemeManager.CurrentTheme.General.Controls.ButtonLabel.ForeColor
+        SetText("Version", "-")
 
         If File.Exists(CurrentPackage.Path) Then
-            Contents("Version").Text = If(correctVersion, CurrentPackage.Version, "Unknown")
-            Contents("Version").Text += " (" + File.GetLastWriteTimeUtc(CurrentPackage.Path).ToShortDateString() + ")"
-            If correctVersion Then
-                Contents("Version").ApplyTheme()
-                If TypeOf Contents("Version") Is ButtonLabel Then
-                    CType(Contents("Version"), ButtonLabel).ApplyTheme()
-                End If
+            If CurrentPackage.IsSystemInstalled Then
+                SetText("Version", "System (" + File.GetLastWriteTimeUtc(CurrentPackage.Path).ToShortDateString() + ")")
             Else
-                Dim col = If(CurrentPackage.Required, ThemeManager.CurrentTheme.AppsForm.AttentionForeColor, ThemeManager.CurrentTheme.AppsForm.MinorForeColor)
-                Contents("Version").ForeColor = col
-                If TypeOf Contents("Version") Is ButtonLabel Then
-                    CType(Contents("Version"), ButtonLabel).LinkColor = col
-                    CType(Contents("Version"), ButtonLabel).LinkHoverColor = col.SetSaturation(1).AddLuminance(0.1)
-                End If
+                SetText("Version", If(correctVersion, CurrentPackage.Version, "Unknown") +
+                    " (" + File.GetLastWriteTimeUtc(CurrentPackage.Path).ToShortDateString() + ")")
             End If
         End If
 
-        Contents("Location").Text = If(path = "", "Not found", path)
-        Contents("Description").Text = CurrentPackage.Description
+        SetText("Location", If(path = "", "Not found", path))
+        SetText("Description", CurrentPackage.Description)
 
         Dim visible = Not String.IsNullOrWhiteSpace(CurrentPackage.WebURL)
         Headers("Website").Visible = visible
-        Contents("Website").Text = CurrentPackage.WebURL
+        SetText("Website", CurrentPackage.WebURL)
         Contents("Website").Visible = visible
 
         visible = Not String.IsNullOrWhiteSpace(CurrentPackage.HelpURL)
         Headers("Help").Visible = visible
-        Contents("Help").Text = CurrentPackage.HelpURL
+        SetText("Help", CurrentPackage.HelpURL)
         Contents("Help").Visible = visible
 
         visible = Not String.IsNullOrWhiteSpace(CurrentPackage.DownloadURL)
         Headers("Download").Visible = visible
-        Contents("Download").Text = CurrentPackage.DownloadURL
+        SetText("Download", CurrentPackage.DownloadURL)
         Contents("Download").Visible = visible
 
         Headers("AviSynth Filters").Visible = False
@@ -603,59 +259,45 @@ Public Class AppsForm
 
             If plugin.AvsFilterNames IsNot Nothing AndAlso plugin.VsFilterNames IsNot Nothing Then
                 Headers("AviSynth Filters").Visible = True
-                Contents("AviSynth Filters").Text = plugin.AvsFilterNames.Join(", ")
+                SetText("AviSynth Filters", plugin.AvsFilterNames.Join(", "))
                 Contents("AviSynth Filters").Visible = True
 
                 Headers("VapourSynth Filters").Visible = True
-                Contents("VapourSynth Filters").Text = plugin.VsFilterNames.Join(", ")
+                SetText("VapourSynth Filters", plugin.VsFilterNames.Join(", "))
                 Contents("VapourSynth Filters").Visible = True
             ElseIf plugin.AvsFilterNames IsNot Nothing Then
                 Headers("Filters").Visible = True
-                Contents("Filters").Text = plugin.AvsFilterNames.Join(", ")
-                Contents("Filters").AutoEllipsis = True
-                Contents("Filters").MaximumSize = New Size(Contents("Filters").Parent.Width - Contents("Filters").Left - Contents("Filters").Padding.Left, 333)
+                SetText("Filters", plugin.AvsFilterNames.Join(", "))
                 Contents("Filters").Visible = True
             ElseIf plugin.VsFilterNames IsNot Nothing Then
                 Headers("Filters").Visible = True
-                Contents("Filters").Text = plugin.VsFilterNames.Join(", ")
-                Contents("Filters").AutoEllipsis = True
-                Contents("Filters").MaximumSize = New Size(Contents("Filters").Parent.Width - Contents("Filters").Left - Contents("Filters").Padding.Left, 333)
+                SetText("Filters", plugin.VsFilterNames.Join(", "))
                 Contents("Filters").Visible = True
             End If
         End If
-
-        flp.ResumeLayout()
     End Sub
 
-    <STAThread()>
     Sub AddSection(title As String, Optional clickAction As Action = Nothing)
         If String.IsNullOrWhiteSpace(title) Then Return
 
-        Dim controlMargin = CInt(FontHeight / 10)
-        Dim headerPadding = CInt(FontHeight / 3)
-
         Dim headerLabel = New LabelEx With {
             .Text = title,
-            .Font = FontManager.GetDefaultFont(0, FontStyle.Bold),
-            .AutoSize = True,
-            .Margin = New Padding(controlMargin, controlMargin, 0, 0),
-            .Padding = New Padding(0, headerPadding, 0, 0)}
+            .Font = FontManager.GetDefaultFont(0, FontStyle.Bold)}
 
         Headers(title) = headerLabel
-        flp.Controls.Add(headerLabel)
+        flp.Items.Add(New StackLayoutItem(headerLabel))
 
-        Dim contentLabel = If(clickAction IsNot Nothing,
-            New ButtonLabel With {
-                .AutoSize = True,
-                .ClickAction = clickAction,
-                .Cursor = Cursors.Hand,
-                .Margin = New Padding(controlMargin, CInt(controlMargin / 3), 0, 0)},
-            New LabelEx With {
-                .AutoSize = True,
-                .Margin = New Padding(controlMargin, CInt(controlMargin / 3), 0, 0)})
+        Dim contentLabel As Control
+
+        If clickAction IsNot Nothing Then
+            contentLabel = New ButtonLabel With {.ClickAction = clickAction}
+        Else
+            contentLabel = New LabelEx With {.Wrap = WrapMode.Word}
+        End If
 
         Contents(title) = contentLabel
-        flp.Controls.Add(contentLabel)
+        'wrapping labels get the visible width, they would follow long paths otherwise
+        flp.Items.Add(New StackLayoutItem(contentLabel, If(TypeOf contentLabel Is LabelEx, HorizontalAlignment.Left, HorizontalAlignment.Stretch)))
     End Sub
 
     Sub ShowPackage(package As Package)
@@ -693,30 +335,16 @@ Public Class AppsForm
         ShowActivePackage()
     End Sub
 
-    Protected Overrides Sub OnActivated(e As EventArgs)
+    Protected Overrides Sub OnGotFocus(e As EventArgs)
         ShowActivePackage()
-        Refresh()
-        MyBase.OnActivated(e)
+        MyBase.OnGotFocus(e)
     End Sub
 
-    Protected Overrides Sub OnDragEnter(e As DragEventArgs)
-        MyBase.OnDragEnter(e)
-
-        Dim files = TryCast(e.Data.GetData(DataFormats.FileDrop), String())
-
-        If Not files.NothingOrEmpty Then
-            e.Effect = DragDropEffects.Copy
-        End If
-    End Sub
-
-    Protected Overrides Sub OnDragDrop(args As DragEventArgs)
-        MyBase.OnDragDrop(args)
-
-        Dim files = TryCast(args.Data.GetData(DataFormats.FileDrop), String())
-
+    Sub AppsForm_FilesDropped(files As String()) Handles Me.FilesDropped
         BeginInvoke(Sub()
-                        If Not files.NothingOrEmpty Then
-                            If files.Length = 1 AndAlso files(0).Ext.EqualsAny("zip", "7z") Then
+                        If Not files.NothingOrEmpty AndAlso CurrentPackage IsNot Nothing Then
+                            If files.Length = 1 AndAlso (files(0).Ext.EqualsAny("zip", "7z") OrElse
+                                files(0).ToLowerInvariant.EndsWithAny(".tar.gz", ".tar.xz", ".tar.bz2", ".tar.zst", ".tgz")) Then
 
                                 ToolUpdate = New ToolUpdate(CurrentPackage, Me)
                                 ToolUpdate.DownloadFile = files(0)
@@ -754,6 +382,10 @@ Public Class AppsForm
         tv.Nodes.Clear()
 
         For Each pack In Package.Items.Values
+            If Not pack.IsLinuxSupported Then
+                Continue For
+            End If
+
             Dim plugin = TryCast(pack, PluginPackage)
             Dim searchString = pack.Name + pack.Description + pack.Version + pack.WebURL + plugin?.VsFilterNames.Join(" ") + pack.Path + plugin?.AvsFilterNames.Join(" ")
             Dim newVersion = Not s.AllowToolsWithWrongVersion AndAlso Not pack.IsVersionValid()
@@ -792,7 +424,7 @@ Public Class AppsForm
             tv.SelectedNode = tv.Nodes(0)
         End If
 
-        ToolStrip.Enabled = tv.Nodes.Count > 0
+        ToolBarRow.Enabled = tv.Nodes.Count > 0
         flp.Visible = tv.Nodes.Count > 0
 
         If SearchTextBox.Text <> "" Then
@@ -854,11 +486,12 @@ Public Class AppsForm
         If input <> "" Then
             CurrentPackage.SetVersion(input.Replace(";", "_").Trim)
             ShowActivePackage()
-            Application.DoEvents()
+            DoEvents()
         End If
     End Sub
 
     Sub miShowGridView_Click(sender As Object, e As EventArgs) Handles miShowGrid.Click
+        If CurrentPackage Is Nothing Then Exit Sub
         Dim rows As New List(Of Object)
 
         For Each pack In Package.Items.Values.OrderBy(Function(i) i.GetTypeName)
@@ -881,20 +514,9 @@ Public Class AppsForm
             rows.Add(row)
         Next
 
-        Using td As New TaskDialog(Of String)
-            td.Title = "Choose how to show"
-            td.AddCommand("Show as CSV file", "csv")
-            td.AddCommand("Show using PowerShell", "ogv")
-
-            Select Case td.Show
-                Case "csv"
-                    Dim csvFile = Path.Combine(Folder.Temp, "staxrip tools.csv")
-                    g.ConvertToCSV(";", rows).WriteFileUTF8(csvFile)
-                    g.ShellExecute(g.GetAppPathForExtension("csv", "txt"), csvFile.Escape)
-                Case "ogv"
-                    g.InvokePowerShellCode($"$objects | Out-GridView", "objects", rows)
-            End Select
-        End Using
+        Dim csvFile = Path.Combine(Folder.Temp, "staxrip tools.csv")
+        g.ConvertToCSV(";", rows).WriteFileUTF8(csvFile)
+        g.ShellExecute(csvFile)
     End Sub
 
     Sub miStatus_Click(sender As Object, e As EventArgs) Handles miStatus.Click
@@ -989,46 +611,34 @@ Public Class AppsForm
         Everything()
     End Sub
 
+    'searches the app with locate if available, otherwise in the common binary and library folders
     Async Sub Everything()
         Dim paths As New List(Of String)
+        Dim fileName = CurrentPackage.Filename
 
         Dim run = Sub()
-                      Dim size = 500
-                      Dim sb As New StringBuilder(size)
+                      If ShellHelp.Which("locate") <> "" Then
+                          Dim output = ProcessHelp.GetConsoleOutput("locate", {"-b", "-l", "20", "\" + fileName})
 
-                      Try
-                          Everything_SetSearch(CurrentPackage.Filename)
-                          Everything_SetRequestFlags(EVERYTHING_REQUEST_FILE_NAME Or EVERYTHING_REQUEST_PATH)
-                          Everything_Query(True)
-
-                          For x = 0 To Everything_GetNumResults() - 1
-                              Everything_GetResultFullPathName(CUInt(x), sb, CUInt(size))
-                              Dim path = sb.ToString
-
-                              If path.FileName.ToLowerInvariant = CurrentPackage.Filename.ToLowerInvariant Then
-                                  paths.Add(path)
-                              End If
-
-                              If paths.Count > 9 Then
-                                  Exit For
+                          For Each line In output.SplitLinesNoEmpty
+                              If File.Exists(line) AndAlso line.FileName = fileName Then
+                                  paths.Add(line)
                               End If
                           Next
-                      Catch
-                          If MsgQuestion("The Find Path feature requires the installation of a tool named voidtools Everything." + BR2 +
-                                         "Open the voidtools Everything website?") = DialogResult.OK Then
-                              g.ShellExecute("https://www.voidtools.com")
-                          End If
+                      End If
 
-                          If MsgQuestion("Would you like to open the website of Everything.NET?",
-                                         "Everything.NET is a voidtools Everything frontend that supports dark mode.") = DialogResult.OK Then
-                              g.ShellExecute("https://github.com/stax76/Everything.NET")
+                      If paths.Count = 0 Then
+                          Dim found = Package.FindEverywhere(fileName)
+
+                          If found <> "" Then
+                              paths.Add(found)
                           End If
-                      End Try
+                      End If
                   End Sub
 
         Await Task.Run(run)
 
-        If Disposing OrElse IsDisposed Then
+        If IsDisposed Then
             Exit Sub
         End If
 
@@ -1036,19 +646,11 @@ Public Class AppsForm
             Using td As New TaskDialog(Of String)
                 td.Title = "Choose Path"
 
-                For Each path In paths
+                For Each path In paths.Distinct.Take(10)
                     td.AddCommand("", path, path)
                 Next
 
                 If td.Show.FileExists Then
-                    If Not s.AllowCustomPathsInStartupFolder AndAlso
-                        td.SelectedValue.ToLowerEx.StartsWithEx(Folder.Startup.ToLowerEx + Path.DirectorySeparatorChar) AndAlso
-                        Not td.SelectedValue.ToLowerEx.StartsWithEx(Folder.Settings.ToLowerEx + Path.DirectorySeparatorChar) Then
-
-                        MsgError("Custom paths within the startup folder are not permitted.")
-                        Exit Sub
-                    End If
-
                     CurrentPackage.SetStoredPath(td.SelectedValue)
                     ShowActivePackage()
                 ElseIf td.SelectedValue <> "" Then
@@ -1059,37 +661,6 @@ Public Class AppsForm
             MsgInfo("Nothing found.")
         End If
     End Sub
-
-    Const EVERYTHING_REQUEST_FILE_NAME As Integer = 1
-    Const EVERYTHING_REQUEST_PATH As Integer = 2
-
-    <DllImport("Everything.dll", CharSet:=CharSet.Unicode)>
-    Shared Function Everything_SetSearch(lpSearchString As String) As Integer
-    End Function
-
-    <DllImport("Everything.dll")>
-    Shared Sub Everything_SetRequestFlags(dwRequestFlags As UInt32)
-    End Sub
-
-    <DllImport("Everything.dll")>
-    Shared Sub Everything_SetSort(dwSortType As UInt32)
-    End Sub
-
-    <DllImport("Everything.dll", CharSet:=CharSet.Unicode)>
-    Shared Function Everything_Query(bWait As Boolean) As Boolean
-    End Function
-
-    <DllImport("Everything.dll", CharSet:=CharSet.Unicode)>
-    Shared Sub Everything_GetResultFullPathName(nIndex As UInt32, lpString As StringBuilder, nMaxCount As UInt32)
-    End Sub
-
-    <DllImport("Everything.dll")>
-    Shared Function Everything_GetResultSize(nIndex As UInt32, ByRef lpFileSize As Long) As Boolean
-    End Function
-
-    <DllImport("Everything.dll")>
-    Shared Function Everything_GetNumResults() As UInt32
-    End Function
 
     Sub miEditVersion_Click(sender As Object, e As EventArgs) Handles miEditVersion.Click
         tsbVersion.PerformClick()
@@ -1123,8 +694,7 @@ Public Class AppsForm
 
     Sub UpdateUI() Implements IUpdateUI.UpdateUI
         ShowActivePackage()
-        Refresh()
-        Application.DoEvents()
+        DoEvents()
     End Sub
 
     Sub miHelp_Click(sender As Object, e As EventArgs) Handles miHelp.Click
@@ -1155,8 +725,7 @@ Public Class AppsForm
     Sub miPATHEnvVar_Click(sender As Object, e As EventArgs) Handles miPATHEnvVar.Click
         'crash report by user
         Try
-            'no EnvironmentVariableTarget.User on unix systems, Machine would require admin permissions. process is not persistet -> conditional check to not break windows behaviour.
-            Dim pathTarget = If(RuntimeInformation.IsOSPlatform(OSPlatform.Windows), EnvironmentVariableTarget.User, EnvironmentVariableTarget.Process)
+            Dim pathTarget = EnvironmentVariableTarget.Process
             Dim dir = CurrentPackage.Directory
             Dim pathVar = If(Environment.GetEnvironmentVariable("path", pathTarget), "")
             Dim pathItems = pathVar.Split(New String() {Path.PathSeparator}, StringSplitOptions.RemoveEmptyEntries).ToList()
@@ -1165,7 +734,6 @@ Public Class AppsForm
                 td.Title = "Modify the process PATH environment variable"
                 td.AddCommand("Add", $"Add {CurrentPackage.Name} to process PATH environment variable", "add")
                 td.AddCommand("Remove", $"Remove {CurrentPackage.Name} from process PATH environment variable", "remove")
-                td.AddCommand("Editor", "Show environment variable editor", "edit")
 
                 Select Case td.Show
                     Case "add"
@@ -1184,8 +752,6 @@ Public Class AppsForm
                         Else
                             MsgError("Folder is not in PATH")
                         End If
-                    Case "edit"
-                        g.Execute("rundll32.exe", "sysdm.cpl,EditEnvironmentVariables")
                 End Select
             End Using
         Catch ex As Exception

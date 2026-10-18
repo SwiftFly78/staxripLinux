@@ -1,130 +1,120 @@
-﻿Imports System.Drawing.Text
-Imports System.Globalization
-Imports System.Runtime.InteropServices
-Imports System.Text
 
+'On Linux the fonts come from fontconfig, a font name configured in the settings
+'is used if it's installed, otherwise the system default/monospace font is used.
 Public NotInheritable Class FontManager
-    Private Shared ReadOnly _currentFontFamilies As New Dictionary(Of FontCategory, FontFamily)
-    Private Shared ReadOnly _fontCollections As New Dictionary(Of FontCategory, PrivateFontCollection)
+    Private Shared ReadOnly FamilyCache As New Dictionary(Of FontCategory, FontFamily)
+    Private Shared AvailableFamilies As List(Of FontFamily)
 
     Public Const DefaultCodeFontSize As Single = 10.0
     Public Const DefaultFontSize As Single = 9.0
     Public Const DefaultThumbnailFontSize As Single = 10.0
 
-    Public Shared Sub Init()
-        For Each category As FontCategory In [Enum].GetValues(GetType(FontCategory)).Cast(Of FontCategory)().Skip(1)
-            AddCollection(category)
-        Next
-    End Sub
-
     Shared Sub Reset()
-        _currentFontFamilies.Clear()
+        FamilyCache.Clear()
     End Sub
 
-    Public Shared Sub AddCollection(category As FontCategory)
-        Dim collection As New PrivateFontCollection()
-        Dim fontFiles = Directory.GetFiles(Path.Combine(Folder.Fonts, category.ToString()), "*.ttf", SearchOption.AllDirectories)
+    Shared ReadOnly Property SystemFontSize As Single
+        Get
+            Return SystemFonts.Default().Size
+        End Get
+    End Property
 
-        For Each fontFile In fontFiles
-            collection.AddFontFile(fontFile)
-        Next
-
-        If g.SettingsFolderExists Then
-            If Folder.UserFonts.DirExists() Then
-                Dim subfolderPath = Path.Combine(Folder.UserFonts, category.ToString())
-                If subfolderPath.DirExists() Then
-                    fontFiles = Directory.GetFiles(subfolderPath, "*.ttf", SearchOption.AllDirectories)
-                    For Each fontFile In fontFiles
-                        collection.AddFontFile(fontFile)
-                    Next
-                End If
-            End If
+    Shared Function GetAvailableFamilies() As List(Of FontFamily)
+        If AvailableFamilies Is Nothing Then
+            Try
+                AvailableFamilies = Fonts.AvailableFontFamilies.OrderBy(Function(x) x.Name).ToList()
+            Catch
+                AvailableFamilies = New List(Of FontFamily)
+            End Try
         End If
 
-        If collection.Families.Any() Then
-            _fontCollections.Add(category, collection)
-        End If
-    End Sub
+        Return AvailableFamilies
+    End Function
 
     Shared Function GetFontFamilies(category As FontCategory, filtered As Boolean) As List(Of FontFamily)
-        If Not _fontCollections.Any() Then Init()
-
-        Dim collections = If(category = FontCategory.All, _fontCollections, _fontCollections.Where(Function(x) x.Key = category))
-        Dim fontFamilies = collections.SelectMany(Function(x) x.Value.Families)
+        Dim families As IEnumerable(Of FontFamily) = GetAvailableFamilies()
 
         If filtered Then
-            fontFamilies = fontFamilies _
-                .Where(Function(x) Not x.Name.ContainsAny({"UltraCondensed", "UltraExpanded"})) _
-                .Where(Function(x) Not x.Name.EndsWithAny({" Thin"}))
+            families = families.Where(Function(x) Not x.Name.ContainsAny({"UltraCondensed", "UltraExpanded"}) AndAlso Not x.Name.EndsWith(" Thin"))
         End If
 
-        Return fontFamilies.ToList()
+        If category = FontCategory.Code Then
+            families = families.Where(Function(x) IsMonospace(x))
+        End If
+
+        Return families.ToList()
+    End Function
+
+    Shared Function IsMonospace(family As FontFamily) As Boolean
+        Try
+            Using font = New Font(family, 10)
+                Return Math.Abs(font.MeasureString("iiiii").Width - font.MeasureString("WWWWW").Width) < 1
+            End Using
+        Catch
+            Return False
+        End Try
     End Function
 
     Shared Function GetFontFamily(category As FontCategory, fontName As String) As FontFamily
-        If Not _fontCollections.Any() Then Init()
-        Dim collections = If(category = FontCategory.All, _fontCollections, _fontCollections.Where(Function(x) x.Key = category))
-        Return collections.SelectMany(Function(s) s.Value.Families.Where(Function(x) x.Name = fontName)).FirstOrDefault(Function(x) x IsNot Nothing)
-    End Function
+        If fontName <> "" Then
+            Dim family = GetAvailableFamilies().FirstOrDefault(Function(x) x.Name.Equals(fontName, StringComparison.OrdinalIgnoreCase))
 
-    Shared Function GetFont(category As FontCategory, fontName As String, Optional size As Single = DefaultFontSize, Optional fontStyle As FontStyle = FontStyle.Regular, Optional graphicsUnit As GraphicsUnit = GraphicsUnit.Point, Optional gdiCharSet As Byte = 0) As Font
-        If Not _fontCollections.Any() Then Init()
-
-        Dim family = GetFontFamily(category, fontName)
-
-        If family IsNot Nothing Then
-            Return GetFont(family, size, fontStyle)
+            If family IsNot Nothing Then
+                Return family
+            End If
         End If
 
-        Return New Font(_fontCollections.First().Value.Families.First(), size * s.UIScaleFactor, fontStyle, graphicsUnit, gdiCharSet)
-    End Function
-
-    Shared Function GetFont(fontFamily As FontFamily, Optional size As Single = DefaultFontSize, Optional fontStyle As FontStyle = FontStyle.Regular, Optional graphicsUnit As GraphicsUnit = GraphicsUnit.Point, Optional gdiCharSet As Byte = 0) As Font
-        If Not _fontCollections.Any() Then Init()
-
-        Return New Font(fontFamily, size * s.UIScaleFactor, fontStyle, graphicsUnit, gdiCharSet)
-    End Function
-
-    Shared Function GetCodeFont(Optional sizeOffset As Single = 0.0, Optional fontStyle As FontStyle = FontStyle.Regular) As Font
-        Dim family As FontFamily
-        Dim size = DefaultCodeFontSize + sizeOffset
-
-        If _currentFontFamilies.TryGetValue(FontCategory.Code, family) Then
-            Return GetFont(family, size, fontStyle)
+        If category = FontCategory.Code Then
+            Return New FontFamily(FontFamilies.MonospaceFamilyName)
         End If
 
-        Dim font = GetFont(FontCategory.Code, s.Fonts(FontCategory.Code), size, fontStyle)
-        _currentFontFamilies.Add(FontCategory.Code, font.FontFamily)
-        Return font
+        Return SystemFonts.Default().Family
     End Function
 
-    Shared Function GetDefaultFont(Optional sizeOffset As Single = 0.0, Optional fontStyle As FontStyle = FontStyle.Regular) As Font
-        Dim family As FontFamily
-        Dim size = DefaultFontSize + sizeOffset
-
-        If _currentFontFamilies.TryGetValue(FontCategory.Default, family) Then
-            Return GetFont(family, size, fontStyle)
-        End If
-
-        Dim font = GetFont(FontCategory.Default, s.Fonts(FontCategory.Default), size, fontStyle)
-        _currentFontFamilies.Add(FontCategory.Default, font.FontFamily)
-        Return font
+    Shared Function GetFont(category As FontCategory, fontName As String, Optional size As Single = DefaultFontSize, Optional style As FontStyle = FontStyle.None) As Font
+        Return New Font(GetFontFamily(category, fontName), Math.Max(1, size * s.UIScaleFactor), style)
     End Function
 
-    Shared Function GetThumbnailFont(Optional sizeOffset As Single = 0.0, Optional fontStyle As FontStyle = FontStyle.Regular) As Font
-        Dim family As FontFamily
-        Dim size = DefaultThumbnailFontSize + sizeOffset
+    Shared Function GetFont(family As FontFamily, Optional size As Single = DefaultFontSize, Optional style As FontStyle = FontStyle.None) As Font
+        Return New Font(family, Math.Max(1, size * s.UIScaleFactor), style)
+    End Function
 
-        If _currentFontFamilies.TryGetValue(FontCategory.Thumbnail, family) Then
-            Return GetFont(family, size, fontStyle)
+    Private Shared Function GetCategoryFont(category As FontCategory, size As Single, style As FontStyle) As Font
+        Dim family As FontFamily = Nothing
+
+        If Not FamilyCache.TryGetValue(category, family) Then
+            Dim name = ""
+
+            If s?.Fonts IsNot Nothing AndAlso s.Fonts.ContainsKey(category) Then
+                name = s.Fonts(category)
+            End If
+
+            family = GetFontFamily(category, name)
+            FamilyCache(category) = family
         End If
 
-        Dim font = GetFont(FontCategory.Thumbnail, s.Fonts(FontCategory.Thumbnail), size, fontStyle)
-        _currentFontFamilies.Add(FontCategory.Thumbnail, font.FontFamily)
-        Return font
+        Return New Font(family, Math.Max(1, size), style)
+    End Function
+
+    'sizeOffset is relative to the system font size
+    Shared Function GetCodeFont(Optional sizeOffset As Single = 0.0, Optional style As FontStyle = FontStyle.None) As Font
+        Return GetCategoryFont(FontCategory.Code, SystemFontSize + sizeOffset, style)
+    End Function
+
+    Shared Function GetDefaultFont(Optional sizeOffset As Single = 0.0, Optional style As FontStyle = FontStyle.None) As Font
+        If sizeOffset = 0 AndAlso style = FontStyle.None AndAlso
+            (s?.Fonts Is Nothing OrElse Not s.Fonts.ContainsKey(FontCategory.Default) OrElse s.Fonts(FontCategory.Default) = "") Then
+
+            Return SystemFonts.Default()
+        End If
+
+        Return GetCategoryFont(FontCategory.Default, SystemFontSize + sizeOffset, style)
+    End Function
+
+    Shared Function GetThumbnailFont(Optional sizeOffset As Single = 0.0, Optional style As FontStyle = FontStyle.None) As Font
+        Return GetCategoryFont(FontCategory.Thumbnail, DefaultThumbnailFontSize + sizeOffset, style)
     End Function
 End Class
-
 
 Public Enum FontCategory
     All

@@ -1,4 +1,4 @@
-﻿
+
 Imports System.Text
 
 Imports StaxRip.VideoEncoderCommandLine
@@ -108,8 +108,7 @@ Public Class x264Enc
             proc.SkipStrings = {"kb/s, eta", "est.size", "%]"}
 
             If commandLine.Contains("|") Then
-                proc.File = "cmd.exe"
-                proc.Arguments = "/S /C """ + commandLine + """"
+                proc.SetShellCommand(commandLine)
             Else
                 proc.CommandLine = commandLine
             End If
@@ -397,7 +396,7 @@ Public Class x264Enc
     End Sub
 
     Overrides Function CreateEditControl() As Control
-        Return New x264Control(Me) With {.Dock = DockStyle.Fill}
+        Return New x264Control(Me)
     End Function
 
     Shared Function Test() As String
@@ -631,34 +630,34 @@ Public Class x264Params
         .Switches = {"--partitions", "-A"},
         .Label = "Partitions",
         .ArgsFunc = AddressOf GetPartitionsArg,
-        .LeftMargin = g.MainForm.FontHeight * 1.5,
+        .LeftMargin = EtoHelp.FontHeight * 1.5,
         .Text = "i4x4"}
 
     Property P4x4 As New BoolParam With {
         .Switches = {"--partitions", "-A"},
-        .LeftMargin = g.MainForm.FontHeight * 1.5,
+        .LeftMargin = EtoHelp.FontHeight * 1.5,
         .Text = "p4x4"}
 
     Property B8x8 As New BoolParam With {
         .Switches = {"--partitions", "-A"},
-        .LeftMargin = g.MainForm.FontHeight * 1.5,
+        .LeftMargin = EtoHelp.FontHeight * 1.5,
         .Text = "b8x8"}
 
     Property I8x8 As New BoolParam With {
         .Switches = {"--partitions", "-A"},
-        .LeftMargin = g.MainForm.FontHeight * 1.5,
+        .LeftMargin = EtoHelp.FontHeight * 1.5,
         .Text = "i8x8"}
 
     Property P8x8 As New BoolParam With {
         .Switches = {"--partitions", "-A"},
-        .LeftMargin = g.MainForm.FontHeight * 1.5,
+        .LeftMargin = EtoHelp.FontHeight * 1.5,
         .Text = "p8x8"}
 
     Property _8x8dct As New BoolParam With {
         .Switch = "--8x8dct",
         .NoSwitch = "--no-8x8dct",
         .Text = "8x8dct",
-        .LeftMargin = g.MainForm.FontHeight * 1.5}
+        .LeftMargin = EtoHelp.FontHeight * 1.5}
 
     Property RcLookahead As New NumParam With {
         .Switch = "--rc-lookahead",
@@ -1293,7 +1292,7 @@ Public Class x264Params
 
             If pipeTool = "automatic" Then
                 If p.Script.IsAviSynth Then
-                    pipeTool = If(Package.x264Type = x264Type.Vanilla, "avs2pipemody4m", "none")
+                    pipeTool = If(Package.x264Type <> x264Type.Vanilla, "none", If(FrameServerHelp.GetAviSynthPipeTool() = "ffmpeg", "ffmpegy4m", "avs2pipemody4m"))
                 ElseIf p.Script.IsVapourSynth Then
                     pipeTool = If(Package.x264Type = x264Type.Vanilla, "vspipey4m", "none")
                 End If
@@ -1417,7 +1416,7 @@ Public Class x264Params
             End If
 
             If (Mode.Value = x264RateMode.ThreePass AndAlso pass <> 2) OrElse (Mode.Value = x264RateMode.TwoPass AndAlso pass = 1) Then
-                sb.Append(" --output NUL")
+                sb.Append(" --output /dev/null")
             Else
                 sb.Append(" --output " + (targetPath.DirAndBase + chunkName + targetPath.ExtFull).Escape)
             End If

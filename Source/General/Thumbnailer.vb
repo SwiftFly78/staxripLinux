@@ -1,7 +1,4 @@
-﻿Imports System.Collections.Concurrent
-Imports System.Drawing.Drawing2D
-Imports System.Drawing.Imaging
-Imports System.Drawing.Text
+Imports System.Collections.Concurrent
 Imports System.Globalization
 Imports System.Text
 Imports System.Threading
@@ -85,28 +82,24 @@ Public Class Thumbnailer
         Dim spacerPercent = Mathf.Clamp(settings.GetInt("SpacerPercent", 20), 0, 1000)
         Dim spacer = CInt(thumbWidth / 10.0F * (spacerPercent / 100.0F))
 
-        Dim timestampFontName = settings.GetString("TimestampFontName", FontManager.GetThumbnailFont().Name)
+        Dim timestampFontName = settings.GetString("TimestampFontName", FontManager.GetThumbnailFont().FamilyName)
         Dim timestampFontSizePercent = Mathf.Clamp(settings.GetInt("TimestampFontSizePercent", 100), 10, 1000)
         Dim timestampFontSize = (thumbWidth / 20.0F) * (timestampFontSizePercent / 100.0F)
-        Dim timestampFont = FontManager.GetFont(FontCategory.Thumbnail, timestampFontName, timestampFontSize, FontStyle.Regular, GraphicsUnit.Pixel)
         Dim timestampFontColorValue = settings.GetString("TimestampFontColor", New ColorHSL(0, 0, 0.9, 1).ToHTML())
         Dim timestampFontColor = timestampFontColorValue.ToColor(New ColorHSL(0, 0, 0.9, 1))
         Dim timestampOutlineColorValue = settings.GetString("TimestampOutlineColor", New ColorHSL(0, 0, 0.1, 1).ToHTML())
         Dim timestampOutlineColor = timestampOutlineColorValue.ToColor(New ColorHSL(0, 0, 0.1, 1))
         Dim timestampOutlineStrengthPercent = Mathf.Clamp(settings.GetInt("TimestampOutlineStrengthPercent", 100), 0, 1000)
-        Dim timestampOutlineStrength = (timestampFont.Height / 6.0F) * (timestampOutlineStrengthPercent / 100.0F)
+        Dim timestampOutlineStrength = (timestampFontSize / 8.0F) * (timestampOutlineStrengthPercent / 100.0F)
 
         Dim timestampAlignmentValue = settings.GetString("TimestampAlignment")
         Dim timestampAlignment As ContentAlignment = Nothing
         If Not [Enum].TryParse(timestampAlignmentValue, timestampAlignment) Then timestampAlignment = ContentAlignment.BottomLeft
         Dim timestampAlignmentLeftFlags = {ContentAlignment.BottomLeft, ContentAlignment.MiddleLeft, ContentAlignment.TopLeft}
         Dim timestampAlignmentCenterFlags = {ContentAlignment.BottomCenter, ContentAlignment.MiddleCenter, ContentAlignment.TopCenter}
-        Dim timestampAlignmentRightFlags = {ContentAlignment.BottomRight, ContentAlignment.MiddleRight, ContentAlignment.TopRight}
         Dim timestampAlignmentTopFlags = {ContentAlignment.TopLeft, ContentAlignment.TopCenter, ContentAlignment.TopRight}
         Dim timestampAlignmentMiddleFlags = {ContentAlignment.MiddleLeft, ContentAlignment.MiddleCenter, ContentAlignment.MiddleRight}
-        Dim timestampAlignmentBottomFlags = {ContentAlignment.BottomLeft, ContentAlignment.BottomCenter, ContentAlignment.BottomRight}
-        Dim timestampAlignmentMargin = New Size(2, 2)
-        timestampAlignmentMargin.Width = CInt(timestampAlignmentMargin.Width * dar)
+        Dim timestampAlignmentMargin = New Size(CInt(thumbWidth / 100.0F * dar), CInt(thumbHeight / 100.0F))
 
         Dim imageWidth = (spacer + thumbWidth) * columns + spacer
         Dim imageBackColorValue = settings.GetString("ImageBackColor", defaultImageBackColor.ToHTML())
@@ -115,10 +108,9 @@ Public Class Thumbnailer
         Dim header = settings.GetBool("Header", True)
         Dim headerBackColorValue = settings.GetString("HeaderBackColor", defaultImageBackColor.ToHTML())
         Dim headerBackColor = headerBackColorValue.ToColor(defaultImageBackColor)
-        Dim headerFontName = settings.GetString("HeaderFontName", FontManager.GetThumbnailFont().Name)
+        Dim headerFontName = settings.GetString("HeaderFontName", FontManager.GetThumbnailFont().FamilyName)
         Dim headerFontSizePercent = Mathf.Clamp(settings.GetInt("HeaderFontSizePercent", 100), 10, 1000)
         Dim headerFontSize = (thumbWidth / 25.0F) * (columns / 4.0F) * (headerFontSizePercent / 100.0F)
-        Dim headerFont = FontManager.GetFont(FontCategory.Thumbnail, headerFontName, headerFontSize, FontStyle.Regular, GraphicsUnit.Pixel)
         Dim headerFontColorValue = settings.GetString("HeaderFontColor", New ColorHSL(0, 0, 0.8, 1).ToHTML())
         Dim headerFontColor = headerFontColorValue.ToColor(New ColorHSL(0, 0, 0.8, 1))
 
@@ -127,20 +119,16 @@ Public Class Thumbnailer
 
         Dim imageFileFormat = settings.GetString("ImageFileFormat", "jpg").ToLowerEx()
         Dim imageQuality = Mathf.Clamp(settings.GetInt("ImageQuality", 70), 1, 100)
-        Dim imageFormatGuid As Guid = Nothing
-        If imageFileFormat = "bmp" Then imageFormatGuid = ImageFormat.Bmp.Guid
-        If imageFileFormat = "gif" Then imageFormatGuid = ImageFormat.Gif.Guid
-        If imageFileFormat = "jpg" Then imageFormatGuid = ImageFormat.Jpeg.Guid
-        If imageFileFormat = "png" Then imageFormatGuid = ImageFormat.Png.Guid
-        If imageFileFormat = "tif" Then imageFormatGuid = ImageFormat.Tiff.Guid
-        If imageFormatGuid = Nothing Then
-            imageFileFormat = "jpg"
-            imageFormatGuid = ImageFormat.Jpeg.Guid
-        End If
+        Dim imageFormat As ImageFormat
 
-        Dim imageEPs = New EncoderParameters(1)
-        imageEPs.Param(0) = New EncoderParameter(Imaging.Encoder.Quality, imageQuality)
-        Dim imageCI = ImageCodecInfo.GetImageEncoders.Where(Function(arg) arg.FormatID = imageFormatGuid).FirstOrDefault
+        Select Case imageFileFormat
+            Case "bmp" : imageFormat = ImageFormat.Bitmap
+            Case "png" : imageFormat = ImageFormat.Png
+            Case "tif" : imageFormat = ImageFormat.Tiff
+            Case Else
+                imageFileFormat = "jpg"
+                imageFormat = ImageFormat.Jpeg
+        End Select
 
         Dim imageFilePathWithoutExtension = settings.GetString("ImageFilePathWithoutExtension", "")
         Dim imageFilePath = Macro.Expand(
@@ -149,21 +137,22 @@ Public Class Thumbnailer
                             ) + "." + imageFileFormat
 
         Dim headerInfo = Await headerInfoTask
-        Dim headerNearText = headerInfo.NearSide
-        Dim headerFarText = headerInfo.FarSide
+        Dim headerNearText = If(headerInfo?.NearSide, "")
 
-        Dim headerNextSize As Size
-        Dim headerFarSize As Size
-        Using tempBitmap = New Bitmap(1, 1)
-            Using tempGraphics = Graphics.FromImage(tempBitmap)
-                headerNextSize = tempGraphics.MeasureString(headerNearText, headerFont).ToSize()
-                headerFarSize = tempGraphics.MeasureString(headerFarText, headerFont).ToSize()
-            End Using
-        End Using
-        Dim headerHeight = Math.Max(headerNextSize.Height, headerFarSize.Height)
+        'fonts are measured in pixels, Eto font sizes are in points
+        Dim headerFont As Font = Nothing
+        Dim timestampFont As Font = Nothing
+        Dim headerHeight = 0
+
+        UIInvoke(Sub()
+                     headerFont = FontManager.GetFont(FontCategory.Thumbnail, headerFontName, headerFontSize * 0.75F)
+                     timestampFont = FontManager.GetFont(FontCategory.Thumbnail, timestampFontName, timestampFontSize * 0.75F)
+                     headerHeight = CInt(Math.Ceiling(headerFont.MeasureString(headerNearText).Height))
+                 End Sub)
 
         Dim frames = MediaInfo.GetVideo(pSourcePath, "FrameCount").ToInt()
         Dim calculatedRows = If(rowMode = ThumbnailerRowMode.TimeInterval AndAlso interval > 0, CInt((MediaInfo.GetGeneral(pSourcePath, "Duration").ToInt() / 1000 / interval) / columns), rows)
+        calculatedRows = Math.Max(1, calculatedRows)
         Dim thumbCount = columns * calculatedRows
         Dim thumbVerticalOffset = spacer + headerHeight + headerSeparatorHeight + spacer
         If Not header Then thumbVerticalOffset = spacer
@@ -176,99 +165,86 @@ Public Class Thumbnailer
 
         pToken.ThrowIfCancellationRequested()
 
-        Dim frameServerLock As New Object()
-        Dim graphicsLock As New Object()
-        Using image = New Bitmap(imageWidth, imageHeight, PixelFormat.Format32bppPArgb)
-            Using imageGraphics = Graphics.FromImage(image)
-                imageGraphics.InterpolationMode = InterpolationMode.HighQualityBicubic
-                imageGraphics.TextRenderingHint = TextRenderingHint.AntiAlias
-                imageGraphics.SmoothingMode = SmoothingMode.AntiAlias
-                imageGraphics.PixelOffsetMode = PixelOffsetMode.HighQuality
-                imageGraphics.Clear(imageBackColor)
+        'the frames are requested in the background, drawing happens on the UI thread
+        Dim thumbs(thumbCount - 1) As FrameData
+        Dim timestamps(thumbCount - 1) As String
 
-                Dim drawHeaderTask As Task = Task.CompletedTask
-                If header Then
-                    drawHeaderTask = Task.Run(
-                        Sub()
-                            If headerBackColor <> imageBackColor Then
-                                Using brush As New SolidBrush(headerBackColor)
-                                    SyncLock graphicsLock
-                                        Dim rect = New Rectangle()
-                                        imageGraphics.FillRectangle(brush, headerRect.X, headerRect.Y, headerRect.Width, headerRect.Height + headerSeparatorHeight)
-                                    End SyncLock
-                                End Using
-                            End If
+        Using frameServer = FrameServerFactory.Create(script.Path)
+            If frameServer Is Nothing Then Return False
 
-                            SyncLock graphicsLock
-                                TextRenderer.DrawText(imageGraphics, headerNearText, headerFont, New Point(CInt(headerRect.Location.X), CInt(headerRect.Location.Y)), headerFontColor)
-                            End SyncLock
-                        End Sub,
-                        pToken
-                    )
-                End If
-
-                Using frameServer = FrameServerFactory.Create(script.Path)
-                    Parallel.For(0, thumbCount, New ParallelOptions() With {.CancellationToken = pToken, .MaxDegreeOfParallelism = 4},
-                    Sub(x)
-                        Dim serverPos = CInt((frames / thumbCount) * (x + 1)) - CInt((frames / thumbCount) / 2)
-                        Dim bitmap As Bitmap = Nothing
-
-                        SyncLock frameServerLock
-                            Dim stride As Integer
-                            Dim data As IntPtr
-                            If frameServer.GetFrame(serverPos, data, stride) = 0 Then
-                                bitmap = New Bitmap(frameServer.Info.Width, frameServer.Info.Height, stride, PixelFormat.Format32bppPArgb, data)
-                            End If
-                        End SyncLock
-
-                        If bitmap Is Nothing Then Return
-
-                        Using graph = Graphics.FromImage(bitmap)
-                            graph.InterpolationMode = InterpolationMode.HighQualityBicubic
-                            graph.TextRenderingHint = TextRenderingHint.AntiAlias
-                            graph.SmoothingMode = SmoothingMode.AntiAlias
-                            graph.PixelOffsetMode = PixelOffsetMode.HighQuality
-
-                            Dim timestamp = g.GetTimeString(serverPos / frameServer.FrameRate)
-
-                            Using gp As New GraphicsPath()
-                                Dim timestampSize = TextRenderer.MeasureText(timestamp, timestampFont)
-                                Dim timestampPositionX = If(timestampAlignmentLeftFlags.Contains(timestampAlignment), timestampAlignmentMargin.Width, If(timestampAlignmentCenterFlags.Contains(timestampAlignment), (bitmap.Width - timestampSize.Width) \ 2, bitmap.Width - timestampAlignmentMargin.Width - timestampSize.Width \ 2))
-                                Dim timestampPositionY = If(timestampAlignmentTopFlags.Contains(timestampAlignment), timestampAlignmentMargin.Height, If(timestampAlignmentMiddleFlags.Contains(timestampAlignment), (bitmap.Height - timestampSize.Height) \ 2, bitmap.Height - timestampAlignmentMargin.Height - timestampSize.Height \ 2))
-                                Dim timestampPosition = New Point(timestampPositionX, timestampPositionY)
-
-                                Using Format = New StringFormat()
-                                    gp.AddString(timestamp, timestampFont.FontFamily, timestampFont.Style, timestampFont.Size, timestampPosition, Format)
-                                End Using
-
-                                Using pen = New Pen(timestampOutlineColor, timestampOutlineStrength)
-                                    graph.DrawPath(pen, gp)
-                                End Using
-
-                                Using brush = New SolidBrush(timestampFontColor)
-                                    graph.FillPath(brush, gp)
-                                End Using
-                            End Using
-                        End Using
-
-                        Dim rowPos = x \ columns
-                        Dim columnPos = x Mod columns
-
-                        SyncLock graphicsLock
-                            imageGraphics.DrawImage(bitmap, spacer + columnPos * (thumbWidth + spacer), thumbVerticalOffset + rowPos * (thumbHeight + spacer))
-                        End SyncLock
-
-                        bitmap.Dispose()
-                    End Sub
-                )
-                End Using
-
-                If header Then Await drawHeaderTask
-            End Using
-
-            pToken.ThrowIfCancellationRequested()
-            image.Save(imageFilePath, imageCI, imageEPs)
+            For x = 0 To thumbCount - 1
+                pToken.ThrowIfCancellationRequested()
+                Dim serverPos = CInt((frames / thumbCount) * (x + 1)) - CInt((frames / thumbCount) / 2)
+                serverPos = Math.Max(0, Math.Min(serverPos, frameServer.Info.FrameCount - 1))
+                thumbs(x) = FrameData.Create(frameServer, serverPos)
+                timestamps(x) = g.GetTimeString(serverPos / frameServer.FrameRate)
+            Next
         End Using
+
+        pToken.ThrowIfCancellationRequested()
+
+        UIInvoke(Sub()
+                     Using image = New Bitmap(imageWidth, imageHeight, PixelFormat.Format32bppRgb)
+                         Using imageGraphics = New Graphics(image)
+                             imageGraphics.AntiAlias = True
+                             imageGraphics.ImageInterpolation = ImageInterpolation.High
+                             imageGraphics.Clear(imageBackColor)
+
+                             If header Then
+                                 If headerBackColor <> imageBackColor Then
+                                     imageGraphics.FillRectangle(headerBackColor, headerRect.X, headerRect.Y, headerRect.Width, headerRect.Height + headerSeparatorHeight)
+                                 End If
+
+                                 imageGraphics.DrawText(headerFont, headerFontColor, headerRect.X, headerRect.Y, headerNearText)
+                             End If
+
+                             For x = 0 To thumbCount - 1
+                                 Dim frame = thumbs(x)
+
+                                 If frame Is Nothing Then
+                                     Continue For
+                                 End If
+
+                                 Dim rowPos = x \ columns
+                                 Dim columnPos = x Mod columns
+                                 Dim left = spacer + columnPos * (thumbWidth + spacer)
+                                 Dim top = thumbVerticalOffset + rowPos * (thumbHeight + spacer)
+
+                                 Using thumb = FrameHelp.CreateBitmap(frame)
+                                     imageGraphics.DrawImage(thumb, left, top, thumbWidth, thumbHeight)
+                                 End Using
+
+                                 Dim timestamp = timestamps(x)
+                                 Dim timestampSize = timestampFont.MeasureString(timestamp)
+                                 Dim tx = If(timestampAlignmentLeftFlags.Contains(timestampAlignment), timestampAlignmentMargin.Width,
+                                     If(timestampAlignmentCenterFlags.Contains(timestampAlignment), (thumbWidth - timestampSize.Width) / 2, thumbWidth - timestampAlignmentMargin.Width - timestampSize.Width))
+                                 Dim ty = If(timestampAlignmentTopFlags.Contains(timestampAlignment), timestampAlignmentMargin.Height,
+                                     If(timestampAlignmentMiddleFlags.Contains(timestampAlignment), (thumbHeight - timestampSize.Height) / 2, thumbHeight - timestampAlignmentMargin.Height - timestampSize.Height))
+
+                                 tx += left
+                                 ty += top
+
+                                 'outline drawn with offset copies of the text
+                                 If timestampOutlineStrength > 0 Then
+                                     Dim o = Math.Max(1.0F, timestampOutlineStrength)
+
+                                     For Each offset In {New PointF(-o, 0), New PointF(o, 0), New PointF(0, -o), New PointF(0, o),
+                                                         New PointF(-o, -o), New PointF(o, o), New PointF(-o, o), New PointF(o, -o)}
+                                         imageGraphics.DrawText(timestampFont, timestampOutlineColor, CSng(tx) + offset.X, CSng(ty) + offset.Y, timestamp)
+                                     Next
+                                 End If
+
+                                 imageGraphics.DrawText(timestampFont, timestampFontColor, CSng(tx), CSng(ty), timestamp)
+                             Next
+                         End Using
+
+                         If imageFormat = ImageFormat.Jpeg Then
+                             ImageHelp.SaveJpeg(image, imageFilePath, imageQuality)
+                         Else
+                             ImageHelp.Save(image, imageFilePath, imageFormat)
+                         End If
+                     End Using
+                 End Sub)
 
         Return True
     End Function
@@ -290,9 +266,9 @@ Public Class Thumbnailer
                     .Path = scriptFilePath
                 }
 
-                script.Filters.Add(New VideoFilter($"clip = core.ffms2.Source(r""{filePath}"", cachefile=r""{cacheFilePath}"", cache=False)"))
+                script.Filters.Add(New VideoFilter($"clip = core.ffms2.Source({VideoScript.ToPythonString(filePath)}, cachefile={VideoScript.ToPythonString(cacheFilePath)}, cache=False)"))
 
-                If size <> Size.Empty Then
+                If size.Width > 0 AndAlso size.Height > 0 Then
                     script.Filters.Add(New VideoFilter($"clip = core.resize.Spline64(clip, {size.Width},{size.Height})"))
                 End If
 
@@ -425,3 +401,16 @@ Public Class Thumbnailer
         Property FarSide As String
     End Class
 End Class
+
+'positions like the WinForms ContentAlignment enum, stored as text in the thumbnailer settings
+Public Enum ContentAlignment
+    TopLeft = 1
+    TopCenter = 2
+    TopRight = 4
+    MiddleLeft = 16
+    MiddleCenter = 32
+    MiddleRight = 64
+    BottomLeft = 256
+    BottomCenter = 512
+    BottomRight = 1024
+End Enum

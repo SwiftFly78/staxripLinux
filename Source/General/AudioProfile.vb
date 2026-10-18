@@ -1,4 +1,4 @@
-﻿
+
 Imports System.Text.RegularExpressions
 Imports System.Text
 
@@ -454,20 +454,21 @@ Public MustInherit Class AudioProfile
         Return ExpandMacros(value, True)
     End Function
 
-    Function ExpandMacros(value As String, silent As Boolean) As String
+    'shell expands a command line that runs in /bin/sh
+    Function ExpandMacros(value As String, silent As Boolean, Optional shell As Boolean = False) As String
         If value = "" Then Return ""
-        If value.Contains("%input%") Then value = value.Replace("%input%", File.Escape)
-        If value.Contains("%output%") Then value = value.Replace("%output%", GetOutputFile.Escape)
+        If value.Contains("%input%") Then value = value.Replace("%input%", Macro.Protect(If(shell, File, File.Escape), shell))
+        If value.Contains("%output%") Then value = value.Replace("%output%", Macro.Protect(If(shell, GetOutputFile, GetOutputFile.Escape), shell))
         If value.Contains("%bitrate%") Then value = value.Replace("%bitrate%", Bitrate.ToString)
         If value.Contains("%channels%") Then value = value.Replace("%channels%", Channels.ToString)
         If value.Contains("%delay%") Then value = value.Replace("%delay%", Delay.ToString)
-        If value.Contains("%language%") Then value = value.Replace("%language%", Language.Name)
-        If value.Contains("%language_english%") Then value = value.Replace("%language_english%", Language.EnglishName)
-        If value.Contains("%language_native%") Then value = value.Replace("%language_native%", Language.CultureInfo.NativeName)
+        If value.Contains("%language%") Then value = value.Replace("%language%", Macro.Protect(Language.Name, shell))
+        If value.Contains("%language_english%") Then value = value.Replace("%language_english%", Macro.Protect(Language.EnglishName, shell))
+        If value.Contains("%language_native%") Then value = value.Replace("%language_native%", Macro.Protect(Language.CultureInfo.NativeName, shell))
         If value.Contains("%streamid0%") AndAlso Stream IsNot Nothing Then value = value.Replace("%streamid0%", (Stream?.ID - 1)?.ToString)
         If value.Contains("%streamid1%") Then value = value.Replace("%streamid1%", Stream?.ID.ToString)
 
-        Return Macro.Expand(value)
+        Return If(shell, Macro.ExpandShell(value), Macro.Expand(value))
     End Function
 
     Shared Function GetDefaults() As List(Of AudioProfile)
@@ -522,12 +523,12 @@ Public Class BatchAudioProfile
             Dim bitrateBefore = p.VideoBitrate
             Dim targetPath = GetOutputFile()
 
-            For Each line In Macro.Expand(GetCode).SplitLinesNoEmpty
+            'the lines are split before the expansion, file names can contain line breaks
+            For Each line In CommandLines.SplitLinesNoEmpty
                 Using proc As New Proc
                     proc.Header = "Audio Encoding: " + Name
                     proc.SkipStrings = Proc.GetSkipStrings(CommandLines)
-                    proc.File = "cmd.exe"
-                    proc.Arguments = "/S /C """ + line + """"
+                    proc.SetShellCommand(ExpandMacros(line, True, True).Trim)
 
                     Try
                         proc.Start()
@@ -913,8 +914,7 @@ Public Class GUIAudioProfile
                 proc.Header = "Audio Encoding " & (GetTrackIndex() + 1)
 
                 If cl.Contains("|") Then
-                    proc.File = "cmd.exe"
-                    proc.Arguments = "/S /C """ + cl + """"
+                    proc.SetShellCommand(cl)
                 Else
                     proc.CommandLine = cl
                 End If
@@ -985,7 +985,7 @@ Public Class GUIAudioProfile
                 Params.ffmpegLoudnormLRA.ToInvariantString + ":print_format=summary"
         End If
 
-        args += " -f null NUL"
+        args += " -f null -"
 
         Using proc As New Proc
             proc.Header = "Find Gain " & (GetTrackIndex() + 1)
@@ -1077,7 +1077,8 @@ Public Class GUIAudioProfile
                 End If
             Case GuiAudioEncoder.Automatic
                 If Params.Codec = AudioCodec.AAC Then
-                    Return GuiAudioEncoder.qaac
+                    'qaac isn't available on Linux
+                    Return If(Package.fdkaac.Path <> "", GuiAudioEncoder.fdkaac, GuiAudioEncoder.ffmpeg)
                 ElseIf Params.Codec = AudioCodec.AC4 Then
                     Return GuiAudioEncoder.deezy
                 ElseIf Params.Codec = AudioCodec.Opus Then
@@ -1262,6 +1263,9 @@ Public Class GUIAudioProfile
 
         If Params.SimpleRateMode = SimpleAudioRateMode.CBR Then
             sb.Append(" --bitrate " & CInt(Bitrate))
+        ElseIf Params.Encoder = GuiAudioEncoder.Automatic Then
+            'the quality of automatic mode uses the qaac scale
+            sb.Append(" --bitrate " & GetBitrate())
         Else
             sb.Append(" --bitrate-mode " & Params.Quality)
         End If
@@ -1608,6 +1612,9 @@ Public Class GUIAudioProfile
 
                     If Params.RateMode = SimpleAudioRateMode.CBR Then
                         sb.Append(" -b:a " & CInt(Bitrate) & "k")
+                    ElseIf Params.Encoder = GuiAudioEncoder.Automatic Then
+                        'the quality of automatic mode uses the qaac scale
+                        sb.Append(" -b:a " & GetBitrate() & "k")
                     Else
                         sb.Append(" -q:a " & CInt(Params.Quality))
                     End If

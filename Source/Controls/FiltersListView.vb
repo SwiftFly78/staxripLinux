@@ -1,5 +1,4 @@
-﻿
-Imports System.ComponentModel
+
 
 Imports StaxRip.UI
 
@@ -13,20 +12,15 @@ Public Class FiltersListView
     Event Changed()
 
     Sub New()
-        AllowDrop = True
-        Anchor = AnchorStyles.Top Or AnchorStyles.Bottom Or AnchorStyles.Left Or AnchorStyles.Right
         CheckBoxes = True
         View = View.Details
         HideSelection = False
         FullRowSelect = True
         MultiSelect = False
         HeaderStyle = ColumnHeaderStyle.None
-        Columns.Add("")
         Columns.Add("Type")
         Columns.Add("Name")
-        Menu.Font = FontManager.GetDefaultFont()
         ContextMenuStrip = Menu
-        HideFocusRectange()
         AddHandler VideoScript.Changed, Sub(script As VideoScript)
                                             If p.Script IsNot Nothing AndAlso script Is p.Script Then
                                                 OnChanged()
@@ -34,7 +28,7 @@ Public Class FiltersListView
                                         End Sub
     End Sub
 
-    Sub Load()
+    Shadows Sub Load()
         g.MainForm.lgbFilters.Text = If(p.Script.IsAviSynth, "AVS Filters", "VS Filters")
 
         BlockItemCheck = True
@@ -42,18 +36,9 @@ Public Class FiltersListView
         BeginUpdate()
 
         For Each filter In p.Script.Filters
-            Dim item As New ListViewItem
+            Dim item As New ListViewItem({filter.Category, If(filter.Name = "", filter.Script, filter.Name)})
             item.Tag = filter
             item.Checked = filter.Active
-            item.SubItems.Add(filter.Category)
-
-            If filter.Name = "" Then
-                item.SubItems.Add(filter.Script)
-            Else
-                item.SubItems.Add(filter.Name)
-            End If
-
-            item.SubItems.Add(filter.Script)
             Items.Add(item)
         Next
 
@@ -67,7 +52,7 @@ Public Class FiltersListView
         Dim filterProfiles = If(p.Script.IsAviSynth, s.AviSynthProfiles, s.VapourSynthProfiles)
         Dim selectedFunc = Function() SelectedItems.Count > 0
         Menu.Add("active").VisibleFunc = selectedFunc
-        Dim sep0 = New ToolStripSeparator
+        Dim sep0 = New SeparatorMenuItem
         Menu.Items.Add(sep0)
 
         Dim replaceMenuItem = Menu.Add("Replace")
@@ -125,7 +110,7 @@ Public Class FiltersListView
         setup.SetImage(Symbol.MultiSelect)
         g.PopulateProfileMenu(setup.DropDownItems, s.FilterSetupProfiles, AddressOf g.MainForm.ShowFilterSetupProfilesDialog, AddressOf g.MainForm.LoadFilterSetup)
 
-        Dim a = Sub(sender As Object, e As CancelEventArgs)
+        Dim a = Sub(sender As Object, e As EventArgs)
                     Dim active = DirectCast(Menu.Items(0), MenuItemEx)
                     active.DropDownItems.ClearAndDisplose
                     sep0.Visible = SelectedItems.Count > 0
@@ -272,21 +257,9 @@ Public Class FiltersListView
         OnChanged()
     End Sub
 
-    Protected Overrides Sub OnCreateControl()
-        MyBase.OnCreateControl()
+    Protected Overrides Sub OnSizeChanged(e As EventArgs)
+        MyBase.OnSizeChanged(e)
         AutoResizeColumns(True)
-    End Sub
-
-    Protected Overrides Sub OnLayout(e As LayoutEventArgs)
-        MyBase.OnLayout(e)
-        AutoResizeColumns(True)
-    End Sub
-
-    Protected Overrides Sub OnDragDrop(e As DragEventArgs)
-        BlockItemCheck = True
-        MyBase.OnDragDrop(e)
-        BlockItemCheck = False
-        UpdateDocument()
     End Sub
 
     Protected Overrides Sub OnKeyDown(e As KeyEventArgs)
@@ -297,22 +270,16 @@ Public Class FiltersListView
         End If
     End Sub
 
-    Protected Overrides Sub OnItemCheck(e As ItemCheckEventArgs)
-        MyBase.OnItemCheck(e)
+    Sub FiltersListView_ItemChecked(sender As Object, e As ItemCheckedEventArgs) Handles MyBase.ItemChecked
+        If Not BlockItemCheck Then
+            Dim filter = DirectCast(e.Item.Tag, VideoFilter)
 
-        If Not BlockItemCheck AndAlso Focused Then
-            Dim filter = DirectCast(Items(e.Index).Tag, VideoFilter)
-
-            If e.NewValue = CheckState.Checked AndAlso filter.Category = "Resize" Then
-                Dim form = FindForm()
-
-                If form IsNot Nothing AndAlso TypeOf form Is MainForm Then
-                    g.MainForm.SetTargetImageSize(p.TargetWidth, 0)
-                End If
+            If e.Item.Checked AndAlso filter.Category = "Resize" AndAlso TypeOf ParentWindow Is MainForm Then
+                g.MainForm.SetTargetImageSize(p.TargetWidth, 0)
             End If
 
-            filter.Active = e.NewValue = CheckState.Checked
-            g.MainForm.BeginInvoke(Sub() OnChanged())
+            filter.Active = e.Item.Checked
+            UIBeginInvoke(Sub() OnChanged())
         End If
     End Sub
 End Class

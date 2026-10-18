@@ -1,4 +1,4 @@
-﻿
+
 Imports System.ComponentModel
 Imports System.Globalization
 Imports System.Runtime.CompilerServices
@@ -122,7 +122,7 @@ Public Class Project
     Public SourceFrameRateMode As String
     Public SourceFrames As Integer
     Public SourceHeight As Integer = 1080
-    Public SourcePAR As Point = New Point(1, 1)
+    Public SourcePAR As System.Drawing.Point = New System.Drawing.Point(1, 1)
     Public SourceScanOrder As String
     Public SourceScanType As String
     Public SourceScript As SourceVideoScript
@@ -323,32 +323,19 @@ Public Class Project
                 .Category = "Subtitle",
                 .Path = path.FileName,
                 .Active = True,
-                .Script = filterName + "(""" + path + """)"
+                .Script = filterName + "(" + VideoScript.ToAviSynthString(path) + ")"
             }
             Dim insertCat = If(p.Script.IsFilterActive("Crop"), "Crop", "Source")
             Script.InsertAfter(insertCat, filter)
         Else
             Dim filterName As String
 
+            'VSFilterMod is not available on Linux, SubText renders all formats
             Select Case path.Ext
-                Case "idx"
-                    filterName = "core.vsfm.VobSub"
-                Case "srt"
-                    filterName = "core.vsfm.TextSubMod"
-                Case "ass"
-                    Using td As New TaskDialog(Of String)
-                        td.Title = "Please select an ASS renderer"
-                        td.AddCommand("core.vsfm.TextSubMod")
-                        td.AddCommand("core.sub.TextFile")
-
-                        If td.Show <> "" Then
-                            filterName = td.SelectedValue
-                        Else
-                            Exit Sub
-                        End If
-                    End Using
-                Case "sup"
+                Case "idx", "sup"
                     filterName = "core.sub.ImageFile"
+                Case "srt", "ass"
+                    filterName = "core.sub.TextFile"
                 Case Else
                     If showErrorMsg Then MsgError("Only idx, srt, ass and sup file types are supported.")
                     Exit Sub
@@ -358,7 +345,7 @@ Public Class Project
                 .Category = "Subtitle",
                 .Path = path.FileName,
                 .Active = True,
-                .Script = "clip = " + filterName + "(clip, file = r""" + path + """)"
+                .Script = "clip = " + filterName + "(clip, file = " + VideoScript.ToPythonString(path) + ")"
             }
             Dim insertCat = If(p.Script.IsFilterActive("Crop"), "Crop", "Source")
             Script.InsertAfter(insertCat, filter)

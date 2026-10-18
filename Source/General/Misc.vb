@@ -1,17 +1,12 @@
-﻿
+
 Imports System.Collections.Concurrent
 Imports System.ComponentModel
-Imports System.Drawing.Design
-Imports System.Drawing.Imaging
 Imports System.Globalization
-Imports System.Management
 Imports System.Runtime.InteropServices
 Imports System.Runtime.Serialization
 Imports System.Text
 Imports System.Text.RegularExpressions
 Imports System.Threading.Tasks
-Imports System.Web
-Imports Microsoft.Win32
 Imports StaxRip.UI
 Imports StaxRip.VideoEncoder
 
@@ -223,9 +218,9 @@ Public Class Calc
         End If
     End Function
 
-    Private Shared Function GetSimplePar(par As Point) As Point
+    Private Shared Function GetSimplePar(par As System.Drawing.Point) As System.Drawing.Point
         If par.Y > 0 Then
-            For Each i In New Point() {New Point(12, 11), New Point(10, 11), New Point(16, 11), New Point(40, 33)}
+            For Each i In New System.Drawing.Point() {New System.Drawing.Point(12, 11), New System.Drawing.Point(10, 11), New System.Drawing.Point(16, 11), New System.Drawing.Point(40, 33)}
                 If Math.Abs((par.X / par.Y) / (i.X / i.Y) * 100 - 100) < 1 Then Return i
             Next
         End If
@@ -251,22 +246,22 @@ Public Class Calc
         Return par
     End Function
 
-    Shared Function ParseCustomAR(value As String, defaultX As Integer, defaultY As Integer) As Point
+    Shared Function ParseCustomAR(value As String, defaultX As Integer, defaultY As Integer) As System.Drawing.Point
         If value <> "" AndAlso (value.Contains(":") OrElse value.Contains("/")) Then
             Dim a = value.Split(":/".ToCharArray)
 
             If a.Length = 2 AndAlso a(0).IsInt AndAlso a(1).IsInt Then
-                Return Reduce(New Point(a(0).ToInt, a(1).ToInt))
+                Return Reduce(New System.Drawing.Point(a(0).ToInt, a(1).ToInt))
             End If
         ElseIf value.IsDouble Then
             Dim val = value.ToDouble
 
             If val > 0 Then
-                Return Reduce(New Point(CInt(val * 1000000), 1000000))
+                Return Reduce(New System.Drawing.Point(CInt(val * 1000000), 1000000))
             End If
         End If
 
-        Return New Point(defaultX, defaultY)
+        Return New System.Drawing.Point(defaultX, defaultY)
     End Function
 
     Shared Function GetSourceDAR() As Double
@@ -278,11 +273,11 @@ Public Class Calc
         End Try
     End Function
 
-    Shared Function GetSimpleSourcePAR() As Point
+    Shared Function GetSimpleSourcePAR() As System.Drawing.Point
         Return GetSimplePar(GetSourcePAR)
     End Function
 
-    Shared Function GetSourcePAR() As Point
+    Shared Function GetSourcePAR() As System.Drawing.Point
         If p.CustomSourcePAR <> "" Then
             Dim val = ParseCustomAR(p.CustomSourcePAR, 0, 0)
 
@@ -295,11 +290,11 @@ Public Class Calc
             Dim val = ParseCustomAR(p.CustomSourceDAR, 0, 0)
 
             If val.X <> 0 Then
-                Return Reduce(New Point(p.SourceHeight * val.X, p.SourceWidth * val.Y))
+                Return Reduce(New System.Drawing.Point(p.SourceHeight * val.X, p.SourceWidth * val.Y))
             End If
         End If
 
-        Dim par As New Point(1, 1)
+        Dim par As New System.Drawing.Point(1, 1)
         Dim w = p.SourceWidth, h = p.SourceHeight
 
         If (h = 576 OrElse h = 480) AndAlso w <= 768 Then
@@ -342,7 +337,7 @@ Public Class Calc
         Return Reduce(p.SourcePAR)
     End Function
 
-    Shared Function GetTargetPAR() As Point
+    Shared Function GetTargetPAR() As System.Drawing.Point
         Try
             If p.CustomTargetPAR <> "" Then
                 Dim val = ParseCustomAR(p.CustomTargetPAR, 0, 0)
@@ -365,12 +360,12 @@ Public Class Calc
                 Dim val = ParseCustomAR(p.CustomTargetDAR, 0, 0)
 
                 If val.X <> 0 Then
-                    Return Reduce(New Point(CInt(val.X * croppedHeight), CInt(val.Y * croppedWidth)))
+                    Return Reduce(New System.Drawing.Point(CInt(val.X * croppedHeight), CInt(val.Y * croppedWidth)))
                 End If
             End If
 
             If p.TargetWidth <> croppedWidth OrElse p.TargetHeight <> croppedHeight Then
-                Dim par2 = Reduce(New Point(croppedWidth * p.TargetHeight, croppedHeight * p.TargetWidth))
+                Dim par2 = Reduce(New System.Drawing.Point(croppedWidth * p.TargetHeight, croppedHeight * p.TargetWidth))
                 par.X = par.X * par2.X
                 par.Y = par.Y * par2.Y
                 par = Reduce(par)
@@ -378,7 +373,7 @@ Public Class Calc
 
             Return GetSimplePar(par)
         Catch ex As Exception
-            Return New Point(1, 1)
+            Return New System.Drawing.Point(1, 1)
         End Try
     End Function
 
@@ -415,7 +410,7 @@ Public Class Calc
         Return ((p.TargetWidth / p.TargetHeight) / Calc.GetTargetDAR) * 100 - 100
     End Function
 
-    Shared Function Reduce(p As Point) As Point
+    Shared Function Reduce(p As System.Drawing.Point) As System.Drawing.Point
         If p.X <> 0 AndAlso p.Y <> 0 Then
             Dim gcd = GetGCD(p.X, p.Y)
             p.X \= gcd
@@ -555,109 +550,68 @@ Public Structure VideoFormat
     Public SamplingRate As Double
 End Structure
 
-Public Class RtfBuilder
-    Private ReadOnly _colors As New Dictionary(Of Color, Integer)
-    Private ReadOnly _colorTable As New List(Of Color)
-    Private ReadOnly _sb As New StringBuilder(2048)
-
-    Public Sub New()
-    End Sub
-
-    Public Function AddColor(c As Color) As Integer
-        If Not _colors.ContainsKey(c) Then
-            _colors(c) = _colorTable.Count + 1
-            _colorTable.Add(c)
-        End If
-
-        Return _colors(c)
-    End Function
-
-    Public Sub AppendText(text As String, colorIndex As Integer, Optional bold As Boolean = False)
-        If bold Then _sb.Append("\b")
-        _sb.Append("\cf").Append(colorIndex).Append(" ")
-        _sb.Append(Escape(text))
-        If bold Then _sb.Append("\b0")
-    End Sub
-
-    Public Function Build(font As Font) As String
-        Dim rtf As New StringBuilder(4096)
-
-        rtf.Append("{\rtf1\ansi\deff0")
-        rtf.Append("{\fonttbl{\f0\fnil ").Append(font.Name).Append(";}}")
-
-        rtf.Append("{\colortbl;")
-        For Each c In _colorTable
-            rtf.Append("\red").Append(c.R)
-            rtf.Append("\green").Append(c.G)
-            rtf.Append("\blue").Append(c.B).Append(";")
-        Next
-        rtf.Append("}")
-
-        rtf.Append("\f0\fs").Append(CInt(font.SizeInPoints * 2)).Append(" ")
-        rtf.Append(_sb)
-        rtf.Append("}")
-
-        Return rtf.ToString()
-    End Function
-
-    Private Shared Function Escape(text As String) As String
-        Return text _
-            .Replace("\", "\\") _
-            .Replace("{", "\{") _
-            .Replace("}", "\}") _
-            .Replace(Microsoft.VisualBasic.vbCrLf, "\line ") _
-            .Replace(Microsoft.VisualBasic.vbLf, "\line ")
-    End Function
-End Class
-
-<Serializable()>
+'culture with custom names, used for languages that .NET doesn't know
 Public Class CustomCultureInfo
     Inherits CultureInfo
-    Implements IDeserializationCallback
 
-    Private _name As String
-    Private _displayName As String
-    Private _twoLetterCode As String
-    Private _threeLetterCode As String
-
-    Protected Sub New(baseCultureName As String)
-        MyBase.New(baseCultureName)
-    End Sub
+    Private ReadOnly _name As String
+    Private ReadOnly _displayName As String
+    Private ReadOnly _twoLetterCode As String
+    Private ReadOnly _threeLetterCode As String
 
     Public Sub New(baseCultureName As String, name As String, displayName As String, twoLetterCode As String, threeLetterCode As String)
-        MyBase.New(baseCultureName)
+        MyBase.New(GetBaseName(baseCultureName))
 
         _name = name
         _displayName = displayName
-        _twoLetterCode = _twoLetterCode
+        _twoLetterCode = twoLetterCode
         _threeLetterCode = threeLetterCode
-
-        PatchInternals()
     End Sub
 
-    Public Sub OnDeserialization(sender As Object) Implements IDeserializationCallback.OnDeserialization
-        PatchInternals()
-    End Sub
+    Shared Function GetBaseName(name As String) As String
+        Try
+            Dim ci = New CultureInfo(name)
+            Return name
+        Catch
+            Return name.Split("-"c)(0)
+        End Try
+    End Function
 
-    Private Sub PatchInternals()
-        Dim cultureField = GetType(CultureInfo).GetField("m_name", Reflection.BindingFlags.NonPublic Or Reflection.BindingFlags.Instance)
-        cultureField?.SetValue(Me, _name)
+    Public Overrides ReadOnly Property Name As String
+        Get
+            Return _name
+        End Get
+    End Property
 
-        Dim displayNameField = GetType(CultureInfo).GetField("m_cultureData", Reflection.BindingFlags.NonPublic Or Reflection.BindingFlags.Instance)
-        If displayNameField IsNot Nothing Then
-            Dim cultureData = displayNameField.GetValue(Me)
-            Dim displayNameProp = cultureData.GetType().GetField("sLocalizedDisplayName", Reflection.BindingFlags.NonPublic Or Reflection.BindingFlags.Instance)
-            displayNameProp?.SetValue(cultureData, _displayName)
-            displayNameProp = cultureData.GetType().GetField("sEnglishDisplayName", Reflection.BindingFlags.NonPublic Or Reflection.BindingFlags.Instance)
-            displayNameProp?.SetValue(cultureData, _displayName)
-            displayNameProp = cultureData.GetType().GetField("sISO639Language", Reflection.BindingFlags.NonPublic Or Reflection.BindingFlags.Instance)
-            displayNameProp?.SetValue(cultureData, _twoLetterCode)
-            displayNameProp = cultureData.GetType().GetField("sISO639Language2", Reflection.BindingFlags.NonPublic Or Reflection.BindingFlags.Instance)
-            displayNameProp?.SetValue(cultureData, _threeLetterCode)
-            displayNameProp = cultureData.GetType().GetField("sName", Reflection.BindingFlags.NonPublic Or Reflection.BindingFlags.Instance)
-            displayNameProp?.SetValue(cultureData, _name)
-        End If
-    End Sub
+    Public Overrides ReadOnly Property DisplayName As String
+        Get
+            Return _displayName
+        End Get
+    End Property
+
+    Public Overrides ReadOnly Property EnglishName As String
+        Get
+            Return _displayName
+        End Get
+    End Property
+
+    Public Overrides ReadOnly Property NativeName As String
+        Get
+            Return _displayName
+        End Get
+    End Property
+
+    Public Overrides ReadOnly Property TwoLetterISOLanguageName As String
+        Get
+            Return _twoLetterCode
+        End Get
+    End Property
+
+    Public Overrides ReadOnly Property ThreeLetterISOLanguageName As String
+        Get
+            Return _threeLetterCode
+        End Get
+    End Property
 End Class
 
 <Serializable()>
@@ -720,7 +674,39 @@ Public Class Language
         End Try
     End Sub
 
+    <NonSerialized>
     Private CultureInfoValue As CultureInfo
+
+    'CultureInfo isn't serializable on .NET, the name is serialized instead
+    Private CultureName As String
+
+    <Runtime.Serialization.OnSerializing>
+    Private Sub OnSerializing(context As Runtime.Serialization.StreamingContext)
+        CultureName = If(CultureInfoValue?.Name, "")
+    End Sub
+
+    <Runtime.Serialization.OnDeserialized>
+    Private Sub OnDeserialized(context As Runtime.Serialization.StreamingContext)
+        CultureInfoValue = GetCulture(CultureName)
+    End Sub
+
+    Shared Function GetCulture(name As String) As CultureInfo
+        If String.IsNullOrEmpty(name) Then
+            Return CultureInfo.InvariantCulture
+        End If
+
+        Dim match = Languages.FirstOrDefault(Function(x) x.CultureInfo?.Name = name)
+
+        If match IsNot Nothing Then
+            Return match.CultureInfo
+        End If
+
+        Try
+            Return New CultureInfo(name)
+        Catch
+            Return CultureInfo.InvariantCulture
+        End Try
+    End Function
 
     ReadOnly Property CultureInfo() As CultureInfo
         Get
@@ -797,9 +783,10 @@ Public Class Language
         End Get
     End Property
 
+    'ms is the delay unit in the audio file names of D2V Witch
     Shared ReadOnly Property ConfusingTwoLetterISOLanguageNames As String()
         Get
-            Return {"am", "an", "as", "be", "es", "et", "he", "hi", "in", "is", "it", "my", "no", "or", "so", "to", "yo"}
+            Return {"am", "an", "as", "be", "es", "et", "he", "hi", "in", "is", "it", "ms", "my", "no", "or", "so", "to", "yo"}
         End Get
     End Property
 
@@ -833,7 +820,7 @@ Public Class Language
                     New Language(CultureInfo.InvariantCulture, True, True)
                 }
 
-                If Not g.IsRunningUnderWine AndAlso OSVersion.VersionInfo.dwMajorVersion > 7 Then
+                If OperatingSystem.IsWindows() Then
                     l.AddRange({
                                    New Language(New CustomCultureInfo("cmn-Hans-CN", "cmn-Hans-CN", "Chinese (Mandarin, Simplified, China)", "zh", "cmn"), False, False),
                                    New Language(New CustomCultureInfo("cmn-Hant-CN", "cmn-Hant-CN", "Chinese (Mandarin, Traditional, China)", "zh", "cmn"), False, False),
@@ -902,11 +889,9 @@ Public Class Language
 End Class
 
 Public Class CommandLineTypeEditor
-    Inherits UITypeEditor
+    Implements IValueEditor
 
-    Overloads Overrides Function EditValue(context As ITypeDescriptorContext,
-                                           provider As IServiceProvider,
-                                           value As Object) As Object
+    Function EditValue(value As Object) As Object Implements IValueEditor.EditValue
         Using f As New MacroEditorDialog
             f.SetBatchDefaults()
             f.MacroEditorControl.Value = CStr(value)
@@ -918,16 +903,12 @@ Public Class CommandLineTypeEditor
             End If
         End Using
     End Function
-
-    Overloads Overrides Function GetEditStyle(context As ITypeDescriptorContext) As UITypeEditorEditStyle
-        Return UITypeEditorEditStyle.Modal
-    End Function
 End Class
 
 Public Class ScriptTypeEditor
-    Inherits UITypeEditor
+    Implements IValueEditor
 
-    Overloads Overrides Function EditValue(context As ITypeDescriptorContext, provider As IServiceProvider, value As Object) As Object
+    Function EditValue(value As Object) As Object Implements IValueEditor.EditValue
         Using f As New MacroEditorDialog
             f.SetScriptDefaults()
             f.MacroEditorControl.Value = CStr(value)
@@ -939,18 +920,12 @@ Public Class ScriptTypeEditor
             End If
         End Using
     End Function
-
-    Overloads Overrides Function GetEditStyle(context As ITypeDescriptorContext) As UITypeEditorEditStyle
-        Return UITypeEditorEditStyle.Modal
-    End Function
 End Class
 
 Public Class MacroStringTypeEditor
-    Inherits UITypeEditor
+    Implements IValueEditor
 
-    Overloads Overrides Function EditValue(context As ITypeDescriptorContext,
-                                           provider As IServiceProvider,
-                                           value As Object) As Object
+    Function EditValue(value As Object) As Object Implements IValueEditor.EditValue
         Using f As New MacroEditorDialog
             f.SetMacroDefaults()
             f.MacroEditorControl.Value = CStr(value)
@@ -962,9 +937,26 @@ Public Class MacroStringTypeEditor
             End If
         End Using
     End Function
+End Class
 
-    Overloads Overrides Function GetEditStyle(context As ITypeDescriptorContext) As UITypeEditorEditStyle
-        Return UITypeEditorEditStyle.Modal
+'value editors used by the command parameter editor
+Public Interface IValueEditor
+    Function EditValue(value As Object) As Object
+End Interface
+
+Public Class OpenFileValueEditor
+    Implements IValueEditor
+
+    Function EditValue(value As Object) As Object Implements IValueEditor.EditValue
+        Using dialog As New OpenFileDialog
+            dialog.SetInitDir(CStr(value))
+
+            If dialog.ShowDialog = DialogResult.OK Then
+                Return dialog.FileName
+            End If
+        End Using
+
+        Return value
     End Function
 End Class
 
@@ -1159,7 +1151,6 @@ Public Class AudioTrack
         End If
 
         _textEdit.Text = ""
-        _textEdit.Refresh()
     End Sub
 End Class
 
@@ -1285,13 +1276,26 @@ End Enum
 
 Public Class Startup
     <STAThread()>
-    Shared Sub Main()
+    Shared Sub Main(args As String())
         AddHandler AppDomain.CurrentDomain.UnhandledException, AddressOf g.OnUnhandledException
-        Application.EnableVisualStyles()
-        Application.SetCompatibleTextRenderingDefault(False)
+        AppContext.SetSwitch("System.Runtime.Serialization.EnableUnsafeBinaryFormatterSerialization", True)
+        NativeLibraries.Init()
+
+        'overlay scrollbars hide that pages can be scrolled
+        If Environment.GetEnvironmentVariable("GTK_OVERLAY_SCROLLING") Is Nothing Then
+            NativeLibraries.SetNativeEnvironmentVariable("GTK_OVERLAY_SCROLLING", "0")
+        End If
+
+        Dim app As New Application(Eto.Platforms.Gtk)
+        EtoHelp.InitMainThread()
+
+        'GTK opens the menu bar with F10, which StaxRip uses for the settings
+        Global.Gtk.Settings.Default.MenuBarAccel = ""
+        AddHandler app.UnhandledException, Sub(sender, e) g.OnException(TryCast(e.ExceptionObject, Exception))
+
         Dim loadSettings = g.SettingsFile.FileExists()
         If loadSettings Then g.LoadSettings()
-        Application.Run(New MainForm(Not loadSettings))
+        app.Run(New MainForm(Not loadSettings))
     End Sub
 End Class
 
@@ -1819,14 +1823,14 @@ Public Class Subtitle
             If Not FileTypes.SubtitleSingle.Contains(inSub.Path.Ext) Then args += " --subtitle-tracks " & id
             args += " " + inSub.Path.Escape
             args += " --split parts-frames:" + p.Ranges.Select(Function(v) v.Start & "-" & v.End).Join(",+")
-            args += " --ui-language en"
+            args += " --ui-language en_US"
 
             Using proc As New Proc
                 proc.Header = "Cut subtitle"
                 proc.SkipString = "Progress: "
                 proc.Encoding = Encoding.UTF8
                 proc.Package = Package.mkvmerge
-                proc.Arguments = args + " --ui-language en"
+                proc.Arguments = args + " --ui-language en_US"
                 proc.AllowedExitCodes = {0, 1, 2}
                 proc.Start()
             End Using
@@ -1845,7 +1849,7 @@ Public Class Subtitle
                 proc.SkipString = "Progress: "
                 proc.Encoding = Encoding.UTF8
                 proc.Package = Package.mkvextract
-                proc.Arguments = args + " --ui-language en"
+                proc.Arguments = args + " --ui-language en_US"
                 proc.AllowedExitCodes = {0, 1, 2}
                 proc.Start()
             End Using
@@ -1941,82 +1945,74 @@ Public Class FileTypes
     End Function
 End Class
 
-<StructLayout(LayoutKind.Sequential)>
-Public Structure OSVERSIONINFOEXW
-    Public dwOSVersionInfoSize As UInteger
-    Public dwMajorVersion As UInteger
-    Public dwMinorVersion As UInteger
-    Public dwBuildNumber As UInteger
-    Public dwPlatformId As UInteger
-    <MarshalAs(UnmanagedType.ByValTStr, SizeConst:=128)>
-    Public szCSDVersion As String
-    Public wServicePackMajor As UShort
-    Public wServicePackMinor As UShort
-    Public wSuiteMask As UShort
-    Public wProductType As Byte
-    Public wReserved As Byte
-End Structure
-
 Public Class OSVersion
-    <DllImport("ntdll.dll", CharSet:=CharSet.Auto)>
-    Private Shared Function RtlGetVersion(ByRef osVersionInfo As OSVERSIONINFOEXW) As Integer
-    End Function
-
-    Private Shared _osVersionInfo As New OSVERSIONINFOEXW()
-    Private Shared _osVersionInfoInitialized As Boolean = False
-    Private Shared _versionString As String
-
-    Public Shared Sub NOSVersion()
-        If Not _osVersionInfoInitialized Then
-            _osVersionInfo.dwOSVersionInfoSize = CUInt(Marshal.SizeOf(_osVersionInfo))
-            _osVersionInfoInitialized = True
-        End If
-    End Sub
-
-    Public Shared ReadOnly Property VersionInfo As OSVERSIONINFOEXW
-        Get
-            If _osVersionInfo.dwMajorVersion = 0 Then
-                RtlGetVersion(_osVersionInfo)
-            End If
-
-            Return _osVersionInfo
-        End Get
-    End Property
+    Private Shared VersionStringValue As String
 
     Public Shared ReadOnly Property VersionString As String
         Get
-            If String.IsNullOrWhiteSpace(_versionString) Then
-                Dim result = RtlGetVersion(_osVersionInfo)
-                Dim edition = Registry.LocalMachine.GetString("SOFTWARE\Microsoft\Windows NT\CurrentVersion", "EditionID")
-                Dim display = Registry.LocalMachine.GetString("SOFTWARE\Microsoft\Windows NT\CurrentVersion", "DisplayVersion")
-                _versionString = If(result = 0, $"Windows {_osVersionInfo.dwMajorVersion}.{_osVersionInfo.dwMinorVersion}.{_osVersionInfo.dwBuildNumber} {display} {edition}", "-?-").Trim()
+            If VersionStringValue Is Nothing Then
+                VersionStringValue = Runtime.InteropServices.RuntimeInformation.OSDescription
+
+                Try
+                    For Each line In File.ReadAllLines("/etc/os-release")
+                        If line.StartsWith("PRETTY_NAME=") Then
+                            VersionStringValue = line.Substring(12).Trim(""""c) + " (" + Environment.OSVersion.Version.ToString + ")"
+                            Exit For
+                        End If
+                    Next
+                Catch
+                End Try
             End If
-            Return _versionString
+
+            Return VersionStringValue
         End Get
     End Property
 End Class
 
 Public Class OS
-    Public Shared ReadOnly Property EnvVars As String() = {"ALLUSERSPROFILE", "APPDATA", "CD", "CMDCMDLINE",
-        "CMDEXTVERSION", "CommonProgramFiles", "CommonProgramFiles(x86)", "CommonProgramW6432",
-        "COMPUTERNAME", "COMSPEC", "DATE", "ERRORLEVEL", "HOMEDRIVE", "HOMEPATH", "LOCALAPPDATA",
-        "LOGONSERVER", "NUMBER_OF_PROCESSORS", "OS", "PATH", "PATHEXT", "PROCESSOR_ARCHITECTURE",
-        "PROCESSOR_IDENTIFIER", "PROCESSOR_LEVEL", "PROCESSOR_REVISION", "ProgramData",
-        "ProgramFiles", "ProgramFiles(x86)", "ProgramW6432", "PROMPT", "PSModulePath", "PUBLIC",
-        "RANDOM", "SessionName", "SystemDrive", "SystemRoot", "TEMP", "TIME", "TMP", "USERDOMAIN",
-        "USERDOMAIN_ROAMINGPROFILE", "USERNAME", "USERPROFILE", "WINDIR"}
+    Public Shared ReadOnly Property EnvVars As String() = {"HOME", "LANG", "PATH", "PWD", "SHELL", "TMPDIR", "USER",
+        "XDG_CACHE_HOME", "XDG_CONFIG_HOME", "XDG_DATA_HOME", "XDG_RUNTIME_DIR", "XDG_SESSION_TYPE", "DISPLAY", "WAYLAND_DISPLAY"}
 
     Private Shared VideoControllersValue As String()
 
     Public Shared ReadOnly Property VideoControllers As String()
         Get
             If VideoControllersValue Is Nothing Then
-                Try 'bug report received
-                    Dim mc As New ManagementClass("Win32_VideoController")
-                    VideoControllersValue = mc.GetInstances().OfType(Of ManagementBaseObject)().Select(Function(val) CStr(val("Caption"))).ToArray
-                Catch ex As Exception
-                    Return {"WMI Error"}
+                Dim ret As New List(Of String)
+
+                Try
+                    Dim output = ProcessHelp.GetConsoleOutput("lspci", "-mm", False)
+
+                    For Each line In output.SplitLinesNoEmpty
+                        If line.Contains("VGA compatible controller") OrElse line.Contains("3D controller") OrElse line.Contains("Display controller") Then
+                            Dim parts = Regex.Matches(line, """([^""]*)""").Cast(Of Match).Select(Function(m) m.Groups(1).Value).ToArray
+
+                            If parts.Length >= 3 Then
+                                ret.Add(parts(1) + " " + parts(2))
+                            Else
+                                ret.Add(line)
+                            End If
+                        End If
+                    Next
+                Catch
                 End Try
+
+                If ret.Count = 0 Then
+                    For Each dir As String In {"/sys/class/drm/card0/device", "/sys/class/drm/card1/device"}
+                        Try
+                            Dim vendor = File.ReadAllText(Path.Combine(dir, "vendor")).Trim
+
+                            Select Case vendor
+                                Case "0x10de" : ret.Add("NVIDIA")
+                                Case "0x1002" : ret.Add("AMD")
+                                Case "0x8086" : ret.Add("Intel")
+                            End Select
+                        Catch
+                        End Try
+                    Next
+                End If
+
+                VideoControllersValue = ret.ToArray
             End If
 
             Return VideoControllersValue
@@ -2029,15 +2025,25 @@ Public Class OS
         Public Shared ReadOnly Property Cores As Integer
             Get
                 If _cores <= 0 Then
-                    Try 'bug report received
-                        Using moc = New ManagementObjectSearcher("Select * from Win32_Processor").Get()
-                            For Each mbo In moc
-                                _cores += Integer.Parse(mbo("NumberOfCores").ToString())
-                            Next
-                        End Using
-                    Catch ex As Exception
-                        _cores = Environment.ProcessorCount \ 2
+                    Try
+                        Dim coreIDs As New HashSet(Of String)
+                        Dim physicalID = ""
+
+                        For Each line In File.ReadAllLines("/proc/cpuinfo")
+                            If line.StartsWith("physical id") Then
+                                physicalID = line.Right(":").Trim
+                            ElseIf line.StartsWith("core id") Then
+                                coreIDs.Add(physicalID + ":" + line.Right(":").Trim)
+                            End If
+                        Next
+
+                        _cores = coreIDs.Count
+                    Catch
                     End Try
+
+                    If _cores <= 0 Then
+                        _cores = Math.Max(1, Environment.ProcessorCount \ 2)
+                    End If
                 End If
 
                 Return _cores
@@ -2053,12 +2059,7 @@ Public Class OS
         Public Class Mouse
             Public Shared ReadOnly Property WheelScrollLines As Integer
                 Get
-                    Dim lines = 3
-                    Dim ret As Integer
-
-                    If Native.SystemParametersInfo(Native.SPI_GETWHEELSCROLLLINES, 0, ret, 0) Then lines = ret
-
-                    Return lines
+                    Return 3
                 End Get
             End Property
         End Class
@@ -2084,38 +2085,39 @@ Public Class eac3toProfile
     End Sub
 End Class
 
-Public Class BitmapUtil
+Public Class FrameData
+    Property Width As Integer
+    Property Height As Integer
+    Property Stride As Integer
     Property Data As Byte()
-    Property BitmapData As BitmapData
 
-    Function GetPixel(x As Integer, y As Integer) As Color
-        Dim pos = y * BitmapData.Stride + x * 4
-        Return Color.FromArgb(Data(pos), Data(pos + 1), Data(pos + 2))
+    Function GetLuminance(x As Integer, y As Integer) As Single
+        Dim pos = y * Stride + x * 4
+        Dim b = Data(pos)
+        Dim g = Data(pos + 1)
+        Dim r = Data(pos + 2)
+        Dim max = Math.Max(r, Math.Max(g, b))
+        Dim min = Math.Min(r, Math.Min(g, b))
+        Return (CInt(max) + min) / 510.0F
     End Function
 
-    Function GetMaxLuminance(x As Integer, y As Integer) As Single
-        Return GetPixel(x, y).ToColorHSL().L
-    End Function
-
-    Shared Function Create(bmp As Bitmap) As BitmapUtil
-        Dim util As New BitmapUtil
-        Dim rect As New Rectangle(0, 0, bmp.Width, bmp.Height)
-        util.BitmapData = bmp.LockBits(rect, Imaging.ImageLockMode.ReadWrite, bmp.PixelFormat)
-        Dim ptr = util.BitmapData.Scan0
-        Dim bytesCount = Math.Abs(util.BitmapData.Stride) * bmp.Height
-        util.Data = New Byte(bytesCount - 1) {}
-        Marshal.Copy(ptr, util.Data, 0, bytesCount)
-        bmp.UnlockBits(util.BitmapData)
-        Return util
-    End Function
-
-    Shared Function CreateBitmap(server As IFrameServer, position As Integer) As Bitmap
+    Shared Function Create(server As IFrameServer, position As Integer) As FrameData
         Dim pitch As Integer
-        Dim data As IntPtr
+        Dim ptr As IntPtr
 
-        If server.GetFrame(position, data, pitch) = 0 Then
-            Return New Bitmap(server.Info.Width, server.Info.Height, pitch, PixelFormat.Format32bppArgb, data)
+        If server.GetFrame(position, ptr, pitch) <> 0 OrElse ptr = IntPtr.Zero Then
+            Return Nothing
         End If
+
+        Dim ret As New FrameData With {
+            .Width = server.Info.Width,
+            .Height = server.Info.Height,
+            .Stride = pitch
+        }
+
+        ret.Data = New Byte(pitch * ret.Height - 1) {}
+        Marshal.Copy(ptr, ret.Data, 0, ret.Data.Length)
+        Return ret
     End Function
 End Class
 
@@ -2125,33 +2127,32 @@ Public Class AutoCrop
     Public Left As Integer()
     Public Right As Integer()
 
-    Shared Function Start(bmp As Bitmap, threshold As Single) As AutoCrop
+    Shared Function Start(u As FrameData, threshold As Single) As AutoCrop
         Dim ret As New AutoCrop
-        Dim u = BitmapUtil.Create(bmp)
         Dim xCount = 20
         Dim yCount = 20
 
         Dim xValues(xCount) As Integer
 
         For x = 0 To xCount
-            xValues(x) = CInt(bmp.Width / (xCount + 1) * x)
+            xValues(x) = CInt(u.Width / (xCount + 1) * x)
         Next
 
         ret.Top = New Integer(xValues.Length - 1) {}
         ret.Bottom = New Integer(xValues.Length - 1) {}
 
         For xValue = 0 To xValues.Length - 1
-            For y = 0 To u.BitmapData.Height \ 4
-                If u.GetMaxLuminance(xValues(xValue), y) < threshold Then
+            For y = 0 To u.Height \ 4
+                If u.GetLuminance(xValues(xValue), y) < threshold Then
                     ret.Top(xValue) = y + 1
                 Else
                     Exit For
                 End If
             Next
 
-            For y = u.BitmapData.Height - 1 To u.BitmapData.Height - u.BitmapData.Height \ 4 Step -1
-                If u.GetMaxLuminance(xValues(xValue), y) < threshold Then
-                    ret.Bottom(xValue) = u.BitmapData.Height - y
+            For y = u.Height - 1 To u.Height - u.Height \ 4 Step -1
+                If u.GetLuminance(xValues(xValue), y) < threshold Then
+                    ret.Bottom(xValue) = u.Height - y
                 Else
                     Exit For
                 End If
@@ -2161,24 +2162,24 @@ Public Class AutoCrop
         Dim yValues(yCount) As Integer
 
         For x = 0 To yCount
-            yValues(x) = CInt(bmp.Height / (yCount + 1) * x)
+            yValues(x) = CInt(u.Height / (yCount + 1) * x)
         Next
 
         ret.Left = New Integer(yValues.Length - 1) {}
         ret.Right = New Integer(yValues.Length - 1) {}
 
         For yValue = 0 To yValues.Length - 1
-            For x = 0 To u.BitmapData.Width \ 4
-                If u.GetMaxLuminance(x, yValues(yValue)) < threshold Then
+            For x = 0 To u.Width \ 4
+                If u.GetLuminance(x, yValues(yValue)) < threshold Then
                     ret.Left(yValue) = x + 1
                 Else
                     Exit For
                 End If
             Next
 
-            For x = u.BitmapData.Width - 1 To u.BitmapData.Width - u.BitmapData.Width \ 4 Step -1
-                If u.GetMaxLuminance(x, yValues(yValue)) < threshold Then
-                    ret.Right(yValue) = u.BitmapData.Width - x
+            For x = u.Width - 1 To u.Width - u.Width \ 4 Step -1
+                If u.GetLuminance(x, yValues(yValue)) < threshold Then
+                    ret.Right(yValue) = u.Width - x
                 Else
                     Exit For
                 End If
@@ -2190,11 +2191,11 @@ Public Class AutoCrop
 End Class
 
 Public Enum MsgIcon
-    None = MessageBoxIcon.None
-    Info = MessageBoxIcon.Information
-    [Error] = MessageBoxIcon.Error
-    Warning = MessageBoxIcon.Warning
-    Question = MessageBoxIcon.Question
+    None
+    Info
+    [Error]
+    Warning
+    Question
 End Enum
 
 Public Enum ForceOutputModDirection
@@ -2312,15 +2313,59 @@ Public Enum CommandLinePresetType
     TargetFileNameOverride = 1000
 End Enum
 
+'natural sort order like the Windows Explorer, digits are compared numerically
 Public Class StringLogicalComparer
     Implements IComparer, IComparer(Of String)
 
-    <DllImport("shlwapi.dll", CharSet:=CharSet.Unicode)>
     Shared Function StrCmpLogical(x As String, y As String) As Integer
+        If x Is Nothing Then Return If(y Is Nothing, 0, -1)
+        If y Is Nothing Then Return 1
+
+        Dim ix = 0
+        Dim iy = 0
+
+        While ix < x.Length AndAlso iy < y.Length
+            If Char.IsDigit(x(ix)) AndAlso Char.IsDigit(y(iy)) Then
+                Dim sx = ix
+                Dim sy = iy
+
+                While ix < x.Length AndAlso Char.IsDigit(x(ix))
+                    ix += 1
+                End While
+
+                While iy < y.Length AndAlso Char.IsDigit(y(iy))
+                    iy += 1
+                End While
+
+                Dim nx = x.Substring(sx, ix - sx).TrimStart("0"c)
+                Dim ny = y.Substring(sy, iy - sy).TrimStart("0"c)
+
+                If nx.Length <> ny.Length Then
+                    Return nx.Length.CompareTo(ny.Length)
+                End If
+
+                Dim c = String.CompareOrdinal(nx, ny)
+
+                If c <> 0 Then
+                    Return c
+                End If
+            Else
+                Dim c = String.Compare(x(ix).ToString, y(iy).ToString, StringComparison.CurrentCultureIgnoreCase)
+
+                If c <> 0 Then
+                    Return c
+                End If
+
+                ix += 1
+                iy += 1
+            End If
+        End While
+
+        Return (x.Length - ix).CompareTo(y.Length - iy)
     End Function
 
     Function IComparer_Compare(x As Object, y As Object) As Integer Implements IComparer.Compare
-        Return StrCmpLogical(x.ToString(), y.ToString())
+        Return StrCmpLogical(x?.ToString(), y?.ToString())
     End Function
 
     Function IComparerOfString_Compare(x As String, y As String) As Integer Implements IComparer(Of String).Compare
@@ -4554,10 +4599,11 @@ Public Interface IUpdateUI
 End Interface
 
 Public Class TextEncoding
-    Shared Property EncodingOfProcess As Encoding = Encoding.Default
-    Shared Property CodePageOfProcess As Integer = Encoding.Default.CodePage
-    Shared Property CodePageOfSystem As Integer = Registry.LocalMachine.GetString("SYSTEM\CurrentControlSet\Control\Nls\CodePage", "ACP").ToInt
-    Shared Property EncodingOfSystem As Encoding = Encoding.GetEncoding(CodePageOfSystem)
+    'Linux uses UTF-8 for processes and the file system
+    Shared Property EncodingOfProcess As Encoding = New UTF8Encoding(False)
+    Shared Property CodePageOfProcess As Integer = 65001
+    Shared Property CodePageOfSystem As Integer = 65001
+    Shared Property EncodingOfSystem As Encoding = New UTF8Encoding(False)
     Shared Property PathsSupportedByProcessEncoding As New Dictionary(Of String, Boolean)
     Shared Property UTF8CodePage As Integer = 65001
 
@@ -4622,7 +4668,7 @@ Public Class Ffprobe
         Dim key = path & File.GetLastWriteTime(path).Ticks
         If Cache.ContainsKey(key) AndAlso Cache(key) IsNot Nothing Then Return Cache(key)
 
-        Dim output = ProcessHelp.GetConsoleOutput(Package.ffprobe.Path, $"-hide_banner -i ""{path}""", True)
+        Dim output = ProcessHelp.GetConsoleOutput(Package.ffprobe.Path, $"-hide_banner -i {path.Escape}", True)
         If String.IsNullOrWhiteSpace(output) Then Return Nothing
         If Not output.ContainsAny({"Input #0", "Stream #0:0"}) Then Return Nothing
 

@@ -1,8 +1,7 @@
-﻿
+
 Imports System.Text
 Imports System.Text.RegularExpressions
 Imports System.Xml.Serialization
-Imports MS.Internal.Text.TextInterface
 Imports StaxRip.UI
 Imports StaxRip.VideoEncoderCommandLine
 
@@ -186,8 +185,7 @@ Public Class VCEEnc
             proc.Header = "Video encoding"
             proc.Package = Package
             proc.SkipStrings = {"%]", " frames: "}
-            proc.File = "cmd.exe"
-            proc.Arguments = "/S /C """ + Params.GetCommandLine(True, True) + """"
+            proc.SetShellCommand(Params.GetCommandLine(True, True))
             proc.Start()
         End Using
     End Sub
@@ -195,7 +193,7 @@ Public Class VCEEnc
     Overrides Function BeforeEncoding() As Boolean
         Dim rpu = Params.DolbyVisionRpu.Value
         If Not String.IsNullOrWhiteSpace(rpu) AndAlso rpu = p.HdrDolbyVisionMetadataFile?.Path AndAlso rpu.FileExists() Then
-            Dim offset = If(p.Script.IsFilterActive("Crop"), New Padding(p.CropLeft, p.CropTop, p.CropRight, p.CropBottom), Padding.Empty)
+            Dim offset = If(p.Script.IsFilterActive("Crop"), New CropPadding(p.CropLeft, p.CropTop, p.CropRight, p.CropBottom), CropPadding.Empty)
             Dim rpuProfile = p.HdrDolbyVisionMetadataFile.ReadProfileFromRpu()
 
             Dim profile = "#"
@@ -469,7 +467,7 @@ Public Class VCEEnc
 
         Property Decoder As New OptionParam With {
             .Text = "Decoder",
-            .Options = {"AviSynth/VapourSynth", "VCEEnc (Hardware)", "VCEEnc (Software)", "QSVEnc (Intel)", "ffmpeg (Intel)", "ffmpeg (DXVA2)"},
+            .Options = {"AviSynth/VapourSynth", "VCEEnc (Hardware)", "VCEEnc (Software)", "QSVEnc (Intel)", "ffmpeg (Intel)", "ffmpeg (VAAPI)"},
             .Values = {"avs", "avhw", "avsw", "qs", "ffqsv", "ffdxva"}}
 
         Property Interlace As New OptionParam With {
@@ -696,8 +694,8 @@ Public Class VCEEnc
         Property Tiles As New NumParam With {.Switch = "--tiles", .Text = "Tiles", .Init = 0, .Config = {0, 64}, .VisibleFunc = Function() Codec.Value = 2}
         Property CdefMode As New OptionParam With {.Switch = "--cdef-mode", .Text = "CDEF Mode", .Init = 0, .Options = {"Off", "On"}, .Values = {"off", "on"}, .VisibleFunc = Function() Codec.Value = 2}
         Property ScreenContentTools As New BoolParam With {.Switch = "--screen-content-tools", .Text = "Screen Content Tools", .Init = False, .VisibleFunc = Function() Codec.Value = 2, .ArgsFunc = AddressOf GetScreenContentToolsArgs, .ImportAction = AddressOf ImportScreenContentToolsArgs}
-        Property ScreenContentToolsPaletteMode As New BoolParam With {.HelpSwitch = "--screen-content-tools", .LeftMargin = g.MainForm.FontHeight * 1.3, .Text = "Palette Mode", .Init = False, .VisibleFunc = Function() ScreenContentTools.Visible AndAlso ScreenContentTools.Value}
-        Property ScreenContentToolsForceIntegerMv As New BoolParam With {.HelpSwitch = "--screen-content-tools", .LeftMargin = g.MainForm.FontHeight * 1.3, .Text = "Force Integer MV", .Init = False, .VisibleFunc = Function() ScreenContentTools.Visible AndAlso ScreenContentTools.Value}
+        Property ScreenContentToolsPaletteMode As New BoolParam With {.HelpSwitch = "--screen-content-tools", .LeftMargin = EtoHelp.FontHeight * 1.3, .Text = "Palette Mode", .Init = False, .VisibleFunc = Function() ScreenContentTools.Visible AndAlso ScreenContentTools.Value}
+        Property ScreenContentToolsForceIntegerMv As New BoolParam With {.HelpSwitch = "--screen-content-tools", .LeftMargin = EtoHelp.FontHeight * 1.3, .Text = "Force Integer MV", .Init = False, .VisibleFunc = Function() ScreenContentTools.Visible AndAlso ScreenContentTools.Value}
         Property CdfUpdate As New BoolParam With {.Switch = "--cdf-update", .Text = "CDF Update", .Init = False, .VisibleFunc = Function() Codec.Value = 2}
         Property CdfFrameEndUpdate As New BoolParam With {.Switch = "--cdf-frame-end-update", .Text = "CDF Frame End Update", .Init = False, .VisibleFunc = Function() Codec.Value = 2}
         Property TemporalLayers As New NumParam With {.Switch = "--temporal-layers", .Text = "Temporal Layers", .Value = 0, .Config = {0, 1000}, .VisibleFunc = Function() Codec.Value = 1 OrElse Codec.Value = 2}
@@ -747,9 +745,9 @@ Public Class VCEEnc
         Property SmoothQP As New NumParam With {.Text = "      QP", .HelpSwitch = "--vpp-smooth", .Config = {0, 100, 10, 1}}
         Property SmoothPrec As New OptionParam With {.Text = "      Precision", .HelpSwitch = "--vpp-smooth", .Options = {"Auto", "FP16", "FP32"}}
 
-        Property TransformFlipX As New BoolParam With {.Switch = "--vpp-transform", .Text = "Flip X", .Label = "Transform", .LeftMargin = g.MainForm.FontHeight * 1.5, .ArgsFunc = AddressOf GetTransform}
-        Property TransformFlipY As New BoolParam With {.Text = "Flip Y", .LeftMargin = g.MainForm.FontHeight * 1.5, .HelpSwitch = "--vpp-transform"}
-        Property TransformTranspose As New BoolParam With {.Text = "Transpose", .LeftMargin = g.MainForm.FontHeight * 1.5, .HelpSwitch = "--vpp-transform"}
+        Property TransformFlipX As New BoolParam With {.Switch = "--vpp-transform", .Text = "Flip X", .Label = "Transform", .LeftMargin = EtoHelp.FontHeight * 1.5, .ArgsFunc = AddressOf GetTransform}
+        Property TransformFlipY As New BoolParam With {.Text = "Flip Y", .LeftMargin = EtoHelp.FontHeight * 1.5, .HelpSwitch = "--vpp-transform"}
+        Property TransformTranspose As New BoolParam With {.Text = "Transpose", .LeftMargin = EtoHelp.FontHeight * 1.5, .HelpSwitch = "--vpp-transform"}
 
         Property Decomb As New BoolParam With {.Text = "Decomb", .Switch = "--vpp-decomb", .ArgsFunc = AddressOf GetDecombArgs}
         Property DecombFull As New OptionParam With {.Text = "      Full", .HelpSwitch = "--vpp-decomb", .Init = 1, .Options = {"Off", "On (Default)"}, .Values = {"off", "on"}}
@@ -815,8 +813,8 @@ Public Class VCEEnc
         Property DebandDitherY As New NumParam With {.Text = "          Y", .HelpSwitch = "--vpp-deband", .Name = "vpp-deband_dither_y", .Init = 15, .Config = {0, 31}}
         Property DebandDitherC As New NumParam With {.Text = "          C", .HelpSwitch = "--vpp-deband", .Init = 15, .Config = {0, 31}}
         Property DebandSeed As New NumParam With {.Text = "     Seed", .HelpSwitch = "--vpp-deband", .Init = 1234}
-        Property DebandBlurfirst As New BoolParam With {.Text = "Blurfirst", .HelpSwitch = "--vpp-deband", .LeftMargin = g.MainForm.FontHeight * 1.3}
-        Property DebandRandEachFrame As New BoolParam With {.Text = "Rand Each Frame", .HelpSwitch = "--vpp-deband", .LeftMargin = g.MainForm.FontHeight * 1.3}
+        Property DebandBlurfirst As New BoolParam With {.Text = "Blurfirst", .HelpSwitch = "--vpp-deband", .LeftMargin = EtoHelp.FontHeight * 1.3}
+        Property DebandRandEachFrame As New BoolParam With {.Text = "Rand Each Frame", .HelpSwitch = "--vpp-deband", .LeftMargin = EtoHelp.FontHeight * 1.3}
 
         Property Deinterlacer As New OptionParam With {.Text = "Deinterlacing Method", .HelpSwitch = "", .Init = 0, .Options = {"None", "AFS (Activate Auto Field Shift)", "Nnedi", "Yadif"}, .ArgsFunc = AddressOf GetDeinterlacerArgs}
 
@@ -833,14 +831,14 @@ Public Class VCEEnc
         Property AfsThreMotionY As New NumParam With {.Text = "Threshold Motion Y", .HelpSwitch = "--vpp-afs", .Init = 112, .Config = {0, 1024}, .VisibleFunc = Function() Deinterlacer.Value = 1}
         Property AfsThreMotionC As New NumParam With {.Text = "Threshold Motion C", .HelpSwitch = "--vpp-afs", .Init = 224, .Config = {0, 1024}, .VisibleFunc = Function() Deinterlacer.Value = 1}
         Property AfsLevel As New NumParam With {.Text = "Level", .HelpSwitch = "--vpp-afs", .Init = 3, .Config = {0, 4}, .VisibleFunc = Function() Deinterlacer.Value = 1}
-        Property AfsShift As New BoolParam With {.Text = "Shift", .HelpSwitch = "--vpp-afs", .LeftMargin = g.MainForm.FontHeight * 1.3, .VisibleFunc = Function() Deinterlacer.Value = 1}
-        Property AfsDrop As New BoolParam With {.Text = "Drop", .HelpSwitch = "--vpp-afs", .LeftMargin = g.MainForm.FontHeight * 1.3, .VisibleFunc = Function() Deinterlacer.Value = 1}
-        Property AfsSmooth As New BoolParam With {.Text = "Smooth", .HelpSwitch = "--vpp-afs", .LeftMargin = g.MainForm.FontHeight * 1.3, .VisibleFunc = Function() Deinterlacer.Value = 1}
-        Property Afs24fps As New BoolParam With {.Text = "24 FPS", .HelpSwitch = "--vpp-afs", .LeftMargin = g.MainForm.FontHeight * 1.3, .VisibleFunc = Function() Deinterlacer.Value = 1}
-        Property AfsTune As New BoolParam With {.Text = "Tune", .HelpSwitch = "--vpp-afs", .LeftMargin = g.MainForm.FontHeight * 1.3, .VisibleFunc = Function() Deinterlacer.Value = 1}
-        Property AfsRFF As New BoolParam With {.Text = "RFF", .HelpSwitch = "--vpp-afs", .LeftMargin = g.MainForm.FontHeight * 1.3, .VisibleFunc = Function() Deinterlacer.Value = 1}
-        Property AfsTimecode As New BoolParam With {.Text = "Timecode", .HelpSwitch = "--vpp-afs", .LeftMargin = g.MainForm.FontHeight * 1.3, .VisibleFunc = Function() Deinterlacer.Value = 1}
-        Property AfsLog As New BoolParam With {.Text = "Log", .HelpSwitch = "--vpp-afs", .LeftMargin = g.MainForm.FontHeight * 1.3, .VisibleFunc = Function() Deinterlacer.Value = 1}
+        Property AfsShift As New BoolParam With {.Text = "Shift", .HelpSwitch = "--vpp-afs", .LeftMargin = EtoHelp.FontHeight * 1.3, .VisibleFunc = Function() Deinterlacer.Value = 1}
+        Property AfsDrop As New BoolParam With {.Text = "Drop", .HelpSwitch = "--vpp-afs", .LeftMargin = EtoHelp.FontHeight * 1.3, .VisibleFunc = Function() Deinterlacer.Value = 1}
+        Property AfsSmooth As New BoolParam With {.Text = "Smooth", .HelpSwitch = "--vpp-afs", .LeftMargin = EtoHelp.FontHeight * 1.3, .VisibleFunc = Function() Deinterlacer.Value = 1}
+        Property Afs24fps As New BoolParam With {.Text = "24 FPS", .HelpSwitch = "--vpp-afs", .LeftMargin = EtoHelp.FontHeight * 1.3, .VisibleFunc = Function() Deinterlacer.Value = 1}
+        Property AfsTune As New BoolParam With {.Text = "Tune", .HelpSwitch = "--vpp-afs", .LeftMargin = EtoHelp.FontHeight * 1.3, .VisibleFunc = Function() Deinterlacer.Value = 1}
+        Property AfsRFF As New BoolParam With {.Text = "RFF", .HelpSwitch = "--vpp-afs", .LeftMargin = EtoHelp.FontHeight * 1.3, .VisibleFunc = Function() Deinterlacer.Value = 1}
+        Property AfsTimecode As New BoolParam With {.Text = "Timecode", .HelpSwitch = "--vpp-afs", .LeftMargin = EtoHelp.FontHeight * 1.3, .VisibleFunc = Function() Deinterlacer.Value = 1}
+        Property AfsLog As New BoolParam With {.Text = "Log", .HelpSwitch = "--vpp-afs", .LeftMargin = EtoHelp.FontHeight * 1.3, .VisibleFunc = Function() Deinterlacer.Value = 1}
 
         Property NnediField As New OptionParam With {.Text = "Field", .HelpSwitch = "--vpp-nnedi", .Options = {"auto", "top", "bottom"}, .VisibleFunc = Function() Deinterlacer.Value = 2}
         Property NnediNns As New OptionParam With {.Text = "NNS", .HelpSwitch = "--vpp-nnedi", .Init = 1, .Options = {"16", "32", "64", "128", "256"}, .VisibleFunc = Function() Deinterlacer.Value = 2}
@@ -1905,7 +1903,14 @@ Public Class VCEEnc
                 Case "avs"
                     sourcePath = p.Script.Path
 
-                    If includePaths AndAlso FrameServerHelp.IsPortable Then
+                    'the VapourSynth reader of the encoder depends on how VapourSynth was installed, vspipe always works
+                    If p.Script.Engine = ScriptEngine.VapourSynth Then
+                        sourcePath = "-"
+
+                        If includePaths Then
+                            ret = Package.vspipe.Path.Escape + " " + p.Script.Path.Escape + " - --container y4m | " + Package.VCEEncC.Path.Escape
+                        End If
+                    ElseIf includePaths AndAlso FrameServerHelp.IsPortable Then
                         ret += " --avsdll " + Package.AviSynth.Path.Escape
                     End If
                 Case "avhw"
@@ -1926,7 +1931,7 @@ Public Class VCEEnc
                     If includePaths Then
                         Dim pix_fmt = If(p.SourceVideoBitDepth = 10 OrElse p.Script.Info.BitDepth >= 10, "yuv420p10le", "yuv420p")
                         ret = If(includePaths, Package.ffmpeg.Path.Escape, "ffmpeg") +
-                            " -threads 1 -hwaccel dxva2 -i " + If(includePaths, p.SourceFile.Escape, "path") +
+                            " -threads 1 -hwaccel vaapi -i " + If(includePaths, p.SourceFile.Escape, "path") +
                             " -f yuv4mpegpipe -pix_fmt " + pix_fmt + " -strict -1 -loglevel fatal - | " +
                             If(includePaths, Package.VCEEncC.Path.Escape, "VCEEncC64")
                     End If

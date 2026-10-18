@@ -1,6 +1,5 @@
-﻿Imports System.Text
+Imports System.Text
 Imports System.Text.RegularExpressions
-Imports System.Web.UI.WebControls
 
 Imports VB6 = Microsoft.VisualBasic
 
@@ -8,9 +7,9 @@ Imports VB6 = Microsoft.VisualBasic
 <Serializable>
 Public Class RpuPreset
     Public ReadOnly Property Id As Integer = 0
-    Public ReadOnly Property Offset As New Padding(0)
+    Public ReadOnly Property Offset As New CropPadding(0)
 
-    Public Sub New(id As Integer, offset As Padding)
+    Public Sub New(id As Integer, offset As CropPadding)
         Me.Id = id
         Me.Offset = offset
     End Sub
@@ -33,7 +32,7 @@ End Class
 Public Class DolbyVisionMetadataFile
     <NonSerialized> Private Shared ReadOnly _autoCropThresholdBegin As Integer = 1000
     <NonSerialized> Private Shared ReadOnly _autoCropThresholdEnd As Integer = 1000
-    Private _crop As Padding? = Nothing
+    Private _crop As CropPadding? = Nothing
     Private _lastWriteTime As DateTime = Nothing
     Private _lastWriteTimeL5 As DateTime = Nothing
     Private _trimRanges As List(Of Range) = Nothing
@@ -108,7 +107,7 @@ Public Class DolbyVisionMetadataFile
         End Get
     End Property
 
-    Public ReadOnly Property Crop As Padding
+    Public ReadOnly Property Crop As CropPadding
         Get
             If _crop Is Nothing Then
                 Select Case p.AutoCropDolbyVisionMode
@@ -137,8 +136,8 @@ Public Class DolbyVisionMetadataFile
         ReadLevel5Export()
     End Sub
 
-    Private Function GetCrop(thresholdBegin As Integer, thresholdEnd As Integer) As Padding
-        Dim newCrop As New Padding(0)
+    Private Function GetCrop(thresholdBegin As Integer, thresholdEnd As Integer) As CropPadding
+        Dim newCrop As New CropPadding(0)
 
         If Not Edits?.Any() Then Return newCrop
         If Not Presets?.Any() Then Return newCrop
@@ -186,7 +185,7 @@ Public Class DolbyVisionMetadataFile
             If presetMatches.Count = 0 Then Return
 
             For Each match As Match In presetMatches
-                Dim offset = New Padding(match.Groups("left").Value.ToInt(), match.Groups("top").Value.ToInt(), match.Groups("right").Value.ToInt(), match.Groups("bottom").Value.ToInt())
+                Dim offset = New CropPadding(match.Groups("left").Value.ToInt(), match.Groups("top").Value.ToInt(), match.Groups("right").Value.ToInt(), match.Groups("bottom").Value.ToInt())
                 Presets.Add(New RpuPreset(match.Groups("id").Value.ToInt(), offset))
             Next
 
@@ -224,7 +223,7 @@ Public Class DolbyVisionMetadataFile
         Try
             Dim pd = Path.Dir
             Dim l5 = Level5JsonFilePath.Replace(pd, ".")
-            Dim arguments = $"export --data ""level5={l5}"" -i ""{Path}"""
+            Dim arguments = "export --data " + ("level5=" + l5).Escape + " -i " + Path.Escape
             Using proc As New Proc
                 proc.Package = Package.DoViTool
                 proc.Project = p
@@ -257,7 +256,7 @@ Public Class DolbyVisionMetadataFile
     Public Function ReadProfileFromRpu() As Integer
         If Not Path?.FileExists() Then Return -1
 
-        Dim output = ProcessHelp.GetConsoleOutput(Package.DoViTool.Path.Escape, $"info -i {Path.Escape} -s", False).Split(New String() {VB6.vbCrLf, VB6.vbLf, VB6.vbCr}, StringSplitOptions.RemoveEmptyEntries)
+        Dim output = ProcessHelp.GetConsoleOutput(Package.DoViTool.Path, $"info -i {Path.Escape} -s", False).Split(New String() {VB6.vbCrLf, VB6.vbLf, VB6.vbCr}, StringSplitOptions.RemoveEmptyEntries)
 
         For i = 0 To output.Length - 1
             Dim line = output(i).Trim()
@@ -271,7 +270,7 @@ Public Class DolbyVisionMetadataFile
         Return -1
     End Function
 
-    Public Sub WriteEditorConfigFile(offset As Padding, mode As DoviMode, Optional logContent As Boolean = True, Optional overwrite As Boolean = True)
+    Public Sub WriteEditorConfigFile(offset As CropPadding, mode As DoviMode, Optional logContent As Boolean = True, Optional overwrite As Boolean = True)
         If Not Level5JsonFilePath?.FileExists() Then Return
         If Not overwrite AndAlso EditorConfigFilePath?.FileExists() Then Return
 
@@ -327,7 +326,7 @@ Public Class DolbyVisionMetadataFile
         If Not overwrite AndAlso ModifiedRpuFilePath.FileExists() Then Return Nothing
 
         Try
-            Dim arguments = $"editor -i ""{Path}"" -j ""{EditorConfigFilePath}"" -o ""{ModifiedRpuFilePath}"""
+            Dim arguments = "editor -i " + Path.Escape + " -j " + EditorConfigFilePath.Escape + " -o " + ModifiedRpuFilePath.Escape
             Using proc As New Proc
                 proc.Package = Package.DoViTool
                 proc.Project = p
@@ -386,3 +385,52 @@ Public Class DolbyVisionMetadataFile
         Return TrimmedRpuFilePath
     End Function
 End Class
+
+'serializable crop values, Eto.Drawing.Padding isn't serializable
+<Serializable>
+Public Structure CropPadding
+    Public Left As Integer
+    Public Top As Integer
+    Public Right As Integer
+    Public Bottom As Integer
+
+    Sub New(all As Integer)
+        Left = all
+        Top = all
+        Right = all
+        Bottom = all
+    End Sub
+
+    Sub New(left As Integer, top As Integer, right As Integer, bottom As Integer)
+        Me.Left = left
+        Me.Top = top
+        Me.Right = right
+        Me.Bottom = bottom
+    End Sub
+
+    Shared ReadOnly Property Empty As CropPadding
+        Get
+            Return New CropPadding(0)
+        End Get
+    End Property
+
+    Shared Operator =(a As CropPadding, b As CropPadding) As Boolean
+        Return a.Left = b.Left AndAlso a.Top = b.Top AndAlso a.Right = b.Right AndAlso a.Bottom = b.Bottom
+    End Operator
+
+    Shared Operator <>(a As CropPadding, b As CropPadding) As Boolean
+        Return Not a = b
+    End Operator
+
+    Overrides Function Equals(obj As Object) As Boolean
+        Return TypeOf obj Is CropPadding AndAlso DirectCast(obj, CropPadding) = Me
+    End Function
+
+    Overrides Function GetHashCode() As Integer
+        Return HashCode.Combine(Left, Top, Right, Bottom)
+    End Function
+
+    Overrides Function ToString() As String
+        Return $"{Left}, {Top}, {Right}, {Bottom}"
+    End Function
+End Structure

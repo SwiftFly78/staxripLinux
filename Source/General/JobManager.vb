@@ -1,4 +1,4 @@
-﻿
+
 Imports System.Runtime.Serialization.Formatters.Binary
 Imports System.Threading
 
@@ -143,15 +143,12 @@ Public Class JobManager
         Dim formatter As New BinaryFormatter
         Dim jobsDir As String = Folder.Settings
         Dim jobsPath As String = Path.Combine(jobsDir, "Jobs.dat")
-        Dim availableNumberOfBytes As ULong = 0
-        Dim totalNumberOfBytes As ULong = 0
-        Dim totalNumberOfFreeBytes As ULong = 0
-
         While True
             Try
-                If Native.GetDiskFreeSpaceEx(jobsDir, availableNumberOfBytes, totalNumberOfBytes, totalNumberOfFreeBytes) Then
-                    If availableNumberOfBytes < 600000 Then Throw New AbortException()
-                End If
+                Try
+                    If New DriveInfo(jobsDir).AvailableFreeSpace < 600000 Then Throw New AbortException()
+                Catch ex As ArgumentException
+                End Try
 
                 Using stream As New FileStream(jobsPath, FileMode.Create, FileAccess.Write, FileShare.None)
                     formatter.Serialize(stream, jobs)

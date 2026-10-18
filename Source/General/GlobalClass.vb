@@ -1,29 +1,23 @@
-﻿
+
 Imports System.Collections.ObjectModel
-Imports System.Drawing.Imaging
 Imports System.Globalization
 Imports System.Management.Automation
 Imports System.Management.Automation.Language
-Imports System.Management.Instrumentation
 Imports System.Reflection
 Imports System.Runtime.ExceptionServices
 Imports System.Runtime.Serialization.Formatters.Binary
-Imports System.Security.Principal
 Imports System.Text
 Imports System.Text.RegularExpressions
 Imports System.Threading
 Imports System.Threading.Tasks
-Imports System.Windows.Forms.VisualStyles
 Imports System.Xml.Linq
-Imports Microsoft.VisualBasic.FileIO
-Imports Microsoft.Win32
 Imports StaxRip.UI
 Imports VB6 = Microsoft.VisualBasic
 
 Public Class GlobalClass
     Property DefaultCommands As New GlobalCommands
     Property DPI As Integer
-    Property IsAdmin As Boolean = New WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator)
+    Property IsAdmin As Boolean = Environment.IsPrivilegedProcess
     Property IsJobProcessing As Boolean
     Property MainForm As MainForm
     Shared Property MAX_PATH As Integer = 260
@@ -33,7 +27,7 @@ Public Class GlobalClass
     Property ProjectPath As String
     Property SavedProject As New Project
     Property StopAfterCurrentJob As Boolean
-    Property ActiveForm As Form
+    Property ActiveForm As Window
 
     Private _isAppStart As Boolean = True
 
@@ -46,25 +40,9 @@ Public Class GlobalClass
         End Set
     End Property
 
-    Private _isRunningUnderWine As Boolean?
-
     ReadOnly Property IsRunningUnderWine As Boolean
         Get
-            If Not _isRunningUnderWine.HasValue Then
-                Try
-                    Using wineKey As RegistryKey = Registry.CurrentUser.OpenSubKey("Software\Wine")
-                        If wineKey IsNot Nothing Then
-                            _isRunningUnderWine = True
-                        Else
-                            _isRunningUnderWine = False
-                        End If
-                    End Using
-                Catch ex As Exception
-                    _isRunningUnderWine = False
-                End Try
-            End If
-
-            Return _isRunningUnderWine.Value
+            Return False
         End Get
     End Property
 
@@ -114,7 +92,7 @@ Public Class GlobalClass
                 Directory.CreateDirectory(backupPath)
             End If
 
-            FileHelp.Copy(SettingsFile, Path.Combine(backupPath, "Settings(v" + Application.ProductVersion + ").dat"))
+            FileHelp.Copy(SettingsFile, Path.Combine(backupPath, "Settings(v" + AppInfo.ProductVersion + ").dat"))
         Catch ex As Exception
             g.ShowException(ex)
         End Try
@@ -128,6 +106,7 @@ Public Class GlobalClass
                 mutex.ReleaseMutex()
             End Using
         Catch ex As Exception
+            Console.Error.WriteLine(ex.ToString())
             Using td As New TaskDialog(Of String)
                 td.Title = "The settings failed to load!"
                 td.Content = ex.Message
@@ -368,92 +347,138 @@ Public Class GlobalClass
     End Function
 
     Function IsWindowsTerminalAvailable() As Boolean
-        Return File.Exists(Path.Combine(Folder.AppDataLocal, "Microsoft", "WindowsApps", "wt.exe"))
+        Return False
     End Function
 
+    'runs PowerShell code in a terminal, requires pwsh
     Sub RunCodeInTerminal(code As String)
-        Dim base64 = Convert.ToBase64String(Encoding.Unicode.GetBytes(code)) 'UTF16LE
-
-        If s.PreferWindowsTerminal AndAlso g.IsWindowsTerminalAvailable Then
-            RunCommandInTerminal("wt.exe", $"powershell.exe -NoLogo -NoExit -NoProfile -EncodedCommand ""{base64}""")
-        Else
-            RunCommandInTerminal("powershell.exe", $"-NoLogo -NoExit -NoProfile -EncodedCommand ""{base64}""")
+        If ShellHelp.Which("pwsh") = "" Then
+            MsgError("PowerShell (pwsh) is not installed.", "PowerShell is required to run this command in a terminal.")
+            Exit Sub
         End If
+
+        Dim base64 = Convert.ToBase64String(Encoding.Unicode.GetBytes(code)) 'UTF16LE
+        DesktopHelp.RunInTerminal("pwsh -NoLogo -NoProfile -EncodedCommand " + base64)
     End Sub
 
     Sub RunCommandInTerminal(fileName As String, Optional arguments As String = Nothing)
-        Using pr As New Process
-            pr.StartInfo.FileName = fileName
-            pr.StartInfo.Arguments = arguments
-            pr.StartInfo.UseShellExecute = False
-            pr.StartInfo.WorkingDirectory = Folder.Desktop
-            Proc.SetEnvironmentVariables(pr)
-            pr.Start()
-        End Using
+        DesktopHelp.RunInTerminal(ShellHelp.Quote(fileName) + If(arguments <> "", " " + arguments, ""), Folder.Desktop)
+    End Sub
+
+    'starts a shell command line like a pipe without waiting
+    Sub ExecuteShell(commandLine As String)
+        Try
+            Dim info As New ProcessStartInfo With {.UseShellExecute = False}
+            ShellHelp.SetShellCommand(info, commandLine)
+
+            Using pr As New Process
+                pr.StartInfo = info
+                Proc.SetEnvironmentVariables(pr)
+                pr.Start()
+            End Using
+        Catch ex As Exception
+            g.ShowException(ex, "Failed to start process", commandLine)
+        End Try
     End Sub
 
     Sub Execute(fileName As String, Optional arguments As String = Nothing)
-        Dim info As New ProcessStartInfo With {
-            .UseShellExecute = False,
-            .FileName = fileName
-        }
-
-        If arguments <> "" Then
-            info.Arguments = arguments
-        End If
-
-        Using pr As New Process
-            pr.StartInfo = info
-            Proc.SetEnvironmentVariables(pr)
-            pr.Start()
-        End Using
-    End Sub
-
-    Sub ShellExecute(fileName As String, Optional arguments As String = Nothing)
         Try
-            Dim psi = New ProcessStartInfo(fileName.Escape) With {
-                .UseShellExecute = True,
-                .Arguments = arguments
+            Dim info As New ProcessStartInfo With {
+                .UseShellExecute = False,
+                .FileName = fileName
             }
 
+            If arguments <> "" Then
+                ShellHelp.SetArguments(info, arguments)
+            End If
+
+            Using pr As New Process
+                pr.StartInfo = info
+                Proc.SetEnvironmentVariables(pr)
+                pr.Start()
+            End Using
+        Catch ex As Exception
+            g.ShowException(ex, "Failed to start process", "Filename:" + BR2 + fileName + BR2 + "Arguments:" + BR2 + arguments)
+        End Try
+    End Sub
+
+    'opens files, folders and URLs with the default application,
+    'executables are started directly with the arguments
+    Sub ShellExecute(fileName As String, Optional arguments As String = Nothing)
+        Try
+            fileName = fileName.TrimQuotes
+
+            If arguments = "" AndAlso (fileName.Contains("://") OrElse Not IsExecutable(fileName)) Then
+                DesktopHelp.Open(fileName)
+                Exit Sub
+            End If
+
+            Dim exe = If(fileName.Contains("/"c), fileName, ShellHelp.Which(fileName))
+
+            If exe = "" Then
+                exe = fileName
+            End If
+
+            Dim psi = New ProcessStartInfo(exe) With {.UseShellExecute = False}
+            ShellHelp.SetArguments(psi, arguments)
+
+            Proc.SetEnvironmentVariables(psi)
             Process.Start(psi)?.Dispose()
         Catch ex As Exception
             g.ShowException(ex, "Failed to start process", "Filename:" + BR2 + fileName + BR2 + "Arguments:" + BR2 + arguments)
         End Try
     End Sub
 
+    Shared Function IsExecutable(fileName As String) As Boolean
+        Dim fp = If(fileName.Contains("/"c), fileName, ShellHelp.Which(fileName))
+
+        If fp = "" OrElse Not File.Exists(fp) Then
+            Return False
+        End If
+
+        Try
+            Return (File.GetUnixFileMode(fp) And (UnixFileMode.UserExecute Or UnixFileMode.GroupExecute Or UnixFileMode.OtherExecute)) <> 0
+        Catch
+            Return False
+        End Try
+    End Function
+
     Sub SelectFileWithExplorer(filepath As String)
-        g.ShellExecute("explorer.exe", "/n, /select, " + filepath.Escape)
+        DesktopHelp.SelectFile(filepath.TrimQuotes)
     End Sub
 
     Sub AddToPath(ParamArray dirs As String())
-        Dim path = Environment.GetEnvironmentVariable("path")
-        Dim newPath = path
+        Dim path = If(Environment.GetEnvironmentVariable("PATH"), "")
+        Dim parts = path.Split(IO.Path.PathSeparator).ToList
+        Dim changed = False
 
-        For Each d In dirs
-            If d.DirExists AndAlso Not d.StartsWith(Folder.System) AndAlso Not path.Contains(d + ";") Then
-                newPath = d + ";" + newPath
+        For Each d In dirs.Reverse
+            If d <> "" AndAlso d.DirExists AndAlso Not d.StartsWith(Folder.System) AndAlso Not parts.Contains(d) Then
+                parts.Insert(0, d)
+                changed = True
             End If
         Next
 
-        If newPath <> path Then
-            Environment.SetEnvironmentVariable("path", newPath)
+        If changed Then
+            Environment.SetEnvironmentVariable("PATH", String.Join(IO.Path.PathSeparator, parts))
         End If
     End Sub
 
     Function IsFixedDrive(path As String) As Boolean
-        Try
-            If path <> "" Then
-                Return New DriveInfo(path).DriveType = DriveType.Fixed
-            End If
-        Catch
-        End Try
+        Return path <> ""
     End Function
 
+    'starts processing the jobs on a worker thread so the UI thread can run the processing window
     Sub ProcessJobs()
+        If IsJobProcessing Then
+            Exit Sub
+        End If
+
         For Each form In PreviewForm.Instances.ToArray
             form.Close()
         Next
+
+        IsJobProcessing = True
 
         Dim tempProject = ObjectHelp.GetCopy(p)
         Dim projectPath = g.ProjectPath
@@ -467,25 +492,42 @@ Public Class GlobalClass
 
         FrameServerHelp.AviSynthToolPath()
         g.StopAfterCurrentJob = False
-        ProcessJobsRecursive()
 
-        Dim restore = String.IsNullOrWhiteSpace(tempProject.SourceFile) OrElse (File.Exists(tempProject.SourceFile) AndAlso Directory.Exists(tempProject.TempDir) AndAlso File.Exists(projectPath))
-        If restore Then
-            g.MainForm.OpenProject(tempProject, projectPath)
-            g.MainForm.tbTargetFile.Text = targetFile
-            g.MainForm.Text = mainFormText
-            g.ProjectPath = projectPath
-            g.UpdateTrim(p.Script)
-            g.MainForm.UpdateFilters()
-        Else
-            g.MainForm.OpenProject("", False)
-        End If
+        Dim thread As New Thread(
+            Sub()
+                Try
+                    ProcessJobsRecursive()
+                Catch ex As Exception
+                    OnException(ex)
+                End Try
+
+                UIInvoke(Sub()
+                             Dim restore = String.IsNullOrWhiteSpace(tempProject.SourceFile) OrElse (File.Exists(tempProject.SourceFile) AndAlso Directory.Exists(tempProject.TempDir) AndAlso File.Exists(projectPath))
+
+                             If restore Then
+                                 g.MainForm.OpenProject(tempProject, projectPath)
+                                 g.MainForm.tbTargetFile.Text = targetFile
+                                 g.MainForm.Text = mainFormText
+                                 g.ProjectPath = projectPath
+                                 g.UpdateTrim(p.Script)
+                                 g.MainForm.UpdateFilters()
+                             Else
+                                 g.MainForm.OpenProject("", False)
+                             End If
+                         End Sub)
+            End Sub)
+
+        thread.IsBackground = True
+        thread.Name = "Job Processing"
+        thread.Start()
     End Sub
 
     Sub ProcessJobsRecursive()
         Dim jobs = JobManager.ActiveJobs
 
         If jobs.Count = 0 Then
+            IsJobProcessing = False
+            UIInvoke(Sub() ProcController.Finished())
             Exit Sub
         End If
 
@@ -494,7 +536,7 @@ Public Class GlobalClass
 
         Try
             JobManager.ActivateJob(jobPath, False)
-            g.MainForm.OpenProject(jobPath, False)
+            UIInvoke(Sub() g.MainForm.OpenProject(jobPath, False))
 
             If s.PreventStandby Then
                 PowerRequest.SuppressStandby()
@@ -509,21 +551,15 @@ Public Class GlobalClass
             ElseIf JobManager.ActiveJobs.Count = 0 OrElse g.StopAfterCurrentJob Then
                 g.RaiseAppEvent(ApplicationEvent.AfterJobsProcessed)
 
-                If Process.GetProcessesByName("StaxRip").Count = 1 Then
+                If Process.GetProcessesByName("StaxRip").Count <= 1 Then
                     g.ShutdownPC()
                 End If
             Else
-                If Process.GetCurrentProcess.PrivateMemorySize64 / 1024 ^ 2 > 1500 Then
-                    g.ShellExecute(Application.ExecutablePath, "-StartJobs -NoFocus")
-                    g.MainForm.SetSavedProject()
-                    g.MainForm.Close()
-                Else
-                    ProcessJobsRecursive()
-                End If
+                ProcessJobsRecursive()
             End If
         Catch ex As AbortException
             Log.Save()
-            g.MainForm.OpenProject(g.ProjectPath, False)
+            UIInvoke(Sub() g.MainForm.OpenProject(g.ProjectPath, False))
         Catch ex As Exception
             Log.Save()
             g.OnException(ex)
@@ -533,9 +569,11 @@ Public Class GlobalClass
             End If
 
             g.IsJobProcessing = False
-            ThemeManager.SetCurrentTheme(s.ThemeName)
-            g.MainForm.OpenProject(jobPath, False)
-            ProcController.Finished()
+            UIInvoke(Sub()
+                         ThemeManager.SetCurrentTheme(ThemeManager.CurrentTheme.Name)
+                         g.MainForm.OpenProject(jobPath, False)
+                         ProcController.Finished()
+                     End Sub)
         End Try
     End Sub
 
@@ -558,10 +596,10 @@ Public Class GlobalClass
                     Exit Sub
                 End If
 
-                g.MainForm.OpenVideoSourceFiles(p.SourceFiles, True, True, s.ErrorMessageTimeout)
+                UIInvoke(Sub() g.MainForm.OpenVideoSourceFiles(p.SourceFiles, True, True, s.ErrorMessageTimeout))
                 g.ProjectPath = Path.Combine(p.TempDir, p.TargetFile.Base + ".srip")
                 p.BatchMode = False
-                g.MainForm.SaveProjectPath(g.ProjectPath)
+                UIInvoke(Sub() g.MainForm.SaveProjectPath(g.ProjectPath))
             Else
                 If Not File.Exists(p.SourceFile) Then
                     g.RunTask(Sub() MsgError("Source file not found!", $"'{p.SourceFile}'{BR}could not be found and got skipped!"))
@@ -596,7 +634,7 @@ Public Class GlobalClass
             Log.WriteHeader("Target Script Info")
             Log.WriteLine(p.Script.Info.GetInfoText(-1))
 
-            g.MainForm.Hide()
+            UIInvoke(Sub() g.MainForm.Hide())
 
             Dim actions As New List(Of Action)
 
@@ -663,9 +701,9 @@ Public Class GlobalClass
             If p.Thumbnailer Then
                 Dim cts = New CancellationTokenSource()
                 Dim closingTD As TaskDialog(Of DialogResult) = Nothing
-                Dim mainFormClosingHandler As FormClosingEventHandler = Nothing
+                Dim mainFormClosingHandler As EventHandler(Of ComponentModel.CancelEventArgs) = Nothing
 
-                mainFormClosingHandler = Sub(sender As Object, e As FormClosingEventArgs)
+                mainFormClosingHandler = Sub(sender As Object, e As ComponentModel.CancelEventArgs)
                                              If Not e.Cancel Then
                                                  Using closingTD
                                                      closingTD = New TaskDialog(Of DialogResult)(DialogResult.Yes)
@@ -689,7 +727,7 @@ Public Class GlobalClass
 
                 Dim thumbnailerTask = Task.Run(
                     Async Function()
-                        AddHandler g.MainForm.FormClosing, mainFormClosingHandler
+                        AddHandler g.MainForm.Closing, mainFormClosingHandler
 
                         Dim proceededSources = Await Thumbnailer.RunAsync(cts.Token, p, p.TargetFile)
 
@@ -697,7 +735,7 @@ Public Class GlobalClass
                             closingTD.Close()
                         End If
 
-                        RemoveHandler g.MainForm.FormClosing, mainFormClosingHandler
+                        RemoveHandler g.MainForm.Closing, mainFormClosingHandler
                         Return proceededSources
                     End Function,
                     cts.Token)
@@ -716,7 +754,7 @@ Public Class GlobalClass
                 Dim shouldFrames = p.TargetFrames
 
                 If hasFrames <> shouldFrames Then
-                    g.MainForm.UpdateTargetParameters(p)
+                    UIInvoke(Sub() g.MainForm.UpdateTargetParameters(p))
                     shouldFrames = p.TargetFrames
                 End If
 
@@ -753,7 +791,7 @@ Public Class GlobalClass
             Log.Save()
             g.RaiseAppEvent(ApplicationEvent.AfterJobFailed)
             g.ShowException(ex, Nothing, Nothing, s.ErrorMessageTimeout)
-            g.ShellExecute(g.GetTextEditorPath(), """" + p.Log.GetPath() + """")
+            g.ShellExecute(p.Log.GetPath())
             ProcController.Aborted = False
         End Try
     End Sub
@@ -844,7 +882,7 @@ Public Class GlobalClass
 
     ReadOnly Property SettingsFolderExists As Boolean
         Get
-            Return Not String.IsNullOrWhiteSpace(Registry.CurrentUser.GetString("Software\StaxRip\SettingsLocation", Folder.Startup))
+            Return Directory.Exists(Folder.Settings)
         End Get
     End Property
 
@@ -894,12 +932,14 @@ Public Class GlobalClass
     End Sub
 
     Sub PlayAudio(ap As AudioProfile)
+        Package.mpvnet.VerifyOK(True)
+
         If FileTypes.AudioRaw.Contains(ap.File.Ext) Then
             g.ShellExecute(Package.mpvnet.Path, ap.File.Escape)
         ElseIf ap.File = p.FirstOriginalSourceFile AndAlso ap.Streams.Count > 0 Then
             g.ShellExecute(Package.mpvnet.Path, "--audio=" & (ap.Stream.Index + 1) & " " + p.FirstOriginalSourceFile.Escape)
         ElseIf FileTypes.Audio.Contains(ap.File.Ext) Then
-            g.ShellExecute(Package.mpvnet.Path, "--audio-delay=" + (g.ExtractDelay(ap.File) / 1000).ToInvariantString.Shorten(9) + " --audio-files=" + ap.File.Escape + " " + p.FirstOriginalSourceFile.Escape)
+            g.ShellExecute(Package.mpvnet.Path, "--audio-delay=" + (g.ExtractDelay(ap.File) / 1000).ToInvariantString.Shorten(9) + " --audio-file=" + ap.File.Escape + " " + p.FirstOriginalSourceFile.Escape)
         Else
             MsgError("Unable to play audio.")
         End If
@@ -952,12 +992,9 @@ Public Class GlobalClass
             Exit Sub
         End If
 
+        Package.mpvnet.VerifyOK(True)
         script.Synchronize()
         Dim args = ""
-
-        If script.Engine = ScriptEngine.VapourSynth Then
-            args += " --demuxer-lavf-format=vapoursynth"
-        End If
 
         If cliArgs <> "" Then
             args += " " + cliArgs
@@ -970,11 +1007,17 @@ Public Class GlobalClass
         Dim ap = GetAudioProfileForScriptPlayback()
 
         If ap IsNot Nothing AndAlso FileTypes.Audio.Contains(ap.File.Ext) AndAlso p.Ranges.Count = 0 Then
-            args += " --audio-files=" + ap.File.Escape
+            args += " --audio-file=" + ap.File.Escape
         End If
 
-        args += " " + script.Path.Escape
-        g.Execute(Package.mpvnet.Path, args.Trim)
+        'many FFmpeg builds can't read VapourSynth scripts, so vspipe pipes the video to mpv
+        If script.Engine = ScriptEngine.VapourSynth Then
+            ExecuteShell(Package.vspipe.Path.Escape + " " + script.Path.Escape +
+                " - --container y4m | " + Package.mpvnet.Path.Escape + " " + args.Trim + " -")
+        Else
+            args += " " + script.Path.Escape
+            g.Execute(Package.mpvnet.Path, args.Trim)
+        End If
     End Sub
 
     Function ExtractDelay(value As String) As Integer
@@ -1077,10 +1120,12 @@ Public Class GlobalClass
     End Function
 
     Sub ShowCode(title As String, content As String, Optional find As String = Nothing, Optional wordwrap As Boolean = False)
-        Dim form As New CodeForm(content, find, wordwrap) With {
-            .Text = $"{title} - {g.DefaultCommands.GetApplicationDetails()}"
-        }
-        form.Show()
+        UIInvoke(Sub()
+                     Dim form As New CodeForm(content, find, wordwrap) With {
+                         .Text = $"{title} - {g.DefaultCommands.GetApplicationDetails()}"
+                     }
+                     form.Show()
+                 End Sub)
     End Sub
 
     Sub ShowHelp(title As String, content As String)
@@ -1092,12 +1137,13 @@ Public Class GlobalClass
     End Sub
 
     Sub PopulateProfileMenu(
-        ic As ToolStripItemCollection,
+        ic As MenuItemCollection,
         profiles As IList,
         dialogAction As Action,
         loadAction As Action(Of Profile))
 
         For Each iProfile As Profile In profiles
+            Dim profile = iProfile
             Dim a = iProfile.Name.SplitNoEmpty(" | ")
             Dim l = ic
             Dim p = ""
@@ -1106,35 +1152,35 @@ Public Class GlobalClass
                 p += If(i = 0, "", " | ") + a(i)
                 Dim found = False
 
-                For Each iItem As ToolStripItem In l
+                For Each iItem In l.OfType(Of MenuItemEx)
                     If i < a.Length - 1 Then
-                        If iItem.Text = a(i) + "     " Then
+                        If iItem.Text = a(i) Then
                             found = True
-                            l = DirectCast(iItem, ToolStripMenuItem).DropDownItems
+                            l = iItem.Items
                         End If
                     End If
                 Next
 
                 If Not found Then
                     If i = a.Length - 1 Then
-                        Dim item As New MenuItemEx(a(i) + "     ", Sub() loadAction(iProfile))
+                        Dim item As New MenuItemEx(a(i), Sub() loadAction(profile))
                         item.Path = p
                         item.Tag = p
                         l.Add(item)
-                        l = item.DropDownItems
+                        l = item.Items
                     Else
-                        Dim item As New MenuItemEx(a(i) + "     ")
+                        Dim item As New MenuItemEx(a(i))
                         item.Path = p
                         item.Tag = p
                         l.Add(item)
-                        l = item.DropDownItems
+                        l = item.Items
                     End If
                 End If
             Next
         Next
 
         If dialogAction IsNot Nothing Then
-            ic.Add(New ToolStripSeparator)
+            ic.Add(New SeparatorMenuItem)
             ic.Add(New MenuItemEx("Edit Profiles...", dialogAction, "Opens the profiles editor"))
         End If
     End Sub
@@ -1166,34 +1212,13 @@ Public Class GlobalClass
         Return CInt((s.LastPosition / p.Script.GetCachedFrameRate) * 1000)
     End Function
 
+    'text files are opened with the default application via xdg-open
     Function GetTextEditorPath() As String
-        Dim ret = GetAppPathForExtension("txt")
-
-        Return If(ret <> "", ret, "notepad.exe")
+        Return "xdg-open"
     End Function
 
     Function GetAppPathForExtension(ParamArray extensions As String()) As String
-        For Each extension In extensions
-            If Not extension.StartsWith(".") Then
-                extension = "." + extension
-            End If
-
-            Dim c = 0UI
-
-            If Native.AssocQueryString(&H40, 2, extension, Nothing, Nothing, c) = 1 Then
-                If c > 0 Then
-                    Dim sb As New StringBuilder(CInt(c))
-
-                    If 0 = Native.AssocQueryString(&H40, 2, extension, Nothing, sb, c) Then
-                        Dim ret = sb.ToString
-
-                        If File.Exists(ret) Then
-                            Return ret
-                        End If
-                    End If
-                End If
-            End If
-        Next
+        Return ""
     End Function
 
     Function ObfuscateLogFile(text As String, Optional proj As Project = Nothing, Optional folderReplacement As String = "x", Optional fileReplacement As String = "Source") As String
@@ -1261,75 +1286,31 @@ Public Class GlobalClass
         audioTrack.AudioProfile.Streams = streams
         audioTrack.AudioProfile.Delay += g.ExtractDelay(file)
 
-        audioTrack.NameLabel.Refresh()
+        audioTrack.NameLabel.Invalidate()
         g.MainForm.UpdateSizeOrBitrate()
         g.MainForm.Assistant()
     End Sub
 
     Sub PopulateLanguages(menuButton As MenuButton)
-        If menuButton Is Nothing Then Return
+        If menuButton Is Nothing OrElse menuButton.IsDisposed Then Return
 
-        Try
-            If menuButton.InvokeRequired Then
-                menuButton.Invoke(Sub()
-                                      menuButton.Menu.Enabled = False
-                                      menuButton.Enabled = False
-                                      menuButton.Menu.SuspendLayout()
-                                      menuButton.SuspendLayout()
-                                  End Sub)
-            Else
-                menuButton.Menu.Enabled = False
-                menuButton.Enabled = False
-                menuButton.Menu.SuspendLayout()
-                menuButton.SuspendLayout()
-            End If
+        UIInvoke(Sub()
+                     menuButton.Menu.Items.Clear()
 
-            Dim tsic = New ToolStripItemCollection(New ToolStrip(), {})
+                     For Each lng In Language.Languages.OrderBy(Function(x) x.EnglishName)
+                         Dim path = If(lng.IsCommon,
+                             $"{GetExtendedLanguageName(lng)}",
+                             $"More | {lng.ToString().Substring(0, 1).ToUpperInvariant()}... | {GetExtendedLanguageName(lng)}")
 
-            For Each lng In Language.Languages.OrderBy(Function(x) x.EnglishName)
-                If menuButton?.IsDisposed Then Return
-
-                Dim path = If(lng.IsCommon,
-                    $"{GetExtendedLanguageName(lng)}",
-                    $"More | {lng.ToString().Substring(0, 1).ToUpperInvariant()}... | {GetExtendedLanguageName(lng)}")
-
-                MenuItemEx.Add(Of Language)(tsic, path, Sub(l As Language)
-                                                            menuButton.OnAction(l.ToString(), l)
-                                                        End Sub, lng, Nothing)
-            Next
-
-            menuButton.Menu.Items.Clear()
-            menuButton.Menu.Items.AddRange(tsic)
-        Catch ex As Exception
-        Finally
-            If menuButton.InvokeRequired Then
-                menuButton.Invoke(Sub()
-                                      menuButton.Menu.ResumeLayout()
-                                      menuButton.ResumeLayout()
-                                      menuButton.Menu.Enabled = True
-                                      menuButton.Enabled = True
-                                  End Sub)
-            Else
-                menuButton.Menu.ResumeLayout()
-                menuButton.ResumeLayout()
-                menuButton.Menu.Enabled = True
-                menuButton.Enabled = True
-            End If
-        End Try
+                         MenuItemEx.Add(Of Language)(menuButton.Menu.Items, path, Sub(l As Language)
+                                                                                      menuButton.OnAction(l.ToString(), l)
+                                                                                  End Sub, lng, Nothing)
+                     Next
+                 End Sub)
     End Sub
 
-    Async Sub PopulateLanguagesAsync(menuButton As MenuButton)
-        Dim task As Task
-
-        Try
-            SyncLock menuButton
-                task = Task.Run(Sub() PopulateLanguages(menuButton))
-            End SyncLock
-        Catch ex As Exception
-        Finally
-        End Try
-
-        Await task
+    Sub PopulateLanguagesAsync(menuButton As MenuButton)
+        UIBeginInvoke(Sub() PopulateLanguages(menuButton))
     End Sub
 
     Public Function GetExtendedLanguageName(lang As Language) As String
@@ -1470,18 +1451,11 @@ Public Class GlobalClass
         Select Case s.CommandLinePreview
             Case CommandLinePreview.CodePreview
                 ShowCodePreview(value, Nothing, True)
-            Case CommandLinePreview.Powershell
-                Environment.SetEnvironmentVariable("CommandLineToShow", BR + value + BR)
-                g.Execute("powershell.exe", "-NoLogo -NoExit -NoProfile -Command $env:CommandLineToShow")
-            Case CommandLinePreview.WindowsTerminal
-                Environment.SetEnvironmentVariable("CommandLineToShow", BR + value + BR)
-
-                If g.IsWindowsTerminalAvailable Then
-                    g.Execute("wt.exe", "powershell.exe -NoLogo -NoExit -NoProfile -Command $env:CommandLineToShow")
-                Else
-                    MsgWarn("Windows Terminal not found!", "Windows Terminal could not be found and thus Powershell will be used to show the command line preview!")
-                    g.Execute("powershell.exe", "-NoLogo -NoExit -NoProfile -Command $env:CommandLineToShow")
-                End If
+            Case Else
+                Dim tempFile = Path.Combine(Folder.Temp, "staxrip-command-line.txt")
+                Dim text = BR + value + BR
+                text.WriteFileUTF8(tempFile)
+                DesktopHelp.RunInTerminal("cat " + ShellHelp.Quote(tempFile))
         End Select
     End Sub
 
@@ -1496,7 +1470,7 @@ Public Class GlobalClass
                 proc.SkipString = "Indexing, please wait..."
                 proc.Project = proj
                 proc.Priority = s.ToolProcessPriority
-                proc.File = Path.Combine(Package.ffms2.Directory, "ffmsindex.exe")
+                proc.File = Package.ffmsindex.Path
                 proc.Arguments = If(indexAudio, "-t -1 ", "") + sourcePath.LongPathPrefix.Escape + " " + cachePath.LongPathPrefix.Escape
                 proc.Start()
             End Using
@@ -1527,7 +1501,7 @@ Public Class GlobalClass
     End Function
 
     Function IsCOMObjectRegistered(guid As String) As Boolean
-        Return File.Exists(Registry.ClassesRoot.GetString("CLSID\" + guid + "\InprocServer32", Nothing))
+        Return False
     End Function
 
     Function IsSourceSame(path As String) As Boolean
@@ -1576,7 +1550,12 @@ Public Class GlobalClass
     Private ExceptionHandled As Boolean
 
     Sub OnException(ex As Exception)
-        If ExceptionHandled Then Exit Sub
+        'GTK# invokes signal handlers by reflection
+        While TypeOf ex Is TargetInvocationException AndAlso ex.InnerException IsNot Nothing
+            ex = ex.InnerException
+        End While
+
+        If ExceptionHandled OrElse TypeOf ex Is AbortException Then Exit Sub
 
         ExceptionHandled = True
 
@@ -1607,6 +1586,7 @@ Public Class GlobalClass
     End Sub
 
     Sub ShowException(ex As Exception, Optional title As String = Nothing, Optional content As String = Nothing, Optional timeout As Integer = 0)
+        Console.Error.WriteLine(ex.ToString())
         If timeout < 0 Then Exit Sub
 
         Try
@@ -1628,7 +1608,7 @@ Public Class GlobalClass
         Catch
             Dim msg = If(TypeOf ex Is ErrorAbortException, DirectCast(ex, ErrorAbortException).Title, ex.GetType.Name)
 
-            VB6.MsgBox(msg + BR2 + ex.Message + BR2 + ex.ToString, VB6.MsgBoxStyle.Critical)
+            Console.Error.WriteLine(msg + BR2 + ex.Message + BR2 + ex.ToString)
         End Try
     End Sub
 
@@ -1649,20 +1629,13 @@ Public Class GlobalClass
         End Try
     End Sub
 
-    Sub SetRenderer(ms As ToolStrip)
-        ms.Renderer = If(VisualStyleInformation.IsEnabledByUser, New ToolStripRendererEx(), DirectCast(New ToolStripSystemRenderer(), ToolStripRenderer))
-    End Sub
-
     Sub Play(file As String)
-        g.ShellExecute(Package.mpvnet.Path.Escape, file.Escape)
+        Package.mpvnet.VerifyOK(True)
+        g.ShellExecute(Package.mpvnet.Path, file.Escape)
     End Sub
 
     Sub ShowWikiPage(title As String)
         ShellExecute($"https://github.com/staxrip/staxrip/wiki/{title}")
-    End Sub
-
-    Sub OnUnhandledException(sender As Object, e As ThreadExceptionEventArgs)
-        OnException(e.Exception)
     End Sub
 
     Sub OnUnhandledException(sender As Object, e As UnhandledExceptionEventArgs)
@@ -1675,12 +1648,17 @@ Public Class GlobalClass
     Public Property Icon As Icon
         Get
             If IconValue Is Nothing OrElse s.IconFile <> LastIconFile Then
-                If File.Exists(s.IconFile) Then
-                    IconValue = New Icon(s.IconFile)
-                    LastIconFile = s.IconFile
-                Else
-                    IconValue = My.Resources.Black
-                End If
+                Try
+                    If File.Exists(s.IconFile) Then
+                        IconValue = New Icon(s.IconFile)
+                        LastIconFile = s.IconFile
+                    Else
+                        Using stream = GetType(GlobalClass).Assembly.GetManifestResourceStream("StaxRip.png")
+                            IconValue = New Icon(1, New Bitmap(stream))
+                        End Using
+                    End If
+                Catch
+                End Try
             End If
 
             Return IconValue
@@ -1709,7 +1687,7 @@ Public Class GlobalClass
         If MsgQuestion("An error occured", "Do you want to open the log file?",
                        TaskButton.YesNo) = DialogResult.Yes Then
 
-            g.ShellExecute(g.GetTextEditorPath(), fp.Escape)
+            g.ShellExecute(fp)
             logfileOpened = True
         End If
 
@@ -1717,7 +1695,7 @@ Public Class GlobalClass
                        TaskButton.YesNo) = DialogResult.Yes Then
 
             If Not logfileOpened Then
-                g.ShellExecute(g.GetTextEditorPath(), fp.Escape)
+                g.ShellExecute(fp)
             End If
 
             g.SelectFileWithExplorer(fp)
@@ -1735,15 +1713,60 @@ Public Class GlobalClass
         Next
     End Function
 
+    Private TrayIndicator As TrayIndicator
+    Private TrayClickAction As Action
+
+    'returns False if the desktop doesn't support tray icons
+    Function ShowTrayIcon(clickAction As Action) As Boolean
+        Try
+            If TrayIndicator Is Nothing Then
+                TrayIndicator = New TrayIndicator With {.Image = Icon, .Title = "StaxRip"}
+                AddHandler TrayIndicator.Activated, Sub() TrayClickAction?.Invoke()
+            End If
+
+            TrayClickAction = clickAction
+            TrayIndicator.Show()
+            Return True
+        Catch
+            Return False
+        End Try
+    End Function
+
+    Sub HideTrayIcon()
+        Try
+            TrayIndicator?.Hide()
+        Catch
+        End Try
+    End Sub
+
+    'the shutdown mode is shared between StaxRip instances with a file in the settings folder
+    Property ShutdownMode As ShutdownMode
+        Get
+            Dim fp = Path.Combine(Folder.Settings, "ShutdownMode")
+
+            If File.Exists(fp) Then
+                Return CType(File.ReadAllText(fp).Trim.ToInt, ShutdownMode)
+            End If
+
+            Return ShutdownMode.Nothing
+        End Get
+        Set(value As ShutdownMode)
+            Try
+                File.WriteAllText(Path.Combine(Folder.Settings, "ShutdownMode"), CInt(value).ToString)
+            Catch
+            End Try
+        End Set
+    End Property
+
     Sub ShutdownPC()
-        ShutdownPC(CType(Registry.CurrentUser.GetInt("Software\" + Application.ProductName, "ShutdownMode"), ShutdownMode))
+        ShutdownPC(ShutdownMode)
     End Sub
 
     Sub ShutdownPC(mode As ShutdownMode)
         If mode <> ShutdownMode.Nothing Then
             g.SavedProject = p
-            g.MainForm.Close()
-            Registry.CurrentUser.Write("Software\" + Application.ProductName, "ShutdownMode", 0)
+            UIInvoke(Sub() g.MainForm.Close())
+            ShutdownMode = ShutdownMode.Nothing
             Shutdown.Commit(mode)
         End If
     End Sub
@@ -1775,7 +1798,7 @@ Public Class GlobalClass
     Function BrowseFile(filter As String) As String
         Using dialog As New OpenFileDialog
             dialog.Filter = filter
-            dialog.SetInitDir(p.TempDir)
+            dialog.SetInitDir(p.TempDir, s.LastSourceDir)
 
             If dialog.ShowDialog = DialogResult.OK Then
                 Return dialog.FileName
@@ -1795,7 +1818,7 @@ Public Class GlobalClass
 
         Using form As New StringEditorForm
             form.ScaleClientSize(25, 15)
-            form.MaximizeBox = False
+            form.Maximizable = False
             form.rtb.ReadOnly = True
             form.cbWrap.Checked = False
             form.cbWrap.Visible = False
@@ -1829,51 +1852,8 @@ Public Class GlobalClass
         End If
     End Sub
 
+    'long paths are always supported on Linux
     Sub CheckForLongPathSupport()
-        If Not s.CheckForLongPathSupport Then Return
-
-        Try
-            Dim root = "HKLM"
-            Dim key = "SYSTEM\CurrentControlSet\Control\FileSystem"
-            Dim name = "LongPathsEnabled"
-            Dim enabled = Registry.LocalMachine.GetBoolean(key, name)
-            If Not enabled Then
-                Using td = New TaskDialog(Of DialogResult)
-                    td.Icon = TaskIcon.Question
-                    td.Timeout = s.ErrorMessageTimeout
-                    td.Title = "Enable Long Path Support?"
-                    td.Content = $"Long Path Support is disabled in your Registry under:{BR}{root}\{key}\{name}{BR}This can cause issues with long paths as well as Unicode characters within the paths.{BR2}Do you want to enable it?"
-                    td.AddButton("Yes", DialogResult.Yes)
-                    td.AddButton("No", DialogResult.No, True)
-                    td.AddButton("No and disable the check", DialogResult.Ignore)
-                    td.Show()
-
-                    If td.SelectedValue = DialogResult.Yes Then
-                        Try
-                            Dim psi As New ProcessStartInfo With {
-                                .FileName = "reg.exe",
-                                .Arguments = $"add {root}\{key} /v {name} /t REG_DWORD /d 1 /f",
-                                .Verb = "runas",
-                                .UseShellExecute = True
-                            }
-
-                            Using regProcess = Process.Start(psi)
-                                regProcess.WaitForExit()
-
-                                If regProcess.ExitCode <> 0 Then
-                                    MsgError("Something went wrong, the Long Path Support was not enabled!")
-                                End If
-                            End Using
-                        Catch ex As Exception
-                            MsgError("Something went wrong, the Long Path Support was not enabled!" + BR2 + ex.Message)
-                        End Try
-                    ElseIf td.SelectedValue = DialogResult.Ignore Then
-                        s.CheckForLongPathSupport = False
-                    End If
-                End Using
-            End If
-        Catch ex As Exception
-        End Try
     End Sub
 
     Async Sub PreloadValuesAsync()
@@ -1915,7 +1895,7 @@ Public Class GlobalClass
 
         p.SourceScript.Synchronize(True, True, True)
 
-        Dim useDvOnly = p.HdrDolbyVisionMetadataFile IsNot Nothing AndAlso p.VideoEncoder.IsDolbyVisionSet AndAlso p.HdrDolbyVisionMetadataFile.Crop <> Padding.Empty
+        Dim useDvOnly = p.HdrDolbyVisionMetadataFile IsNot Nothing AndAlso p.VideoEncoder.IsDolbyVisionSet AndAlso p.HdrDolbyVisionMetadataFile.Crop <> CropPadding.Empty
 
         If useDvOnly Then
             Dim c = p.HdrDolbyVisionMetadataFile.Crop
@@ -1924,70 +1904,92 @@ Public Class GlobalClass
             If p.AutoCropDolbyVisionSideMode = AutoCropDolbyVisionSideMode.Vertical Then sm = AutoCropSideMode.Vertical
             SetCrop(c.Left, c.Top, c.Right, c.Bottom, sm, p.ForcedOutputModDirection, True)
         Else
-            Using server = FrameServerFactory.Create(p.SourceScript.Path)
-                Dim info = server.Info
-                Dim frameCount = info.FrameCount
-                Dim frameRate = info.FrameRate
-                Dim startFrame = 0
-                Dim endFrame = frameCount - 1
-                If p.AutoCropFrameRangeMode = AutoCropFrameRangeMode.Automatic Then
-                    Dim threshold = CInt(VB6.Conversion.Fix(frameCount * 0.05))
-                    startFrame += threshold
-                    endFrame -= threshold
-                ElseIf p.AutoCropFrameRangeMode = AutoCropFrameRangeMode.ManualThreshold Then
-                    startFrame += p.AutoCropFrameRangeThresholdBegin
-                    endFrame -= p.AutoCropFrameRangeThresholdEnd
-                End If
-                Dim consideredFrames = endFrame - startFrame
-                Dim minFrames = 5
-                Dim interval = CInt(VB6.Conversion.Fix(frameRate * 60))
-                If p.AutoCropFrameSelectionMode = AutoCropFrameSelectionMode.FixedFrames Then
-                    interval = consideredFrames \ (p.AutoCropFixedFramesFrameSelection - 1)
-                ElseIf p.AutoCropFrameSelectionMode = AutoCropFrameSelectionMode.FrameInterval Then
-                    interval = p.AutoCropFrameIntervalFrameSelection
-                    If interval * minFrames > consideredFrames Then
-                        interval = CInt(VB6.Conversion.Fix(consideredFrames / minFrames))
-                    End If
-                ElseIf p.AutoCropFrameSelectionMode = AutoCropFrameSelectionMode.TimeInterval Then
-                    interval = CInt(VB6.Conversion.Fix(frameRate * p.AutoCropTimeIntervalFrameSelection))
-                    If interval * minFrames > consideredFrames Then
-                        interval = CInt(VB6.Conversion.Fix(consideredFrames / minFrames))
-                    End If
-                End If
-                Dim analyzeCount = (consideredFrames \ interval) + 1
-                Dim analyzeFrames(analyzeCount - 1) As Integer
-                Dim crops(analyzeCount - 1) As AutoCrop
-                Dim offset = (consideredFrames - ((analyzeCount - 1) * interval)) \ 2
-                startFrame += offset
-                Dim luminanceThreshold = p.AutoCropLuminanceThreshold / 100
+            Dim crop = DetectAutoCrop(progressAction)
 
-                For i = 0 To analyzeCount - 1
-                    analyzeFrames(i) = Math.Min(startFrame + i * interval, endFrame)
-                Next
-
-                For i = 0 To analyzeCount - 1
-                    progressAction?.Invoke(i / analyzeCount * 100)
-
-                    Dim frame = analyzeFrames(i)
-                    Using bmp = BitmapUtil.CreateBitmap(server, frame)
-                        crops(i) = AutoCrop.Start(bmp.Clone(New Rectangle(0, 0, bmp.Width, bmp.Height), PixelFormat.Format32bppRgb), luminanceThreshold)
-                    End Using
-
-                    If {crops(i).Left.Min, crops(i).Top.Min, crops(i).Right.Min, crops(i).Bottom.Min}.Max() = 0 Then
-                        progressAction?.Invoke(100.0)
-                        Exit For
-                    End If
-                Next
-
-                Dim left = crops.Where(Function(x) x IsNot Nothing).SelectMany(Function(arg) arg.Left).Min()
-                Dim top = crops.Where(Function(x) x IsNot Nothing).SelectMany(Function(arg) arg.Top).Min()
-                Dim right = crops.Where(Function(x) x IsNot Nothing).SelectMany(Function(arg) arg.Right).Min()
-                Dim bottom = crops.Where(Function(x) x IsNot Nothing).SelectMany(Function(arg) arg.Bottom).Min()
-
-                SetCrop(left, top, right, bottom, p.AutoCropSideMode, p.ForcedOutputModDirection, False)
-            End Using
+            If crop IsNot Nothing Then
+                SetCrop(crop(0), crop(1), crop(2), crop(3), p.AutoCropSideMode, p.ForcedOutputModDirection, False)
+            End If
         End If
     End Sub
+
+    'returns left, top, right and bottom crop values of the source script or Nothing
+    Function DetectAutoCrop(progressAction As Action(Of Double)) As Integer()
+        Using server = FrameServerFactory.Create(p.SourceScript.Path)
+            If server Is Nothing OrElse server.Error <> "" Then
+                Return Nothing
+            End If
+
+            Dim info = server.Info
+            Dim frameCount = info.FrameCount
+            Dim frameRate = info.FrameRate
+            Dim startFrame = 0
+            Dim endFrame = frameCount - 1
+            If p.AutoCropFrameRangeMode = AutoCropFrameRangeMode.Automatic Then
+                Dim threshold = CInt(VB6.Conversion.Fix(frameCount * 0.05))
+                startFrame += threshold
+                endFrame -= threshold
+            ElseIf p.AutoCropFrameRangeMode = AutoCropFrameRangeMode.ManualThreshold Then
+                startFrame += p.AutoCropFrameRangeThresholdBegin
+                endFrame -= p.AutoCropFrameRangeThresholdEnd
+            End If
+            Dim consideredFrames = endFrame - startFrame
+            Dim minFrames = 5
+            Dim interval = CInt(VB6.Conversion.Fix(frameRate * 60))
+            If p.AutoCropFrameSelectionMode = AutoCropFrameSelectionMode.FixedFrames Then
+                interval = consideredFrames \ (p.AutoCropFixedFramesFrameSelection - 1)
+            ElseIf p.AutoCropFrameSelectionMode = AutoCropFrameSelectionMode.FrameInterval Then
+                interval = p.AutoCropFrameIntervalFrameSelection
+                If interval * minFrames > consideredFrames Then
+                    interval = CInt(VB6.Conversion.Fix(consideredFrames / minFrames))
+                End If
+            ElseIf p.AutoCropFrameSelectionMode = AutoCropFrameSelectionMode.TimeInterval Then
+                interval = CInt(VB6.Conversion.Fix(frameRate * p.AutoCropTimeIntervalFrameSelection))
+                If interval * minFrames > consideredFrames Then
+                    interval = CInt(VB6.Conversion.Fix(consideredFrames / minFrames))
+                End If
+            End If
+            interval = Math.Max(1, interval)
+            Dim analyzeCount = (consideredFrames \ interval) + 1
+            Dim analyzeFrames(analyzeCount - 1) As Integer
+            Dim crops(analyzeCount - 1) As AutoCrop
+            Dim offset = (consideredFrames - ((analyzeCount - 1) * interval)) \ 2
+            startFrame += offset
+            Dim luminanceThreshold = p.AutoCropLuminanceThreshold / 100
+
+            For i = 0 To analyzeCount - 1
+                analyzeFrames(i) = Math.Min(startFrame + i * interval, endFrame)
+            Next
+
+            For i = 0 To analyzeCount - 1
+                progressAction?.Invoke(i / analyzeCount * 100)
+
+                Dim frame = analyzeFrames(i)
+                Dim data = FrameData.Create(server, frame)
+
+                If data Is Nothing Then
+                    Continue For
+                End If
+
+                crops(i) = AutoCrop.Start(data, luminanceThreshold)
+
+                If crops(i) IsNot Nothing AndAlso {crops(i).Left.Min, crops(i).Top.Min, crops(i).Right.Min, crops(i).Bottom.Min}.Max() = 0 Then
+                    progressAction?.Invoke(100.0)
+                    Exit For
+                End If
+            Next
+
+            If Not crops.Any(Function(x) x IsNot Nothing) Then
+                Return Nothing
+            End If
+
+            Dim left = crops.Where(Function(x) x IsNot Nothing).SelectMany(Function(arg) arg.Left).Min()
+            Dim top = crops.Where(Function(x) x IsNot Nothing).SelectMany(Function(arg) arg.Top).Min()
+            Dim right = crops.Where(Function(x) x IsNot Nothing).SelectMany(Function(arg) arg.Right).Min()
+            Dim bottom = crops.Where(Function(x) x IsNot Nothing).SelectMany(Function(arg) arg.Bottom).Min()
+
+            Return {left, top, right, bottom}
+        End Using
+    End Function
 
     Sub SmartCrop()
         If Not p.Script.IsFilterActive("Resize") Then
@@ -2163,20 +2165,15 @@ Public Class GlobalClass
             Using td As New TaskDialog(Of String)
                 td.Title = "Choose below"
                 td.AddCommand("Info()")
-                td.AddCommand("avsmeter benchmark")
-                td.AddCommand("avsmeter info")
                 td.AddCommand("avs2pipemod info")
 
                 Select Case td.Show()
                     Case "avs2pipemod info"
-                        g.RunCodeInTerminal($"""`n{Package.avs2pipemod.Name} {Package.avs2pipemod.Version}""; & '{Package.avs2pipemod.Path}' -dll=""{Package.AviSynth.Path.Escape}"" -info '{script.Path}'")
-                    Case "avsmeter benchmark"
-                        g.RunCodeInTerminal($"& '{Package.AVSMeter.Path}' '{script.Path.ToShortFilePath}'")
-                    Case "avsmeter info"
-                        g.RunCodeInTerminal($"& '{Package.AVSMeter.Path}' -info '{script.Path.ToShortFilePath}';""""")
+                        DesktopHelp.RunInTerminal(GetVersionEcho(Package.avs2pipemod) + Package.avs2pipemod.Path.Escape +
+                            " -dll=" + Package.AviSynth.Path.Escape + " -info " + script.Path.Escape)
                     Case "Info()"
                         Dim infoScript = New VideoScript
-                        infoScript.AddFilter(New VideoFilter($"Import(""{script.Path}"")"))
+                        infoScript.AddFilter(New VideoFilter("Import(" + VideoScript.ToAviSynthString(script.Path) + ")"))
                         Dim infoCode = $"Info(size={(script.GetInfo().Height * 0.05).ToInvariantString()})"
                         infoScript.AddFilter(New VideoFilter(infoCode))
                         infoScript.Path = Path.Combine(p.TempDir, p.TargetFile.Base + $"_info." + script.FileType)
@@ -2198,7 +2195,7 @@ Public Class GlobalClass
 
                 Select Case td.Show()
                     Case "vspipe info"
-                        g.RunCodeInTerminal($"""`n{Package.vspipe.Name} {Package.vspipe.Version}`n""; & '{Package.vspipe.Path}' --info '{script.Path}' -;""""")
+                        DesktopHelp.RunInTerminal(GetVersionEcho(Package.vspipe) + Package.vspipe.Path.Escape + " --info " + script.Path.Escape + " -")
                     Case "ClipInfo()"
                         Dim infoScript = script.GetNewScript
                         infoScript.Path = Path.Combine(p.TempDir, p.TargetFile.Base + "_info." + script.FileType)
@@ -2217,8 +2214,14 @@ Public Class GlobalClass
         End If
     End Sub
 
+    Function GetVersionEcho(pack As Package) As String
+        'the version of system installed tools is unknown
+        If pack.Version = "" Then Return ""
+        Return "echo " + ShellHelp.Quote(pack.Name + " " + pack.Version) + "; echo; "
+    End Function
+
     Function IsDevelopmentPC() As Boolean
-        Return New DirectoryInfo(Application.StartupPath).Name.EndsWithEx("bin") OrElse New DirectoryInfo(Application.StartupPath).Name.EndsWithEx("bin-x86")
+        Return New DirectoryInfo(Folder.Startup).Name.EndsWithEx("bin")
     End Function
 
     Sub RunTask(action As Action)
@@ -2232,18 +2235,7 @@ Public Class GlobalClass
     End Sub
 
     Function RunSTATask(action As Action) As Task
-        Dim tcs = New TaskCompletionSource(Of Object)()
-        Dim thread = New Thread(Sub()
-                                    Try
-                                        action?.Invoke()
-                                        tcs.SetResult(Nothing)
-                                    Catch ex As Exception
-                                        tcs.SetException(ex)
-                                    End Try
-                                End Sub)
-        thread.SetApartmentState(ApartmentState.STA)
-        thread.Start()
-        Return tcs.Task
+        Return Task.Run(action)
     End Function
 
     Sub UpdateTrim(script As VideoScript, Optional moveToTheEnd As Boolean = False)

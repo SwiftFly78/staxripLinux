@@ -1,44 +1,41 @@
 
-Imports System.ComponentModel
-Imports System.Drawing.Design
-
 Namespace UI
-    <ProvideProperty("TipText", GetType(Control))>
+    'Shows short help texts as tooltip and the full help text on right-click
     Public Class TipProvider
-        Inherits Component
-        Implements IExtenderProvider
+        Implements IDisposable
 
-        Private ToolTip As New ToolTip
         Private TipTitles As New Dictionary(Of Control, String)
         Private TipTexts As New Dictionary(Of Control, String)
+        Private Registered As New HashSet(Of Control)
 
-        <Browsable(False)>
-        <DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)>
         Property TipsFunc As Func(Of StringPairList)
 
-        Sub New(Optional component As IContainer = Nothing)
-            If Not component Is Nothing Then
-                component.Add(Me)
+        Sub New(Optional component As Object = Nothing)
+        End Sub
+
+        Sub Dispose() Implements IDisposable.Dispose
+            TipTexts.Clear()
+            TipTitles.Clear()
+        End Sub
+
+        Shared Function FormatTip(value As String) As String
+            If value = "" Then
+                Return Nothing
             End If
 
-            ToolTip.AutomaticDelay = 1000
-            ToolTip.AutoPopDelay = 10000
-            ToolTip.InitialDelay = 1000
-            ToolTip.ReshowDelay = 1000
-        End Sub
+            value = value.TrimEnd("."c)
 
-        Protected Overrides Sub Dispose(disposing As Boolean)
-            ToolTip.Dispose()
-            MyBase.Dispose(disposing)
-        End Sub
+            If HelpDocument.MustConvert(value) Then
+                value = HelpDocument.ConvertMarkup(value, True)
+            End If
 
-        Function CanExtend(obj As Object) As Boolean Implements IExtenderProvider.CanExtend
-            Return TypeOf obj Is Control
+            If value.Length > 400 Then
+                value = value.Substring(0, 400) + "..." + BR + "(right-click for full help)"
+            End If
+
+            Return value
         End Function
 
-        <Category("TipProvider")>
-        <DefaultValue("")>
-        <Editor(GetType(StringEditor), GetType(UITypeEditor))>
         Function GetTipText(ctrl As Control) As String
             If TipTexts.ContainsKey(ctrl) Then
                 Return TipTexts(ctrl)
@@ -63,8 +60,10 @@ Namespace UI
             Dim title = ""
 
             For Each ctrl In controls
-                If TypeOf ctrl Is Label OrElse TypeOf ctrl Is CheckBox Then
-                    title = FormatName(ctrl.Text)
+                Dim text = GetControlText(ctrl)
+
+                If (TypeOf ctrl Is Label OrElse TypeOf ctrl Is CheckBox) AndAlso text <> "" Then
+                    title = FormatName(text)
                 End If
             Next
 
@@ -79,28 +78,30 @@ Namespace UI
             Next
         End Sub
 
+        Shared Function GetControlText(ctrl As Control) As String
+            If TypeOf ctrl Is Label Then Return DirectCast(ctrl, Label).Text
+            If TypeOf ctrl Is CheckBox Then Return DirectCast(ctrl, CheckBox).Text
+            If TypeOf ctrl Is ButtonEx Then Return DirectCast(ctrl, ButtonEx).Text
+            If TypeOf ctrl Is Button Then Return DirectCast(ctrl, Button).Text
+            If TypeOf ctrl Is LinkButton Then Return DirectCast(ctrl, LinkButton).Text
+            Return ""
+        End Function
+
         Sub Init(tipText As String, control As Control)
-            If Not DesignMode Then
+            control.ToolTip = FormatTip(tipText)
+
+            If Not Registered.Contains(control) Then
+                Registered.Add(control)
                 AddHandler control.MouseDown, AddressOf TipMouseDown
-                tipText = tipText.TrimEnd("."c)
-
-                If tipText.Length > 80 Then
-                    tipText = If(HasContextMenu(control), Nothing, "Right-click for help")
-                ElseIf HelpDocument.MustConvert(tipText) Then
-                    tipText = HelpDocument.ConvertMarkup(tipText, True)
-                End If
-
-                If tipText <> "" Then
-                    AddHandler control.HandleCreated, Sub() ToolTip.SetToolTip(control, tipText)
-                End If
             End If
         End Sub
 
         Sub TipMouseDown(sender As Object, e As MouseEventArgs)
-            If e.Button = MouseButtons.Right AndAlso
-                Not HasContextMenu(DirectCast(sender, Control)) Then
+            Dim ctrl = DirectCast(sender, Control)
 
-                ShowHelp(DirectCast(sender, Control))
+            If e.Buttons = MouseButtons.Alternate AndAlso Not HasContextMenu(ctrl) Then
+                e.Handled = True
+                ShowHelp(ctrl)
             End If
         End Sub
 
@@ -114,34 +115,31 @@ Namespace UI
 
             If TipTitles.ContainsKey(ctrl) Then
                 ret.Name = FormatName(TipTitles(ctrl))
+            Else
+                ret.Name = FormatName(GetControlText(ctrl))
             End If
 
             If TipTexts.ContainsKey(ctrl) Then
                 ret.Value = TipTexts(ctrl)
             End If
+
             Return ret
         End Function
 
         Function HasContextMenu(ctrl As Control) As Boolean
-            If TypeOf ctrl Is TextBox Then Return True
-            If TypeOf ctrl Is RichTextBox Then Return True
-            If TypeOf ctrl Is NumericUpDown Then Return True
-
-            If TypeOf ctrl Is ComboBox AndAlso
-                DirectCast(ctrl, ComboBox).DropDownStyle = ComboBoxStyle.DropDown Then
-
+            If TypeOf ctrl Is TextControl OrElse TypeOf ctrl Is TextEdit OrElse TypeOf ctrl Is NumericStepper Then
                 Return True
             End If
 
-            If Not ctrl.ContextMenuStrip Is Nothing Then
-                Return True
-            End If
+            Return ctrl.ContextMenu IsNot Nothing
         End Function
 
-        Function FormatName(value As String) As String
-            If value.Contains(" ") Then
-                value = value.Trim
+        Shared Function FormatName(value As String) As String
+            If value Is Nothing Then
+                Return ""
             End If
+
+            value = value.Trim
 
             If value.Contains("&") AndAlso Not value.Contains(" & ") Then
                 value = value.Replace("&", "")
@@ -170,18 +168,17 @@ Namespace UI
                     If TipTitles.ContainsKey(ctrl) Then
                         pair.Name = FormatName(TipTitles(ctrl))
                     Else
-                        pair.Name = FormatName(ctrl.Text)
+                        pair.Name = FormatName(GetControlText(ctrl))
                     End If
 
                     If Not temp.Contains(pair.Name) Then
                         temp.Add(pair.Name)
-                        pair.Name = FormatName(pair.Name)
                         ret.Add(pair)
                     End If
                 End If
             Next
 
-            If Not TipsFunc Is Nothing Then
+            If TipsFunc IsNot Nothing Then
                 ret.AddRange(TipsFunc.Invoke)
             End If
 

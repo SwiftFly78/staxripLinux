@@ -1,4 +1,4 @@
-﻿
+
 Imports System.Collections.ObjectModel
 Imports System.Management.Automation
 Imports System.Management.Automation.Runspaces
@@ -18,11 +18,8 @@ Public Class PowerShell
         runspace.ThreadOptions = PSThreadOptions.UseCurrentThread
         runspace.Open()
 
+        'execution policies don't exist on Linux
         Dim pipeline = runspace.CreatePipeline()
-        Dim policyCommand = New Runspaces.Command("Set-ExecutionPolicy")
-        policyCommand.Parameters.Add("ExecutionPolicy", "Unrestricted")
-        policyCommand.Parameters.Add("Scope", "Process")
-        pipeline.Commands.Add(policyCommand)
 
         If InitCode <> "" Then
             pipeline.Commands.AddScript(InitCode)

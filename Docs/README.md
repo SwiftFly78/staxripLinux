@@ -18,6 +18,7 @@
 - [Community](Introduction/Community.md)
 - [System Requirements](Introduction/System-Requirements.md)
 - [Installation](Introduction/Installation.md)
+- [Linux](Introduction/Linux.md)
 - [Changelog](../CHANGELOG.md) :link:
 
 ## [Usage](Usage/README.md)

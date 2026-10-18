@@ -1,12 +1,18 @@
-﻿
-Imports System.Drawing.Imaging
+
 Imports System.Text
-Imports Microsoft.VisualBasic.FileIO
+
 Imports StaxRip.UI
 
 Public Class VideoComparisonForm
+    Inherits FormBase
+
+    Public WithEvents TabControl As TabControlEx
+    Public WithEvents TrackBar As TrackBarEx
+    Public laFilePath As LabelEx
+    Public laInfo As LabelEx
+    Public WithEvents bnMenu As ButtonEx
+
     Shared Property Pos As Integer
-    Shared Property TabBackColor As ColorHSL
 
     Private ShowMessageSavedPngs As Boolean = True
     Public CropLeft, CropTop, CropRight, CropBottom As Integer
@@ -14,26 +20,28 @@ Public Class VideoComparisonForm
     Shadows Menu As ContextMenuStripEx
 
     Sub New()
-        InitializeComponent()
+        TabControl = New TabControlEx
+        TrackBar = New TrackBarEx With {.Maximum = 1}
+        laInfo = New LabelEx With {.Font = FontManager.GetCodeFont(-1)}
+        laFilePath = New LabelEx
+        Menu = New ContextMenuStripEx With {.Form = Me}
+        bnMenu = New ButtonEx With {.ShowMenuSymbol = True, .ContextMenuStrip = Menu}
+
+        Content = PaddedTable(
+            ScaledRow(TabControl),
+            Row(TrackBar),
+            Row(New TableLayout(Row(bnMenu, Scaled(laInfo))) With {.Spacing = DefaultSpacing}),
+            Row(laFilePath))
+
+        Text = $"Video Comparison - {g.DefaultCommands.GetApplicationDetails()}"
         RestoreClientSize(53, 36)
+        FileDrop = True
+        TabControl.ContextMenu = Menu
 
         Dim enabledFunc = Function() TabControl.SelectedTab IsNot Nothing
-        Menu = New ContextMenuStripEx With {
-            .Form = Me
-        }
-
-        AllowDrop = True
-        KeyPreview = True
-        bnMenu.ContextMenuStrip = Menu
-        bnMenu.TabStop = False
-        TabControl.AllowDrop = True
-        TabControl.ContextMenuStrip = Menu
-        TabControl.ShowToolTips = True
-        TrackBar.NoMouseWheelEvent = True
-        tlpMain.AllowDrop = True
 
         Menu.Add("Add files to compare...", AddressOf Add, Keys.O, "Video files to compare, the file browser has multiselect enabled.")
-        Menu.Add("Close selected tab", AddressOf Remove, Keys.Delete, enabledFunc)
+        Menu.Add("Close selected tab", AddressOf RemoveTab, Keys.Delete, enabledFunc)
         Menu.Add("Select next tab", AddressOf NextTab, Keys.Space, enabledFunc)
         Menu.Add("Save PNGs at current position", AddressOf Save, Keys.S, enabledFunc, "Saves a PNG image for every file/tab at the current position in the directory of the source file.")
         Menu.Add("Crop and Zoom...", AddressOf CropZoom, Keys.C)
@@ -46,91 +54,40 @@ Public Class VideoComparisonForm
         Menu.Add("Reload all tabs", AddressOf Reload, Keys.R, enabledFunc)
         Menu.Add("Help", AddressOf Help, Keys.F1)
 
-        Menu.ApplyMarginFix()
-
-        AddHandler tlpMain.DragOver, AddressOf TabControlOnDragOver
-        AddHandler tlpMain.DragDrop, AddressOf TabControlOnDragDrop
-        AddHandler TabControl.DragOver, AddressOf TabControlOnDragOver
-        AddHandler TabControl.DragDrop, AddressOf TabControlOnDragDrop
-        AddHandler TabControl.Selected, AddressOf TabControlOnSelected
-
-        ApplyTheme()
-        AddHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
+        AddHandler TabControl.SelectedIndexChanged, AddressOf TabControlOnSelected
     End Sub
 
-    Protected Overrides Sub Dispose(disposing As Boolean)
-        RemoveHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
-        components?.Dispose()
-        MyBase.Dispose(disposing)
+    Sub VideoComparisonForm_FilesDropped(files As String()) Handles Me.FilesDropped
+        BeginInvoke(Sub() Add(files))
     End Sub
 
-    Sub OnThemeChanged(theme As Theme)
-        ApplyTheme(theme)
-    End Sub
+    Sub TabControlOnSelected(sender As Object, e As EventArgs)
+        Dim tab = TryCast(TabControl.SelectedTab, VideoTab)
 
-    Sub ApplyTheme()
-        ApplyTheme(ThemeManager.CurrentTheme)
-    End Sub
-
-    Sub ApplyTheme(theme As Theme)
-        If DesignHelp.IsDesignMode Then
-            Exit Sub
-        End If
-
-        BackColor = theme.VideoComparisonForm.BackColor
-        TabBackColor = theme.VideoComparisonForm.TabBackColor
-
-    End Sub
-
-    Protected Overrides Sub OnDragEnter(e As DragEventArgs)
-        MyBase.OnDragEnter(e)
-
-        Dim files = TryCast(e.Data.GetData(DataFormats.FileDrop), String())
-
-        If Not files.NothingOrEmpty Then
-            e.Effect = DragDropEffects.Copy
-        End If
-    End Sub
-
-    Protected Overrides Sub OnDragDrop(e As DragEventArgs)
-        MyBase.OnDragDrop(e)
-
-        Dim files = TryCast(e.Data.GetData(DataFormats.FileDrop), String())
-
-        If Not files.NothingOrEmpty Then
-            BeginInvoke(Sub() Add(files))
-        End If
-    End Sub
-
-    Sub TabControlOnDragOver(sender As Object, e As DragEventArgs)
-        Dim files = TryCast(e.Data.GetData(DataFormats.FileDrop), String())
-
-        If Not files.NothingOrEmpty Then
-            e.Effect = DragDropEffects.Copy
-        End If
-    End Sub
-
-    Sub TabControlOnDragDrop(sender As Object, e As DragEventArgs)
-        Dim files = TryCast(e.Data.GetData(DataFormats.FileDrop), String())
-
-        If Not files.NothingOrEmpty Then
-            BeginInvoke(Sub() Add(files))
-        End If
-    End Sub
-
-    Sub TabControlOnSelected(sender As Object, e As TabControlEventArgs)
-        Dim tab = DirectCast(e.TabPage, VideoTab)
-
-        If tab IsNot Nothing
+        If tab IsNot Nothing Then
             laFilePath.Text = tab.SourceFilePath
+            tab.TrackBarValueChanged()
         End If
     End Sub
+
+    'the comparison uses the engine of the project if available
+    Shared Function GetEngine() As ScriptEngine
+        If p.Script?.Engine = ScriptEngine.AviSynth AndAlso Package.AviSynth.Path <> "" Then
+            Return ScriptEngine.AviSynth
+        End If
+
+        If Package.VapourSynth.Path <> "" Then
+            Return ScriptEngine.VapourSynth
+        End If
+
+        Return ScriptEngine.AviSynth
+    End Function
 
     Sub Add()
-        If Not Package.AviSynth.VerifyOK(True) Then Exit Sub
+        If GetEngine() = ScriptEngine.AviSynth AndAlso Not Package.AviSynth.VerifyOK(True) Then Exit Sub
 
         Dim sourcePath = p.SourceFile
-        Dim sourceAlreadyOpen = If(TabControl.TabPages.Cast(Of VideoTab)?.Where(Function(x) x.SourceFilePath.Equals(sourcePath, StringComparison.InvariantCultureIgnoreCase))?.Any(), False)
+        Dim sourceAlreadyOpen = TabControl.TabPages.OfType(Of VideoTab).Any(Function(x) x.SourceFilePath = sourcePath)
 
         If Not sourceAlreadyOpen AndAlso File.Exists(sourcePath) Then
             Add(sourcePath)
@@ -151,28 +108,18 @@ Public Class VideoComparisonForm
     End Sub
 
     Sub Add(sourcePath As String)
-        Dim tab = New VideoTab With {
-            .AllowDrop = True,
-            .Form = Me,
-            .BackColor = TabBackColor,
-            .ToolTipText = sourcePath
-        }
-        tab.VideoPanel.ContextMenuStrip = TabControl.ContextMenuStrip
+        Dim tab = New VideoTab With {.Form = Me}
+        tab.VideoPanel.ContextMenu = Menu
 
         If tab.Open(sourcePath) Then
             TabControl.TabPages.Add(tab)
-
-            AddHandler tab.DragOver, AddressOf TabControlOnDragOver
-            AddHandler tab.DragDrop, AddressOf TabControlOnDragDrop
-
-            Dim page = DirectCast(TabControl.SelectedTab, VideoTab)
-            page.DoLayout()
-            page.TrackBarValueChanged()
+            TabControl.SelectedTab = tab
+            tab.TrackBarValueChanged()
         Else
-            tab.Dispose()
+            tab.CloseServer()
         End If
 
-        Dim vt = DirectCast(TabControl.SelectedTab, VideoTab)
+        Dim vt = TryCast(TabControl.SelectedTab, VideoTab)
         laFilePath.Text = vt?.SourceFilePath
     End Sub
 
@@ -184,11 +131,12 @@ Public Class VideoComparisonForm
         Next
     End Sub
 
-    Sub Remove()
-        If TabControl.SelectedTab IsNot Nothing Then
-            Dim tab = TabControl.SelectedTab
+    Sub RemoveTab()
+        Dim tab = TryCast(TabControl.SelectedTab, VideoTab)
+
+        If tab IsNot Nothing Then
             TabControl.TabPages.Remove(tab)
-            tab.Dispose()
+            tab.CloseServer()
         End If
     End Sub
 
@@ -206,7 +154,7 @@ Public Class VideoComparisonForm
             End Select
 
             Using bmp = tab.GetBitmap
-                bmp.Save(outputPath, ImageFormat.Png)
+                bmp?.Save(outputPath, ImageFormat.Png)
             End Using
         Next
 
@@ -231,7 +179,7 @@ Public Class VideoComparisonForm
 
     Sub TrackBarValueChanged()
         If TabControl.TabPages.Count > 0 Then
-            DirectCast(TabControl.SelectedTab, VideoTab).TrackBarValueChanged()
+            TryCast(TabControl.SelectedTab, VideoTab)?.TrackBarValueChanged()
         End If
     End Sub
 
@@ -262,12 +210,10 @@ Public Class VideoComparisonForm
         Next
     End Sub
 
-    Protected Overrides Sub OnMouseWheel(e As MouseEventArgs)
-        MyBase.OnMouseWheel(e)
-
+    Sub OnVideoMouseWheel(sender As Object, e As MouseEventArgs)
         Dim value = 100
 
-        If e.Delta < 0 Then
+        If e.Delta.Height < 0 Then
             value *= -1
         End If
 
@@ -276,11 +222,15 @@ Public Class VideoComparisonForm
         End If
 
         TrackBar.Value += value
+        e.Handled = True
     End Sub
 
-    Protected Overrides Sub OnFormClosed(e As FormClosedEventArgs)
-        MyBase.OnFormClosed(e)
-        Dispose()
+    Protected Overrides Sub OnClosed(e As EventArgs)
+        For Each tab In TabControl.TabPages.OfType(Of VideoTab).ToArray
+            tab.CloseServer()
+        Next
+
+        MyBase.OnClosed(e)
     End Sub
 
     Protected Overrides Sub OnShown(e As EventArgs)
@@ -290,11 +240,9 @@ Public Class VideoComparisonForm
 
     Sub CropZoom()
         Using form As New SimpleSettingsForm("Crop and Zoom")
-            form.Height = CInt(form.Height * 0.6)
-            form.Width = CInt(form.Width * 0.6)
+            form.ScaleClientSize(24, 20)
             Dim ui = form.SimpleUI
             Dim page = ui.CreateFlowPage("main page")
-            page.SuspendLayout()
 
             Dim nb = ui.AddNum(page)
             nb.Label.Text = "Crop Left:"
@@ -320,8 +268,6 @@ Public Class VideoComparisonForm
             nb.NumEdit.Value = CropBottom
             nb.NumEdit.SaveAction = Sub(value) CropBottom = CInt(value)
 
-            page.ResumeLayout()
-
             If form.ShowDialog() = DialogResult.OK Then
                 ui.Save()
                 Reload()
@@ -340,7 +286,8 @@ Public Class VideoComparisonForm
     End Sub
 
     Sub GoToTime()
-        Dim tab = DirectCast(TabControl.SelectedTab, VideoTab)
+        Dim tab = TryCast(TabControl.SelectedTab, VideoTab)
+        If tab Is Nothing Then Exit Sub
         Dim d As Date
         d = d.AddSeconds(Pos / tab.Server.FrameRate)
         Dim value = InputBox.Show("Go To Time", d.ToString("HH:mm:ss.fff"))
@@ -359,15 +306,27 @@ Public Class VideoComparisonForm
         Property FileType As VideoComparisonFileType = VideoComparisonFileType.Video
         Property TempFilePath As String
         Property SourceFilePath As String
-        Property VideoPanel As PanelEx
+        Property VideoPanel As Drawable
 
         Private Renderer As VideoRenderer
         Private FrameInfo As String()
 
         Sub New()
-            VideoPanel = New PanelEx
-            AddHandler VideoPanel.Paint, Sub() Draw()
-            Controls.Add(VideoPanel)
+            VideoPanel = New Drawable
+            Content = VideoPanel
+        End Sub
+
+        Sub CloseServer()
+            Renderer?.Dispose()
+            Renderer = Nothing
+            Server?.Dispose()
+            Server = Nothing
+
+            If TempFilePath <> "" AndAlso FileType <> VideoComparisonFileType.AviSynthScript AndAlso
+                FileType <> VideoComparisonFileType.VapourSynthScript Then
+
+                FileHelp.Delete(TempFilePath)
+            End If
         End Sub
 
         Private Function AdjustName(name As String, Optional lengthLimit As Integer = 50) As String
@@ -385,15 +344,16 @@ Public Class VideoComparisonForm
         End Function
 
         Sub Reload()
-            Renderer.Dispose()
-            Server.Dispose()
+            CloseServer()
             Open(SourceFilePath)
         End Sub
 
         Function Open(sourcePath As String) As Boolean
             Text = AdjustName(sourcePath.Base)
-            ToolTipText = sourcePath
+            ToolTip = sourcePath
             SourceFilePath = sourcePath
+            Dim engine = VideoComparisonForm.GetEngine()
+            Dim scriptExt = If(engine = ScriptEngine.VapourSynth, ".vpy", ".avs")
 
             Select Case sourcePath.Ext()
                 Case "avs"
@@ -404,18 +364,25 @@ Public Class VideoComparisonForm
                     TempFilePath = sourcePath.DirAndBase + "_compare" + sourcePath.ExtFull
                 Case "png"
                     FileType = VideoComparisonFileType.Picture
-                    TempFilePath = Path.Combine(Folder.Temp, Guid.NewGuid.ToString + ".avs")
+                    TempFilePath = Path.Combine(Folder.Temp, Guid.NewGuid.ToString + scriptExt)
                 Case Else
                     FileType = VideoComparisonFileType.Video
-                    TempFilePath = Path.Combine(Folder.Temp, Guid.NewGuid.ToString + ".avs")
+                    TempFilePath = Path.Combine(Folder.Temp, Guid.NewGuid.ToString + scriptExt)
             End Select
 
+            If FileType = VideoComparisonFileType.AviSynthScript Then
+                engine = ScriptEngine.AviSynth
+            ElseIf FileType = VideoComparisonFileType.VapourSynthScript Then
+                engine = ScriptEngine.VapourSynth
+            End If
+
             Dim script As New VideoScript With {
-                .Engine = If(FileType = VideoComparisonFileType.VapourSynthScript, ScriptEngine.VapourSynth, ScriptEngine.AviSynth),
+                .Engine = engine,
                 .Path = TempFilePath
             }
 
-            AddHandler Disposed, Sub() FileHelp.Delete(script.Path, RecycleOption.DeletePermanently)
+            Dim isVS = engine = ScriptEngine.VapourSynth
+            Dim pathLiteral = VideoScript.ToScriptString(sourcePath, engine)
 
             Select Case FileType
                 Case VideoComparisonFileType.AviSynthScript
@@ -423,27 +390,34 @@ Public Class VideoComparisonForm
                 Case VideoComparisonFileType.VapourSynthScript
                     script.Filters.Add(New VideoFilter("Source", "Source", File.ReadAllText(sourcePath)))
                 Case VideoComparisonFileType.Video
-                    If sourcePath.EndsWith("mp4") Then
-                        script.Filters.Add(New VideoFilter("Source", "Source", "LSMASHVideoSource(""" + sourcePath + "" + """, format = ""YUV420P12"")"))
+                    If isVS Then
+                        script.Filters.Add(New VideoFilter("Source", "Source", "clip = core.ffms2.Source(" + pathLiteral + ")"))
+                    ElseIf sourcePath.EndsWith("mp4") Then
+                        script.Filters.Add(New VideoFilter("Source", "Source", "LSMASHVideoSource(" + pathLiteral + ", format = ""YUV420P12"")"))
+                        script.Filters.Add(New VideoFilter("SetMemoryMax(512)"))
                     Else
-                        script.Filters.Add(New VideoFilter("Source", "Source", "FFVideoSource(""" + sourcePath + "" + """, colorspace = ""YV12"")"))
+                        script.Filters.Add(New VideoFilter("Source", "Source", "FFVideoSource(" + pathLiteral + ", colorspace = ""YV12"")"))
+                        script.Filters.Add(New VideoFilter("SetMemoryMax(512)"))
                     End If
-                    script.Filters.Add(New VideoFilter("SetMemoryMax(512)"))
                 Case VideoComparisonFileType.Picture
-                    script.Filters.Add(New VideoFilter("ImageSource(""" + sourcePath + """, end = 0)"))
-                    script.Filters.Add(New VideoFilter("SetMemoryMax(512)"))
+                    If isVS Then
+                        script.Filters.Add(New VideoFilter("Source", "Source", "clip = core.imwri.Read(" + pathLiteral + ")"))
+                    Else
+                        script.Filters.Add(New VideoFilter("ImageSource(" + pathLiteral + ", end = 0)"))
+                        script.Filters.Add(New VideoFilter("SetMemoryMax(512)"))
+                    End If
                 Case Else
                     Throw New NotSupportedException("VideoComparisonFileType unhandled!")
             End Select
 
+            Dim cropCode = If(isVS,
+                "clip = core.std.Crop(clip, " & Form.CropLeft & ", " & Form.CropRight & ", " & Form.CropTop & ", " & Form.CropBottom & ")",
+                "Crop(" & Form.CropLeft & ", " & Form.CropTop & ", -" & Form.CropRight & ", -" & Form.CropBottom & ")")
+
             Select Case FileType
-                Case VideoComparisonFileType.Picture
+                Case VideoComparisonFileType.Picture, VideoComparisonFileType.Video
                     If (Form.CropLeft Or Form.CropTop Or Form.CropRight Or Form.CropBottom) <> 0 Then
-                        script.Filters.Add(New VideoFilter("Crop(" & Form.CropLeft & ", " & Form.CropTop & ", -" & Form.CropRight & ", -" & Form.CropBottom & ")"))
-                    End If
-                Case VideoComparisonFileType.Video
-                    If (Form.CropLeft Or Form.CropTop Or Form.CropRight Or Form.CropBottom) <> 0 Then
-                        script.Filters.Add(New VideoFilter("Crop(" & Form.CropLeft & ", " & Form.CropTop & ", -" & Form.CropRight & ", -" & Form.CropBottom & ")"))
+                        script.Filters.Add(New VideoFilter("Crop", "Crop", cropCode))
                     End If
                 Case VideoComparisonFileType.AviSynthScript
                 Case VideoComparisonFileType.VapourSynthScript
@@ -455,11 +429,15 @@ Public Class VideoComparisonForm
             script.Synchronize(True, True, True)
 
             Server = FrameServerFactory.Create(script.Path)
-            Renderer = New VideoRenderer(VideoPanel, Server)
+            Renderer = New VideoRenderer(VideoPanel, Server) With {.KeepAspectRatio = True}
+            AddHandler VideoPanel.MouseWheel, AddressOf Form.OnVideoMouseWheel
             Dim maximum = Server.Info.FrameCount - 1
             Form.TrackBar.Maximum = If(Form.TrackBar.Maximum < maximum, maximum, Form.TrackBar.Maximum)
 
-            If Server.Error <> "" Then MsgError(Server.Error)
+            If Server.Error <> "" Then
+                MsgError(Server.Error)
+                Return False
+            End If
 
             Dim csvFile = sourcePath.DirAndBase + ".csv"
 
@@ -467,7 +445,7 @@ Public Class VideoComparisonForm
                 Dim len = Form.TrackBar.Maximum
                 Dim lines = File.ReadAllLines(csvFile)
 
-                If lines.Length > len Then
+                If lines.Length > len + 1 Then
                     FrameInfo = New String(len) {}
                     Dim headers = lines(0).Split({","c})
 
@@ -518,7 +496,7 @@ Public Class VideoComparisonForm
                             proc.Arguments = "-i " + script.Path.Escape + " -hide_banner"
                         Else
                             proc.File = Package.vspipe.Path
-                            proc.Arguments = script.Path.Escape + " NUL -i"
+                            proc.Arguments = script.Path.Escape + " /dev/null -i"
                         End If
 
                         proc.AllowedExitCodes = {0, 1}
@@ -529,12 +507,13 @@ Public Class VideoComparisonForm
         End Sub
 
         Sub Draw()
+            If Renderer Is Nothing Then Exit Sub
             Renderer.Position = Pos
             Renderer.Draw()
         End Sub
 
         Function GetBitmap() As Bitmap
-            Return BitmapUtil.CreateBitmap(Server, Pos)
+            Return FrameHelp.CreateBitmap(Server, Pos)
         End Function
 
         Sub TrackBarValueChanged()
@@ -550,65 +529,10 @@ Public Class VideoComparisonForm
                     Form.laInfo.Text = $"Position: {Pos,5}, Time: {dt:HH:mm:ss.fff}, Size: {Server.Info.Width} x {Server.Info.Height}"
                 End If
 
-                Form.laInfo.Refresh()
             Catch ex As Exception
                 g.ShowException(ex)
             End Try
         End Sub
 
-        Sub DoLayout()
-            If Server Is Nothing Then
-                Exit Sub
-            End If
-
-            Dim sizeToFit = New Size(Server.Info.Width, Server.Info.Height)
-
-            If sizeToFit.IsEmpty Then
-                Exit Sub
-            End If
-
-            Dim padding As Padding
-
-            Dim rect As New Rectangle(
-                padding.Left, padding.Top,
-                Width - padding.Horizontal,
-                Height - padding.Vertical)
-
-            Dim targetPoint As Point
-            Dim targetSize As Size
-            Dim ar1 = rect.Width / rect.Height
-            Dim ar2 = sizeToFit.Width / sizeToFit.Height
-
-            If ar2 < ar1 Then
-                targetSize.Height = rect.Height
-                targetSize.Width = CInt(sizeToFit.Width / (sizeToFit.Height / rect.Height))
-                targetPoint.X = CInt((rect.Width - targetSize.Width) / 2) + padding.Left
-                targetPoint.Y = padding.Top
-            Else
-                targetSize.Width = rect.Width
-                targetSize.Height = CInt(sizeToFit.Height / (sizeToFit.Width / rect.Width))
-                targetPoint.Y = CInt((rect.Height - targetSize.Height) / 2) + padding.Top
-                targetPoint.X = padding.Left
-            End If
-
-            Dim targetRect = New Rectangle(targetPoint, targetSize)
-            Dim reg As New Region(ClientRectangle)
-            reg.Exclude(targetRect)
-
-            VideoPanel.Left = targetRect.Left
-            VideoPanel.Top = targetRect.Top
-            VideoPanel.Width = targetRect.Width
-            VideoPanel.Height = targetRect.Height
-        End Sub
-
-        Protected Overrides Sub Dispose(disposing As Boolean)
-            Server?.Dispose()
-
-            MyBase.Dispose(disposing)
-        End Sub
-
-        Sub VideoTab_Resize(sender As Object, e As EventArgs) Handles Me.Resize
-            DoLayout()
-        End Sub
     End Class
 End Class

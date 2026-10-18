@@ -19,3 +19,4 @@
 /Source/TaskDialog/WPFTest/bin
 /Source/TaskDialog/WPFTest/obj
 *.aps
+/publish

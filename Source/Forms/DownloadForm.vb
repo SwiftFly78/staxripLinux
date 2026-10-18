@@ -1,49 +1,89 @@
-﻿
-Imports System.ComponentModel
-Imports System.Net
+
+Imports System.Net.Http
+Imports System.Threading
+
+Imports StaxRip.UI
 
 Public Class DownloadForm
-    Private WebClient As New WebClient
+    Inherits DialogBase
+
+    Public WithEvents bnCancel As ButtonEx
+    Public ProgressBar As ProgressBar
+
+    Private ReadOnly Cancellation As New CancellationTokenSource
+    Private ReadOnly Url As String
 
     Property Path As String
 
     Sub New(url As String, path As String)
-        InitializeComponent()
+        Me.Url = url
         Me.Path = path
-        AddHandler WebClient.DownloadProgressChanged, AddressOf ProgressChanged
-        AddHandler WebClient.DownloadFileCompleted, AddressOf Completed
-        Dim filename = url.FileName
-        WebClient.Headers.Add("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36")
-        WebClient.Headers.Add("Referer", url)
-        WebClient.DownloadFileAsync(New Uri(url), path)
+        Text = $"Download - {g.DefaultCommands.GetApplicationDetails()}"
+        ProgressBar = New ProgressBar With {.MaxValue = 1000}
+        bnCancel = CreateButton("Cancel")
+        AbortButton = bnCancel
+        Content = PaddedTable(Row(Scaled(ProgressBar)), Row(ButtonRow(bnCancel)))
+        ClientSize = New Size(FH(30), FH(5))
     End Sub
 
-    Sub ProgressChanged(sender As Object, e As DownloadProgressChangedEventArgs)
+    Protected Overrides Sub OnShown(e As EventArgs)
+        MyBase.OnShown(e)
+        Download()
+    End Sub
+
+    Async Sub Download()
         Try
-            Dim mb = e.TotalBytesToReceive / PrefixedSize(2).Factor
-            Dim received = e.BytesReceived / PrefixedSize(2).Factor
-            Text = $"Download - {received:0.#} {PrefixedSize(2).Unit} of {mb:0.#} {PrefixedSize(2).Factor}"
-            ProgressBar.Maximum = CInt(e.TotalBytesToReceive / SizePrefix.Base)
-            ProgressBar.Value = CInt(e.BytesReceived / SizePrefix.Base)
-        Catch
+            Using client As New HttpClient
+                client.DefaultRequestHeaders.Add("User-Agent", "StaxRip")
+                client.DefaultRequestHeaders.Referrer = New Uri(Url)
+
+                Using response = Await client.GetAsync(Url, HttpCompletionOption.ResponseHeadersRead, Cancellation.Token)
+                    response.EnsureSuccessStatusCode()
+                    Dim total = response.Content.Headers.ContentLength.GetValueOrDefault
+
+                    Using source = Await response.Content.ReadAsStreamAsync(Cancellation.Token)
+                        Using target = File.Create(Path)
+                            Dim buffer(81919) As Byte
+                            Dim received As Long
+
+                            While True
+                                Dim count = Await source.ReadAsync(buffer, 0, buffer.Length, Cancellation.Token)
+
+                                If count = 0 Then
+                                    Exit While
+                                End If
+
+                                Await target.WriteAsync(buffer, 0, count, Cancellation.Token)
+                                received += count
+                                UpdateProgress(received, total)
+                            End While
+                        End Using
+                    End Using
+                End Using
+            End Using
+
+            DialogResult = DialogResult.OK
+        Catch ex As OperationCanceledException
+            DialogResult = DialogResult.Cancel
+        Catch ex As Exception
+            MsgError("Download failed.", ex.Message)
+            DialogResult = DialogResult.Cancel
         End Try
     End Sub
 
-    Sub Completed(sender As Object, e As AsyncCompletedEventArgs)
-        If Not e.Cancelled Then
-            DialogResult = DialogResult.OK
-        End If
+    Sub UpdateProgress(received As Long, total As Long)
+        Dim unit = PrefixedSize(2)
+        Dim receivedText = (received / unit.Factor).ToString("0.#")
 
-        Close()
+        If total > 0 Then
+            Text = $"Download - {receivedText} {unit.Unit} of {(total / unit.Factor):0.#} {unit.Unit}"
+            ProgressBar.Value = CInt(received * 1000 / total)
+        Else
+            Text = $"Download - {receivedText} {unit.Unit}"
+        End If
     End Sub
 
     Sub bnCancel_Click(sender As Object, e As EventArgs) Handles bnCancel.Click
-        WebClient.CancelAsync()
-        Close()
-    End Sub
-
-    Protected Overrides Sub OnFormClosed(e As FormClosedEventArgs)
-        MyBase.OnFormClosed(e)
-        WebClient.Dispose()
+        Cancellation.Cancel()
     End Sub
 End Class

@@ -1,4 +1,4 @@
-﻿
+
 Imports System.Reflection
 Imports StaxRip.UI
 
@@ -12,7 +12,7 @@ Public Class ApplicationSettings
     Public AudioProfiles As List(Of AudioProfile)
     Public AutoSaveProject As Boolean
     Public AviSynthFilterPreferences As StringPairList
-    Public AviSynthMode As FrameServerMode
+    Public AviSynthMode As FrameServerMode = FrameServerMode.Installed
     Public AviSynthProfiles As List(Of FilterCategory)
     Public BinaryPrefix As Boolean = False
     Public CheckForLongPathSupport As Boolean = True
@@ -31,7 +31,7 @@ Public Class ApplicationSettings
     Public CommandLinePreviewViaCodeForm As Boolean = True
     Public CommandLinePreview As CommandLinePreview = CommandLinePreview.CodePreview
     Public CommandLinePreviewWithLineNumbers As Boolean = True
-    Public CropColor As Color
+    Public CropColor As System.Drawing.Color
     Public CustomMenuCodeEditor As CustomMenuItem
     Public CustomMenuCrop As CustomMenuItem
     Public CustomMenuMainForm As CustomMenuItem
@@ -49,10 +49,11 @@ Public Class ApplicationSettings
     Public ExpandPreviewWindow As Boolean = True
     Public FilterSetupProfiles As List(Of TargetVideoScript)
     Public FirstRunOnVersion As KeyValuePair(Of String, DateTime) = New KeyValuePair(Of String, Date)(g.DefaultCommands.GetApplicationDetails(), DateTime.Now)
+    'empty font names use the fontconfig defaults
     Public Fonts As Dictionary(Of FontCategory, String) = New Dictionary(Of FontCategory, String) From {
-                                                            {FontCategory.Code, "Roboto Mono"},
-                                                            {FontCategory.Default, "Anuphan"},
-                                                            {FontCategory.Thumbnail, "Roboto Mono"}}
+                                                            {FontCategory.Code, ""},
+                                                            {FontCategory.Default, ""},
+                                                            {FontCategory.Thumbnail, ""}}
     Public HidePreviewButtons As Boolean
     Public IconFile As String
     Public InvertCtrlKeyOnNextButton As Boolean = False
@@ -69,7 +70,6 @@ Public Class ApplicationSettings
     Public OutputHighlighting As Boolean = True
     Public ParallelProcsNum As Integer = 3
     Public ParMenu As String
-    Public PreferWindowsTerminal As Boolean = False
     Public PreventFocusStealAfter As Integer = 15
     Public PreventFocusStealUntil As Integer = -1
     Public PreventStandby As Boolean = True
@@ -100,12 +100,13 @@ Public Class ApplicationSettings
     Public StartWithoutFocus As Boolean = False
     Public Storage As ObjectStorage
     Public StringDictionary As Dictionary(Of String, String)
+    Public TerminalEmulator As String = ""
     Public TargetImageSizeMenu As String
     Public ThemeName As String = ThemeManager.DefaultThemeName
     Public ToolProcessPriority As ProcessPriorityClass = ProcessPriorityClass.Normal
     Public UIScaleFactor As Single = 1.0F
     Public VapourSynthFilterPreferences As StringPairList
-    Public VapourSynthMode As FrameServerMode
+    Public VapourSynthMode As FrameServerMode = FrameServerMode.Installed
     Public VapourSynthProfiles As List(Of FilterCategory)
     Public VerifyToolStatus As Boolean = True
     Public Version As Version = Assembly.GetExecutingAssembly.GetName.Version
@@ -178,7 +179,7 @@ Public Class ApplicationSettings
             End If
         End If
 
-        If Check(Demuxers, "Demuxers", 110) Then
+        If Check(Demuxers, "Demuxers", 111) Then
             Demuxers = Demuxer.GetDefaults()
         End If
 
@@ -202,7 +203,6 @@ Public Class ApplicationSettings
                 {"*:VP9", "LWLibavSource"},
                 {"264 h264 avc", "LWLibavSource"},
                 {"265 h265 hevc hvc", "LWLibavSource"},
-                {"avs vdr", "AVISource"},
                 {"d2v", "d2vSource"},
                 {"mp4 m4v mov", "LibavSMASHSource"},
                 {"ts m2ts mts m2t m2v", "LWLibavSource"}
@@ -233,9 +233,9 @@ Public Class ApplicationSettings
             ThemeManager.SetCurrentTheme()
         End If
 
-        If Not Fonts.ContainsKey(FontCategory.Code) Then Fonts.Add(FontCategory.Code, "Roboto Mono")
-        If Not Fonts.ContainsKey(FontCategory.Default) Then Fonts.Add(FontCategory.Default, "Anuphan")
-        If Not Fonts.ContainsKey(FontCategory.Thumbnail) Then Fonts.Add(FontCategory.Thumbnail, "Roboto Mono")
+        If Not Fonts.ContainsKey(FontCategory.Code) Then Fonts.Add(FontCategory.Code, "")
+        If Not Fonts.ContainsKey(FontCategory.Default) Then Fonts.Add(FontCategory.Default, "")
+        If Not Fonts.ContainsKey(FontCategory.Thumbnail) Then Fonts.Add(FontCategory.Thumbnail, "")
 
         If RecentProjects Is Nothing Then
             RecentProjects = New List(Of String)
@@ -299,11 +299,11 @@ Public Class ApplicationSettings
             CustomMenuCrop = CropForm.GetDefaultMenuCrop
         End If
 
-        If Check(CustomMenuMainForm, "Main menu in main window", 166) Then
+        If Check(CustomMenuMainForm, "Main menu in main window", 167) Then
             CustomMenuMainForm = MainForm.GetDefaultMainMenu
         End If
 
-        If Check(CustomMenuPreview, "Menu in preview dialog", 55) Then
+        If Check(CustomMenuPreview, "Menu in preview dialog", 56) Then
             CustomMenuPreview = PreviewForm.GetDefaultMenu()
         End If
 

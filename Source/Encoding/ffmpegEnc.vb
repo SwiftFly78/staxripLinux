@@ -1,4 +1,4 @@
-﻿
+
 Imports System.Text
 Imports System.Web
 Imports StaxRip.UI
@@ -166,8 +166,7 @@ Public Class ffmpegEnc
             proc.Package = Package.ffmpeg
 
             If commandLine.Contains("|") Then
-                proc.File = "cmd.exe"
-                proc.Arguments = "/S /C """ + commandLine + """"
+                proc.SetShellCommand(commandLine)
             Else
                 proc.CommandLine = commandLine
             End If
@@ -236,7 +235,7 @@ Public Class ffmpegEnc
 
         Property Decoder As New OptionParam With {
             .Text = "Decoder",
-            .Options = {"AviSynth/VapourSynth", "Software", "Intel", "DXVA2", "Nvidia"},
+            .Options = {"AviSynth/VapourSynth", "Software", "Intel", "VAAPI", "Nvidia"},
             .Values = {"-", "sw", "qsv", "dxva2", "cuda"}}
 
         Property PipingToolAVS As New OptionParam With {
@@ -312,7 +311,7 @@ Public Class ffmpegEnc
                         Dim pipeString = ""
 
                         If pipeTool = "automatic" Then
-                            pipeTool = If(p.Script.IsAviSynth, "avs2pipemod", "vspipe")
+                            pipeTool = If(p.Script.IsAviSynth, FrameServerHelp.GetAviSynthPipeTool(), "vspipe")
                         End If
 
                         Select Case pipeTool
@@ -357,7 +356,7 @@ Public Class ffmpegEnc
                     Case "dxva2"
                         sourcePath = p.LastOriginalSourceFile
                         sb.Append(Package.ffmpeg.Path.Escape())
-                        sb.Append(" -hwaccel dxva2")
+                        sb.Append(" -hwaccel vaapi")
                         sb.Append(" -i ")
                         sb.Append(sourcePath.Escape())
                     Case "cuda"
@@ -396,7 +395,7 @@ Public Class ffmpegEnc
             End Select
             Dim targetPath As String
             If Mode.OptionText = "Two Pass" AndAlso pass = 1 Then
-                targetPath = "NUL"
+                targetPath = "-f null -"
             Else
                 targetPath = p.VideoEncoder.OutputPath.ChangeExt(p.VideoEncoder.OutputExt).Escape
             End If

@@ -1,4 +1,4 @@
-﻿Imports System.Text
+Imports System.Text
 Imports StaxRip.UI
 Imports StaxRip.VideoEncoderCommandLine
 
@@ -93,8 +93,7 @@ Public Class VvencffappEnc
             proc.SkipString = "TId: "
 
             If commandLine.Contains("|") Then
-                proc.File = "cmd.exe"
-                proc.Arguments = "/S /C """ + commandLine + """"
+                proc.SetShellCommand(commandLine)
             Else
                 proc.CommandLine = commandLine
             End If
@@ -280,7 +279,7 @@ Public Class VvencffappEnc
     End Sub
 
     Overrides Function CreateEditControl() As Control
-        Return New VvencffappControl(Me) With {.Dock = DockStyle.Fill}
+        Return New VvencffappControl(Me)
     End Function
 
     Shared Function Test() As String
@@ -339,7 +338,7 @@ Public Class VvencffappParams
 
     Property Decoder As New OptionParam With {
         .Text = "Decoder",
-        .Options = {"AviSynth/VapourSynth", "QSVEnc (Intel)", "ffmpeg (Intel)", "ffmpeg (DXVA2)"},
+        .Options = {"AviSynth/VapourSynth", "QSVEnc (Intel)", "ffmpeg (Intel)", "ffmpeg (VAAPI)"},
         .Values = {"script", "qs", "ffqsv", "ffdxva"}}
 
     Property PipingToolAVS As New OptionParam With {
@@ -563,7 +562,7 @@ Public Class VvencffappParams
                 Case "script"
                     'Broken ANSI fallback taken from x265
                     If pipeTool = "automatic" OrElse (p.Script.IsAviSynth AndAlso Not TextEncoding.IsProcessUTF8 AndAlso Not TextEncoding.ArePathsSupportedByASCIIEncoding) Then
-                        pipeTool = If(p.Script.IsAviSynth, "avs2pipemod", "vspipe")
+                        pipeTool = If(p.Script.IsAviSynth, FrameServerHelp.GetAviSynthPipeTool(), "vspipe")
                     End If
 
                     Select Case pipeTool
@@ -597,7 +596,7 @@ Public Class VvencffappParams
                 Case "ffdxva"
                     Dim crop = If(isCropped, $" -vf ""crop={p.SourceWidth - p.CropLeft - p.CropRight}:{p.SourceHeight - p.CropTop - p.CropBottom}:{p.CropLeft}:{p.CropTop}""", "")
                     Dim pix_fmt = If(p.SourceVideoBitDepth = 10 OrElse p.Script.Info.BitDepth >= 10, "yuv420p10le", "yuv420p")
-                    pipeString = Package.ffmpeg.Path.Escape + " -threads 1 -hwaccel dxva2 -i " + p.SourceFile.Escape + " -f yuv4mpegpipe -pix_fmt " + pix_fmt + " -strict -1" + crop + " -loglevel fatal -hide_banner -"
+                    pipeString = Package.ffmpeg.Path.Escape + " -threads 1 -hwaccel vaapi -i " + p.SourceFile.Escape + " -f yuv4mpegpipe -pix_fmt " + pix_fmt + " -strict -1" + crop + " -loglevel fatal -hide_banner -"
 
                     sb.Append(pipeString & " | " & Package.VVenCFFapp.Path.Escape)
             End Select
@@ -608,7 +607,7 @@ Public Class VvencffappParams
 
             If (Mode.Value = VvencffappRateMode.TwoPass AndAlso pass = 1) Then
                 sb.Append(input)
-                sb.Append(" --BitstreamFile NUL")
+                sb.Append(" --BitstreamFile /dev/null")
             Else
                 sb.Append(input)
                 sb.Append(" --BitstreamFile " + (targetPath.DirAndBase + chunkName + targetPath.ExtFull).Escape)

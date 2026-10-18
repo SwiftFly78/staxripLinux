@@ -31,6 +31,7 @@ There are a lot of resources in StaxRip-related communities. Users are strongly 
 - For the current changelog click here: [Changelog](https://github.com/staxrip/staxrip/blob/master/CHANGELOG.md) - it's worth taking a look at it.
     - Supporters please use the [Changelog for Supporters](https://github.com/staxrip/staxrip/blob/master/CHANGELOG-SUPPORTER.md).
 - To download StaxRip browse through all [Releases](https://github.com/staxrip/staxrip/releases) or jump directly to the [Latest Release](https://github.com/staxrip/staxrip/releases/latest). 
+- How to build and install the Linux version is described here: [Linux](Docs/Introduction/Linux.md)
 
 # Contribution / Support
 

@@ -1,5 +1,6 @@
 ﻿
 Imports System.Globalization
+Imports System.Text
 Imports System.Text.RegularExpressions
 Imports Microsoft.VisualBasic
 Imports StaxRip.UI
@@ -263,6 +264,12 @@ Public Class Macro
             Using dialog As New OpenFileDialog
                 ret.Cancel = dialog.ShowDialog <> DialogResult.OK
 
+                'the path is inserted into scripts and command lines as it is
+                If Not ret.Cancel AndAlso dialog.FileName.Any(Function(c) """\%$`".Contains(c) OrElse Char.IsControl(c)) Then
+                    MsgError("The file path contains unsupported characters.", "Paths with "" \ % $ ` or line breaks can't be used here." + BR2 + dialog.FileName)
+                    ret.Cancel = True
+                End If
+
                 If ret.Cancel Then
                     If throwIfCancel Then Throw New AbortException
                     Return ret
@@ -343,6 +350,124 @@ Public Class Macro
     End Function
 
     Shared Function Expand(value As String, proj As Project) As String
+        Return ExpandValues(value, proj, False).Replace(PercentPlaceholder, "%")
+    End Function
+
+    'expands a command line that runs in /bin/sh, values are quoted for their position
+    Shared Function ExpandShell(value As String, Optional proj As Project = Nothing) As String
+        Return QuoteShellValues(ExpandValues(value, If(proj, p), True))
+    End Function
+
+    'file names on Linux and metadata can contain characters like % and :, so
+    'values must not form new macros like %eval:, NUL never occurs in them
+    Shared ReadOnly PercentPlaceholder As String = ChrW(0) + "p"
+    Shared ReadOnly ValueStart As String = ChrW(0) + "("
+    Shared ReadOnly ValueEnd As String = ChrW(0) + ")"
+
+    Shared Function Protect(value As String, shell As Boolean) As String
+        If value = "" Then Return ""
+
+        Dim needsQuotes = shell AndAlso value.Any(Function(c) Not Char.IsLetterOrDigit(c) AndAlso Not "_./:@%+=,-".Contains(c))
+        value = value.Replace(ChrW(0), "").Replace("%", PercentPlaceholder)
+        Return If(needsQuotes, ValueStart + value + ValueEnd, value)
+    End Function
+
+    Shared Function Unprotect(value As String) As String
+        Return value.Replace(ValueStart, "").Replace(ValueEnd, "").Replace(PercentPlaceholder, "%")
+    End Function
+
+    Shared Function QuoteShellValues(value As String) As String
+        Dim sb As New StringBuilder
+        Dim quote As Char = Nothing
+        Dim i = 0
+
+        While i < value.Length
+            If String.CompareOrdinal(value, i, ValueStart, 0, ValueStart.Length) = 0 Then
+                Dim endIndex = value.IndexOf(ValueEnd, i, StringComparison.Ordinal)
+                Dim text = Unprotect(value.Substring(i + ValueStart.Length, endIndex - i - ValueStart.Length))
+
+                Select Case quote
+                    Case "'"c
+                        sb.Append(text.Replace("'", "'\''"))
+                    Case """"c
+                        For Each c In text
+                            If "\""$`".Contains(c) Then sb.Append("\"c)
+                            sb.Append(c)
+                        Next
+                    Case Else
+                        sb.Append(ShellHelp.Quote(text))
+                End Select
+
+                i = endIndex + ValueEnd.Length
+                Continue While
+            End If
+
+            If String.CompareOrdinal(value, i, PercentPlaceholder, 0, PercentPlaceholder.Length) = 0 Then
+                sb.Append("%"c)
+                i += PercentPlaceholder.Length
+                Continue While
+            End If
+
+            Dim ch = value(i)
+
+            If quote = "'"c Then
+                If ch = "'"c Then quote = Nothing
+            ElseIf ch = "\"c AndAlso i + 1 < value.Length AndAlso value(i + 1) <> ChrW(0) Then
+                sb.Append(ch)
+                i += 1
+                ch = value(i)
+            ElseIf quote = """"c Then
+                If ch = """"c Then quote = Nothing
+            ElseIf ch = "'"c OrElse ch = """"c Then
+                quote = ch
+            End If
+
+            sb.Append(ch)
+            i += 1
+        End While
+
+        Return sb.ToString
+    End Function
+
+    'file names on Linux and the metadata of media files can contain eval macros
+    Shared Function IsUntrustedEval(macro As String, proj As Project) As Boolean
+        Dim paths As New List(Of String) From {
+            proj.SourceFile, proj.TargetFile, proj.TempDir, proj.FirstOriginalSourceFile,
+            proj.LastOriginalSourceFile, proj.Hdr10PlusMetadataFile, proj.HdrDolbyVisionMetadataFile?.Path}
+
+        Dim names As New List(Of String)
+
+        If proj.SourceFiles IsNot Nothing Then paths.AddRange(proj.SourceFiles)
+
+        If proj.AudioTracks IsNot Nothing Then
+            For Each track In proj.AudioTracks
+                paths.Add(track?.AudioProfile?.File)
+                names.Add(track?.AudioProfile?.StreamName)
+                names.Add(track?.AudioProfile?.Stream?.Title)
+            Next
+        End If
+
+        Dim muxer = proj.VideoEncoder?.Muxer
+
+        If muxer IsNot Nothing Then
+            paths.AddRange({muxer.ChapterFile, muxer.CoverFile, muxer.TagFile, muxer.TimestampsFile})
+            If muxer.Attachments IsNot Nothing Then paths.AddRange(muxer.Attachments)
+
+            If muxer.Subtitles IsNot Nothing Then
+                For Each subtitle In muxer.Subtitles
+                    paths.Add(subtitle.Path)
+                    names.Add(subtitle.Title)
+                Next
+            End If
+
+            If proj.TakeOverTitle Then names.Add(TryCast(muxer, MkvMuxer)?.Title)
+        End If
+
+        Return paths.Any(Function(i) i <> "" AndAlso i.Contains("%eval:")) OrElse
+            names.Any(Function(i) i <> "" AndAlso i.Contains(macro))
+    End Function
+
+    Private Shared Function ExpandValues(value As String, proj As Project, shell As Boolean) As String
         If value = "" Then Return ""
         If proj Is Nothing Then Return ""
 
@@ -350,82 +475,82 @@ Public Class Macro
 
         If value.Contains("%") Then
             If value.Contains("%empty%") Then value = value.Replace("%empty%", "")
-            If value.Contains("%current_date%") Then value = value.Replace("%current_date%", Date.Now.ToString("yyyy-MM-dd"))
-            If value.Contains("%current_time%") Then value = value.Replace("%current_time%", Date.Now.ToString("hh-mm-ss"))
-            If value.Contains("%current_time24%") Then value = value.Replace("%current_time24%", Date.Now.ToString("HH-mm-ss"))
-            If value.Contains("%source_file%") Then value = value.Replace("%source_file%", proj.SourceFile)
-            If value.Contains("%working_dir%") Then value = value.Replace("%working_dir%", proj.TempDir)
-            If value.Contains("%temp_dir%") Then value = value.Replace("%temp_dir%", proj.TempDir)
-            If value.Contains("%temp_file%") Then value = value.Replace("%temp_file%", Path.Combine(proj.TempDir, proj.SourceFile.Base))
-            If value.Contains("%source_temp_file%") Then value = value.Replace("%source_temp_file%", Path.Combine(proj.TempDir, g.GetSourceBase))
-            If value.Contains("%target_temp_file%") Then value = value.Replace("%target_temp_file%", Path.Combine(proj.TempDir, proj.TargetFile.Base))
-            If value.Contains("%source_name%") Then value = value.Replace("%source_name%", proj.SourceFile.Base)
-            If value.Contains("%source_ext%") Then value = value.Replace("%source_ext%", proj.FirstOriginalSourceFile.Ext)
-            If value.Contains("%version%") Then value = value.Replace("%version%", Application.ProductVersion)
-            If value.Contains("%source_width%") Then value = value.Replace("%source_width%", proj.SourceWidth.ToString)
-            If value.Contains("%source_height%") Then value = value.Replace("%source_height%", proj.SourceHeight.ToString)
-            If value.Contains("%source_seconds%") Then value = value.Replace("%source_seconds%", proj.SourceSeconds.ToString)
-            If value.Contains("%source_frames%") Then value = value.Replace("%source_frames%", proj.SourceFrames.ToString)
-            If value.Contains("%source_framerate%") Then value = value.Replace("%source_framerate%", proj.SourceFrameRate.ToString("0.######", CultureInfo.InvariantCulture))
-            If value.Contains("%source_framerate6%") Then value = value.Replace("%source_framerate6%", proj.SourceFrameRate.ToString("f6", CultureInfo.InvariantCulture))
-            If value.Contains("%source_dir%") Then value = value.Replace("%source_dir%", proj.SourceFile.Dir)
-            If value.Contains("%source_dir_parent%") Then value = value.Replace("%source_dir_parent%", proj.SourceFile.Dir.Parent)
-            If value.Contains("%source_dir_name%") Then value = value.Replace("%source_dir_name%", proj.SourceFile.Dir.DirName)
+            If value.Contains("%current_date%") Then value = value.Replace("%current_date%", Protect(Date.Now.ToString("yyyy-MM-dd"), shell))
+            If value.Contains("%current_time%") Then value = value.Replace("%current_time%", Protect(Date.Now.ToString("hh-mm-ss"), shell))
+            If value.Contains("%current_time24%") Then value = value.Replace("%current_time24%", Protect(Date.Now.ToString("HH-mm-ss"), shell))
+            If value.Contains("%source_file%") Then value = value.Replace("%source_file%", Protect(proj.SourceFile, shell))
+            If value.Contains("%working_dir%") Then value = value.Replace("%working_dir%", Protect(proj.TempDir, shell))
+            If value.Contains("%temp_dir%") Then value = value.Replace("%temp_dir%", Protect(proj.TempDir, shell))
+            If value.Contains("%temp_file%") Then value = value.Replace("%temp_file%", Protect(Path.Combine(proj.TempDir, proj.SourceFile.Base), shell))
+            If value.Contains("%source_temp_file%") Then value = value.Replace("%source_temp_file%", Protect(Path.Combine(proj.TempDir, g.GetSourceBase), shell))
+            If value.Contains("%target_temp_file%") Then value = value.Replace("%target_temp_file%", Protect(Path.Combine(proj.TempDir, proj.TargetFile.Base), shell))
+            If value.Contains("%source_name%") Then value = value.Replace("%source_name%", Protect(proj.SourceFile.Base, shell))
+            If value.Contains("%source_ext%") Then value = value.Replace("%source_ext%", Protect(proj.FirstOriginalSourceFile.Ext, shell))
+            If value.Contains("%version%") Then value = value.Replace("%version%", Protect(AppInfo.ProductVersion, shell))
+            If value.Contains("%source_width%") Then value = value.Replace("%source_width%", Protect(proj.SourceWidth.ToString, shell))
+            If value.Contains("%source_height%") Then value = value.Replace("%source_height%", Protect(proj.SourceHeight.ToString, shell))
+            If value.Contains("%source_seconds%") Then value = value.Replace("%source_seconds%", Protect(proj.SourceSeconds.ToString, shell))
+            If value.Contains("%source_frames%") Then value = value.Replace("%source_frames%", Protect(proj.SourceFrames.ToString, shell))
+            If value.Contains("%source_framerate%") Then value = value.Replace("%source_framerate%", Protect(proj.SourceFrameRate.ToString("0.######", CultureInfo.InvariantCulture), shell))
+            If value.Contains("%source_framerate6%") Then value = value.Replace("%source_framerate6%", Protect(proj.SourceFrameRate.ToString("f6", CultureInfo.InvariantCulture), shell))
+            If value.Contains("%source_dir%") Then value = value.Replace("%source_dir%", Protect(proj.SourceFile.Dir, shell))
+            If value.Contains("%source_dir_parent%") Then value = value.Replace("%source_dir_parent%", Protect(proj.SourceFile.Dir.Parent, shell))
+            If value.Contains("%source_dir_name%") Then value = value.Replace("%source_dir_name%", Protect(proj.SourceFile.Dir.DirName, shell))
 
             If value.Contains("%source_mi_") Then
                 Dim miFile = If(proj.FirstOriginalSourceFile.FileExists(), proj.FirstOriginalSourceFile, proj.SourceFile)
 
-                If value.Contains("%source_mi_v:Format%") Then value = value.Replace("%source_mi_v:Format%", MediaInfo.GetVideo(miFile, "Format"))
+                If value.Contains("%source_mi_v:Format%") Then value = value.Replace("%source_mi_v:Format%", Protect(MediaInfo.GetVideo(miFile, "Format"), shell))
 
-                If value.Contains("%source_mi_vc%") Then value = value.Replace("%source_mi_vc%", If(miFile.FileExists(), MediaInfo.GetVideoCount(miFile).ToInvariantString(), ""))
-                If value.Contains("%source_mi_ac%") Then value = value.Replace("%source_mi_ac%", If(miFile.FileExists(), MediaInfo.GetAudioCount(miFile).ToInvariantString(), ""))
-                If value.Contains("%source_mi_tc%") Then value = value.Replace("%source_mi_tc%", If(miFile.FileExists(), MediaInfo.GetSubtitleCount(miFile).ToInvariantString(), ""))
+                If value.Contains("%source_mi_vc%") Then value = value.Replace("%source_mi_vc%", Protect(If(miFile.FileExists(), MediaInfo.GetVideoCount(miFile).ToInvariantString(), ""), shell))
+                If value.Contains("%source_mi_ac%") Then value = value.Replace("%source_mi_ac%", Protect(If(miFile.FileExists(), MediaInfo.GetAudioCount(miFile).ToInvariantString(), ""), shell))
+                If value.Contains("%source_mi_tc%") Then value = value.Replace("%source_mi_tc%", Protect(If(miFile.FileExists(), MediaInfo.GetSubtitleCount(miFile).ToInvariantString(), ""), shell))
 
                 If value.Contains("%source_mi_") Then
                     For Each match As Match In Regex.Matches(value, "%source_mi_g:(.+?)%")
-                        value = value.Replace(match.Value, MediaInfo.GetGeneral(miFile, match.Groups(1).Value))
+                        value = value.Replace(match.Value, Protect(MediaInfo.GetGeneral(miFile, match.Groups(1).Value), shell))
                     Next
                     For Each match As Match In Regex.Matches(value, "%source_mi_v(\d*):(.+?)%")
-                        value = value.Replace(match.Value, MediaInfo.GetVideo(miFile, If(match.Groups(1).Success, match.Groups(1).Value.ToInt(), 0), match.Groups(2).Value))
+                        value = value.Replace(match.Value, Protect(MediaInfo.GetVideo(miFile, If(match.Groups(1).Success, match.Groups(1).Value.ToInt(), 0), match.Groups(2).Value), shell))
                     Next
                     For Each match As Match In Regex.Matches(value, "%source_mi_a(\d*):(.+?)%")
-                        value = value.Replace(match.Value, MediaInfo.GetAudio(miFile, If(match.Groups(1).Success, match.Groups(1).Value.ToInt(), 0), match.Groups(2).Value))
+                        value = value.Replace(match.Value, Protect(MediaInfo.GetAudio(miFile, If(match.Groups(1).Success, match.Groups(1).Value.ToInt(), 0), match.Groups(2).Value), shell))
                     Next
                     For Each match As Match In Regex.Matches(value, "%source_mi_t(\d*):(.+?)%")
-                        value = value.Replace(match.Value, MediaInfo.GetText(miFile, If(match.Groups(1).Success, match.Groups(1).Value.ToInt(), 0), match.Groups(2).Value))
+                        value = value.Replace(match.Value, Protect(MediaInfo.GetText(miFile, If(match.Groups(1).Success, match.Groups(1).Value.ToInt(), 0), match.Groups(2).Value), shell))
                     Next
                 End If
             End If
 
-            If value.Contains("%target_width%") Then value = value.Replace("%target_width%", proj.TargetWidth.ToString)
-            If value.Contains("%target_height%") Then value = value.Replace("%target_height%", proj.TargetHeight.ToString)
-            If value.Contains("%target_seconds%") Then value = value.Replace("%target_seconds%", proj.TargetSeconds.ToString)
-            If value.Contains("%target_bitdepth%") Then value = value.Replace("%target_bitdepth%", proj.Script.Info.BitDepth.ToString)
-            If value.Contains("%target_frames%") Then value = value.Replace("%target_frames%", proj.Script.Info.FrameCount.ToString)
-            If value.Contains("%target_framerate%") Then value = value.Replace("%target_framerate%", proj.Script.GetCachedFrameRate.ToString("0.######", CultureInfo.InvariantCulture))
-            If value.Contains("%target_framerate6%") Then value = value.Replace("%target_framerate6%", proj.Script.GetCachedFrameRate.ToString("f6", CultureInfo.InvariantCulture))
-            If value.Contains("%target_size%") Then value = value.Replace("%target_size%", (proj.TargetSize * SizePrefix.Base).ToString)
-            If value.Contains("%target_file%") Then value = value.Replace("%target_file%", proj.TargetFile)
-            If value.Contains("%target_dir%") Then value = value.Replace("%target_dir%", proj.TargetFile.Dir)
-            If value.Contains("%target_name%") Then value = value.Replace("%target_name%", proj.TargetFile.Base)
-            If value.Contains("%crop_width%") Then value = value.Replace("%crop_width%", (proj.SourceWidth - proj.CropLeft - proj.CropRight).ToString)
-            If value.Contains("%crop_height%") Then value = value.Replace("%crop_height%", (proj.SourceHeight - proj.CropTop - proj.CropBottom).ToString)
-            If value.Contains("%crop_left%") Then value = value.Replace("%crop_left%", proj.CropLeft.ToString)
-            If value.Contains("%crop_top%") Then value = value.Replace("%crop_top%", proj.CropTop.ToString)
-            If value.Contains("%crop_right%") Then value = value.Replace("%crop_right%", proj.CropRight.ToString)
-            If value.Contains("%crop_bottom%") Then value = value.Replace("%crop_bottom%", proj.CropBottom.ToString)
-            If value.Contains("%video_bitrate%") Then value = value.Replace("%video_bitrate%", proj.VideoBitrate.ToString)
-            If value.Contains("%audio_bitrate%") Then value = value.Replace("%audio_bitrate%", proj.AudioTracks.Sum(Function(x) x.AudioProfile.Bitrate).ToString)
+            If value.Contains("%target_width%") Then value = value.Replace("%target_width%", Protect(proj.TargetWidth.ToString, shell))
+            If value.Contains("%target_height%") Then value = value.Replace("%target_height%", Protect(proj.TargetHeight.ToString, shell))
+            If value.Contains("%target_seconds%") Then value = value.Replace("%target_seconds%", Protect(proj.TargetSeconds.ToString, shell))
+            If value.Contains("%target_bitdepth%") Then value = value.Replace("%target_bitdepth%", Protect(proj.Script.Info.BitDepth.ToString, shell))
+            If value.Contains("%target_frames%") Then value = value.Replace("%target_frames%", Protect(proj.Script.Info.FrameCount.ToString, shell))
+            If value.Contains("%target_framerate%") Then value = value.Replace("%target_framerate%", Protect(proj.Script.GetCachedFrameRate.ToString("0.######", CultureInfo.InvariantCulture), shell))
+            If value.Contains("%target_framerate6%") Then value = value.Replace("%target_framerate6%", Protect(proj.Script.GetCachedFrameRate.ToString("f6", CultureInfo.InvariantCulture), shell))
+            If value.Contains("%target_size%") Then value = value.Replace("%target_size%", Protect((proj.TargetSize * SizePrefix.Base).ToString, shell))
+            If value.Contains("%target_file%") Then value = value.Replace("%target_file%", Protect(proj.TargetFile, shell))
+            If value.Contains("%target_dir%") Then value = value.Replace("%target_dir%", Protect(proj.TargetFile.Dir, shell))
+            If value.Contains("%target_name%") Then value = value.Replace("%target_name%", Protect(proj.TargetFile.Base, shell))
+            If value.Contains("%crop_width%") Then value = value.Replace("%crop_width%", Protect((proj.SourceWidth - proj.CropLeft - proj.CropRight).ToString, shell))
+            If value.Contains("%crop_height%") Then value = value.Replace("%crop_height%", Protect((proj.SourceHeight - proj.CropTop - proj.CropBottom).ToString, shell))
+            If value.Contains("%crop_left%") Then value = value.Replace("%crop_left%", Protect(proj.CropLeft.ToString, shell))
+            If value.Contains("%crop_top%") Then value = value.Replace("%crop_top%", Protect(proj.CropTop.ToString, shell))
+            If value.Contains("%crop_right%") Then value = value.Replace("%crop_right%", Protect(proj.CropRight.ToString, shell))
+            If value.Contains("%crop_bottom%") Then value = value.Replace("%crop_bottom%", Protect(proj.CropBottom.ToString, shell))
+            If value.Contains("%video_bitrate%") Then value = value.Replace("%video_bitrate%", Protect(proj.VideoBitrate.ToString, shell))
+            If value.Contains("%audio_bitrate%") Then value = value.Replace("%audio_bitrate%", Protect(proj.AudioTracks.Sum(Function(x) x.AudioProfile.Bitrate).ToString, shell))
 
             matches = Regex.Matches(value, "%audio_bitrate:(\d+)?%")
             For Each match As Match In matches
                 Select Case match.Groups.Count
                     Case 1
-                        value = value.Replace(match.Value, proj.AudioTracks.Sum(Function(x) x.AudioProfile.Bitrate).ToString)
+                        value = value.Replace(match.Value, Protect(proj.AudioTracks.Sum(Function(x) x.AudioProfile.Bitrate).ToString, shell))
                     Case 2
                         Dim track = match.Groups(1).Value.ToInt() - 1
                         If track < proj.AudioTracks.Count Then
-                            value = value.Replace(match.Value, proj.AudioTracks(track).AudioProfile.Bitrate.ToString)
+                            value = value.Replace(match.Value, Protect(proj.AudioTracks(track).AudioProfile.Bitrate.ToString, shell))
                         End If
                     Case Else
                         Throw New NotImplementedException("Macro %audio_bitrate:%")
@@ -436,7 +561,7 @@ Public Class Macro
             For Each match As Match In matches
                 Dim track = match.Groups(1).Value.ToInt() - 1
                 If track < proj.AudioTracks.Count Then
-                    value = value.Replace(match.Value, proj.AudioTracks(track).AudioProfile.Channels.ToString)
+                    value = value.Replace(match.Value, Protect(proj.AudioTracks(track).AudioProfile.Channels.ToString, shell))
                 End If
             Next
 
@@ -444,7 +569,7 @@ Public Class Macro
             For Each match As Match In matches
                 Dim track = match.Groups(1).Value.ToInt() - 1
                 If track < proj.AudioTracks.Count Then
-                    value = value.Replace(match.Value, proj.AudioTracks(track).AudioProfile.AudioCodec.ToString)
+                    value = value.Replace(match.Value, Protect(proj.AudioTracks(track).AudioProfile.AudioCodec.ToString, shell))
                 End If
             Next
 
@@ -452,7 +577,7 @@ Public Class Macro
             For Each match As Match In matches
                 Dim track = match.Groups(1).Value.ToInt() - 1
                 If track < proj.AudioTracks.Count Then
-                    value = value.Replace(match.Value, proj.AudioTracks(track).AudioProfile.Delay.ToString)
+                    value = value.Replace(match.Value, Protect(proj.AudioTracks(track).AudioProfile.Delay.ToString, shell))
                 End If
             Next
 
@@ -460,73 +585,79 @@ Public Class Macro
             For Each match As Match In matches
                 Dim track = match.Groups(1).Value.ToInt() - 1
                 If track < proj.AudioTracks.Count Then
-                    value = value.Replace(match.Value, proj.AudioTracks(track).AudioProfile.File)
+                    value = value.Replace(match.Value, Protect(proj.AudioTracks(track).AudioProfile.File, shell))
                 End If
             Next
 
-            If value.Contains("%startup_dir%") Then value = value.Replace("%startup_dir%", Folder.Startup)
-            If value.Contains("%system_dir%") Then value = value.Replace("%system_dir%", Folder.System)
-            If value.Contains("%script_dir%") Then value = value.Replace("%script_dir%", Folder.Scripts)
-            If value.Contains("%programs_dir%") Then value = value.Replace("%programs_dir%", Folder.Programs)
-            If value.Contains("%plugin_dir%") Then value = value.Replace("%plugin_dir%", Folder.Plugins)
-            If value.Contains("%source_files_comma%") Then value = value.Replace("%source_files_comma%", """" + String.Join(""",""", proj.SourceFiles.ToArray) + """")
-            If value.Contains("%source_files%") Then value = value.Replace("%source_files%", """" + String.Join(""" """, proj.SourceFiles.ToArray) + """")
-            If value.Contains("%compressibility%") Then value = value.Replace("%compressibility%", Math.Round(proj.Compressibility, 3).ToString.Replace(",", "."))
-            If value.Contains("%encoder%") Then value = value.Replace("%encoder%", TryCast(proj.VideoEncoder, BasicVideoEncoder)?.CommandLineParams.Package.Name)
-            If value.Contains("%encoder_profile%") Then value = value.Replace("%encoder_profile%", proj.VideoEncoder.Name)
-            If value.Contains("%encoder_settings%") Then value = value.Replace("%encoder_settings%", TryCast(proj.VideoEncoder, BasicVideoEncoder)?.GetCommandLine(False, True).Replace("--", ""))
-            If value.Contains("%encoder_out_file%") Then value = value.Replace("%encoder_out_file%", proj.VideoEncoder.OutputPath)
-            If value.Contains("%encoder_ext%") Then value = value.Replace("%encoder_ext%", proj.VideoEncoder.OutputExt)
-            If value.Contains("%encoder_codec%") Then value = value.Replace("%encoder_codec%", proj.VideoEncoder.Codec)
-            If value.Contains("%muxer_ext%") Then value = value.Replace("%muxer_ext%", proj.VideoEncoder.Muxer.OutputExt)
-            If value.Contains("%script_ext%") Then value = value.Replace("%script_ext%", proj.Script.FileType)
-            If value.Contains("%pos_frame%") Then value = value.Replace("%pos_frame%", s.LastPosition.ToString)
-            If value.Contains("%template_name%") Then value = value.Replace("%template_name%", proj.TemplateName)
-            If value.Contains("%settings_dir%") Then value = value.Replace("%settings_dir%", Folder.Settings)
-            If value.Contains("%player%") Then value = value.Replace("%player%", Package.mpvnet.Path)
-            If value.Contains("%text_editor%") Then value = value.Replace("%text_editor%", g.GetTextEditorPath)
-            If value.Contains("%processing%") Then value = value.Replace("%processing%", g.IsJobProcessing.ToString)
-            If value.Contains("%dpi%") Then value = value.Replace("%dpi%", g.DPI.ToString())
-            If value.Contains("%script_file%") Then value = value.Replace("%script_file%", proj.Script.Path)
-            If value.Contains("%pos_ms%") Then value = value.Replace("%pos_ms%", g.GetPreviewPosMS.ToString)
-            If value.Contains("%hdr10plus_path%") Then value = value.Replace("%hdr10plus_path%", p.Hdr10PlusMetadataFile)
-            If value.Contains("%hdrdv_path%") Then value = value.Replace("%hdrdv_path%", p.HdrDolbyVisionMetadataFile?.Path)
+            If value.Contains("%startup_dir%") Then value = value.Replace("%startup_dir%", Protect(Folder.Startup, shell))
+            If value.Contains("%system_dir%") Then value = value.Replace("%system_dir%", Protect(Folder.System, shell))
+            If value.Contains("%script_dir%") Then value = value.Replace("%script_dir%", Protect(Folder.Scripts, shell))
+            If value.Contains("%programs_dir%") Then value = value.Replace("%programs_dir%", Protect(Folder.Programs, shell))
+            If value.Contains("%plugin_dir%") Then value = value.Replace("%plugin_dir%", Protect(Folder.Plugins, shell))
+            If value.Contains("%source_files_comma%") Then value = value.Replace("%source_files_comma%", Protect("""" + String.Join(""",""", proj.SourceFiles.ToArray) + """", shell))
+            If value.Contains("%source_files%") Then
+                If shell Then
+                    value = value.Replace("%source_files%", Protect(String.Join(" ", proj.SourceFiles.Select(Function(i) i.Escape)), False))
+                Else
+                    value = value.Replace("%source_files%", Protect("""" + String.Join(""" """, proj.SourceFiles.ToArray) + """", shell))
+                End If
+            End If
+            If value.Contains("%compressibility%") Then value = value.Replace("%compressibility%", Protect(Math.Round(proj.Compressibility, 3).ToString.Replace(",", "."), shell))
+            If value.Contains("%encoder%") Then value = value.Replace("%encoder%", Protect(TryCast(proj.VideoEncoder, BasicVideoEncoder)?.CommandLineParams.Package.Name, shell))
+            If value.Contains("%encoder_profile%") Then value = value.Replace("%encoder_profile%", Protect(proj.VideoEncoder.Name, shell))
+            If value.Contains("%encoder_settings%") Then value = value.Replace("%encoder_settings%", Protect(TryCast(proj.VideoEncoder, BasicVideoEncoder)?.GetCommandLine(False, True).Replace("--", ""), shell))
+            If value.Contains("%encoder_out_file%") Then value = value.Replace("%encoder_out_file%", Protect(proj.VideoEncoder.OutputPath, shell))
+            If value.Contains("%encoder_ext%") Then value = value.Replace("%encoder_ext%", Protect(proj.VideoEncoder.OutputExt, shell))
+            If value.Contains("%encoder_codec%") Then value = value.Replace("%encoder_codec%", Protect(proj.VideoEncoder.Codec, shell))
+            If value.Contains("%muxer_ext%") Then value = value.Replace("%muxer_ext%", Protect(proj.VideoEncoder.Muxer.OutputExt, shell))
+            If value.Contains("%script_ext%") Then value = value.Replace("%script_ext%", Protect(proj.Script.FileType, shell))
+            If value.Contains("%pos_frame%") Then value = value.Replace("%pos_frame%", Protect(s.LastPosition.ToString, shell))
+            If value.Contains("%template_name%") Then value = value.Replace("%template_name%", Protect(proj.TemplateName, shell))
+            If value.Contains("%settings_dir%") Then value = value.Replace("%settings_dir%", Protect(Folder.Settings, shell))
+            If value.Contains("%player%") Then value = value.Replace("%player%", Protect(Package.mpvnet.Path, shell))
+            If value.Contains("%text_editor%") Then value = value.Replace("%text_editor%", Protect(g.GetTextEditorPath, shell))
+            If value.Contains("%processing%") Then value = value.Replace("%processing%", Protect(g.IsJobProcessing.ToString, shell))
+            If value.Contains("%dpi%") Then value = value.Replace("%dpi%", Protect(g.DPI.ToString(), shell))
+            If value.Contains("%script_file%") Then value = value.Replace("%script_file%", Protect(proj.Script.Path, shell))
+            If value.Contains("%pos_ms%") Then value = value.Replace("%pos_ms%", Protect(g.GetPreviewPosMS.ToString, shell))
+            If value.Contains("%hdr10plus_path%") Then value = value.Replace("%hdr10plus_path%", Protect(p.Hdr10PlusMetadataFile, shell))
+            If value.Contains("%hdrdv_path%") Then value = value.Replace("%hdrdv_path%", Protect(p.HdrDolbyVisionMetadataFile?.Path, shell))
 
             Dim jobs As List(Of Job)
             Dim getJobs = Function() As List(Of Job)
                               If jobs Is Nothing Then jobs = JobManager.GetJobs()
                               Return jobs
                           End Function
-            If value.Contains("%jobs%") Then value = value.Replace("%jobs%", getJobs().Count.ToString())
-            If value.Contains("%jobs_active%") Then value = value.Replace("%jobs_active%", getJobs().AsEnumerable().Count(Function(x) x.Active).ToString())
+            If value.Contains("%jobs%") Then value = value.Replace("%jobs%", Protect(getJobs().Count.ToString(), shell))
+            If value.Contains("%jobs_active%") Then value = value.Replace("%jobs_active%", Protect(getJobs().AsEnumerable().Count(Function(x) x.Active).ToString(), shell))
 
-            Dim sourcePar As Point
-            Dim getSourcePar = Function() As Point
-                                   If sourcePar = Point.Empty Then sourcePar = Calc.GetSourcePAR()
+            Dim sourcePar As System.Drawing.Point
+            Dim getSourcePar = Function() As System.Drawing.Point
+                                   If sourcePar = System.Drawing.Point.Empty Then sourcePar = Calc.GetSourcePAR()
                                    Return sourcePar
                                End Function
-            If value.Contains("%source_par_x%") Then value = value.Replace("%source_par_x%", getSourcePar().X.ToString)
-            If value.Contains("%source_par_y%") Then value = value.Replace("%source_par_y%", getSourcePar().Y.ToString)
+            If value.Contains("%source_par_x%") Then value = value.Replace("%source_par_x%", Protect(getSourcePar().X.ToString, shell))
+            If value.Contains("%source_par_y%") Then value = value.Replace("%source_par_y%", Protect(getSourcePar().Y.ToString, shell))
 
-            Dim targetPar As Point
-            Dim getTargetPar = Function() As Point
-                                   If targetPar = Point.Empty Then targetPar = Calc.GetTargetPAR()
+            Dim targetPar As System.Drawing.Point
+            Dim getTargetPar = Function() As System.Drawing.Point
+                                   If targetPar = System.Drawing.Point.Empty Then targetPar = Calc.GetTargetPAR()
                                    Return targetPar
                                End Function
-            If value.Contains("%target_par_x%") Then value = value.Replace("%target_par_x%", getTargetPar().X.ToString)
-            If value.Contains("%target_par_y%") Then value = value.Replace("%target_par_y%", getTargetPar().Y.ToString)
+            If value.Contains("%target_par_x%") Then value = value.Replace("%target_par_x%", Protect(getTargetPar().X.ToString, shell))
+            If value.Contains("%target_par_y%") Then value = value.Replace("%target_par_y%", Protect(getTargetPar().Y.ToString, shell))
 
-            If value.Contains("%source_dar%") Then value = value.Replace("%source_dar%", Calc.GetSourceDAR.ToString("f9", CultureInfo.InvariantCulture))
-            If value.Contains("%target_dar%") Then value = value.Replace("%target_dar%", Calc.GetTargetDAR.ToString("f9", CultureInfo.InvariantCulture))
+            If value.Contains("%source_dar%") Then value = value.Replace("%source_dar%", Protect(Calc.GetSourceDAR.ToString("f9", CultureInfo.InvariantCulture), shell))
+            If value.Contains("%target_dar%") Then value = value.Replace("%target_dar%", Protect(Calc.GetTargetDAR.ToString("f9", CultureInfo.InvariantCulture), shell))
 
             If value.Contains("%sel_") Then
                 If proj.Ranges.Count > 0 Then
                     If value.Contains("%sel_start%") Then
-                        value = value.Replace("%sel_start%", proj.Ranges(0).Start.ToString)
+                        value = value.Replace("%sel_start%", Protect(proj.Ranges(0).Start.ToString, shell))
                     End If
 
                     If value.Contains("%sel_end%") Then
-                        value = value.Replace("%sel_end%", proj.Ranges(0).End.ToString)
+                        value = value.Replace("%sel_end%", Protect(proj.Ranges(0).End.ToString, shell))
                     End If
                 Else
                     If value.Contains("%sel_start%") Then
@@ -547,7 +678,7 @@ Public Class Macro
                     Dim path = pack?.Path
 
                     If path <> "" Then
-                        value = value.Replace(match.Value, path)
+                        value = value.Replace(match.Value, Protect(path, shell))
 
                         If Not value.Contains("%") Then Exit For
                     End If
@@ -562,7 +693,7 @@ Public Class Macro
                     Dim path = pack?.Path
 
                     If path <> "" Then
-                        value = value.Replace(match.Value, path)
+                        value = value.Replace(match.Value, Protect(path, shell))
 
                         If Not value.Contains("%") Then Exit For
                     End If
@@ -575,7 +706,7 @@ Public Class Macro
                     Dim path = pack?.Path
 
                     If path <> "" Then
-                        value = value.Replace(match.Value, path.Dir)
+                        value = value.Replace(match.Value, Protect(path.Dir, shell))
 
                         If Not value.Contains("%") Then Exit For
                     End If
@@ -590,7 +721,7 @@ Public Class Macro
                     Dim version = pack?.Version
 
                     If version <> "" Then
-                        value = value.Replace(match.Value, version)
+                        value = value.Replace(match.Value, Protect(version, shell))
 
                         If Not value.Contains("%") Then Exit For
                     End If
@@ -606,7 +737,7 @@ Public Class Macro
                     End If
                     Dim random = New Random()
                     Dim randomInt = random.Next(0, Enumerable.Repeat(10, digits).Aggregate(1, Function(a, b) a * b))
-                    value = value.Replace(i.Value, randomInt.ToString().PadLeft(digits, "0"c))
+                    value = value.Replace(i.Value, Protect(randomInt.ToString().PadLeft(digits, "0"c), shell))
 
                     If Not value.Contains("%") Then Exit For
                 Next
@@ -618,7 +749,7 @@ Public Class Macro
                 For Each i As Match In mc
                     For Each i2 In proj.Script.Filters
                         If i2.Active AndAlso i2.Path.ToUpperInvariant = i.Groups(1).Value.ToUpperInvariant Then
-                            value = value.Replace(i.Value, i2.Script)
+                            value = value.Replace(i.Value, Protect(i2.Script, shell))
                             Exit For
                         End If
                     Next
@@ -651,10 +782,12 @@ Public Class Macro
                     matches = Regex.Matches(value, "%eval:(.+?)%")
 
                     For Each ma As Match In matches
+                        If IsUntrustedEval(Unprotect(ma.Value), proj) Then Continue For
+
                         Try
-                            value = value.Replace(ma.Value, PowerShell.InvokeAndConvert(ma.Groups(1).Value))
+                            value = value.Replace(ma.Value, Protect(PowerShell.InvokeAndConvert(Unprotect(ma.Groups(1).Value)), shell))
                         Catch ex As Exception
-                            value = value.Replace(ma.Value, ex.ToString)
+                            value = value.Replace(ma.Value, Protect(ex.ToString, shell))
                         End Try
 
                         If Not value.Contains("%") Then Exit For
@@ -745,7 +878,7 @@ Public Class Macro
                     Dim newValue = "INVALID"
 
                     Try
-                        Dim result = Convert.ToBoolean(New DataTable().Compute(condition, Nothing))
+                        Dim result = Convert.ToBoolean(New System.Data.DataTable().Compute(condition, Nothing))
                         newValue = If(result, trueValue, falseValue)
                     Catch ex As Exception
                         newValue = $"##{ex.Message}##"
@@ -786,9 +919,9 @@ Public Class Macro
         If Not value.Contains("%") Then Return value
         If proj Is Nothing Then proj = p
 
-        If value.Contains("%commandline%") Then value = value.Replace("%commandline%", commandline.Trim().Escape())
+        If value.Contains("%commandline%") Then value = value.Replace("%commandline%", Protect(commandline.Trim().Escape(), False))
         If value.Contains("%progress%") Then value = value.Replace("%progress%", progress.ToInvariantString("0.0"))
-        If value.Contains("%progressline%") Then value = value.Replace("%progressline%", progressline.Trim())
+        If value.Contains("%progressline%") Then value = value.Replace("%progressline%", Protect(progressline.Trim(), False))
 
         value = Expand(value, proj)
         Return value

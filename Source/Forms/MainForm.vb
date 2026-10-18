@@ -1,7 +1,5 @@
-﻿
+
 Imports System.ComponentModel
-Imports System.Drawing.Design
-Imports System.Drawing.Drawing2D
 Imports System.Globalization
 Imports System.Reflection
 Imports System.Runtime.InteropServices
@@ -19,9 +17,6 @@ Partial Public Class MainForm
     Inherits FormBase
 
 #Region " Designer "
-    Private components As IContainer
-    Private Const _filterHeight As Integer = 640
-
     Public WithEvents bnNext As ButtonEx
     Public WithEvents tbSourceFile As TextEdit
     Public WithEvents tbTargetFile As TextEdit
@@ -35,7 +30,7 @@ Partial Public Class MainForm
     Public WithEvents lgbResize As LinkGroupBox
     Public WithEvents lPixel As LabelEx
     Public WithEvents lPixelText As LabelEx
-    Public WithEvents tbResize As TrackBar
+    Public WithEvents tbResize As TrackBarEx
     Public WithEvents lZoom As LabelEx
     Public WithEvents lZoomText As LabelEx
     Public WithEvents tbTargetHeight As TextEdit
@@ -49,16 +44,15 @@ Partial Public Class MainForm
     Public WithEvents lgbSource As LinkGroupBox
     Public WithEvents lSource2 As LabelEx
     Public WithEvents lgbTarget As LinkGroupBox
-    Public WithEvents GroupBox1 As GroupBoxEx
     Public WithEvents laTip As LabelEx
     Public WithEvents lgbEncoder As LinkGroupBox
     Public WithEvents laTarget2 As LabelEx
-    Public WithEvents MenuStrip As MenuStrip
+    Public WithEvents MenuStrip As MenuBar
     Public WithEvents pnEncoder As Panel
-    Public WithEvents FiltersListView As StaxRip.FiltersListView
+    Public WithEvents FiltersListView As FiltersListView
     Public WithEvents blFilesize As ButtonLabel
     Public WithEvents llMuxer As ButtonLabel
-    Public WithEvents lPAR As StaxRip.UI.LabelEx
+    Public WithEvents lPAR As LabelEx
     Public WithEvents blTargetParText As ButtonLabel
     Public WithEvents lAspectRatioError As LabelEx
     Public WithEvents lAspectRatioErrorText As LabelEx
@@ -70,895 +64,109 @@ Partial Public Class MainForm
     Public WithEvents lSourceDar As LabelEx
     Public WithEvents lSAR As LabelEx
     Public WithEvents lSarText As LabelEx
-    Friend WithEvents tlpTarget As TableLayoutPanel
-    Friend WithEvents tlpMain As TableLayoutPanel
-    Friend WithEvents tlpSource As TableLayoutPanel
-    Friend WithEvents tlpResizeValues As TableLayoutPanel
-    Friend WithEvents tlpResize As TableLayoutPanel
-    Friend WithEvents tlpAudio As TableLayoutPanel
-    Friend WithEvents tlpAssistant As TableLayoutPanel
-    Friend WithEvents blSourceDarText As ButtonLabel
-    Friend WithEvents tlpSourceValues As TableLayoutPanel
-    Public WithEvents TipProvider As StaxRip.UI.TipProvider
+    Public WithEvents blSourceDarText As ButtonLabel
+    Public pnAudio As Panel
+    Public TipProvider As TipProvider
 
-    '<System.Diagnostics.DebuggerStepThrough()>
     Private Sub InitializeComponent()
-        Me.components = New System.ComponentModel.Container()
-        Me.bnNext = New StaxRip.UI.ButtonEx()
-        Me.gbAssistant = New StaxRip.UI.GroupBoxEx()
-        Me.tlpAssistant = New TableLayoutPanel()
-        Me.laTip = New StaxRip.UI.LabelEx()
-        Me.gbAudio = New StaxRip.UI.GroupBoxEx()
-        Me.tlpAudio = New TableLayoutPanel()
-        Me.MenuStrip = New MenuStrip()
-        Me.lgbTarget = New StaxRip.UI.LinkGroupBox()
-        Me.tlpTarget = New TableLayoutPanel()
-        Me.tbTargetFile = New StaxRip.UI.TextEdit()
-        Me.laTarget2 = New StaxRip.UI.LabelEx()
-        Me.tbTargetSize = New StaxRip.UI.TextEdit()
-        Me.lTarget1 = New StaxRip.UI.LabelEx()
-        Me.tbBitrate = New StaxRip.UI.TextEdit()
-        Me.laBitrate = New StaxRip.UI.LabelEx()
-        Me.blFilesize = New StaxRip.UI.ButtonLabel()
-        Me.lgbSource = New StaxRip.UI.LinkGroupBox()
-        Me.tlpSource = New TableLayoutPanel()
-        Me.tlpSourceValues = New TableLayoutPanel()
-        Me.blSourceDarText = New StaxRip.UI.ButtonLabel()
-        Me.lSourcePAR = New StaxRip.UI.LabelEx()
-        Me.blSourceParText = New StaxRip.UI.ButtonLabel()
-        Me.lCrop = New StaxRip.UI.LabelEx()
-        Me.lCropText = New StaxRip.UI.LabelEx()
-        Me.lSourceDar = New StaxRip.UI.LabelEx()
-        Me.tbSourceFile = New StaxRip.UI.TextEdit()
-        Me.lSource1 = New StaxRip.UI.LabelEx()
-        Me.lSource2 = New StaxRip.UI.LabelEx()
-        Me.lgbResize = New StaxRip.UI.LinkGroupBox()
-        Me.tlpResize = New TableLayoutPanel()
-        Me.tlpResizeValues = New TableLayoutPanel()
-        Me.blTargetDarText = New StaxRip.UI.ButtonLabel()
-        Me.lAspectRatioError = New StaxRip.UI.LabelEx()
-        Me.lPAR = New StaxRip.UI.LabelEx()
-        Me.lZoom = New StaxRip.UI.LabelEx()
-        Me.lSarText = New StaxRip.UI.LabelEx()
-        Me.lPixel = New StaxRip.UI.LabelEx()
-        Me.blTargetParText = New StaxRip.UI.ButtonLabel()
-        Me.lAspectRatioErrorText = New StaxRip.UI.LabelEx()
-        Me.lCrop2 = New StaxRip.UI.LabelEx()
-        Me.blCropText = New StaxRip.UI.ButtonLabel()
-        Me.lDAR = New StaxRip.UI.LabelEx()
-        Me.lZoomText = New StaxRip.UI.LabelEx()
-        Me.lPixelText = New StaxRip.UI.LabelEx()
-        Me.lSAR = New StaxRip.UI.LabelEx()
-        Me.tbResize = New TrackBar()
-        Me.lTargetWidth = New StaxRip.UI.LabelEx()
-        Me.tbTargetWidth = New StaxRip.UI.TextEdit()
-        Me.lTargetHeight = New StaxRip.UI.LabelEx()
-        Me.tbTargetHeight = New StaxRip.UI.TextEdit()
-        Me.lgbFilters = New StaxRip.UI.LinkGroupBox()
-        Me.FiltersListView = New StaxRip.FiltersListView()
-        Me.lgbEncoder = New StaxRip.UI.LinkGroupBox()
-        Me.llMuxer = New StaxRip.UI.ButtonLabel()
-        Me.pnEncoder = New Panel()
-        Me.TipProvider = New StaxRip.UI.TipProvider(Me.components)
-        Me.tlpMain = New TableLayoutPanel()
-        Me.gbAssistant.SuspendLayout()
-        Me.tlpAssistant.SuspendLayout()
-        Me.gbAudio.SuspendLayout()
-        Me.tlpAudio.SuspendLayout()
-        Me.lgbTarget.SuspendLayout()
-        Me.tlpTarget.SuspendLayout()
-        Me.lgbSource.SuspendLayout()
-        Me.tlpSource.SuspendLayout()
-        Me.tlpSourceValues.SuspendLayout()
-        Me.lgbResize.SuspendLayout()
-        Me.tlpResize.SuspendLayout()
-        Me.tlpResizeValues.SuspendLayout()
-        CType(Me.tbResize, System.ComponentModel.ISupportInitialize).BeginInit()
-        Me.lgbFilters.SuspendLayout()
-        Me.lgbEncoder.SuspendLayout()
-        Me.tlpMain.SuspendLayout()
-        Me.SuspendLayout()
+        Dim label = Function(text As String) New LabelEx With {.Text = text}
+        Dim link = Function(text As String) New ButtonLabel With {.Text = text}
 
-        '
-        'bnNext
-        '
-        Me.bnNext.Anchor = AnchorStyles.None
-        Me.bnNext.AutoSize = False
-        Me.bnNext.AutoSizeMode = AutoSizeMode.GrowAndShrink
-        Me.bnNext.Cursor = Cursors.Default
-        Me.bnNext.FlatStyle = FlatStyle.Flat
-        Me.bnNext.Location = New System.Drawing.Point(1880, 33)
-        Me.bnNext.Margin = New Padding(0, 0, 20, 5)
-        'Me.bnNext.MinimumSize = New System.Drawing.Size(265, 85)
-        Me.bnNext.Size = New System.Drawing.Size(CInt(285 * s.UIScaleFactor), CInt(105 * s.UIScaleFactor))
-        Me.bnNext.UseCompatibleTextRendering = True
-        '
-        'gbAssistant
-        '
-        Me.gbAssistant.Anchor = CType((((AnchorStyles.Top) Or AnchorStyles.Left) Or AnchorStyles.Right), AnchorStyles)
-        Me.tlpMain.SetColumnSpan(Me.gbAssistant, 4)
-        Me.gbAssistant.Controls.Add(Me.tlpAssistant)
-        Me.gbAssistant.Dock = DockStyle.Fill
-        Me.gbAssistant.AutoSize = False
-        Me.gbAssistant.AutoSizeMode = AutoSizeMode.GrowAndShrink
-        Me.gbAssistant.Location = New System.Drawing.Point(9, 1534)
-        Me.gbAssistant.Margin = New Padding(9, 0, 9, 9)
-        Me.gbAssistant.Name = "gbAssistant"
-        Me.gbAssistant.Padding = New Padding(6, 6, 6, 6)
-        Me.gbAssistant.TabIndex = 44
-        Me.gbAssistant.TabStop = False
-        Me.gbAssistant.Text = "Assistant"
-        '
-        'tlpAssistant
-        '
-        Me.tlpAssistant.Anchor = CType((((AnchorStyles.Top) Or AnchorStyles.Left) Or AnchorStyles.Right), AnchorStyles)
-        Me.tlpAssistant.AutoSize = True
-        Me.tlpAssistant.AutoSizeMode = AutoSizeMode.GrowAndShrink
-        Me.tlpAssistant.ColumnCount = 2
-        Me.tlpAssistant.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 75.0!))
-        Me.tlpAssistant.ColumnStyles.Add(New ColumnStyle())
-        Me.tlpAssistant.Controls.Add(Me.laTip, 0, 0)
-        Me.tlpAssistant.Controls.Add(Me.bnNext, 1, 0)
-        Me.tlpAssistant.Dock = DockStyle.Fill
-        Me.tlpAssistant.Location = New System.Drawing.Point(6, 48)
-        Me.tlpAssistant.Margin = New Padding(0)
-        Me.tlpAssistant.Name = "tlpAssistant"
-        Me.tlpAssistant.RowCount = 1
-        Me.tlpAssistant.RowStyles.Add(New RowStyle(SizeType.Percent, 100.0!))
-        Me.tlpAssistant.TabIndex = 62
-        '
-        'laTip
-        '
-        Me.laTip.Anchor = CType((((AnchorStyles.Top Or AnchorStyles.Bottom) _
-            Or AnchorStyles.Left) _
-            Or AnchorStyles.Right), AnchorStyles)
-        Me.laTip.Dock = DockStyle.Fill
-        Me.laTip.Location = New System.Drawing.Point(0, 0)
-        Me.laTip.Margin = New Padding(20, 5, 20, 5)
-        Me.laTip.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
-        '
-        'gbAudio
-        '
-        Me.gbAudio.Anchor = CType(((AnchorStyles.Top Or AnchorStyles.Left) _
-            Or AnchorStyles.Right), AnchorStyles)
-        Me.tlpMain.SetColumnSpan(Me.gbAudio, 4)
-        Me.gbAudio.Controls.Add(Me.tlpAudio)
-        Me.gbAudio.Location = New System.Drawing.Point(9, 724)
-        Me.gbAudio.Margin = New Padding(9, 0, 9, 0)
-        Me.gbAudio.Name = "gbAudio"
-        Me.gbAudio.Padding = New Padding(6, 0, 6, 6)
-        Me.gbAudio.Size = New System.Drawing.Size(2031, 510)
-        Me.gbAudio.AutoSize = True
-        Me.gbAudio.AutoSizeMode = AutoSizeMode.GrowAndShrink
-        Me.gbAudio.TabIndex = 59
-        Me.gbAudio.TabStop = False
-        Me.gbAudio.Text = "Audio"
-        '
-        'tlpAudio
-        '
-        Me.tlpAudio.ColumnCount = 5
-        Me.tlpAudio.ColumnStyles.Add(New ColumnStyle())
-        Me.tlpAudio.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 100.0!))
-        Me.tlpAudio.ColumnStyles.Add(New ColumnStyle())
-        Me.tlpAudio.ColumnStyles.Add(New ColumnStyle())
-        Me.tlpAudio.ColumnStyles.Add(New ColumnStyle())
-        Me.tlpAudio.Dock = DockStyle.Fill
-        Me.tlpAudio.Location = New System.Drawing.Point(6, 48)
-        Me.tlpAudio.Margin = New Padding(0)
-        Me.tlpAudio.Name = "tlpAudio"
-        Me.tlpAudio.RowCount = 0
-        Me.tlpAudio.Size = New System.Drawing.Size(2019, 456)
-        Me.tlpAudio.TabIndex = 62
-        Me.tlpAudio.AutoSize = True
-        Me.tlpAudio.AutoSizeMode = AutoSizeMode.GrowAndShrink
-        '
-        'MenuStrip
-        '
-        Me.MenuStrip.Anchor = CType((((AnchorStyles.Top Or AnchorStyles.Bottom) _
-            Or AnchorStyles.Left) _
-            Or AnchorStyles.Right), AnchorStyles)
-        Me.MenuStrip.AutoSize = True
-        Me.tlpMain.SetColumnSpan(Me.MenuStrip, 4)
-        Me.MenuStrip.Dock = DockStyle.Fill
-        Me.MenuStrip.GripMargin = New Padding(2, 2, 0, 2)
-        Me.MenuStrip.ImageScalingSize = New System.Drawing.Size(24, 24)
-        Me.MenuStrip.Location = New System.Drawing.Point(0, 0)
-        Me.MenuStrip.Name = "MenuStrip"
-        Me.MenuStrip.Padding = New Padding(6, 6, 0, 6)
-        Me.MenuStrip.TabIndex = 60
-        Me.MenuStrip.Text = "MenuStrip"
-        '
-        'lgbTarget
-        '
-        Me.lgbTarget.Anchor = CType((((AnchorStyles.Top Or AnchorStyles.Bottom) _
-            Or AnchorStyles.Left) _
-            Or AnchorStyles.Right), AnchorStyles)
-        Me.tlpMain.SetColumnSpan(Me.lgbTarget, 2)
-        Me.lgbTarget.Controls.Add(Me.tlpTarget)
-        Me.lgbTarget.Location = New System.Drawing.Point(1029, 81)
-        Me.lgbTarget.Margin = New Padding(6, 0, 9, 0)
-        Me.lgbTarget.Name = "lgbTarget"
-        Me.lgbTarget.Padding = New Padding(6, 0, 6, 6)
-        Me.lgbTarget.Size = New System.Drawing.Size(1011, 357)
-        Me.lgbTarget.TabIndex = 58
-        Me.lgbTarget.TabStop = False
-        Me.lgbTarget.Text = "Target"
-        '
-        'tlpTarget
-        '
-        Me.tlpTarget.ColumnCount = 4
-        Me.tlpTarget.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 25.0!))
-        Me.tlpTarget.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 25.0!))
-        Me.tlpTarget.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 25.0!))
-        Me.tlpTarget.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 25.0!))
-        Me.tlpTarget.Controls.Add(Me.tbTargetFile, 0, 0)
-        Me.tlpTarget.Controls.Add(Me.blFilesize, 0, 1)
-        Me.tlpTarget.Controls.Add(Me.tbTargetSize, 1, 1)
-        Me.tlpTarget.Controls.Add(Me.laBitrate, 2, 1)
-        Me.tlpTarget.Controls.Add(Me.tbBitrate, 3, 1)
-        Me.tlpTarget.Controls.Add(Me.lTarget1, 0, 2)
-        Me.tlpTarget.Controls.Add(Me.laTarget2, 0, 3)
-        Me.tlpTarget.Dock = DockStyle.Fill
-        Me.tlpTarget.Location = New System.Drawing.Point(6, 48)
-        Me.tlpTarget.Margin = New Padding(0)
-        Me.tlpTarget.Name = "tlpTarget"
-        Me.tlpTarget.RowCount = 4
-        Me.tlpTarget.RowStyles.Add(New RowStyle(SizeType.Percent, 34.0!))
-        Me.tlpTarget.RowStyles.Add(New RowStyle(SizeType.Percent, 22.0!))
-        Me.tlpTarget.RowStyles.Add(New RowStyle(SizeType.Percent, 22.0!))
-        Me.tlpTarget.RowStyles.Add(New RowStyle(SizeType.Percent, 22.0!))
-        Me.tlpTarget.Size = New System.Drawing.Size(999, 303)
-        Me.tlpTarget.TabIndex = 62
-        '
-        'tbTargetFile
-        '
-        Me.tlpTarget.SetColumnSpan(Me.tbTargetFile, 4)
-        Me.tbTargetFile.Anchor = CType((AnchorStyles.Left Or AnchorStyles.Right), AnchorStyles)
-        Me.tbTargetFile.AutoSize = True
-        Me.tbTargetFile.Location = New System.Drawing.Point(6, 10)
-        Me.tbTargetFile.Margin = New Padding(6, CInt(FontHeight / 1.5), 6, FontHeight \ 2)
-        Me.tbTargetFile.Padding = New Padding(6, FontHeight \ 2, 6, FontHeight \ 2)
-        Me.tbTargetFile.Name = "tbTargetFile"
-        Me.tbTargetFile.ReadOnly = False
-        Me.tbTargetFile.TabIndex = 0
-        '
-        'laTarget2
-        '
-        Me.laTarget2.Anchor = CType((AnchorStyles.Left Or AnchorStyles.Right), AnchorStyles)
-        Me.tlpTarget.SetColumnSpan(Me.laTarget2, 4)
-        Me.laTarget2.ImeMode = ImeMode.NoControl
-        Me.laTarget2.Location = New System.Drawing.Point(6, 234)
-        Me.laTarget2.Margin = New Padding(6, 0, 6, 0)
-        Me.laTarget2.Size = New System.Drawing.Size(987, 60)
-        Me.laTarget2.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
-        '
-        'tbTargetSize
-        '
-        Me.tbTargetSize.Anchor = AnchorStyles.Left
-        Me.tbTargetSize.Location = New System.Drawing.Point(249, 85)
-        Me.tbTargetSize.Margin = New Padding(0)
-        Me.tbTargetSize.Name = "tbTargetSize"
-        Me.tbTargetSize.ReadOnly = False
-        Me.tbTargetSize.Size = New System.Drawing.Size(136, 55)
-        Me.tbTargetSize.TabIndex = 55
-        Me.tbTargetSize.TextBox.TextAlign = HorizontalAlignment.Center
-        '
-        'lTarget1
-        '
-        Me.lTarget1.Anchor = CType((AnchorStyles.Left Or AnchorStyles.Right), AnchorStyles)
-        Me.tlpTarget.SetColumnSpan(Me.lTarget1, 4)
-        Me.lTarget1.Location = New System.Drawing.Point(6, 157)
-        Me.lTarget1.Margin = New Padding(6, 0, 6, 0)
-        Me.lTarget1.Size = New System.Drawing.Size(987, 60)
-        Me.lTarget1.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
-        '
-        'tbBitrate
-        '
-        Me.tbBitrate.Anchor = AnchorStyles.Left
-        Me.tbBitrate.Location = New System.Drawing.Point(747, 85)
-        Me.tbBitrate.Margin = New Padding(0)
-        Me.tbBitrate.Name = "tbBitrate"
-        Me.tbBitrate.ReadOnly = False
-        Me.tbBitrate.Size = New System.Drawing.Size(139, 55)
-        Me.tbBitrate.TabIndex = 41
-        Me.tbBitrate.TextBox.TextAlign = HorizontalAlignment.Center
-        '
-        'laBitrate
-        '
-        Me.laBitrate.Anchor = CType((((AnchorStyles.Top Or AnchorStyles.Bottom) _
-            Or AnchorStyles.Left) _
-            Or AnchorStyles.Right), AnchorStyles)
-        Me.laBitrate.Location = New System.Drawing.Point(498, 75)
-        Me.laBitrate.Margin = New Padding(0)
-        Me.laBitrate.Size = New System.Drawing.Size(249, 75)
-        Me.laBitrate.Text = "Video Bitrate:"
-        Me.laBitrate.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
-        '
-        'blFilesize
-        '
-        Me.blFilesize.Anchor = CType((((AnchorStyles.Top Or AnchorStyles.Bottom) _
-            Or AnchorStyles.Left) _
-            Or AnchorStyles.Right), AnchorStyles)
-        Me.blFilesize.Location = New System.Drawing.Point(6, 75)
-        Me.blFilesize.Margin = New Padding(6, 0, 0, 0)
-        Me.blFilesize.Name = "blFilesize"
-        Me.blFilesize.Size = New System.Drawing.Size(243, 75)
-        Me.blFilesize.TabIndex = 59
-        Me.blFilesize.TabStop = True
-        Me.blFilesize.Text = "Size:"
-        Me.blFilesize.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
-        '
-        'lgbSource
-        '
-        Me.lgbSource.Anchor = CType((((AnchorStyles.Top Or AnchorStyles.Bottom) _
-            Or AnchorStyles.Left) _
-            Or AnchorStyles.Right), AnchorStyles)
-        Me.tlpMain.SetColumnSpan(Me.lgbSource, 2)
-        Me.lgbSource.Controls.Add(Me.tlpSource)
-        Me.lgbSource.Location = New System.Drawing.Point(9, 81)
-        Me.lgbSource.Margin = New Padding(9, 0, 6, 0)
-        Me.lgbSource.Name = "lgbSource"
-        Me.lgbSource.Padding = New Padding(6, 0, 6, 6)
-        Me.lgbSource.Size = New System.Drawing.Size(1008, 357)
-        Me.lgbSource.TabIndex = 57
-        Me.lgbSource.TabStop = False
-        Me.lgbSource.Text = "Source"
-        '
-        'tlpSource
-        '
-        Me.tlpSource.ColumnCount = 1
-        Me.tlpSource.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 50.0!))
-        Me.tlpSource.Controls.Add(Me.tbSourceFile, 0, 0)
-        Me.tlpSource.Controls.Add(Me.lSource1, 0, 1)
-        Me.tlpSource.Controls.Add(Me.lSource2, 0, 2)
-        Me.tlpSource.Controls.Add(Me.tlpSourceValues, 0, 3)
-        Me.tlpSource.Dock = DockStyle.Fill
-        Me.tlpSource.Location = New System.Drawing.Point(6, 48)
-        Me.tlpSource.Margin = New Padding(0)
-        Me.tlpSource.Name = "tlpSource"
-        Me.tlpSource.RowCount = 4
-        Me.tlpSource.RowStyles.Add(New RowStyle(SizeType.Percent, 34.0!))
-        Me.tlpSource.RowStyles.Add(New RowStyle(SizeType.Percent, 22.0!))
-        Me.tlpSource.RowStyles.Add(New RowStyle(SizeType.Percent, 22.0!))
-        Me.tlpSource.RowStyles.Add(New RowStyle(SizeType.Percent, 22.0!))
-        Me.tlpSource.Size = New System.Drawing.Size(996, 303)
-        Me.tlpSource.TabIndex = 62
-        '
-        'tlpSourceValues
-        '
-        Me.tlpSourceValues.Anchor = CType((((AnchorStyles.Top Or AnchorStyles.Bottom) _
-            Or AnchorStyles.Left) _
-            Or AnchorStyles.Right), AnchorStyles)
-        Me.tlpSourceValues.ColumnCount = 7
-        Me.tlpSourceValues.ColumnStyles.Add(New ColumnStyle())
-        Me.tlpSourceValues.ColumnStyles.Add(New ColumnStyle())
-        Me.tlpSourceValues.ColumnStyles.Add(New ColumnStyle())
-        Me.tlpSourceValues.ColumnStyles.Add(New ColumnStyle())
-        Me.tlpSourceValues.ColumnStyles.Add(New ColumnStyle())
-        Me.tlpSourceValues.ColumnStyles.Add(New ColumnStyle())
-        Me.tlpSourceValues.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 100.0!))
-        Me.tlpSourceValues.Controls.Add(Me.blSourceDarText, 4, 0)
-        Me.tlpSourceValues.Controls.Add(Me.lSourcePAR, 3, 0)
-        Me.tlpSourceValues.Controls.Add(Me.blSourceParText, 2, 0)
-        Me.tlpSourceValues.Controls.Add(Me.lCrop, 1, 0)
-        Me.tlpSourceValues.Controls.Add(Me.lCropText, 0, 0)
-        Me.tlpSourceValues.Controls.Add(Me.lSourceDar, 5, 0)
-        Me.tlpSourceValues.Location = New System.Drawing.Point(0, 225)
-        Me.tlpSourceValues.Margin = New Padding(0)
-        Me.tlpSourceValues.Name = "tlpSourceValues"
-        Me.tlpSourceValues.RowCount = 1
-        Me.tlpSourceValues.RowStyles.Add(New RowStyle(SizeType.Percent, 100.0!))
-        Me.tlpSourceValues.Size = New System.Drawing.Size(996, 78)
-        Me.tlpSourceValues.TabIndex = 1
-        '
-        'blSourceDarText
-        '
-        Me.blSourceDarText.Anchor = AnchorStyles.None
-        Me.blSourceDarText.AutoSize = True
-        Me.blSourceDarText.Location = New System.Drawing.Point(446, 15)
-        Me.blSourceDarText.Name = "blSourceDarText"
-        Me.blSourceDarText.Size = New System.Drawing.Size(97, 48)
-        Me.blSourceDarText.TabIndex = 51
-        Me.blSourceDarText.Text = "DAR:"
-        Me.blSourceDarText.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
-        '
-        'lSourcePAR
-        '
-        Me.lSourcePAR.Anchor = AnchorStyles.None
-        Me.lSourcePAR.AutoSize = True
-        Me.lSourcePAR.Location = New System.Drawing.Point(400, 15)
-        Me.lSourcePAR.Margin = New Padding(9, 0, 9, 0)
-        Me.lSourcePAR.Size = New System.Drawing.Size(34, 48)
-        Me.lSourcePAR.Text = "-"
-        Me.lSourcePAR.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
-        '
-        'blSourceParText
-        '
-        Me.blSourceParText.Anchor = AnchorStyles.None
-        Me.blSourceParText.AutoSize = True
-        Me.blSourceParText.Location = New System.Drawing.Point(291, 15)
-        Me.blSourceParText.Margin = New Padding(9, 0, 9, 0)
-        Me.blSourceParText.Name = "blSourceParText"
-        Me.blSourceParText.Size = New System.Drawing.Size(91, 48)
-        Me.blSourceParText.TabIndex = 45
-        Me.blSourceParText.TabStop = True
-        Me.blSourceParText.Text = "PAR:"
-        Me.blSourceParText.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
-        '
-        'lCrop
-        '
-        Me.lCrop.Anchor = AnchorStyles.None
-        Me.lCrop.AutoSize = True
-        Me.lCrop.Location = New System.Drawing.Point(120, 15)
-        Me.lCrop.Margin = New Padding(9, 0, 9, 0)
-        Me.lCrop.Size = New System.Drawing.Size(153, 48)
-        Me.lCrop.Text = "disabled"
-        Me.lCrop.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
-        '
-        'lCropText
-        '
-        Me.lCropText.Anchor = AnchorStyles.None
-        Me.lCropText.AutoSize = True
-        Me.lCropText.Location = New System.Drawing.Point(3, 15)
-        Me.lCropText.Size = New System.Drawing.Size(105, 48)
-        Me.lCropText.TabStop = True
-        Me.lCropText.Text = "Crop:"
-        Me.lCropText.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
-        '
-        'lSourceDar
-        '
-        Me.lSourceDar.Anchor = AnchorStyles.None
-        Me.lSourceDar.AutoSize = True
-        Me.lSourceDar.Location = New System.Drawing.Point(549, 15)
-        Me.lSourceDar.Size = New System.Drawing.Size(34, 48)
-        Me.lSourceDar.Text = "-"
-        Me.lSourceDar.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
-        '
-        'tbSourceFile
-        '
-        Me.tbSourceFile.Anchor = CType((AnchorStyles.Left Or AnchorStyles.Right), AnchorStyles)
-        Me.tbSourceFile.AutoSize = True
-        Me.tbSourceFile.Location = New System.Drawing.Point(6, 10)
-        Me.tbSourceFile.Margin = New Padding(6, CInt(FontHeight / 1.5), 6, FontHeight \ 2)
-        Me.tbSourceFile.Padding = New Padding(6, FontHeight \ 2, 6, FontHeight \ 2)
-        Me.tbSourceFile.Name = "tbSourceFile"
-        Me.tbSourceFile.ReadOnly = False
-        Me.tbSourceFile.TabIndex = 2
-        '
-        'lSource1
-        '
-        Me.lSource1.Anchor = CType((AnchorStyles.Left Or AnchorStyles.Right), AnchorStyles)
-        Me.lSource1.Location = New System.Drawing.Point(6, 84)
-        Me.lSource1.Margin = New Padding(6, 0, 6, 0)
-        Me.lSource1.Size = New System.Drawing.Size(984, 57)
-        Me.lSource1.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
-        '
-        'lSource2
-        '
-        Me.lSource2.Anchor = CType((AnchorStyles.Left Or AnchorStyles.Right), AnchorStyles)
-        Me.lSource2.Location = New System.Drawing.Point(6, 159)
-        Me.lSource2.Margin = New Padding(6, 0, 6, 0)
-        Me.lSource2.Size = New System.Drawing.Size(984, 57)
-        Me.lSource2.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
-        '
-        'lgbResize
-        '
-        Me.lgbResize.Anchor = AnchorStyles.Left Or AnchorStyles.Top Or AnchorStyles.Right
-        Me.tlpMain.SetColumnSpan(Me.lgbResize, 2)
-        Me.lgbResize.Controls.Add(Me.tlpResize)
-        Me.lgbResize.Location = New System.Drawing.Point(688, 438)
-        Me.lgbResize.Margin = New Padding(6, 0, 6, 0)
-        Me.lgbResize.Name = "lgbResize"
-        Me.lgbResize.Padding = New Padding(6, 0, 6, 6)
-        Me.lgbResize.Size = New System.Drawing.Size(670, _filterHeight)
-        Me.lgbResize.TabIndex = 55
-        Me.lgbResize.TabStop = False
-        Me.lgbResize.Text = "Resize"
-        '
-        'tlpResize
-        '
-        Me.tlpResize.ColumnCount = 4
-        Me.tlpResize.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 25.0!))
-        Me.tlpResize.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 25.0!))
-        Me.tlpResize.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 25.0!))
-        Me.tlpResize.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 25.0!))
-        Me.tlpResize.Controls.Add(Me.tlpResizeValues, 0, 2)
-        Me.tlpResize.Controls.Add(Me.tbResize, 0, 1)
-        Me.tlpResize.Controls.Add(Me.lTargetWidth, 0, 0)
-        Me.tlpResize.Controls.Add(Me.tbTargetWidth, 1, 0)
-        Me.tlpResize.Controls.Add(Me.lTargetHeight, 2, 0)
-        Me.tlpResize.Controls.Add(Me.tbTargetHeight, 3, 0)
-        Me.tlpResize.Dock = DockStyle.Fill
-        Me.tlpResize.Location = New System.Drawing.Point(6, 48)
-        Me.tlpResize.Name = "tlpResize"
-        Me.tlpResize.RowCount = 3
-        Me.tlpResize.RowStyles.Add(New RowStyle(SizeType.Absolute, 81.0!))
-        Me.tlpResize.RowStyles.Add(New RowStyle(SizeType.Absolute, 81.0!))
-        Me.tlpResize.RowStyles.Add(New RowStyle(SizeType.Percent, 100.0!))
-        Me.tlpResize.Size = New System.Drawing.Size(658, 232)
-        Me.tlpResize.TabIndex = 63
-        Me.tlpResize.SetColumnSpan(Me.tlpResizeValues, 4)
-        '
-        'tlpResizeValues
-        '
-        Me.tlpResizeValues.Anchor = CType((((AnchorStyles.Top Or AnchorStyles.Bottom) Or AnchorStyles.Left) Or AnchorStyles.Right), AnchorStyles)
-        Me.tlpResizeValues.ColumnCount = 4
-        Me.tlpResizeValues.ColumnStyles.Add(New ColumnStyle())
-        Me.tlpResizeValues.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 33.0!))
-        Me.tlpResizeValues.ColumnStyles.Add(New ColumnStyle())
-        Me.tlpResizeValues.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 40.0!))
-        Me.tlpResizeValues.Controls.Add(Me.blCropText, 0, 1)
-        Me.tlpResizeValues.Controls.Add(Me.lCrop2, 1, 1)
-        Me.tlpResizeValues.SetColumnSpan(Me.lCrop2, 3)
-        Me.tlpResizeValues.Controls.Add(Me.blTargetDarText, 0, 2)
-        Me.tlpResizeValues.Controls.Add(Me.lDAR, 1, 2)
-        Me.tlpResizeValues.Controls.Add(Me.lPixelText, 2, 2)
-        Me.tlpResizeValues.Controls.Add(Me.lPixel, 3, 2)
-        Me.tlpResizeValues.Controls.Add(Me.lSarText, 0, 3)
-        Me.tlpResizeValues.Controls.Add(Me.lSAR, 1, 3)
-        Me.tlpResizeValues.Controls.Add(Me.lZoomText, 2, 3)
-        Me.tlpResizeValues.Controls.Add(Me.lZoom, 3, 3)
-        Me.tlpResizeValues.Controls.Add(Me.blTargetParText, 0, 4)
-        Me.tlpResizeValues.Controls.Add(Me.lPAR, 1, 4)
-        Me.tlpResizeValues.Controls.Add(Me.lAspectRatioErrorText, 2, 4)
-        Me.tlpResizeValues.Controls.Add(Me.lAspectRatioError, 3, 4)
-        Me.tlpResizeValues.Location = New System.Drawing.Point(0, 162)
-        Me.tlpResizeValues.Margin = New Padding(0)
-        Me.tlpResizeValues.Name = "tlpResizeValues"
-        Me.tlpResizeValues.RowCount = 11
-        Me.tlpResizeValues.RowStyles.Add(New RowStyle(SizeType.Percent, 5.0!))
-        Me.tlpResizeValues.RowStyles.Add(New RowStyle(SizeType.Percent, 15.0!))
-        Me.tlpResizeValues.RowStyles.Add(New RowStyle(SizeType.Percent, 15.0!))
-        Me.tlpResizeValues.RowStyles.Add(New RowStyle(SizeType.Percent, 15.0!))
-        Me.tlpResizeValues.RowStyles.Add(New RowStyle(SizeType.Percent, 15.0!))
-        Me.tlpResizeValues.RowStyles.Add(New RowStyle(SizeType.Percent, 15.0!))
-        Me.tlpResizeValues.RowStyles.Add(New RowStyle(SizeType.Percent, 15.0!))
-        Me.tlpResizeValues.RowStyles.Add(New RowStyle(SizeType.Percent, 5.0!))
-        Me.tlpResizeValues.Size = New System.Drawing.Size(658, 70)
-        Me.tlpResizeValues.TabIndex = 62
-        '
-        'blTargetDarText
-        '
-        Me.blTargetDarText.Anchor = AnchorStyles.Left
-        Me.blTargetDarText.AutoSize = True
-        Me.blTargetDarText.ImeMode = ImeMode.NoControl
-        Me.blTargetDarText.Location = New System.Drawing.Point(0, 0)
-        Me.blTargetDarText.Margin = New Padding(0)
-        Me.blTargetDarText.Name = "blTargetDarText"
-        Me.blTargetDarText.Size = New System.Drawing.Size(97, 23)
-        Me.blTargetDarText.TabIndex = 23
-        Me.blTargetDarText.Text = "DAR:"
-        Me.blTargetDarText.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
-        '
-        'lPAR
-        '
-        Me.lPAR.Anchor = AnchorStyles.Left
-        Me.lPAR.AutoSize = True
-        Me.lPAR.Location = New System.Drawing.Point(97, 46)
-        Me.lPAR.Margin = New Padding(0)
-        Me.lPAR.Size = New System.Drawing.Size(34, 24)
-        Me.lPAR.Text = "-"
-        Me.lPAR.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
-        '
-        'lZoom
-        '
-        Me.lZoom.Anchor = AnchorStyles.Left
-        Me.lZoom.AutoSize = True
-        Me.lZoom.Location = New System.Drawing.Point(253, 23)
-        Me.lZoom.Margin = New Padding(0)
-        Me.lZoom.Size = New System.Drawing.Size(34, 23)
-        Me.lZoom.Text = "-"
-        Me.lZoom.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
-        '
-        'lSarText
-        '
-        Me.lSarText.Anchor = AnchorStyles.Left
-        Me.lSarText.AutoSize = True
-        Me.lSarText.Location = New System.Drawing.Point(0, 23)
-        Me.lSarText.Margin = New Padding(0)
-        Me.lSarText.Size = New System.Drawing.Size(92, 23)
-        Me.lSarText.Text = "SAR:"
-        Me.lSarText.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
-        '
-        'lPixel
-        '
-        Me.lPixel.Anchor = AnchorStyles.Left
-        Me.lPixel.AutoSize = True
-        Me.lPixel.Location = New System.Drawing.Point(253, 0)
-        Me.lPixel.Margin = New Padding(0)
-        Me.lPixel.Size = New System.Drawing.Size(34, 23)
-        Me.lPixel.Text = "-"
-        Me.lPixel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
-        '
-        'blTargetParText
-        '
-        Me.blTargetParText.Anchor = AnchorStyles.Left
-        Me.blTargetParText.AutoSize = True
-        Me.blTargetParText.Location = New System.Drawing.Point(0, 46)
-        Me.blTargetParText.Margin = New Padding(0)
-        Me.blTargetParText.Name = "blTargetParText"
-        Me.blTargetParText.Size = New System.Drawing.Size(91, 24)
-        Me.blTargetParText.TabIndex = 51
-        Me.blTargetParText.Text = "PAR:"
-        Me.blTargetParText.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
-        '
-        'lAspectRatioError
-        '
-        Me.lAspectRatioError.Anchor = AnchorStyles.Left
-        Me.lAspectRatioError.AutoSize = True
-        Me.lAspectRatioError.Location = New System.Drawing.Point(253, 46)
-        Me.lAspectRatioError.Margin = New Padding(0)
-        Me.lAspectRatioError.Size = New System.Drawing.Size(34, 24)
-        Me.lAspectRatioError.Text = "-"
-        Me.lAspectRatioError.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
-        '
-        'lAspectRatioErrorText
-        '
-        Me.lAspectRatioErrorText.Anchor = AnchorStyles.Left
-        Me.lAspectRatioErrorText.AutoSize = True
-        Me.lAspectRatioErrorText.Location = New System.Drawing.Point(131, 46)
-        Me.lAspectRatioErrorText.Margin = New Padding(0)
-        Me.lAspectRatioErrorText.Size = New System.Drawing.Size(106, 24)
-        Me.lAspectRatioErrorText.Text = "Error:"
-        Me.lAspectRatioErrorText.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
-        '
-        'lCrop2
-        '
-        Me.lCrop2.Anchor = AnchorStyles.Left
-        Me.lCrop2.AutoSize = True
-        Me.lCrop2.Location = New System.Drawing.Point(253, 46)
-        Me.lCrop2.Margin = New Padding(0)
-        Me.lCrop2.Size = New System.Drawing.Size(34, 24)
-        Me.lCrop2.Text = "-"
-        Me.lCrop2.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
-        '
-        'blCropText
-        '
-        Me.blCropText.Anchor = AnchorStyles.Left
-        Me.blCropText.AutoSize = True
-        Me.blCropText.Location = New System.Drawing.Point(131, 46)
-        Me.blCropText.Margin = New Padding(0)
-        Me.blCropText.Size = New System.Drawing.Size(106, 24)
-        Me.blCropText.Text = "Crop:"
-        Me.blCropText.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
-        Me.blCropText.ClickAction = AddressOf ShowCropDialog
-        '
-        'lDAR
-        '
-        Me.lDAR.Anchor = AnchorStyles.Left
-        Me.lDAR.AutoSize = True
-        Me.lDAR.ImeMode = ImeMode.NoControl
-        Me.lDAR.Location = New System.Drawing.Point(97, 0)
-        Me.lDAR.Margin = New Padding(0)
-        Me.lDAR.Size = New System.Drawing.Size(34, 23)
-        Me.lDAR.Text = "-"
-        Me.lDAR.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
-        '
-        'lZoomText
-        '
-        Me.lZoomText.Anchor = AnchorStyles.Left
-        Me.lZoomText.AutoSize = True
-        Me.lZoomText.Location = New System.Drawing.Point(131, 23)
-        Me.lZoomText.Margin = New Padding(0)
-        Me.lZoomText.Size = New System.Drawing.Size(122, 23)
-        Me.lZoomText.Text = "Zoom:"
-        Me.lZoomText.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
-        '
-        'lPixelText
-        '
-        Me.lPixelText.Anchor = AnchorStyles.Left
-        Me.lPixelText.AutoSize = True
-        Me.lPixelText.Location = New System.Drawing.Point(131, 0)
-        Me.lPixelText.Margin = New Padding(0)
-        Me.lPixelText.Size = New System.Drawing.Size(102, 23)
-        Me.lPixelText.Text = "Pixel:"
-        Me.lPixelText.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
-        '
-        'lSAR
-        '
-        Me.lSAR.Anchor = AnchorStyles.Left
-        Me.lSAR.AutoSize = True
-        Me.lSAR.Location = New System.Drawing.Point(97, 23)
-        Me.lSAR.Margin = New Padding(0)
-        Me.lSAR.Size = New System.Drawing.Size(34, 23)
-        Me.lSAR.Text = "-"
-        Me.lSAR.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
-        '
-        'tbResize
-        '
-        Me.tbResize.Anchor = CType((((AnchorStyles.Top Or AnchorStyles.Bottom) _
-            Or AnchorStyles.Left) _
-            Or AnchorStyles.Right), AnchorStyles)
-        Me.tbResize.AutoSize = False
-        Me.tlpResize.SetColumnSpan(Me.tbResize, 4)
-        Me.tbResize.Location = New System.Drawing.Point(0, 81)
-        Me.tbResize.Margin = New Padding(0)
-        Me.tbResize.Minimum = 0
-        Me.tbResize.TickFrequency = TrackBarTicks
-        Me.tbResize.Name = "tbResize"
-        Me.tbResize.Size = New System.Drawing.Size(658, 81)
-        Me.tbResize.TabIndex = 46
-        '
-        'lTargetWidth
-        '
-        Me.lTargetWidth.Anchor = AnchorStyles.Left
-        Me.lTargetWidth.AutoSize = True
-        Me.lTargetWidth.Location = New System.Drawing.Point(3, 16)
-        Me.lTargetWidth.Size = New System.Drawing.Size(124, 48)
-        Me.lTargetWidth.Text = "Width:"
-        Me.lTargetWidth.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
-        '
-        'tbTargetWidth
-        '
-        Me.tbTargetWidth.Anchor = AnchorStyles.Left
-        Me.tbTargetWidth.BorderStyle = BorderStyle.FixedSingle
-        Me.tbTargetWidth.Location = New System.Drawing.Point(167, 13)
-        Me.tbTargetWidth.Name = "tbTargetWidth"
-        Me.tbTargetWidth.ReadOnly = False
-        Me.tbTargetWidth.Size = New System.Drawing.Size(145, 55)
-        Me.tbTargetWidth.TabIndex = 39
-        Me.tbTargetWidth.TextBox.TextAlign = HorizontalAlignment.Center
-        '
-        'lTargetHeight
-        '
-        Me.lTargetHeight.Anchor = AnchorStyles.Left
-        Me.lTargetHeight.AutoSize = True
-        Me.lTargetHeight.Location = New System.Drawing.Point(331, 16)
-        Me.lTargetHeight.Size = New System.Drawing.Size(135, 48)
-        Me.lTargetHeight.Text = "Height:"
-        Me.lTargetHeight.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
-        '
-        'tbTargetHeight
-        '
-        Me.tbTargetHeight.Anchor = AnchorStyles.Left
-        Me.tbTargetHeight.BorderStyle = BorderStyle.FixedSingle
-        Me.tbTargetHeight.Location = New System.Drawing.Point(495, 13)
-        Me.tbTargetHeight.Name = "tbTargetHeight"
-        Me.tbTargetHeight.ReadOnly = False
-        Me.tbTargetHeight.Size = New System.Drawing.Size(145, 55)
-        Me.tbTargetHeight.TabIndex = 40
-        Me.tbTargetHeight.TextBox.TextAlign = HorizontalAlignment.Center
-        '
-        'lgbFilters
-        '
-        Me.lgbFilters.Anchor = AnchorStyles.Left Or AnchorStyles.Top Or AnchorStyles.Right
-        Me.lgbFilters.Controls.Add(Me.FiltersListView)
-        Me.lgbFilters.Location = New System.Drawing.Point(9, 438)
-        Me.lgbFilters.Margin = New Padding(9, 0, 6, 0)
-        Me.lgbFilters.Name = "lgbFilters"
-        Me.lgbFilters.Padding = New Padding(6, CInt(FontHeight / 1.5), 6, FontHeight \ 4)
-        Me.lgbFilters.Size = New System.Drawing.Size(667, _filterHeight)
-        Me.lgbFilters.TabIndex = 53
-        Me.lgbFilters.TabStop = False
-        '
-        'FiltersListView
-        '
-        Me.FiltersListView.AllowDrop = True
-        Me.FiltersListView.AutoCheckMode = StaxRip.UI.AutoCheckMode.None
-        Me.FiltersListView.CheckBoxes = True
-        Me.FiltersListView.Dock = DockStyle.Fill
-        Me.FiltersListView.FullRowSelect = True
-        Me.FiltersListView.HeaderStyle = ColumnHeaderStyle.None
-        Me.FiltersListView.HideSelection = False
-        Me.FiltersListView.IsLoading = False
-        Me.FiltersListView.Location = New System.Drawing.Point(9, 81)
-        Me.FiltersListView.Margin = New Padding(6, FontHeight \ 2, 6, FontHeight \ 4)
-        Me.FiltersListView.MultiSelect = False
-        Me.FiltersListView.Name = "FiltersListView"
-        Me.FiltersListView.OwnerDraw = True
-        Me.FiltersListView.Padding = New Padding(6, FontHeight \ 2, 6, FontHeight \ 4)
-        Me.FiltersListView.Size = New System.Drawing.Size(649, 226)
-        Me.FiltersListView.TabIndex = 0
-        Me.FiltersListView.UseCompatibleStateImageBehavior = False
-        Me.FiltersListView.View = View.Details
-        '
-        'lgbEncoder
-        '
-        Me.lgbEncoder.Anchor = AnchorStyles.Left Or AnchorStyles.Top Or AnchorStyles.Right
-        Me.lgbEncoder.Controls.Add(Me.llMuxer)
-        Me.lgbEncoder.Controls.Add(Me.pnEncoder)
-        Me.lgbEncoder.Location = New System.Drawing.Point(1370, 438)
-        Me.lgbEncoder.Margin = New Padding(6, 0, 9, 0)
-        Me.lgbEncoder.Name = "lgbEncoder"
-        Me.lgbEncoder.Padding = New Padding(6, CInt(FontHeight / 1.5), 6, FontHeight \ 4)
-        Me.lgbEncoder.Size = New System.Drawing.Size(670, _filterHeight)
-        Me.lgbEncoder.TabIndex = 51
-        Me.lgbEncoder.TabStop = False
-        '
-        'llMuxer
-        '
-        Me.llMuxer.Anchor = AnchorStyles.Top Or AnchorStyles.Right
-        Me.llMuxer.AutoSize = True
-        Me.llMuxer.Location = New System.Drawing.Point(536, 0)
-        Me.llMuxer.Name = "llMuxer"
-        Me.llMuxer.Size = New System.Drawing.Size(201, 48)
-        Me.llMuxer.TabIndex = 1
-        Me.llMuxer.TabStop = True
-        Me.llMuxer.Text = "Muxer"
-        Me.llMuxer.TextAlign = ContentAlignment.MiddleRight
-        '
-        'pnEncoder
-        '
-        Me.pnEncoder.Dock = DockStyle.Fill
-        Me.pnEncoder.Location = New System.Drawing.Point(9, 51)
-        Me.pnEncoder.Name = "pnEncoder"
-        Me.pnEncoder.Margin = New Padding(6, FontHeight \ 2, 6, FontHeight \ 4)
-        Me.pnEncoder.Padding = New Padding(6, 0, 6, 0)
-        Me.pnEncoder.Size = New System.Drawing.Size(652, 226)
-        Me.pnEncoder.TabIndex = 0
-        '
-        'tlpMain
-        '
-        Me.tlpMain.AutoSize = False
-        Me.tlpMain.ColumnCount = 4
-        Me.tlpMain.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 33.33!))
-        Me.tlpMain.ColumnStyles.Add(New ColumnStyle(SizeType.Absolute, 375.0!))
-        Me.tlpMain.ColumnStyles.Add(New ColumnStyle(SizeType.Absolute, 375.0!))
-        Me.tlpMain.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 33.33!))
-        Me.tlpMain.Controls.Add(Me.MenuStrip, 0, 0)
-        Me.tlpMain.Controls.Add(Me.lgbSource, 0, 1)
-        Me.tlpMain.Controls.Add(Me.lgbTarget, 2, 1)
-        Me.tlpMain.Controls.Add(Me.lgbFilters, 0, 2)
-        Me.tlpMain.Controls.Add(Me.lgbResize, 1, 2)
-        Me.tlpMain.Controls.Add(Me.lgbEncoder, 3, 2)
-        Me.tlpMain.Controls.Add(Me.gbAudio, 0, 3)
-        Me.tlpMain.Controls.Add(Me.gbAssistant, 0, 4)
-        Me.tlpMain.Dock = DockStyle.Fill
-        Me.tlpMain.Location = New System.Drawing.Point(0, 0)
-        Me.tlpMain.Margin = New Padding(0)
-        Me.tlpMain.Name = "tlpMain"
-        Me.tlpMain.RowCount = 5
-        Me.tlpMain.RowStyles.Add(New RowStyle(SizeType.Absolute, 81.0!))
-        Me.tlpMain.RowStyles.Add(New RowStyle(SizeType.Absolute, 357.0!))
-        Me.tlpMain.RowStyles.Add(New RowStyle(SizeType.Absolute, _filterHeight))
-        Me.tlpMain.RowStyles.Add(New RowStyle(SizeType.AutoSize))
-        Me.tlpMain.RowStyles.Add(New RowStyle(SizeType.Absolute, 250.0!))
-        Me.tlpMain.TabIndex = 61
-        '
-        'MainForm
-        '
-        Me.AllowDrop = True
-        Me.AutoScaleDimensions = New System.Drawing.SizeF(288.0!, 288.0!)
-        Me.AutoScaleMode = AutoScaleMode.Dpi
-        Me.Controls.Add(Me.tlpMain)
-        Me.FormBorderStyle = FormBorderStyle.Sizable
-        Me.HelpButton = True
-        Me.MainMenuStrip = Me.MenuStrip
-        Me.Margin = New Padding(9, 12, 9, 12)
-        Me.MaximizeBox = False
-        Me.Name = "MainForm"
-        Me.Text = $"{g.DefaultCommands.GetApplicationDetails()}"
-        Me.StartPosition = FormStartPosition.CenterScreen
-        Me.gbAssistant.ResumeLayout(False)
-        Me.tlpAssistant.ResumeLayout(False)
-        Me.tlpAssistant.PerformLayout()
-        Me.gbAudio.ResumeLayout(False)
-        Me.tlpAudio.ResumeLayout(False)
-        Me.tlpAudio.PerformLayout()
-        Me.lgbTarget.ResumeLayout(False)
-        Me.lgbTarget.PerformLayout()
-        Me.tlpTarget.ResumeLayout(False)
-        Me.lgbSource.ResumeLayout(False)
-        Me.lgbSource.PerformLayout()
-        Me.tlpSource.ResumeLayout(False)
-        Me.tlpSourceValues.ResumeLayout(False)
-        Me.tlpSourceValues.PerformLayout()
-        Me.lgbResize.ResumeLayout(False)
-        Me.lgbResize.PerformLayout()
-        Me.tlpResize.ResumeLayout(False)
-        Me.tlpResize.PerformLayout()
-        Me.tlpResizeValues.ResumeLayout(False)
-        Me.tlpResizeValues.PerformLayout()
-        CType(Me.tbResize, System.ComponentModel.ISupportInitialize).EndInit()
-        Me.lgbFilters.ResumeLayout(False)
-        Me.lgbFilters.PerformLayout()
-        Me.lgbEncoder.ResumeLayout(False)
-        Me.lgbEncoder.PerformLayout()
-        Me.tlpMain.ResumeLayout(False)
-        Me.ResumeLayout(False)
-        Me.ScaleSize(44, 44)
+        bnNext = New ButtonEx With {.Text = "Next", .MinimumSize = New Size(FH(7), FH(2.6))}
+        laTip = New LabelEx With {.Wrap = WrapMode.Word}
+        gbAssistant = New GroupBoxEx With {.Text = "Assistant"}
+        gbAudio = New GroupBoxEx With {.Text = "Audio"}
+        pnAudio = New Panel
+        MenuStrip = New MenuBar With {.IncludeSystemItems = MenuBarSystemItems.None}
+
+        tbSourceFile = New TextEdit
+        lSource1 = label("")
+        lSource2 = label("")
+        lCropText = label("Crop:")
+        lCrop = label("disabled")
+        blSourceParText = link("PAR:")
+        lSourcePAR = label("-")
+        blSourceDarText = link("DAR:")
+        lSourceDar = label("-")
+        lgbSource = New LinkGroupBox With {.Text = "Source"}
+
+        tbTargetFile = New TextEdit
+        blFilesize = link("Size:")
+        tbTargetSize = New TextEdit With {.TextAlign = HorizontalAlignment.Center}
+        laBitrate = label("Video Bitrate:")
+        tbBitrate = New TextEdit With {.TextAlign = HorizontalAlignment.Center}
+        lTarget1 = label("")
+        laTarget2 = label("")
+        lgbTarget = New LinkGroupBox With {.Text = "Target"}
+
+        lTargetWidth = label("Width:")
+        tbTargetWidth = New TextEdit With {.TextAlign = HorizontalAlignment.Center, .Width = FH(4.5)}
+        lTargetHeight = label("Height:")
+        tbTargetHeight = New TextEdit With {.TextAlign = HorizontalAlignment.Center, .Width = FH(4.5)}
+        tbResize = New TrackBarEx With {.Minimum = 0, .TickFrequency = TrackBarTicks}
+        blCropText = link("Crop:")
+        blCropText.ClickAction = AddressOf ShowCropDialog
+        lCrop2 = label("-")
+        blTargetDarText = link("DAR:")
+        lDAR = label("-")
+        lPixelText = label("Pixel:")
+        lPixel = label("-")
+        lSarText = label("SAR:")
+        lSAR = label("-")
+        lZoomText = label("Zoom:")
+        lZoom = label("-")
+        blTargetParText = link("PAR:")
+        lPAR = label("-")
+        lAspectRatioErrorText = label("Error:")
+        lAspectRatioError = label("-")
+        lgbResize = New LinkGroupBox With {.Text = "Resize"}
+
+        FiltersListView = New FiltersListView With {.AutoCheckMode = AutoCheckMode.None}
+        lgbFilters = New LinkGroupBox
+
+        llMuxer = link("Muxer")
+        pnEncoder = New Panel
+        lgbEncoder = New LinkGroupBox
+
+        TipProvider = New TipProvider
+
+        Dim sourceValues = HRow(lCropText, lCrop, blSourceParText, lSourcePAR, blSourceDarText, lSourceDar)
+        lgbSource.Content = New TableLayout(Row(tbSourceFile), Row(lSource1), Row(lSource2), Row(sourceValues)) With {.Spacing = DefaultSpacing}
+
+        Dim targetValues As New TableLayout(Row(blFilesize, Scaled(tbTargetSize), laBitrate, Scaled(tbBitrate))) With {.Spacing = DefaultSpacing}
+        lgbTarget.Content = New TableLayout(Row(tbTargetFile), Row(targetValues), Row(lTarget1), Row(laTarget2)) With {.Spacing = DefaultSpacing}
+
+        Dim resizeSize As New TableLayout(Row(lTargetWidth, tbTargetWidth, Nothing, lTargetHeight, tbTargetHeight)) With {.Spacing = DefaultSpacing}
+        Dim resizeValues As New TableLayout(
+            Row(blCropText, lCrop2, Nothing, Nothing),
+            Row(blTargetDarText, Scaled(lDAR), lPixelText, Scaled(lPixel)),
+            Row(lSarText, Scaled(lSAR), lZoomText, Scaled(lZoom)),
+            Row(blTargetParText, Scaled(lPAR), lAspectRatioErrorText, Scaled(lAspectRatioError))) With {.Spacing = New Size(FH(0.4), FH(0.15))}
+
+        lgbResize.Content = New TableLayout(Row(resizeSize), Row(tbResize), Row(resizeValues), New TableRow With {.ScaleHeight = True}) With {.Spacing = DefaultSpacing}
+        lgbResize.Width = FH(19)
+
+        lgbFilters.Content = FiltersListView
+        lgbEncoder.HeaderRight = llMuxer
+        lgbEncoder.Content = pnEncoder
+
+        gbAudio.Content = pnAudio
+        gbAssistant.Content = New TableLayout(Row(Scaled(laTip), bnNext)) With {.Spacing = DefaultSpacing}
+
+        Dim top As New TableLayout(Row(Scaled(lgbSource), Scaled(lgbTarget))) With {.Spacing = DefaultSpacing}
+        Dim middle As New TableLayout(ScaledRow(Scaled(lgbFilters), lgbResize, Scaled(lgbEncoder))) With {.Spacing = DefaultSpacing}
+
+        Menu = MenuStrip
+        Content = New TableLayout(
+            Row(top),
+            ScaledRow(middle),
+            Row(gbAudio),
+            Row(gbAssistant)) With {.Spacing = DefaultSpacing, .Padding = New Padding(FH(0.4))}
+
+        Text = g.DefaultCommands.GetApplicationDetails()
+        FileDrop = True
+        Maximizable = True
     End Sub
-
 #End Region
 
     Public WithEvents CustomMainMenu As CustomMenu
@@ -990,7 +198,6 @@ Partial Public Class MainForm
     Private Const TrackBarTicks As Integer = 4
 
     Sub New(loadSettings As Boolean)
-        AddHandler Application.ThreadException, AddressOf g.OnUnhandledException
         g.MainForm = Me
         If loadSettings Then g.LoadSettings()
         g.LoadAudioProfiles()
@@ -1003,7 +210,7 @@ Partial Public Class MainForm
             "[Reflection.Assembly]::LoadWithPartialName(""StaxRip"")"
 
         If s.WriteDebugLog Then
-            Dim filePath = Path.Combine(Folder.Startup, "Debug.log")
+            Dim filePath = Path.Combine(Folder.Settings, "Debug.log")
 
             If File.Exists(filePath) Then
                 File.Delete(filePath)
@@ -1018,59 +225,45 @@ Partial Public Class MainForm
 
         MenuItemEx.UseTooltips = s.EnableTooltips
         Icon = g.Icon
-        g.DPI = DeviceDpi
 
         InitializeComponent()
         RestoreClientSize(60, 36)
-        SetStyle(ControlStyles.SupportsTransparentBackColor, True)
-
-        If components Is Nothing Then
-            components = New Container()
-        End If
-
         SetTip()
 
-        TargetAspectRatioMenu = New ContextMenuStripEx(components)
-        SizeContextMenuStrip = New ContextMenuStripEx(components)
-        EncoderMenu = New ContextMenuStripEx(components)
-        AddHandler EncoderMenu.Opening, Sub(sender As Object, e As CancelEventArgs) MenuOpening(sender, lgbEncoder.Tag)
-        ContainerMenu = New ContextMenuStripEx(components)
-        AddHandler ContainerMenu.Opening, Sub(sender As Object, e As CancelEventArgs) MenuOpening(sender, llMuxer.Tag)
-        SourceAspectRatioMenu = New ContextMenuStripEx(components)
-        TargetFileMenu = New ContextMenuStripEx(components)
-        SourceFileMenu = New ContextMenuStripEx(components)
-        NextContextMenuStrip = New ContextMenuStripEx(components)
+        TargetAspectRatioMenu = New ContextMenuStripEx
+        SizeContextMenuStrip = New ContextMenuStripEx
+        EncoderMenu = New ContextMenuStripEx
+        AddHandler EncoderMenu.Opening, Sub(sender As Object, e As EventArgs) MenuOpening(sender, lgbEncoder.Tag)
+        ContainerMenu = New ContextMenuStripEx
+        AddHandler ContainerMenu.Opening, Sub(sender As Object, e As EventArgs) MenuOpening(sender, llMuxer.Tag)
+        SourceAspectRatioMenu = New ContextMenuStripEx
+        TargetFileMenu = New ContextMenuStripEx
+        SourceFileMenu = New ContextMenuStripEx
+        NextContextMenuStrip = New ContextMenuStripEx
 
-        tbTargetFile.TextBox.ContextMenuStrip = TargetFileMenu
-        tbSourceFile.TextBox.ContextMenuStrip = SourceFileMenu
+        tbTargetFile.ContextMenuStrip = TargetFileMenu
+        tbSourceFile.ContextMenuStrip = SourceFileMenu
 
         Dim rc = "right-click"
-        tbSourceFile.TextBox.SendMessageCue(rc, False)
-        tbTargetFile.TextBox.SendMessageCue(rc, False)
-
-        MenuStrip.SuspendLayout()
-        MenuStrip.Font = FontManager.GetDefaultFont()
+        tbSourceFile.SendMessageCue(rc, False)
+        tbTargetFile.SendMessageCue(rc, False)
 
         CommandManager.AddCommandsFromObject(Me)
         CommandManager.AddCommandsFromObject(g.DefaultCommands)
 
-        CustomMainMenu = New CustomMenu(AddressOf GetDefaultMainMenu, s.CustomMenuMainForm, CommandManager, MenuStrip)
-
+        CustomMainMenu = New CustomMenu(AddressOf GetDefaultMainMenu, s.CustomMenuMainForm, CommandManager, MenuStrip.Items) With {.IsMenuBar = True}
 
         OpenProject(g.StartupTemplatePath)
         CustomMainMenu.AddKeyDownHandler(Me)
         CustomMainMenu.BuildMenu()
         UpdateAudioMenus()
         UpdateTargetSizeLabel()
-        MenuStrip.ResumeLayout()
-        SizeContextMenuStrip.SuspendLayout()
 
         CustomSizeMenu = New CustomMenu(AddressOf GetDefaultMenuSize,
-                s.CustomMenuSize, CommandManager, SizeContextMenuStrip)
+                s.CustomMenuSize, CommandManager, SizeContextMenuStrip.Items)
 
         CustomSizeMenu.AddKeyDownHandler(Me)
         CustomSizeMenu.BuildMenu()
-        SizeContextMenuStrip.ResumeLayout()
 
         NextContextMenuStrip.Add("Add to top and open Jobs", Sub() AddJob(True, 0))
         NextContextMenuStrip.Add("Add to bottom and open Jobs", Sub() AddJob(True, -1))
@@ -1078,22 +271,15 @@ Partial Public Class MainForm
         NextContextMenuStrip.Add("Add to top w/o opening Jobs", Sub() AddJob(False, 0))
         NextContextMenuStrip.Add("Add to bottom w/o opening Jobs", Sub() AddJob(False, -1))
 
-        g.SetRenderer(MenuStrip)
-
         ThemeManager.SetCurrentTheme(s.ThemeName)
         ApplyTheme()
 
-        AddHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
+        AddHandler ThemeManager.CurrentThemeChanged, AddressOf OnCurrentThemeChanged
         AddHandler FiltersListView.Changed, AddressOf ApplyFilters
+        ShowActivated = Not GetShowWithoutActivation()
     End Sub
 
-    Protected Overrides Sub Dispose(disposing As Boolean)
-        RemoveHandler ThemeManager.CurrentThemeChanged, AddressOf OnThemeChanged
-        components?.Dispose()
-        MyBase.Dispose(disposing)
-    End Sub
-
-    Sub OnThemeChanged(theme As Theme)
+    Sub OnCurrentThemeChanged(theme As Theme)
         ApplyTheme()
         Assistant(False)
     End Sub
@@ -1102,88 +288,17 @@ Partial Public Class MainForm
         ApplyTheme(ThemeManager.CurrentTheme)
     End Sub
 
+    'native controls use the GTK theme, only the assistant tip and highlighted controls are colored
     Sub ApplyTheme(theme As Theme)
-        ApplyTheme(GetAllControls(), theme)
-    End Sub
+        ResetHighlighting()
 
-    Sub ApplyTheme(controls As IEnumerable(Of Control))
-        ApplyTheme(controls, ThemeManager.CurrentTheme)
-    End Sub
-
-    Sub ApplyTheme(controls As IEnumerable(Of Control), theme As Theme)
-        If DesignHelp.IsDesignMode Then
-            Exit Sub
+        If CanIgnoreTip Then
+            laTip.BackColor = Colors.Transparent
+            laTip.ForeColor = SystemColors.ControlText
+        Else
+            laTip.BackColor = theme.MainForm.laTipBackHighlightColor.ToColor
+            laTip.ForeColor = theme.MainForm.laTipForeHighlightColor.ToColor
         End If
-
-        BackColor = theme.General.BackColor
-
-        For Each control In controls.OfType(Of Label)
-            If control Is laTip Then
-                If CanIgnoreTip Then
-                    control.BackColor = theme.MainForm.laTipBackColor
-                    control.ForeColor = theme.MainForm.laTipForeColor
-                Else
-                    control.BackColor = theme.MainForm.laTipBackHighlightColor
-                    control.ForeColor = theme.MainForm.laTipForeHighlightColor
-                End If
-            Else
-                control.BackColor = theme.General.Controls.Label.BackColor
-                control.ForeColor = theme.General.Controls.Label.ForeColor
-            End If
-        Next
-
-        For Each control In controls.OfType(Of ButtonLabel)
-            control.ApplyTheme(theme)
-            control.BackColor = If(TypeOf control.Parent Is UserControl, theme.General.Controls.ListView.BackColor, theme.General.Controls.ButtonLabel.BackColor)
-        Next
-
-        For Each control In controls.OfType(Of ToggleButtonLabel)
-            control.ApplyTheme(theme)
-            control.BackColor = If(TypeOf control.Parent Is UserControl, theme.General.Controls.ListView.BackColor, theme.General.Controls.ToggleButtonLabel.BackColor)
-        Next
-
-        For Each control In controls.OfType(Of ButtonEx)
-            control.ApplyTheme(theme)
-        Next
-
-        For Each control In controls.OfType(Of GroupBox)
-            control.BackColor = theme.General.Controls.GroupBox.BackColor
-            control.ForeColor = theme.General.Controls.GroupBox.ForeColor
-        Next
-
-        For Each control In controls.OfType(Of Panel)
-            control.BackColor = theme.General.Controls.Panel.BackColor
-            control.ForeColor = theme.General.Controls.Panel.ForeColor
-        Next
-
-        For Each control In controls.OfType(Of TableLayoutPanel)
-            control.BackColor = theme.General.Controls.TableLayoutPanel.BackColor
-            control.ForeColor = theme.General.Controls.TableLayoutPanel.ForeColor
-        Next
-
-        For Each control In controls.OfType(Of TextBox)
-            control.BackColor = theme.General.Controls.TextBox.BackColor
-            control.ForeColor = theme.General.Controls.TextBox.ForeColor
-        Next
-
-        For Each control In controls.OfType(Of TextBoxEx)
-            control.BorderColor = theme.General.Controls.TextBox.BorderColor
-            control.BorderFocusedColor = theme.General.Controls.TextBox.BorderFocusedColor
-        Next
-
-        For Each control In controls.OfType(Of TextEdit)
-            control.BackColor = theme.General.Controls.TextEdit.BackColor
-            control.ForeColor = theme.General.Controls.TextEdit.ForeColor
-            control.BorderColor = theme.General.Controls.TextEdit.BorderColor
-            control.BorderFocusedColor = theme.General.Controls.TextEdit.BorderFocusedColor
-        Next
-
-        For Each control In controls.OfType(Of TrackBar)
-            control.BackColor = theme.General.Controls.TrackBar.BackColor
-            control.ForeColor = theme.General.Controls.TrackBar.ForeColor
-        Next
-
-        pnEncoder.BackColor = theme.General.Controls.ListView.BackColor
     End Sub
 
     Sub MenuOpening(sender As Object, tag As Object)
@@ -1193,24 +308,18 @@ Partial Public Class MainForm
         If tag Is Nothing Then Return
 
         Dim allItems = menu.GetItems().OfType(Of MenuItemEx)
-        Dim selectedItem = allItems.Where(Function(x) tag IsNot Nothing AndAlso tag.Equals(x.Tag)).OrderBy(Function(x) x.Path.Length).FirstOrDefault()
+        Dim selectedItem = allItems.Where(Function(x) tag.Equals(x.Tag) AndAlso x.Path IsNot Nothing).OrderBy(Function(x) x.Path.Length).FirstOrDefault()
 
         If selectedItem Is Nothing Then Return
 
-        Dim selectedSubPath = If(selectedItem IsNot Nothing, selectedItem.Path.LeftLast(" | "), "")
+        Dim selectedSubPath = selectedItem.Path.LeftLast(" | ")
         Dim selectedSubSubPath = selectedSubPath.LeftLast(" | ")
-        Dim selectedPathLevel = If(selectedItem IsNot Nothing, Regex.Matches(selectedItem.Path, " \| ").Count, 0)
+        Dim selectedPathLevel = Regex.Matches(selectedItem.Path, " \| ").Count
 
         For Each item As MenuItemEx In allItems.Where(Function(x) Not String.IsNullOrEmpty(x.Path))
             Dim sameLevel = Regex.Matches(item.Path, " \| ").Count = selectedPathLevel
-
-            item.CheckState = CheckState.Unchecked
-            item.CheckState = If(Not sameLevel AndAlso (selectedSubPath.Equals(item.Path) OrElse (selectedPathLevel > 1 AndAlso selectedSubSubPath.StartsWith(item.Path))), CheckState.Indeterminate, item.CheckState)
-            item.CheckState = If(item.Path = selectedItem?.Path, CheckState.Checked, item.CheckState)
-
-            Dim desiredFont = New Font(item.Font, If(item.CheckState = CheckState.Checked, FontStyle.Bold, FontStyle.Regular))
-
-            If Not item.Font.Equals(desiredFont) Then item.Font = desiredFont
+            Dim isParent = Not sameLevel AndAlso (selectedSubPath.Equals(item.Path) OrElse (selectedPathLevel > 1 AndAlso selectedSubSubPath.StartsWith(item.Path)))
+            item.Marked = item.Path = selectedItem.Path OrElse isParent
         Next
     End Sub
 
@@ -1346,7 +455,7 @@ Partial Public Class MainForm
     End Function
 
     Sub UpdateRecentProjectsMenu()
-        If Disposing OrElse IsDisposed Then Exit Sub
+        If IsDisposed Then Exit Sub
 
         For Each mi In CustomMainMenu.MenuItems
             If mi.CustomMenuItem?.MethodName = "DynamicMenuItem" AndAlso
@@ -1403,7 +512,7 @@ Partial Public Class MainForm
             End If
         Next
 
-        Application.DoEvents()
+        DoEvents()
     End Sub
 
     Async Sub UpdateScriptsMenuAsync()
@@ -1416,7 +525,7 @@ Partial Public Class MainForm
                            End If
                        End Sub)
 
-        If IsDisposed OrElse Native.GetForegroundWindow() <> Handle OrElse files.Count = 0 Then
+        If IsDisposed OrElse files.Count = 0 Then
             Exit Sub
         End If
 
@@ -1432,7 +541,7 @@ Partial Public Class MainForm
                         End If
                     Next
 
-                    menuItem.DropDownItems.Add(New ToolStripSeparator)
+                    menuItem.DropDownItems.Add(New SeparatorMenuItem)
                     MenuItemEx.Add(menuItem.DropDownItems, "Open Script Folder", Sub() g.ShellExecute(Folder.Scripts))
                 End If
             End If
@@ -1472,7 +581,7 @@ Partial Public Class MainForm
                 MenuItemEx.Add(menuItem.DropDownItems, text, AddressOf LoadProject, template, Nothing)
             Next
 
-            menuItem.DropDownItems.Add("-")
+            menuItem.DropDownItems.Add(New SeparatorMenuItem)
             MenuItemEx.Add(menuItem.DropDownItems, "Explore", Sub() g.ShellExecute(Folder.Template), "Opens the directory containing the templates.")
             MenuItemEx.Add(menuItem.DropDownItems, "Restore", AddressOf ResetTemplates, "Restores the default templates.")
 
@@ -1481,7 +590,7 @@ Partial Public Class MainForm
 
         If IsDisposed Then Exit Sub
 
-        Application.DoEvents()
+        DoEvents()
     End Sub
 
     Sub ResetTemplates()
@@ -1707,33 +816,29 @@ Partial Public Class MainForm
         End If
     End Function
 
-    Sub SetBindings(proj As Project, add As Boolean)
-        SetTextBoxBinding(tbTargetFile, proj, NameOf(Project.TargetFile), add)
+    Private BoundProject As Project
 
+    'the target file text box is bound to the target file of the project
+    Sub SetBindings(proj As Project, add As Boolean)
         RemoveHandler proj.PropertyChanged, AddressOf ProjectPropertyChanged
+
         If add Then
+            BoundProject = proj
+            tbTargetFile.Text = proj.TargetFile
             AddHandler proj.PropertyChanged, AddressOf ProjectPropertyChanged
+        ElseIf BoundProject Is proj Then
+            BoundProject = Nothing
         End If
     End Sub
 
     Sub ProjectPropertyChanged(sender As Object, e As PropertyChangedEventArgs)
+        If sender Is BoundProject AndAlso e.PropertyName = NameOf(Project.TargetFile) AndAlso
+            tbTargetFile.Text <> BoundProject.TargetFile Then
+
+            tbTargetFile.Text = BoundProject.TargetFile
+        End If
+
         Assistant()
-    End Sub
-
-    Sub SetTextBoxBinding(tb As TextBox, obj As Object, prop As String, add As Boolean)
-        tb.DataBindings.Clear()
-
-        If add Then
-            tb.DataBindings.Add(New Binding(NameOf(TextBox.Text), obj, prop, False, DataSourceUpdateMode.OnPropertyChanged))
-        End If
-    End Sub
-
-    Sub SetTextBoxBinding(te As TextEdit, obj As Object, prop As String, add As Boolean)
-        te.TextBox.DataBindings.Clear()
-
-        If add Then
-            te.TextBox.DataBindings.Add(New Binding(NameOf(TextBox.Text), obj, prop, False, DataSourceUpdateMode.OnPropertyChanged))
-        End If
     End Sub
 
     Function OpenProject(Optional path As String = Nothing) As Boolean
@@ -1895,19 +1000,11 @@ Partial Public Class MainForm
         Dim availableAudioTracks = Mathf.Clamp(proj.AudioTracksAvailable, 1, 25)
         Dim sourceFile = p.LastOriginalSourceFile
         Dim streams = If(sourceFile.FileExists(), MediaInfo.GetAudioStreams(sourceFile), New List(Of AudioStream))
-        Dim ateHeight = -1
-
-        'tlpAudio.SuspendLayout()
         Try
-            tlpAudio.Controls.Clear()
-            tlpAudio.RowStyles.Clear()
+            pnAudio.Content = Nothing
 
             If proj.AudioTracks.Count > availableAudioTracks Then
-                For index = proj.AudioTracks.Count - 1 To availableAudioTracks - 1 Step -1
-                    proj.AudioTracks(index).TextEdit.Dispose()
-                    proj.AudioTracks(index).LanguageLabel.Dispose()
-                    proj.AudioTracks(index).NameLabel.Dispose()
-                    proj.AudioTracks(index).EditLabel.Dispose()
+                For index = proj.AudioTracks.Count - 1 To availableAudioTracks Step -1
                     proj.AudioTracks.RemoveAt(index)
                 Next
             End If
@@ -1915,7 +1012,7 @@ Partial Public Class MainForm
             For i = 0 To availableAudioTracks - 1
                 Dim index = i
 
-                Dim textEditContextMenuStripEx = New ContextMenuStripEx(components)
+                Dim textEditContextMenuStripEx = New ContextMenuStripEx
                 Dim audioTrack As AudioTrack
                 Dim audioProfile As AudioProfile = If(index < proj.AudioTracks.Count AndAlso proj.AudioTracks(index)?.AudioProfile IsNot Nothing, proj.AudioTracks(index)?.AudioProfile, New MuxAudioProfile())
                 If audioProfile.Streams Is Nothing OrElse Not audioProfile.Streams.Any() Then audioProfile.Streams = streams
@@ -1924,7 +1021,7 @@ Partial Public Class MainForm
                     .Text = audioProfile.Language.Name
                 }
                 Dim nameLabel = New AudioNameButtonLabel(index) With {
-                    .ContextMenuStripEx = New ContextMenuStripEx(components),
+                    .ContextMenuStripEx = New ContextMenuStripEx,
                     .ClickAction = Sub()
                                        .ContextMenuStripEx.Show(audioTrack.NameLabel, 0, 16)
                                    End Sub
@@ -1940,7 +1037,7 @@ Partial Public Class MainForm
                                    End Sub
                 }
 
-                textEdit.TextBox.ContextMenuStrip = textEditContextMenuStripEx
+                textEdit.ContextMenuStrip = textEditContextMenuStripEx
 
                 TipProvider.SetTip("Shows the assigned language", languageLabel)
                 TipProvider.SetTip("Shows audio profiles", nameLabel)
@@ -1953,7 +1050,7 @@ Partial Public Class MainForm
                                               AudioTextEditDoubleClick(audioTrack)
                                           End Sub
                 Dim textEditMouseDown = Sub(sender As Object, e As MouseEventArgs)
-                                            If e.Button = MouseButtons.Right Then
+                                            If e.Buttons = MouseButtons.Alternate Then
                                                 UpdateAudioFileMenu(audioTrack, index, Sub() textEditDoubleClick(Nothing, Nothing))
                                             End If
                                         End Sub
@@ -1971,26 +1068,24 @@ Partial Public Class MainForm
                 End If
             Next
 
+            Dim rows As New List(Of TableRow)
+
             For index = 0 To proj.AudioTracks.Count - 1
-                tlpAudio.Controls.Add(proj.AudioTracks(index).RowLabel, 0, index)
-                tlpAudio.Controls.Add(proj.AudioTracks(index).TextEdit, 1, index)
-                tlpAudio.Controls.Add(proj.AudioTracks(index).LanguageLabel, 2, index)
-                tlpAudio.Controls.Add(proj.AudioTracks(index).NameLabel, 3, index)
-                tlpAudio.Controls.Add(proj.AudioTracks(index).EditLabel, 4, index)
+                Dim track = proj.AudioTracks(index)
+                track.TextEdit.SendMessageCue("right-click", False)
+
+                rows.Add(New TableRow(
+                    New TableCell(track.RowLabel),
+                    New TableCell(track.TextEdit, True),
+                    New TableCell(track.LanguageLabel),
+                    New TableCell(track.NameLabel),
+                    New TableCell(track.EditLabel)))
             Next
 
+            pnAudio.Content = New TableLayout(rows) With {.Spacing = New Size(FH(0.5), FH(0.2))}
         Catch ex As Exception
+            g.ShowException(ex)
         Finally
-            tlpAudio.RowCount = availableAudioTracks
-
-            For Each ate In tlpAudio.Controls.OfType(Of AudioTextEdit)
-                ateHeight = ate.Height + ate.Margin.Vertical
-                ate.TextBox.SendMessageCue("right-click", False)
-                tlpAudio.RowStyles.Add(New RowStyle(SizeType.AutoSize))
-            Next
-
-            'tlpAudio.ResumeLayout()
-            SetFormBoundaries(ateHeight)
             UpdateAudioMenus()
             PopulateProfileMenu(DynamicMenuItemID.AudioProfiles)
         End Try
@@ -2119,7 +1214,7 @@ Partial Public Class MainForm
                            End If
 
                            dest.AudioProfile.Language = source.Language
-                           dest.LanguageLabel.Refresh()
+                           dest.LanguageLabel.Invalidate()
                        End Sub
 
         For index = 0 To audioTracks.Count - 1
@@ -2160,7 +1255,7 @@ Partial Public Class MainForm
         Dim te = audioTrack.TextEdit
         Dim ap = audioTrack.AudioProfile
 
-        If te.Text.Contains(":\") OrElse te.Text.StartsWith("\\") Then
+        If te.Text.StartsWith("/") Then
             If te.Text <> ap.File Then
                 ap.Reset(audioTrack.Index)
                 ap.File = te.Text
@@ -2193,7 +1288,7 @@ Partial Public Class MainForm
             UpdateSizeOrBitrate()
         End If
 
-        audioTrack.LanguageLabel?.Refresh()
+        audioTrack.LanguageLabel?.Invalidate()
         audioTrack.NameLabel.Text = g.ConvertPath(audioTrack.AudioProfile.Name)
     End Sub
 
@@ -2212,7 +1307,7 @@ Partial Public Class MainForm
 
     Function GetPathFromIndexFile(sourcePath As String) As String
         For Each i In File.ReadAllLines(sourcePath)
-            If i.Contains(":\") OrElse i.StartsWith("\\") Then
+            If i.StartsWith("/") Then
                 If Regex.IsMatch(i, "^.+ \d+$") Then
                     i = i.LeftLast(" ")
                 End If
@@ -2496,7 +1591,7 @@ Partial Public Class MainForm
 
         Try
             SafeSerialization.Serialize(p, recoverProjectPath)
-            AddHandler Disposed, Sub() FileHelp.Delete(recoverProjectPath)
+            AddHandler AppDomain.CurrentDomain.ProcessExit, Sub() FileHelp.Delete(recoverProjectPath)
         Catch ex As Exception
             MsgWarn("Recovery not saved!", $"The recovery project could not be saved at:{BR}{recoverProjectPath}")
         End Try
@@ -2556,9 +1651,9 @@ Partial Public Class MainForm
 
                         Dim filter = p.Script.GetFilter("Source")
                         filter.Path = "Image"
-                        filter.Script = "ImageSource(""" + Path.Combine(images(0).Dir, p.SourceFile.Base.Substring(0,
-                            p.SourceFile.Base.Length - digitCount) + "%0" & digitCount & "d." + p.SourceFile.Ext) +
-                            """, " & images(0).Base.Substring(p.SourceFile.Base.Length - digitCount).ToInt &
+                        filter.Script = "ImageSource(" + VideoScript.ToAviSynthString(Path.Combine(images(0).Dir, p.SourceFile.Base.Substring(0,
+                            p.SourceFile.Base.Length - digitCount) + "%0" & digitCount & "d." + p.SourceFile.Ext)) +
+                            ", " & images(0).Base.Substring(p.SourceFile.Base.Length - digitCount).ToInt &
                             ", " & images(images.Count - 1).Base.Substring(p.SourceFile.Base.Length - digitCount).ToInt & ", 25)"
                     End If
                 Else
@@ -2759,14 +1854,14 @@ Partial Public Class MainForm
 
             If p.SourceFile.Ext = "avs" AndAlso p.Script.IsAviSynth Then
                 p.Script.Filters.Clear()
-                p.Script.Filters.Add(New VideoFilter("Source", "AVS Script Import", "Import(""" + p.SourceFile + """)"))
+                p.Script.Filters.Add(New VideoFilter("Source", "AVS Script Import", "Import(" + VideoScript.ToAviSynthString(p.SourceFile) + ")"))
             ElseIf p.SourceFile.Ext = "vpy" Then
                 p.Script.Engine = ScriptEngine.VapourSynth
                 p.Script.Filters.Clear()
                 Dim code = "import vapoursynth as vs" + BR +
                            "core = vs.core" + BR +
                            "from importlib.machinery import SourceFileLoader" + BR +
-                           $"SourceFileLoader('clip', r""{p.SourceFile}"").load_module()" + BR +
+                           $"SourceFileLoader('clip', {VideoScript.ToPythonString(p.SourceFile)}).load_module()" + BR +
                            "clip = vs.get_output()"
                 p.Script.Filters.Add(New VideoFilter("Source", "VS Script Import", code))
             End If
@@ -2856,7 +1951,7 @@ Partial Public Class MainForm
             Dim nonDvdFiles = files.Where(Function(x) Not Regex.IsMatch(x, ".*VTS_\d\d_\d\.vob", RegexOptions.IgnoreCase))
 
             If nonDvdFiles.Count() > 1 Then
-                Dim psi = New ProcessStartInfo(Application.ExecutablePath, $"-NoFocus -LoadTemplate:""{p.TemplateName}"" -LoadSourceFiles:""{nonDvdFiles.Skip(1).Join(""";""", False)}""") With {
+                Dim psi = New ProcessStartInfo(AppInfo.ExecutablePath, $"-NoFocus -LoadTemplate:""{p.TemplateName}"" -LoadSourceFiles:""{nonDvdFiles.Skip(1).Join(""";""", False)}""") With {
                     .UseShellExecute = False,
                     .CreateNoWindow = True
                 }
@@ -2936,16 +2031,11 @@ Partial Public Class MainForm
         SetSourceFilter(sourceFilter, preferences, profiles, True, False, False, True)
         SetSourceFilter(sourceFilter, preferences, profiles, False, False, False, False)
 
-        If editAVS Then
-            If Not sourceFilter.Script.Contains("(") Then
-                Dim filter = VideoFilter.GetDefault("Source", "FFVideoSource")
-                p.Script.SetFilter(filter.Category, filter.Name, filter.Script)
-            End If
-        ElseIf editVS Then
-            If Not sourceFilter.Script.Contains("(") Then
-                Dim filter = VideoFilter.GetDefault("Source", "ffms2", ScriptEngine.VapourSynth)
-                p.Script.SetFilter(filter.Category, filter.Name, filter.Script)
-            End If
+        If (editAVS OrElse editVS) AndAlso Not sourceFilter.Script.Contains("(") Then
+            Dim names = If(editAVS, {"FFVideoSource", "BestSource", "LWLibavVideoSource"}, {"ffms2", "BestSource", "LWLibavSource"})
+            Dim candidates = names.Select(Function(name) VideoFilter.GetDefault("Source", name, p.Script.Engine)).Where(Function(f) f IsNot Nothing)
+            Dim filter = If(candidates.FirstOrDefault(Function(f) VideoScript.IsInstalled(f.Script, p.Script.Engine)), candidates.First)
+            p.Script.SetFilter(filter.Category, filter.Name, filter.Script)
         End If
 
         For Each iFilter In p.Script.Filters
@@ -2971,7 +2061,7 @@ Partial Public Class MainForm
             Log.WriteLine(p.SourceScript.GetFullScript)
             Log.Save()
 
-            MsgError("Script Error", errorMsg, Handle, timeout)
+            MsgError("Script Error", errorMsg, timeout)
             Throw New AbortException
         End If
 
@@ -3094,7 +2184,7 @@ Partial Public Class MainForm
                             Function(cat) cat.Name = "Source").First.Filters.Where(
                             Function(cat) cat.Name = pref.Value)
 
-                        If filters.Count > 0 Then
+                        If filters.Count > 0 AndAlso VideoScript.IsInstalled(filters(0).Script, p.Script.Engine) Then
                             p.Script.SetFilter("Source", filters(0).Name, filters(0).Script)
                             Exit Sub
                         End If
@@ -3110,7 +2200,7 @@ Partial Public Class MainForm
         If p.AutoCropMode = AutoCropMode.DolbyVisionOnly OrElse p.AutoCropMode = AutoCropMode.Always Then
             p.SourceScript.Synchronize(True, True, True)
 
-            Dim useDvOnly = p.HdrDolbyVisionMetadataFile IsNot Nothing AndAlso p.VideoEncoder.IsDolbyVisionSet AndAlso p.HdrDolbyVisionMetadataFile.Crop <> Padding.Empty
+            Dim useDvOnly = p.HdrDolbyVisionMetadataFile IsNot Nothing AndAlso p.VideoEncoder.IsDolbyVisionSet AndAlso p.HdrDolbyVisionMetadataFile.Crop <> CropPadding.Empty
 
             If useDvOnly Then
                 Dim c = p.HdrDolbyVisionMetadataFile.Crop
@@ -3127,7 +2217,7 @@ Partial Public Class MainForm
                 Dim considerationThresholdBegin = 0
                 Dim considerationThresholdEnd = 0
                 Dim luminanceThreshold = CInt(p.AutoCropLuminanceThreshold * 100)
-                Dim vfw = If(FrameServerHelp.IsVfwUsed, 1, 0)
+                Dim vfw = 0
 
                 If p.AutoCropFrameRangeMode = AutoCropFrameRangeMode.Automatic Then
                     Dim threshold = CInt(Conversion.Fix(info.FrameCount * 0.05))
@@ -3147,47 +2237,23 @@ Partial Public Class MainForm
                 Dim redo = Not (Regex.IsMatch(values, valuesPattern) AndAlso parameters.Equals(fileParameters))
 
                 If redo Then
-                    Try
-                        g.AddToPath(
-                            Package.Python.Directory,
-                            Package.VapourSynth.Directory,
-                            Package.vspipe.Directory,
-                            Package.AviSynth.Directory,
-                            Package.FFTW.Directory,
-                            Path.Combine(Folder.Startup, "Apps", "Support", "VC"))
+                    Log.WriteHeader("Auto Crop")
+                    Dim crop = g.DetectAutoCrop(Nothing)
 
-                        Using proc As New Proc
-                            proc.Header = "Auto Crop"
-                            proc.SkipString = "%"
-                            proc.Package = Package.AutoCrop
-                            proc.Arguments = $"{p.SourceScript.Path.Escape} {parameters}"
-                            proc.Start()
+                    If crop IsNot Nothing Then
+                        values = String.Join(",", crop)
+                        Log.WriteLine(values)
 
-                            Dim m = Regex.Match(proc.Log.ToString(), valuesPattern)
-                            If m.Success Then
-                                Try
-                                    values = m.Value
-                                    Dim content = parameters & Environment.NewLine & values
-                                    content.WriteFileUTF8(savingFilePath)
-                                Catch ex As Exception
-                                End Try
-                            End If
-                        End Using
-                    Catch ex As SkipException
-                        Log.WriteLine("AutoCrop skipped...")
-                        Log.Save()
-                        ProcController.Aborted = False
-                    Catch ex As AbortException
-                        Log.WriteLine("AutoCrop aborted...")
-                        Log.Save()
-                        ProcController.Aborted = False
-                    Catch ex As ErrorAbortException
-                        Log.WriteLine("AutoCrop aborted...")
-                        Log.Save()
-                        ProcController.Aborted = False
-                    Catch ex As Exception
-                        Throw
-                    End Try
+                        Try
+                            Dim content = parameters & Environment.NewLine & values
+                            content.WriteFileUTF8(savingFilePath)
+                        Catch ex As Exception
+                        End Try
+                    Else
+                        Log.WriteLine("AutoCrop failed...")
+                    End If
+
+                    Log.Save()
                 End If
 
                 Dim match = Regex.Match(values, valuesPattern)
@@ -3307,7 +2373,7 @@ Partial Public Class MainForm
                             proc.Header = "Demux subtitles using VSRip"
                             proc.WriteLog(args + BR2)
                             proc.File = Package.VSRip.Path
-                            proc.Arguments = """" + fileContent + """"
+                            proc.Arguments = fileContent.Escape
                             proc.AllowedExitCodes = {0, 1, 2}
                             proc.Start()
                         End Using
@@ -3390,71 +2456,60 @@ Partial Public Class MainForm
         Highlight(False, controls)
     End Sub
 
+    Private ReadOnly HighlightedControls As New Dictionary(Of Control, Color)
+
     Sub Highlight(highlight As Boolean, ParamArray controls As Control())
         Dim theme = ThemeManager.CurrentTheme
 
         If highlight Then
-            laTip.BackColor = theme.MainForm.laTipBackHighlightColor
-            laTip.ForeColor = theme.MainForm.laTipForeHighlightColor
+            laTip.BackColor = theme.MainForm.laTipBackHighlightColor.ToColor
+            laTip.ForeColor = theme.MainForm.laTipForeHighlightColor.ToColor
         Else
-            laTip.BackColor = theme.MainForm.laTipBackColor
-            laTip.ForeColor = theme.MainForm.laTipForeColor
+            laTip.BackColor = Colors.Transparent
+            laTip.ForeColor = SystemColors.ControlText
         End If
 
-        If controls Is Nothing Then Return
-        If Not controls.NothingOrEmpty Then ThemeRefresh = True
+        If controls.NothingOrEmpty Then Return
+        ThemeRefresh = True
 
-        For Each control In controls.OfType(Of Label)
-            control.BackColor = theme.General.Controls.Label.BackHighlightColor
-            control.ForeColor = theme.General.Controls.Label.ForeHighlightColor
+        Dim controlColors = theme.General.Controls
+
+        For Each control In controls
+            If control Is Nothing OrElse HighlightedControls.ContainsKey(control) Then
+                Continue For
+            End If
+
+            If TypeOf control Is TextEdit Then
+                Dim te = DirectCast(control, TextEdit)
+                HighlightedControls(control) = te.BackColor
+                te.BackColor = controlColors.TextEdit.BackHighlightColor.ToColor
+            ElseIf TypeOf control Is LinkButton Then
+                Dim lb = DirectCast(control, LinkButton)
+                HighlightedControls(control) = lb.TextColor
+                lb.TextColor = controlColors.ButtonLabel.ForeHighlightColor.ToColor
+            Else
+                HighlightedControls(control) = control.BackgroundColor
+                control.BackgroundColor = controlColors.Label.BackHighlightColor.ToColor
+            End If
+        Next
+    End Sub
+
+    Sub ResetHighlighting()
+        For Each pair In HighlightedControls
+            'controls like those of the encoder panel are replaced while they are highlighted,
+            'GTK destroys their widgets when they leave the window
+            If pair.Key.IsDisposed OrElse pair.Key.ParentWindow Is Nothing Then Continue For
+
+            If TypeOf pair.Key Is TextEdit Then
+                DirectCast(pair.Key, TextEdit).ResetBackColor()
+            ElseIf TypeOf pair.Key Is LinkButton Then
+                DirectCast(pair.Key, LinkButton).TextColor = pair.Value
+            Else
+                pair.Key.BackgroundColor = pair.Value
+            End If
         Next
 
-        For Each control In controls.OfType(Of ButtonLabel)
-            control.BackColor = If(TypeOf control.Parent Is UserControl, theme.General.Controls.ListView.BackHighlightColor, theme.General.Controls.ButtonLabel.BackHighlightColor)
-            control.ForeColor = theme.General.Controls.ButtonLabel.ForeHighlightColor
-            control.LinkColor = theme.General.Controls.ButtonLabel.ForeHighlightColor
-            control.LinkHoverColor = theme.General.Controls.ButtonLabel.ForeHighlightColor
-        Next
-
-        For Each control In controls.OfType(Of Button)
-            control.BackColor = theme.General.Controls.Button.BackHighlightColor
-            control.ForeColor = theme.General.Controls.Button.ForeHighlightColor
-        Next
-
-        For Each control In controls.OfType(Of GroupBox)
-            control.BackColor = theme.General.Controls.GroupBox.BackHighlightColor
-            control.ForeColor = theme.General.Controls.GroupBox.ForeHighlightColor
-        Next
-
-        For Each control In controls.OfType(Of Panel)
-            control.BackColor = theme.General.Controls.Panel.BackHighlightColor
-            control.ForeColor = theme.General.Controls.Panel.ForeHighlightColor
-        Next
-
-        For Each control In controls.OfType(Of TableLayoutPanel)
-            control.BackColor = theme.General.Controls.TableLayoutPanel.BackHighlightColor
-            control.ForeColor = theme.General.Controls.TableLayoutPanel.ForeHighlightColor
-        Next
-
-        For Each control In controls.OfType(Of TextBox)
-            control.BackColor = theme.General.Controls.TextBox.BackHighlightColor
-            control.ForeColor = theme.General.Controls.TextBox.ForeHighlightColor
-        Next
-
-        For Each control In controls.OfType(Of TextBoxEx)
-            control.BorderColor = theme.General.Controls.TextBox.BackHighlightColor
-            control.BorderFocusedColor = theme.General.Controls.TextBox.ForeHighlightColor
-        Next
-
-        For Each control In controls.OfType(Of TextEdit)
-            control.TextBox.BackColor = theme.General.Controls.TextEdit.BackHighlightColor
-            control.TextBox.ForeColor = theme.General.Controls.TextEdit.ForeHighlightColor
-        Next
-
-        For Each control In controls.OfType(Of TrackBar)
-            control.BackColor = theme.General.Controls.TrackBar.BackHighlightColor
-            control.ForeColor = theme.General.Controls.TrackBar.ForeHighlightColor
-        Next
+        HighlightedControls.Clear()
     End Sub
 
     Sub OpenTargetFolder()
@@ -3462,17 +2517,22 @@ Partial Public Class MainForm
     End Sub
 
     Function AbortDueToLowDiskSpace() As Boolean
-        Try 'crashes with network shares
-            If p.TargetFile = "" OrElse p.TargetFile.StartsWith("\\") Then
+        Try
+            If p.TargetFile = "" Then
                 Exit Function
             End If
 
             Dim di As New DriveInfo(p.TargetFile.Dir)
 
+            'network and FUSE file systems can report no size
+            If di.TotalSize = 0 Then
+                Exit Function
+            End If
+
             If di.AvailableFreeSpace / PrefixedSize(3).Factor < s.MinimumDiskSpace Then
                 Using td As New TaskDialog(Of String)
                     td.Title = "Low Disk Space"
-                    td.Content = $"The target drive {Path.GetPathRoot(p.TargetFile)} has only " +
+                    td.Content = $"The target folder {p.TargetFile.Dir} has only " +
                                  $"{(di.AvailableFreeSpace / PrefixedSize(3).Factor):f2} {PrefixedSize(3).Unit} free disk space."
                     td.Icon = TaskIcon.Warning
                     td.AddButton("Continue")
@@ -3528,8 +2588,13 @@ Partial Public Class MainForm
                 jsonPath = If(sourcePath.Contains(proj.TempDir) AndAlso Not proj.TempDir.EndsWithEx("_temp"), jsonPath, If(proj.TempDir.DirExists(), $"{Path.Combine({proj.TempDir, "HDR10PlusMetadata.json"})}", jsonPath))
             End If
 
+            If Not jsonPath.FileExists() AndAlso Package.HDR10PlusTool.Path = "" Then
+                MsgWarn("HDR10+ metadata not extracted", "hdr10plus_tool was not found, install it to keep the HDR10+ metadata.")
+                Continue For
+            End If
+
             If Not jsonPath.FileExists() Then
-                Dim commandLine = $"{Package.ffmpeg.Path.Escape} -hide_banner -probesize 50M -i ""{sourcePath}"" -an -sn -dn -c:v copy -bsf:v hevc_mp4toannexb -f hevc - | {Package.HDR10PlusTool.Path.Escape} extract -o ""{jsonPath}"" -"
+                Dim commandLine = $"{Package.ffmpeg.Path.Escape} -hide_banner -probesize 50M -i {sourcePath.Escape} -an -sn -dn -c:v copy -bsf:v hevc_mp4toannexb -f hevc - | {Package.HDR10PlusTool.Path.Escape} extract -o {jsonPath.Escape} -"
 
                     Try
                         Using proc As New Proc
@@ -3538,8 +2603,7 @@ Partial Public Class MainForm
                             proc.Project = If(proj, p)
                             proc.Header = "Extract HDR10+ metadata"
                             proc.Encoding = Encoding.UTF8
-                            proc.File = "cmd.exe"
-                            proc.Arguments = "/S /C """ + commandLine + """"
+                            proc.SetShellCommand(commandLine)
                             proc.SkipStrings = Proc.GetSkipStrings(commandLine)
                             proc.AllowedExitCodes = {0}
                             proc.OutputFiles = {jsonPath}
@@ -3603,9 +2667,14 @@ Partial Public Class MainForm
                     rpuPath = If(sourcePath.Contains(proj.TempDir), rpuPath, If(proj.TempDir.DirExists(), $"{Path.Combine({proj.TempDir, "HDRDVmetadata.rpu"})}", rpuPath))
                 End If
 
+                If Not rpuPath.FileExists() AndAlso Package.DoViTool.Path = "" Then
+                    MsgWarn("Dolby Vision metadata not extracted", "dovi_tool was not found, install it to keep the Dolby Vision metadata.")
+                    Continue For
+                End If
+
                 Try
                     If Not rpuPath.FileExists() Then
-                        Dim commandLine = $"{Package.ffmpeg.Path.Escape} -hide_banner -probesize 50M -i ""{sourcePath}"" -an -sn -dn -c:v copy -bsf:v hevc_mp4toannexb -f hevc - | {Package.DoViTool.Path.Escape} extract-rpu - -o ""{rpuPath}"""
+                        Dim commandLine = $"{Package.ffmpeg.Path.Escape} -hide_banner -probesize 50M -i {sourcePath.Escape} -an -sn -dn -c:v copy -bsf:v hevc_mp4toannexb -f hevc - | {Package.DoViTool.Path.Escape} extract-rpu - -o {rpuPath.Escape}"
                         Dim throwError As (Title As String, Content As String)
 
                         Using proc As New Proc
@@ -3624,8 +2693,7 @@ Partial Public Class MainForm
                             proc.Project = If(proj, p)
                             proc.Header = "Extract Dolby Vision metadata"
                             proc.Encoding = Encoding.UTF8
-                            proc.File = "cmd.exe"
-                            proc.Arguments = "/S /C """ + commandLine + """"
+                            proc.SetShellCommand(commandLine)
                             proc.SkipStrings = Proc.GetSkipStrings(commandLine)
                             proc.AllowedExitCodes = {0}
                             proc.OutputFiles = {rpuPath}
@@ -3810,7 +2878,7 @@ Partial Public Class MainForm
                         proc.Arguments = "-i " + p.Script.Path.LongPathPrefix.Escape + " -hide_banner"
                     Else
                         proc.File = Package.vspipe.Path
-                        proc.Arguments = p.Script.Path.Escape + " NUL -i"
+                        proc.Arguments = p.Script.Path.Escape + " - -i"
                     End If
 
                     proc.AllowedExitCodes = {0, 1}
@@ -3839,7 +2907,7 @@ Partial Public Class MainForm
                         proc.Arguments = "-i " + p.Script.Path.LongPathPrefix.Escape + " -hide_banner"
                     Else
                         proc.File = Package.vspipe.Path
-                        proc.Arguments = p.Script.Path.Escape + " NUL -i"
+                        proc.Arguments = p.Script.Path.Escape + " - -i"
                     End If
 
                     proc.AllowedExitCodes = {0, 1}
@@ -3899,7 +2967,7 @@ Partial Public Class MainForm
 
     <Command("Saves the current project at the specified path.")>
     Sub SaveProjectPath(<Description("The path may contain macros."),
-        Editor(GetType(MacroStringTypeEditor), GetType(UITypeEditor))> path As String)
+        Editor(GetType(MacroStringTypeEditor), GetType(IValueEditor))> path As String)
 
         path = Macro.Expand(path)
 
@@ -3949,7 +3017,7 @@ Partial Public Class MainForm
     <Command("Launches a new instance of StaxRip.")>
     Sub StartNewInstance()
         Using p As New Process()
-            p.StartInfo.FileName = Application.ExecutablePath
+            p.StartInfo.FileName = AppInfo.ExecutablePath
             p.Start()
         End Using
     End Sub
@@ -4134,7 +3202,6 @@ Partial Public Class MainForm
         UpdateScriptsMenuAsync()
         UpdateRecentProjectsMenu()
         UpdateDynamicMenuAsync()
-        g.SetRenderer(MenuStrip)
         Refresh()
         g.SaveSettings()
     End Sub
@@ -4498,12 +3565,8 @@ Partial Public Class MainForm
         ret.Add("Tools|Advanced|Macros...", NameOf(g.DefaultCommands.ShowMacrosDialog), Keys.Control Or Keys.M, Symbol.CalculatorPercentage)
         ret.Add("Tools|Advanced|Reset Settings...", NameOf(g.DefaultCommands.ResetSettings))
         ret.Add("Tools|Advanced|-")
-        ret.Add("Tools|Advanced|Command Prompt", NameOf(g.DefaultCommands.ExecuteCommandLine), Symbol.fa_terminal, {"cmd.exe", False, False, False, "%working_dir%"})
-        ret.Add("Tools|Advanced|PowerShell Terminal", NameOf(g.DefaultCommands.ExecuteCommandLine), Symbol.fa_terminal, {"powershell.exe -nologo -executionpolicy bypass", False, False, False, "%working_dir%"})
-
-        If g.IsWindowsTerminalAvailable Then
-            ret.Add("Tools|Advanced|Windows Terminal", NameOf(g.DefaultCommands.ExecuteCommandLine), Keys.Control Or Keys.T, Symbol.fa_terminal, {"wt.exe", False, False, False, "%working_dir%"})
-        End If
+        ret.Add("Tools|Advanced|Terminal", NameOf(g.DefaultCommands.OpenTerminal), Keys.Control Or Keys.T, Symbol.fa_terminal, {"", "%working_dir%"})
+        ret.Add("Tools|Advanced|PowerShell Terminal", NameOf(g.DefaultCommands.OpenTerminal), Symbol.fa_terminal, {"pwsh -NoLogo", "%working_dir%"})
 
         ret.Add("Tools|Advanced|-")
         ret.Add("Tools|Advanced|Generate Wiki Content", NameOf(g.DefaultCommands.GenerateWikiContent))
@@ -4515,14 +3578,11 @@ Partial Public Class MainForm
 
         ret.Add("Apps|Subtitles|Subtitle Edit", NameOf(g.DefaultCommands.StartTool), {"Subtitle Edit"})
         ret.Add("Apps|Subtitles|BDSup2Sub++", NameOf(g.DefaultCommands.StartTool), {"BDSup2Sub++"})
-        ret.Add("Apps|Subtitles|VSRip", NameOf(g.DefaultCommands.StartTool), {"VSRip"})
         ret.Add("Apps|Media Info|mkvinfo", NameOf(g.DefaultCommands.ShowMkvInfo))
         ret.Add("Apps|Media Info|MediaInfo File", NameOf(g.DefaultCommands.ShowMediaInfo))
         ret.Add("Apps|Media Info|MediaInfo Folder", NameOf(g.DefaultCommands.ShowMediaInfoFolderViewDialog))
-        ret.Add("Apps|Players|mpv.net", NameOf(g.DefaultCommands.StartTool), {"mpv.net"})
-        ret.Add("Apps|Players|MPC", NameOf(g.DefaultCommands.StartTool), {"MPC"})
+        ret.Add("Apps|Players|mpv", NameOf(g.DefaultCommands.StartTool), {"mpv"})
         ret.Add("Apps|Indexing|D2V Witch", NameOf(g.DefaultCommands.StartTool), {"D2V Witch"})
-        ret.Add("Apps|Indexing|DGIndex", NameOf(g.DefaultCommands.StartTool), {"DGIndex"})
         ret.Add("Apps|Thumbnails|StaxRip Thumbnailer (using project options)", NameOf(g.DefaultCommands.ShowThumbnailerDialogAsync))
         ret.Add("Apps|Animation|Animated GIF", NameOf(g.DefaultCommands.SaveGIF))
         ret.Add("Apps|Animation|Animated PNG", NameOf(g.DefaultCommands.SavePNG))
@@ -4618,7 +3678,7 @@ Partial Public Class MainForm
             Dim modval = p.ForcedOutputMod
             Dim ar As Double
 
-            If ModifierKeys = Keys.Control Then
+            If Keyboard.Modifiers = Keys.Control Then
                 Dim cropw = p.SourceWidth - p.CropLeft - p.CropRight
                 Dim croph = p.SourceHeight - p.CropTop - p.CropBottom
 
@@ -4784,7 +3844,7 @@ Partial Public Class MainForm
     End Sub
 
     Sub tbTargetWidth_MouseWheel(sender As Object, e As MouseEventArgs) Handles tbTargetWidth.MouseWheel
-        If e.Delta < 0 Then
+        If e.Delta.Height < 0 Then
             Dim modVal = p.ForcedOutputMod
             tbTargetWidth.Text = CInt(((p.TargetWidth - modVal) / modVal) * modVal).ToString()
         Else
@@ -4794,7 +3854,7 @@ Partial Public Class MainForm
     End Sub
 
     Sub tbTargetHeight_MouseWheel(sender As Object, e As MouseEventArgs) Handles tbTargetHeight.MouseWheel
-        If e.Delta < 0 Then
+        If e.Delta.Height < 0 Then
             Dim modVal = p.ForcedOutputMod
             tbTargetHeight.Text = CInt(((p.TargetHeight - modVal) / modVal) * modVal).ToString()
         Else
@@ -5077,11 +4137,10 @@ Partial Public Class MainForm
     End Sub
 
     Sub SetEncoderControl(c As Control)
-        pnEncoder.Controls.Add(c)
+        Dim old = pnEncoder.Content
+        pnEncoder.Content = c
 
-        If pnEncoder.Controls.Count > 1 Then
-            Dim old = pnEncoder.Controls(0)
-            pnEncoder.Controls.Remove(old)
+        If old IsNot Nothing AndAlso old IsNot c Then
             old.Dispose()
         End If
     End Sub
@@ -5232,7 +4291,7 @@ Partial Public Class MainForm
                             proc.Encoding = Encoding.UTF8
                             proc.Package = Package.mkvmerge
                             Dim outFile = files(0).DirAndBase + "_merged.mkv"
-                            proc.Arguments = "-o " + outFile.Escape + " """ + files.Join(""" + """) + """"
+                            proc.Arguments = "-o " + outFile.Escape + " " + files.Select(Function(i) i.Escape).Join(" + ")
 
                             Try
                                 proc.Start()
@@ -5438,10 +4497,6 @@ Partial Public Class MainForm
         Next
     End Function
 
-    Protected Overrides Sub WndProc(ByRef m As Message)
-        MyBase.WndProc(m)
-    End Sub
-
     Sub tbSource_DoubleClick() Handles tbSourceFile.DoubleClick
         SetLastModifiedTemplate()
 
@@ -5554,15 +4609,15 @@ Partial Public Class MainForm
 
     Sub UpdateAudioMenus()
         If p.AudioTracksAvailable < 1 Then Exit Sub
-        Dim nameControls = tlpAudio?.Controls?.OfType(Of AudioNameButtonLabel)?.Where(Function(x) x.GetType() Is GetType(AudioNameButtonLabel))
-        If nameControls Is Nothing Then Exit Sub
+        If p.AudioTracks Is Nothing Then Exit Sub
+        Dim nameControls = p.AudioTracks.Select(Function(x) x.NameLabel).ToList
         If nameControls.Count < 1 Then Exit Sub
 
         For i = 0 To nameControls.Count - 1
             Dim index = i
             Dim control = nameControls(index)
 
-            control.ContextMenuStripEx = If(control.ContextMenuStripEx, New ContextMenuStripEx(components))
+            control.ContextMenuStripEx = If(control.ContextMenuStripEx, New ContextMenuStripEx)
 
             control.ContextMenuStripEx.Items.ClearAndDisplose()
 
@@ -5616,7 +4671,7 @@ Partial Public Class MainForm
     End Sub
 
     Sub gbResize_LinkClick() Handles lgbResize.LinkClick
-        Dim cms = TextCustomMenu.GetMenu(s.TargetImageSizeMenu, lgbResize.Label, components, AddressOf TargetImageMenuClick)
+        Dim cms = TextCustomMenu.GetMenu(s.TargetImageSizeMenu, lgbResize.Label, AddressOf TargetImageMenuClick)
         cms.Add("-")
         cms.Add("Image Options...", Sub() ShowOptionsDialog("Image"))
         cms.Add("Edit Menu...", Sub() s.TargetImageSizeMenu = TextCustomMenu.EditMenu(s.TargetImageSizeMenu, ApplicationSettings.GetDefaultTargetImageSizeMenu, Me))
@@ -5624,28 +4679,28 @@ Partial Public Class MainForm
     End Sub
 
     Sub blSourceParText_Click(sender As Object, e As EventArgs) Handles blSourceParText.Click
-        Dim menu = TextCustomMenu.GetMenu(s.ParMenu, blSourceParText, components, AddressOf SourceParMenuClick)
+        Dim menu = TextCustomMenu.GetMenu(s.ParMenu, blSourceParText, AddressOf SourceParMenuClick)
         menu.Add("-")
         menu.Items.Add(New MenuItemEx("Edit Menu...", Sub() s.ParMenu = TextCustomMenu.EditMenu(s.ParMenu, ApplicationSettings.GetParMenu, Me)))
         menu.Show(blSourceParText, 0, blSourceParText.Height)
     End Sub
 
     Sub blSourceDarText_Click(sender As Object, e As EventArgs) Handles blSourceDarText.Click
-        Dim menu = TextCustomMenu.GetMenu(s.DarMenu, blSourceDarText, components, AddressOf SourceDarMenuClick)
+        Dim menu = TextCustomMenu.GetMenu(s.DarMenu, blSourceDarText, AddressOf SourceDarMenuClick)
         menu.Add("-")
         menu.Items.Add(New MenuItemEx("Edit Menu...", Sub() s.DarMenu = TextCustomMenu.EditMenu(s.DarMenu, ApplicationSettings.GetDarMenu, Me)))
         menu.Show(blSourceDarText, 0, blSourceDarText.Height)
     End Sub
 
     Sub blTargetDarText_Click(sender As Object, e As EventArgs) Handles blTargetDarText.Click
-        Dim menu = TextCustomMenu.GetMenu(s.DarMenu, blTargetDarText, components, AddressOf TargetDarMenuClick)
+        Dim menu = TextCustomMenu.GetMenu(s.DarMenu, blTargetDarText, AddressOf TargetDarMenuClick)
         menu.Add("-")
         menu.Items.Add(New MenuItemEx("Edit Menu...", Sub() s.DarMenu = TextCustomMenu.EditMenu(s.DarMenu, ApplicationSettings.GetDarMenu, Me)))
         menu.Show(blTargetDarText, 0, blTargetDarText.Height)
     End Sub
 
     Sub blTargetParText_Click(sender As Object, e As EventArgs) Handles blTargetParText.Click
-        Dim menu = TextCustomMenu.GetMenu(s.ParMenu, blTargetParText, components, AddressOf TargetParMenuClick)
+        Dim menu = TextCustomMenu.GetMenu(s.ParMenu, blTargetParText, AddressOf TargetParMenuClick)
         menu.Add("-")
         menu.Items.Add(New MenuItemEx("Edit Menu...", Sub() s.ParMenu = TextCustomMenu.EditMenu(s.ParMenu, ApplicationSettings.GetParMenu, Me)))
         menu.Show(blTargetParText, 0, blTargetParText.Height)
@@ -5842,6 +4897,10 @@ Partial Public Class MainForm
     End Sub
 
     Sub tbTargetFile_TextChanged(sender As Object, e As EventArgs) Handles tbTargetFile.TextChanged
+        If BoundProject IsNot Nothing AndAlso BoundProject.TargetFile <> tbTargetFile.Text Then
+            BoundProject.TargetFile = tbTargetFile.Text
+        End If
+
         If LastTbTargetFileText <> tbTargetFile.Text Then
             LastTbTargetFileText = tbTargetFile.Text
             If Not p.BatchMode AndAlso Not String.IsNullOrWhiteSpace(tbTargetFile.Text) Then p.VideoEncoder.OverridesTargetFileName = False
@@ -5849,13 +4908,13 @@ Partial Public Class MainForm
     End Sub
 
     Sub tbTargetFile_MouseDown(sender As Object, e As MouseEventArgs) Handles tbTargetFile.MouseDown
-        If e.Button = MouseButtons.Right Then
+        If e.Buttons = MouseButtons.Alternate Then
             UpdateTargetFileMenu()
         End If
     End Sub
 
     Sub tbSourceFile_MouseDown(sender As Object, e As MouseEventArgs) Handles tbSourceFile.MouseDown
-        If e.Button = MouseButtons.Right Then
+        If e.Buttons = MouseButtons.Alternate Then
             UpdateSourceFileMenu()
         End If
     End Sub
@@ -5879,7 +4938,7 @@ Partial Public Class MainForm
                                      te.Text = temp.Name + " (" + ap.File.Ext + ")"
                                      ap.Stream = temp
 
-                                     audioTrack.LanguageLabel.Refresh()
+                                     audioTrack.LanguageLabel.Invalidate()
                                      UpdateSizeOrBitrate()
                                  End Sub
 
@@ -5890,7 +4949,7 @@ Partial Public Class MainForm
                 End If
             Next
 
-            cms.Items.Add("-")
+            cms.Items.Add(New SeparatorMenuItem)
         End If
 
         If p.SourceFile.Ext = "avs" OrElse p.Script.GetScript.ToLowerInvariant.Contains("audiodub(") Then
@@ -5919,7 +4978,7 @@ Partial Public Class MainForm
                     End If
                 Next
 
-                cms.Items.Add("-")
+                cms.Items.Add(New SeparatorMenuItem)
             End If
         End If
 
@@ -6007,26 +5066,13 @@ Partial Public Class MainForm
         SourceFileMenu.Add("Play", Sub() g.Play(p.LastOriginalSourceFile), File.Exists(p.LastOriginalSourceFile) AndAlso Not isIndex, "Play the source file.").SetImage(Symbol.Play)
         SourceFileMenu.Add("Media Info...", Sub() g.DefaultCommands.ShowMediaInfo(p.LastOriginalSourceFile), File.Exists(p.LastOriginalSourceFile) AndAlso Not isIndex, "Show MediaInfo for the source file.").SetImage(Symbol.Info)
         SourceFileMenu.Add("Explore...", Sub() g.SelectFileWithExplorer(p.SourceFile), File.Exists(p.SourceFile), "Open the source file directory with File Explorer.").SetImage(Symbol.FileExplorer)
-        SourceFileMenu.Items.Add("-")
-        SourceFileMenu.Add("Copy", Sub() tbSourceFile.TextBox.Copy(), tbSourceFile.Text <> "", "Copies the selected text to the clipboard.").SetImage(Symbol.Copy)
-        SourceFileMenu.Add("Paste", Sub() tbSourceFile.TextBox.Paste(), Clipboard.GetText.Trim <> "", "Copies the full source file path to the clipboard.").SetImage(Symbol.Paste)
+        SourceFileMenu.Items.Add(New SeparatorMenuItem)
+        SourceFileMenu.Add("Copy", Sub() tbSourceFile.Copy(), tbSourceFile.Text <> "", "Copies the selected text to the clipboard.").SetImage(Symbol.Copy)
+        SourceFileMenu.Add("Paste", Sub() tbSourceFile.Paste(), Clipboard.GetText.Trim <> "", "Copies the full source file path to the clipboard.").SetImage(Symbol.Paste)
     End Sub
 
-    Protected Overrides Sub OnDragEnter(e As DragEventArgs)
-        MyBase.OnDragEnter(e)
-
-        Dim files = TryCast(e.Data.GetData(DataFormats.FileDrop), String())
-
-        If Not files.NothingOrEmpty Then
-            e.Effect = DragDropEffects.Copy
-        End If
-    End Sub
-
-    Protected Overrides Sub OnDragDrop(e As DragEventArgs)
-        MyBase.OnDragDrop(e)
+    Sub MainForm_FilesDropped(files As String()) Handles Me.FilesDropped
         SetLastModifiedTemplate()
-
-        Dim files = TryCast(e.Data.GetData(DataFormats.FileDrop), String())
 
         If Not files.NothingOrEmpty Then
             Dim showTemplateSelection = (s.ShowTemplateSelection And (ShowTemplateSelectionMode.Always Or ShowTemplateSelectionMode.DragDrop)) <> 0
@@ -6041,20 +5087,10 @@ Partial Public Class MainForm
         MyBase.OnActivated(e)
         UpdateNextButton()
 
-        If Not FrameServerHelp.IsAviSynthPortable AndAlso FrameServerHelp.GetAviSynthInstallPath = "" Then
-            MsgError($"AviSynth installation not found,{BR}using portable mode instead.")
-            s.AviSynthMode = FrameServerMode.Portable
-        End If
-
-        If Not FrameServerHelp.IsVapourSynthPortable AndAlso FrameServerHelp.GetVapourSynthInstallPath = "" Then
-            MsgError($"VapourSynth installation not found,{BR}using portable mode instead.")
-            s.VapourSynthMode = FrameServerMode.Portable
-        End If
-
         ProcController.SetLastActivation()
 
         BeginInvoke(New Action(Sub()
-                                   Application.DoEvents()
+                                   DoEvents()
                                    Assistant()
                                    UpdateScriptsMenuAsync()
                                End Sub))
@@ -6064,14 +5100,21 @@ Partial Public Class MainForm
         MyBase.OnLoad(args)
     End Sub
 
+    Private WasShown As Boolean
+
     Protected Overrides Sub OnShown(e As EventArgs)
         MyBase.OnShown(e)
+
+        If WasShown Then
+            Exit Sub
+        End If
+
+        WasShown = True
         UpdateDynamicMenuAsync()
         UpdateRecentProjectsMenu()
         UpdateTemplatesMenuAsync()
         IsLoading = False
         Refresh()
-        CheckForWindows7()
         g.CheckForLongPathSupport()
         g.PreloadValuesAsync()
         ShowChangelog(False)
@@ -6083,21 +5126,16 @@ Partial Public Class MainForm
         'Text = $"{Size.Width}x{Size.Height}"
     End Sub
 
-    Protected Overrides Sub OnResize(e As EventArgs)
-        MyBase.OnResize(e)
-        'Text = $"{Size.Width}x{Size.Height}"
-    End Sub
-
-    Protected Overrides Sub OnFormClosing(args As FormClosingEventArgs)
-        MyBase.OnFormClosing(args)
+    Protected Overrides Sub OnClosing(args As CancelEventArgs)
+        MyBase.OnClosing(args)
 
         If IsSaveCanceled() Then
             args.Cancel = True
         End If
     End Sub
 
-    Protected Overrides Sub OnFormClosed(e As FormClosedEventArgs)
-        MyBase.OnFormClosed(e)
+    Protected Overrides Sub OnClosed(e As EventArgs)
+        MyBase.OnClosed(e)
 
         If g.ProcForm IsNot Nothing Then
             If g.ProcForm.InvokeRequired Then
@@ -6115,8 +5153,8 @@ Partial Public Class MainForm
         g.SaveSettings()
     End Sub
 
-    Protected Overrides Sub OnDeactivate(e As EventArgs)
-        MyBase.OnDeactivate(e)
+    Protected Overrides Sub OnLostFocus(e As EventArgs)
+        MyBase.OnLostFocus(e)
         UpdateNextButton()
     End Sub
 
@@ -6130,8 +5168,7 @@ Partial Public Class MainForm
         UpdateNextButton()
     End Sub
 
-    Protected Overrides ReadOnly Property ShowWithoutActivation As Boolean
-        Get
+    Function GetShowWithoutActivation() As Boolean
             If g.IsAppStart Then
                 g.IsAppStart = False
                 If s.StartWithoutFocus OrElse ParseCommandLine(Environment.CommandLine)?.Contains("-" & NameOf(GlobalCommands.NoFocus), StringComparer.OrdinalIgnoreCase) Then
@@ -6145,9 +5182,8 @@ Partial Public Class MainForm
                 Return True
             End If
 
-            Return MyBase.ShowWithoutActivation
-        End Get
-    End Property
+            Return False
+    End Function
 
     Sub UpdateTargetSizeLabel()
         Me.blFilesize.Text = $"Size in {PrefixedSize(2).Unit}:"
@@ -6155,9 +5191,9 @@ Partial Public Class MainForm
 
     Sub UpdateNextButton()
         If AssistantPassed AndAlso CanIgnoreTip Then
-            Dim toTop = ModifierKeys.HasFlag(Keys.Shift)
+            Dim toTop = Keyboard.Modifiers.HasFlag(Keys.Shift)
             toTop = If(s.InvertShiftKeyOnNextButton, Not toTop, toTop)
-            Dim hideList = ModifierKeys.HasFlag(Keys.Control)
+            Dim hideList = Keyboard.Modifiers.HasFlag(Keys.Control)
             hideList = If(s.InvertCtrlKeyOnNextButton, Not hideList, hideList)
 
             Dim txt = "Add job"
@@ -6171,35 +5207,19 @@ Partial Public Class MainForm
     End Sub
 
     Sub bnNext_Click(sender As Object, e As EventArgs) Handles bnNext.Click
-        Dim toTop = ModifierKeys.HasFlag(Keys.Shift)
+        Dim toTop = Keyboard.Modifiers.HasFlag(Keys.Shift)
         toTop = If(s.InvertShiftKeyOnNextButton, Not toTop, toTop)
-        Dim hideList = ModifierKeys.HasFlag(Keys.Control)
+        Dim hideList = Keyboard.Modifiers.HasFlag(Keys.Control)
         hideList = If(s.InvertCtrlKeyOnNextButton, Not hideList, hideList)
 
         AddJob(Not hideList, If(toTop, 0, -1))
     End Sub
 
     Sub bnNext_MouseDown(sender As Object, e As MouseEventArgs) Handles bnNext.MouseDown
-        If e.Button = MouseButtons.Right AndAlso AssistantPassed AndAlso CanIgnoreTip Then
-            NextContextMenuStrip.Show(bnNext, New Point(bnNext.Width, 0), ToolStripDropDownDirection.AboveLeft)
+        If e.Buttons = MouseButtons.Alternate AndAlso AssistantPassed AndAlso CanIgnoreTip Then
+            e.Handled = True
+            NextContextMenuStrip.Show(bnNext, 0, bnNext.Height)
         End If
-    End Sub
-
-    Sub SetFormBoundaries(ateHeight As Integer)
-        Dim assistantHeight = tlpMain.RowStyles.Item(4).Height
-        Dim heights = tlpMain.GetRowHeights()
-        Dim selectedHeights = heights.TakeWhile(Function(x, y) y < heights.Length - 1)
-        Dim sum = CInt(selectedHeights.Sum(Function(s) s))
-        Dim h = sum + assistantHeight + (Size.Height - ClientSize.Height)
-        MinimumSize = New Size(Font.Height * 48, CInt(h))
-        MaximumSize = New Size(Font.Height * 80, CInt(h))
-    End Sub
-
-    Sub CheckForWindows7()
-        If s.ShowWindows7Warning AndAlso OSVersion.VersionInfo.dwMajorVersion = 7 Then
-            MsgWarn("Compatibility problem!", "Whereas Windows 7 is supported by StaxRip itself, some tools don't do it anymore. This can cause tools denying to work correctly or at whole. Currently those tools are 'MKVToolNix (mkvmerge)' and 'Python', which you have to downgrade or try to avoid. For further help join our Discord server.")
-        End If
-        s.ShowWindows7Warning = False
     End Sub
 
     <Command("Shows the latest changes.")>

@@ -1,4 +1,3 @@
-﻿Imports Microsoft.Win32
 Imports StaxRip.SimpleUI
 
 Public NotInheritable Class ThemeManager
@@ -38,6 +37,10 @@ Public NotInheritable Class ThemeManager
                 New Tuple(Of String, Integer, Integer)("Rose", 340, 40)
             }
 
+            If accentColors Is Nothing Then
+                Return defaultColors
+            End If
+
             Return accentColors.Concat(defaultColors).ToArray()
         End Get
     End Property
@@ -58,17 +61,28 @@ Public NotInheritable Class ThemeManager
     Public Shared ReadOnly Property CurrentTheme As Theme
         Get
             If _current Is Nothing Then
-                If s.ThemeName IsNot Nothing AndAlso Themes.Any(Function(theme) String.Equals(theme.Name, s.ThemeName, StringComparison.InvariantCultureIgnoreCase)) Then
-                    SetCurrentTheme(s.ThemeName)
-                Else
-                    Dim newTheme = SetCurrentTheme()
-                    s.ThemeName = newTheme.Name
-                End If
+                SetCurrentTheme(s?.ThemeName)
             End If
 
             Return _current
         End Get
     End Property
+
+    'On Linux the controls use the GTK theme, the StaxRip theme only defines the colors
+    'of custom drawn content like highlighting, so a dark theme is only used with a dark GTK theme.
+    Shared Function GetUsableThemeName(name As String) As String
+        If Not IsDarkMode Then
+            Return "System Colors"
+        End If
+
+        If name = "" OrElse name = "System Colors" OrElse
+            Not Themes.Any(Function(theme) String.Equals(theme.Name, name, StringComparison.InvariantCultureIgnoreCase)) Then
+
+            Return _defaultThemeName
+        End If
+
+        Return name
+    End Function
 
     Public Shared ReadOnly Property DefaultThemeName As String
         Get
@@ -89,21 +103,10 @@ Public NotInheritable Class ThemeManager
         End Get
     End Property
 
+    'there is no accent color on Linux
     Public Shared ReadOnly Property WindowsAccentColor As ColorHSL?
         Get
-            If _windowsAccentColor Is Nothing Then
-                Try
-                    Dim value = Registry.CurrentUser.GetLong("SOFTWARE\Microsoft\Windows\DWM", "AccentColor")
-                    Dim r = CInt((value >> 0) And &HFF)
-                    Dim g = CInt((value >> 8) And &HFF)
-                    Dim b = CInt((value >> 16) And &HFF)
-                    Dim a = CInt((value >> 24) And &HFF)
-                    _windowsAccentColor = Color.FromArgb(a, r, g, b)
-                Catch ex As Exception
-                    _windowsAccentColor = Nothing
-                End Try
-            End If
-            Return _windowsAccentColor
+            Return Nothing
         End Get
     End Property
 
@@ -127,7 +130,7 @@ Public NotInheritable Class ThemeManager
     End Function
 
     Public Shared Function SetCurrentTheme(Optional name As String = _defaultThemeName) As Theme
-        If String.IsNullOrWhiteSpace(name) Then name = _defaultThemeName
+        name = GetUsableThemeName(name)
 
         Dim theme = Themes?.Where(Function(x) x.Name.Equals(name, StringComparison.OrdinalIgnoreCase))?.FirstOrDefault()
         If theme IsNot Nothing Then
@@ -215,7 +218,7 @@ Public NotInheritable Class ThemeManager
             General = New GeneralThemeColors() With {
                 .BackColor = _backColor,
                 .ControlBackColor = _controlBackColor,
-                .DangerBackColor = Color.Transparent,
+                .DangerBackColor = Colors.Transparent,
                 .DangerForeColor = _dangerForeColor,
                 .ForeColor = _foreColor,
                 .Controls = New ControlsThemeColors() With {
@@ -237,7 +240,7 @@ Public NotInheritable Class ThemeManager
                         .LinkForeHoverColor = .LinkForeColor.SetSaturation(1).AddLuminance(0.1)
                     },
                     .CheckBox = New ControlsThemeColors.CheckBoxThemeColors() With {
-                        .BackColor = Color.Empty,
+                        .BackColor = Colors.Transparent,
                         .BackCheckedColor = .BackColor,
                         .BackHighlightColor = _controlBackHighlightColor,
                         .BackHoverColor = .BackColor.AddLuminance(0.1),
@@ -255,8 +258,7 @@ Public NotInheritable Class ThemeManager
                     .ComboBox = New ControlsThemeColors.ComboBoxThemeColors() With {
                         .BackColor = _backColor.AddLuminance(0.1),
                         .BackHighlightColor = _controlBackHighlightColor,
-                        .BorderColor = Color.Transparent,
-                        .FlatStyle = FlatStyle.Flat,
+                        .BorderColor = Colors.Transparent,
                         .ForeColor = _foreColor,
                         .ForeHighlightColor = .ForeColor.AddLuminance(0.15)
                     },
@@ -273,13 +275,13 @@ Public NotInheritable Class ThemeManager
                         .ForeColor = _foreColor
                     },
                     .FlowLayoutPanel = New ControlsThemeColors.FlowLayoutPanelThemeColors() With {
-                        .BackColor = Color.Transparent,
+                        .BackColor = Colors.Transparent,
                         .BackHighlightColor = _controlBackHighlightColor,
                         .ForeColor = _foreColor,
                         .ForeHighlightColor = _controlForeHighlightColor
                     },
                     .FlowPage = New ControlsThemeColors.FlowPageThemeColors() With {
-                        .BackColor = Color.Transparent,
+                        .BackColor = Colors.Transparent,
                         .BackHighlightColor = _controlBackHighlightColor,
                         .ForeColor = _foreColor,
                         .ForeHighlightColor = _controlForeHighlightColor
@@ -292,13 +294,13 @@ Public NotInheritable Class ThemeManager
                         .GridColor = _foreColor
                     },
                     .GroupBox = New ControlsThemeColors.GroupBoxThemeColors() With {
-                        .BackColor = Color.Transparent,
+                        .BackColor = Colors.Transparent,
                         .BackHighlightColor = _controlBackHighlightColor,
                         .ForeColor = _foreColor,
                         .ForeHighlightColor = _controlForeHighlightColor
                     },
                     .Label = New ControlsThemeColors.LabelThemeColors() With {
-                        .BackColor = Color.Transparent,
+                        .BackColor = Colors.Transparent,
                         .BackHighlightColor = _controlBackHighlightColor,
                         .ForeColor = _foreColor,
                         .ForeHighlightColor = _controlForeHighlightColor
@@ -309,7 +311,7 @@ Public NotInheritable Class ThemeManager
                         .ProgressColor = _backSelectedColor.AddSaturation(0.25).AddLuminance(-0.125)
                     },
                     .Line = New ControlsThemeColors.LineThemeColors() With {
-                        .BackColor = Color.Transparent,
+                        .BackColor = Colors.Transparent,
                         .ForeColor = _foreColor,
                         .LineColor1 = .ForeColor,
                         .LineColor2 = .ForeColor.AddLuminance(-0.2)
@@ -349,7 +351,7 @@ Public NotInheritable Class ThemeManager
                         }
                     },
                     .Panel = New ControlsThemeColors.PanelThemeColors() With {
-                        .BackColor = Color.Transparent,
+                        .BackColor = Colors.Transparent,
                         .BackHighlightColor = _controlBackHighlightColor,
                         .ForeColor = _foreColor,
                         .ForeHighlightColor = _controlForeHighlightColor
@@ -407,7 +409,7 @@ Public NotInheritable Class ThemeManager
                     .TextBox = New ControlsThemeColors.TextBoxThemeColors() With {
                         .BackColor = _controlBackColor,
                         .BackHighlightColor = _controlBackHighlightColor,
-                        .BackReadonlyColor = Color.Yellow,
+                        .BackReadonlyColor = Colors.Yellow,
                         .BorderColor = _borderColor,
                         .BorderFocusedColor = .BorderColor.AddSaturation(0.2).AddLuminance(0.1),
                         .ForeColor = _foreColor,
@@ -496,8 +498,8 @@ Public NotInheritable Class ThemeManager
             }
 
             MainForm = New MainFormThemeColors() With {
-                .laTipBackColor = Color.Transparent,
-                .laTipBackHighlightColor = Color.Transparent,
+                .laTipBackColor = Colors.Transparent,
+                .laTipBackHighlightColor = Colors.Transparent,
                 .laTipForeColor = _accentColor.AddSaturation(0.1).AddLuminance(0.1),
                 .laTipForeHighlightColor = _foreHighlightColor
             }
@@ -554,7 +556,7 @@ Public NotInheritable Class ThemeManager
                     .InfoLabelBackColor = _outputHighlightingBackColor.SetHue(145),
                     .InfoLabelForeColor = _foreColor,
                     .InfoTextBackColor = General.Controls.RichTextBox.BackColor,
-                    .InfoTextForeColor = Color.Purple,
+                    .InfoTextForeColor = Colors.Purple,
                                                       _
                     .WarningLabelBackColor = _outputHighlightingBackColor.SetHue(350),
                     .WarningLabelForeColor = _outputHighlightingStrongForeColor.SetHue(.WarningLabelBackColor.H).AddLuminance(_backLuma / 2),

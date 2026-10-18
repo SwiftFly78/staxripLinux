@@ -1,4 +1,4 @@
-﻿
+
 Imports System
 Imports System.Drawing.Imaging
 Imports System.Text
@@ -190,8 +190,7 @@ Public Class NVEnc
             proc.Header = "Video encoding"
             proc.Package = Package
             proc.SkipStrings = {"%]", " frames: "}
-            proc.File = "cmd.exe"
-            proc.Arguments = "/S /C """ + Params.GetCommandLine(True, True) + """"
+            proc.SetShellCommand(Params.GetCommandLine(True, True))
             proc.Start()
         End Using
     End Sub
@@ -199,7 +198,7 @@ Public Class NVEnc
     Overrides Function BeforeEncoding() As Boolean
         Dim rpu = Params.DolbyVisionRpu.Value
         If Not String.IsNullOrWhiteSpace(rpu) AndAlso rpu = p.HdrDolbyVisionMetadataFile?.Path AndAlso rpu.FileExists() Then
-            Dim offset = If(p.Script.IsFilterActive("Crop"), New Padding(p.CropLeft, p.CropTop, p.CropRight, p.CropBottom), Padding.Empty)
+            Dim offset = If(p.Script.IsFilterActive("Crop"), New CropPadding(p.CropLeft, p.CropTop, p.CropRight, p.CropBottom), CropPadding.Empty)
             Dim rpuProfile = p.HdrDolbyVisionMetadataFile.ReadProfileFromRpu()
 
             Dim profile = "#"
@@ -378,7 +377,7 @@ Public Class NVEnc
     End Function
 
     Overrides Function CreateEditControl() As Control
-        Return New NVEncControl(Me) With {.Dock = DockStyle.Fill}
+        Return New NVEncControl(Me)
     End Function
 
     Overrides Property QualityMode() As Boolean
@@ -463,7 +462,7 @@ Public Class NVEncParams
                         "NVEnc Software",
                         "QSVEnc (Intel)",
                         "ffmpeg (Intel)",
-                        "ffmpeg (DXVA2)"},
+                        "ffmpeg (CUDA)"},
             .Values = {"avs", "avhw", "avsw", "qs", "ffqsv", "ffdxva"}}
 
         Property Mode As New OptionParam With {
@@ -882,8 +881,8 @@ Public Class NVEncParams
     Property DebandDitherY As New NumParam With {.Text = "          Y", .HelpSwitch = "--vpp-deband", .Name = "vpp-deband_dither_y", .Init = 15, .Config = {0, 31}}
     Property DebandDitherC As New NumParam With {.Text = "          C", .HelpSwitch = "--vpp-deband", .Init = 15, .Config = {0, 31}}
     Property DebandSeed As New NumParam With {.Text = "     Seed", .HelpSwitch = "--vpp-deband", .Init = 1234}
-    Property DebandBlurfirst As New BoolParam With {.Text = "Blurfirst", .HelpSwitch = "--vpp-deband", .LeftMargin = g.MainForm.FontHeight * 1.3}
-    Property DebandRandEachFrame As New BoolParam With {.Text = "Rand Each Frame", .HelpSwitch = "--vpp-deband", .LeftMargin = g.MainForm.FontHeight * 1.3}
+    Property DebandBlurfirst As New BoolParam With {.Text = "Blurfirst", .HelpSwitch = "--vpp-deband", .LeftMargin = EtoHelp.FontHeight * 1.3}
+    Property DebandRandEachFrame As New BoolParam With {.Text = "Rand Each Frame", .HelpSwitch = "--vpp-deband", .LeftMargin = EtoHelp.FontHeight * 1.3}
 
     Property AfsPreset As New OptionParam With {.Text = "Preset", .HelpSwitch = "--vpp-afs", .Options = {"Default", "Triple", "Double", "Anime", "Cinema", "Min_afterimg", "24fps", "24fps_sd", "30fps"}, .VisibleFunc = Function() Deinterlacer.Value = 2}
     Property AfsINI As New StringParam With {.Text = "INI", .HelpSwitch = "--vpp-afs", .BrowseFile = True, .VisibleFunc = Function() Deinterlacer.Value = 2}
@@ -898,14 +897,14 @@ Public Class NVEncParams
     Property AfsThreMotionY As New NumParam With {.Text = "Threshold Motion Y", .HelpSwitch = "--vpp-afs", .Init = 112, .Config = {0, 1024}, .VisibleFunc = Function() Deinterlacer.Value = 2}
     Property AfsThreMotionC As New NumParam With {.Text = "Threshold Motion C", .HelpSwitch = "--vpp-afs", .Init = 224, .Config = {0, 1024}, .VisibleFunc = Function() Deinterlacer.Value = 2}
     Property AfsLevel As New NumParam With {.Text = "Level", .HelpSwitch = "--vpp-afs", .Init = 3, .Config = {0, 4}, .VisibleFunc = Function() Deinterlacer.Value = 2}
-    Property AfsShift As New BoolParam With {.Text = "Shift", .HelpSwitch = "--vpp-afs", .LeftMargin = g.MainForm.FontHeight * 1.3, .VisibleFunc = Function() Deinterlacer.Value = 2}
-    Property AfsDrop As New BoolParam With {.Text = "Drop", .HelpSwitch = "--vpp-afs", .LeftMargin = g.MainForm.FontHeight * 1.3, .VisibleFunc = Function() Deinterlacer.Value = 2}
-    Property AfsSmooth As New BoolParam With {.Text = "Smooth", .HelpSwitch = "--vpp-afs", .LeftMargin = g.MainForm.FontHeight * 1.3, .VisibleFunc = Function() Deinterlacer.Value = 2}
-    Property Afs24fps As New BoolParam With {.Text = "24 FPS", .HelpSwitch = "--vpp-afs", .LeftMargin = g.MainForm.FontHeight * 1.3, .VisibleFunc = Function() Deinterlacer.Value = 2}
-    Property AfsTune As New BoolParam With {.Text = "Tune", .HelpSwitch = "--vpp-afs", .LeftMargin = g.MainForm.FontHeight * 1.3, .VisibleFunc = Function() Deinterlacer.Value = 2}
-    Property AfsRFF As New BoolParam With {.Text = "RFF", .HelpSwitch = "--vpp-afs", .Init = True, .LeftMargin = g.MainForm.FontHeight * 1.3, .VisibleFunc = Function() Deinterlacer.Value = 2}
-    Property AfsTimecode As New BoolParam With {.Text = "Timecode", .HelpSwitch = "--vpp-afs", .LeftMargin = g.MainForm.FontHeight * 1.3, .VisibleFunc = Function() Deinterlacer.Value = 2}
-    Property AfsLog As New BoolParam With {.Text = "Log", .HelpSwitch = "--vpp-afs", .LeftMargin = g.MainForm.FontHeight * 1.3, .VisibleFunc = Function() Deinterlacer.Value = 2}
+    Property AfsShift As New BoolParam With {.Text = "Shift", .HelpSwitch = "--vpp-afs", .LeftMargin = EtoHelp.FontHeight * 1.3, .VisibleFunc = Function() Deinterlacer.Value = 2}
+    Property AfsDrop As New BoolParam With {.Text = "Drop", .HelpSwitch = "--vpp-afs", .LeftMargin = EtoHelp.FontHeight * 1.3, .VisibleFunc = Function() Deinterlacer.Value = 2}
+    Property AfsSmooth As New BoolParam With {.Text = "Smooth", .HelpSwitch = "--vpp-afs", .LeftMargin = EtoHelp.FontHeight * 1.3, .VisibleFunc = Function() Deinterlacer.Value = 2}
+    Property Afs24fps As New BoolParam With {.Text = "24 FPS", .HelpSwitch = "--vpp-afs", .LeftMargin = EtoHelp.FontHeight * 1.3, .VisibleFunc = Function() Deinterlacer.Value = 2}
+    Property AfsTune As New BoolParam With {.Text = "Tune", .HelpSwitch = "--vpp-afs", .LeftMargin = EtoHelp.FontHeight * 1.3, .VisibleFunc = Function() Deinterlacer.Value = 2}
+    Property AfsRFF As New BoolParam With {.Text = "RFF", .HelpSwitch = "--vpp-afs", .Init = True, .LeftMargin = EtoHelp.FontHeight * 1.3, .VisibleFunc = Function() Deinterlacer.Value = 2}
+    Property AfsTimecode As New BoolParam With {.Text = "Timecode", .HelpSwitch = "--vpp-afs", .LeftMargin = EtoHelp.FontHeight * 1.3, .VisibleFunc = Function() Deinterlacer.Value = 2}
+    Property AfsLog As New BoolParam With {.Text = "Log", .HelpSwitch = "--vpp-afs", .LeftMargin = EtoHelp.FontHeight * 1.3, .VisibleFunc = Function() Deinterlacer.Value = 2}
 
     Property Edgelevel As New BoolParam With {.Text = "Edgelevel filter to enhance edge", .Switches = {"--vpp-edgelevel"}, .ArgsFunc = AddressOf GetEdge}
     Property EdgelevelStrength As New NumParam With {.Text = "     Strength", .HelpSwitch = "--vpp-edgelevel", .Config = {0, 31, 1, 1}}
@@ -961,9 +960,9 @@ Public Class NVEncParams
     Property NvvfxArtifactReduction As New BoolParam With {.Text = "Artifact reduction filter", .Switch = "--vpp-nvvfx-artifact-reduction", .ArgsFunc = AddressOf GetNvvfxArtifactReductionArgs}
     Property NvvfxArtifactReductionMode As New OptionParam With {.Text = "      Mode", .HelpSwitch = "--vpp-nvvfx-artifact-reduction", .Options = {"0 - Removes lesser artifacts, preserves low gradient information better, suited for higher bitrate videos (default)", "1 - Results stronger effect, suitable for lower bitrate videos"}}
 
-    Property TransformFlipX As New BoolParam With {.Switch = "--vpp-transform", .Text = "Flip X", .Label = "Transform", .LeftMargin = g.MainForm.FontHeight * 1.5, .ArgsFunc = AddressOf GetTransform}
-    Property TransformFlipY As New BoolParam With {.Text = "Flip Y", .LeftMargin = g.MainForm.FontHeight * 1.5, .HelpSwitch = "--vpp-transform"}
-    Property TransformTranspose As New BoolParam With {.Text = "Transpose", .LeftMargin = g.MainForm.FontHeight * 1.5, .HelpSwitch = "--vpp-transform"}
+    Property TransformFlipX As New BoolParam With {.Switch = "--vpp-transform", .Text = "Flip X", .Label = "Transform", .LeftMargin = EtoHelp.FontHeight * 1.5, .ArgsFunc = AddressOf GetTransform}
+    Property TransformFlipY As New BoolParam With {.Text = "Flip Y", .LeftMargin = EtoHelp.FontHeight * 1.5, .HelpSwitch = "--vpp-transform"}
+    Property TransformTranspose As New BoolParam With {.Text = "Transpose", .LeftMargin = EtoHelp.FontHeight * 1.5, .HelpSwitch = "--vpp-transform"}
 
     Property Smooth As New BoolParam With {.Text = "Smooth", .Switch = "--vpp-smooth", .ArgsFunc = AddressOf GetSmoothArgs}
     Property SmoothQuality As New NumParam With {.Text = "      Quality", .HelpSwitch = "--vpp-smooth", .Init = 3, .Config = {1, 6}}
@@ -2208,7 +2207,14 @@ Public Class NVEncParams
             Case "avs"
                 sourcePath = p.Script.Path
 
-                If includePaths AndAlso FrameServerHelp.IsPortable Then
+                'the VapourSynth reader of the encoder depends on how VapourSynth was installed, vspipe always works
+                If p.Script.Engine = ScriptEngine.VapourSynth Then
+                    sourcePath = "-"
+
+                    If includePaths Then
+                        ret = Package.vspipe.Path.Escape + " " + p.Script.Path.Escape + " - --container y4m | " + Package.NVEncC.Path.Escape
+                    End If
+                ElseIf includePaths AndAlso FrameServerHelp.IsPortable Then
                     ret += " --avsdll " + Package.AviSynth.Path.Escape
                 End If
             Case "avhw"
@@ -2229,7 +2235,7 @@ Public Class NVEncParams
                 If includePaths Then
                     Dim pix_fmt = If(p.SourceVideoBitDepth = 10 OrElse p.Script.Info.BitDepth >= 10, "yuv420p10le", "yuv420p")
                     ret = If(includePaths, Package.ffmpeg.Path.Escape, "ffmpeg") +
-                        " -threads 1 -hwaccel dxva2 -i " + If(includePaths, p.SourceFile.Escape, "path") +
+                        " -threads 1 -hwaccel cuda -i " + If(includePaths, p.SourceFile.Escape, "path") +
                         " -f yuv4mpegpipe -pix_fmt " + pix_fmt + " -strict -1 -loglevel fatal -hide_banner - | " +
                         If(includePaths, Package.NVEncC.Path.Escape, "NVEncC64")
                 End If

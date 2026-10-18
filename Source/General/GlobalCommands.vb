@@ -1,14 +1,11 @@
-﻿
+
 Imports System.Collections.Concurrent
 Imports System.ComponentModel
-Imports System.Drawing.Design
 Imports System.Reflection
 Imports System.Runtime.InteropServices
 Imports System.Text
 Imports System.Threading
 Imports System.Threading.Tasks
-Imports DirectN
-Imports Microsoft.Win32
 Imports StaxRip.UI
 
 Public Class GlobalCommands
@@ -115,7 +112,7 @@ Public Class GlobalCommands
     Sub ExecuteCommandLine(
         <DispName("Command Line"),
         Description("The command line to be executed. Macros are solved."),
-        Editor(GetType(CommandLineTypeEditor), GetType(UITypeEditor))>
+        Editor(GetType(CommandLineTypeEditor), GetType(IValueEditor))>
         commandLine As String,
         <DispName("Wait For Exit"),
         Description("Halt until the command line returns."),
@@ -139,8 +136,12 @@ Public Class GlobalCommands
             proc.Wait = showProcessWindow OrElse waitForExit
             proc.WorkingDirectory = Macro.Expand(workingDirectory)
 
-            If Not useShellExecute Then
-                proc.Process.StartInfo.UseShellExecute = False
+            'folders, documents and URLs are opened with the default app like the shell of Windows does
+            If useShellExecute AndAlso Not showProcessWindow AndAlso proc.Arguments = "" AndAlso
+                (proc.File.Contains("://") OrElse Not GlobalClass.IsExecutable(proc.File)) Then
+
+                DesktopHelp.Open(proc.File)
+                Exit Sub
             End If
 
             Try
@@ -150,6 +151,18 @@ Public Class GlobalCommands
                 Log.WriteLine(ex.Message)
             End Try
         End Using
+    End Sub
+
+    <Command("Opens a terminal emulator.")>
+    Sub OpenTerminal(
+        <DispName("Command")>
+        <Description("Command to run in the terminal, by default the shell is started. Macros are solved.")>
+        command As String,
+        <DispName("Working Directory")>
+        <Description("Working directory of the terminal. Macros are solved.")>
+        workingDirectory As String)
+
+        DesktopHelp.OpenTerminal(Macro.Expand(command), Macro.Expand(workingDirectory))
     End Sub
 
     <Command("Starts a tool by name as shown in the app manage dialog.")>
@@ -171,7 +184,7 @@ Public Class GlobalCommands
     Sub ExecutePowerShellCode(
         <DispName("Script Code")>
         <Description("PowerShell script code to be executed. Macros are expanded.")>
-        <Editor(GetType(MacroStringTypeEditor), GetType(UITypeEditor))>
+        <Editor(GetType(MacroStringTypeEditor), GetType(IValueEditor))>
         code As String,
         <DispName("Use External Shell")>
         <Description("Execute in StaxRip to automate StaxRip or use external shell.")>
@@ -190,7 +203,7 @@ Public Class GlobalCommands
     Sub ExecutePowerShellFile(
         <DispName("File Path")>
         <Description("Filepath to a PowerShell script file. May contain macros.")>
-        <Editor(GetType(OpenFileDialogEditor), GetType(UITypeEditor))>
+        <Editor(GetType(OpenFileValueEditor), GetType(IValueEditor))>
         filepath As String,
         <DispName("Arguments")>
         <Description("Semicolon separated arguments passed to the script host. May contain macros.")>
@@ -243,7 +256,7 @@ Public Class GlobalCommands
         msg += x265Enc.Test
 
         For Each pack In Package.Items.Values
-            If pack.IsIncluded Then
+            If pack.IsIncluded AndAlso pack.IsLinuxSupported Then
                 If pack.Path = "" Then
                     msg += BR2 + "# path missing for " + pack.Name
                 ElseIf Not pack.VersionAllowAny Then
@@ -256,7 +269,7 @@ Public Class GlobalCommands
 
                 'does help file exist?
                 If pack.Path <> "" AndAlso pack.HelpFilename <> "" Then
-                    If Not File.Exists(Path.Combine(pack.Directory, pack.HelpFilename)) Then
+                    If Not File.Exists(pack.HelpFile) Then
                         msg += BR2 + $"# Help file of {pack.Name} don't exist!"
                     End If
                 End If
@@ -274,20 +287,25 @@ Public Class GlobalCommands
 
     <Command("Plays audio file.")>
     Sub PlaySound(
-        <Editor(GetType(OpenFileDialogEditor), GetType(UITypeEditor))>
-        <Description("Filepath to a mp3, wav or wmv sound file.")>
+        <Editor(GetType(OpenFileValueEditor), GetType(IValueEditor))>
+        <Description("Filepath to a mp3, wav or ogg sound file.")>
         FilePath As String,
         <DispName("Volume (%)")>
         <DefaultValue(20)>
         Volume As Integer)
 
         Try
-            Static player As New Reflector("WMPlayer.OCX.7")
-            Dim settings = player.Invoke("settings", BindingFlags.GetProperty)
-            settings.Invoke("volume", BindingFlags.SetProperty, Volume)
-            settings.Invoke("setMode", "loop", False)
-            player.Invoke("URL", BindingFlags.SetProperty, FilePath)
-            player.Invoke("controls", BindingFlags.GetProperty).Invoke("play")
+            FilePath = Macro.Expand(FilePath)
+
+            If ShellHelp.Which("mpv") <> "" Then
+                g.Execute("mpv", $"--no-video --really-quiet --volume={Volume} {FilePath.Escape}")
+            ElseIf ShellHelp.Which("ffplay") <> "" Then
+                g.Execute("ffplay", $"-nodisp -autoexit -loglevel quiet -volume {Volume} {FilePath.Escape}")
+            ElseIf ShellHelp.Which("pw-play") <> "" Then
+                g.Execute("pw-play", $"--volume={Volume / 100} {FilePath.Escape}")
+            Else
+                g.Execute("paplay", FilePath.Escape)
+            End If
         Catch ex As Exception
             g.ShowException(ex)
         End Try
@@ -298,7 +316,7 @@ Public Class GlobalCommands
         Dim sb = New StringBuilder()
         Dim version = Assembly.GetExecutingAssembly.GetName.Version
 
-        If includeName Then sb.Append(Application.ProductName)
+        If includeName Then sb.Append(AppInfo.ProductName)
         If includeVersion Then
             sb.Append($" v{version.Major}.{version.Minor}")
 
@@ -357,11 +375,11 @@ Public Class GlobalCommands
     Sub ShowMessageBox(
         <DispName("Main Instruction")>
         <Description("Main instruction may contain macros.")>
-        <Editor(GetType(MacroStringTypeEditor), GetType(UITypeEditor))>
+        <Editor(GetType(MacroStringTypeEditor), GetType(IValueEditor))>
         mainInstruction As String,
         <DispName("Content")>
         <Description("May contain macros.")>
-        <Editor(GetType(MacroStringTypeEditor), GetType(UITypeEditor))>
+        <Editor(GetType(MacroStringTypeEditor), GetType(IValueEditor))>
         Optional content As String = Nothing,
         <DispName("Icon")>
         <DefaultValue(GetType(TaskIcon), "Info")>
@@ -383,24 +401,17 @@ Public Class GlobalCommands
     Sub ShowMediaInfo(
         <DispName("Filepath")>
         <Description("May contain macros.")>
-        <Editor(GetType(MacroStringTypeEditor), GetType(UITypeEditor))>
+        <Editor(GetType(MacroStringTypeEditor), GetType(IValueEditor))>
         filepath As String)
 
         filepath = Macro.Expand(filepath)
 
         If File.Exists(filepath) Then
-            Dim theme = ThemeManager.CurrentTheme
-
-            Dim args = " --theme-colors=" +
-                "Foreground:" + theme.General.Controls.RichTextBox.ForeColor.ToHTML + "," +
-                "Background:" + theme.General.Controls.RichTextBox.BackColor.ToHTML + "," +
-                "TextSelection:" + Color.DeepSkyBlue.ToColorHSL.ToHTML + "," +
-                "ItemSelection:" + theme.General.Controls.ToolStrip.DropdownBackgroundSelectedColor.ToHTML + "," +
-                "ItemHover:" + theme.General.Controls.ToolStrip.DropdownBackgroundSelectedColor.AddLuminance(0.1).ToHTML + "," +
-                "Border:" + theme.General.Controls.RichTextBox.BorderColor.ToHTML + "," +
-                "Highlight:" + Color.Green.ToColorHSL.ToHTML
-
-            g.ShellExecute(Package.MediaInfoNET.Path, filepath.Escape + args)
+            If Package.MediaInfoNET.Path <> "" Then
+                g.ShellExecute(Package.MediaInfoNET.Path, filepath.Escape)
+            Else
+                g.ShowCode("MediaInfo - " + filepath.FileName, MediaInfo.GetCompleteSummary(filepath))
+            End If
         Else
             Using dialog As New OpenFileDialog
                 If dialog.ShowDialog = DialogResult.OK Then
@@ -414,7 +425,7 @@ Public Class GlobalCommands
     Sub CopyToClipboard(
         <DispName("Value")>
         <Description("Copies text to the clipboard. May contain macros.")>
-        <Editor(GetType(MacroStringTypeEditor), GetType(UITypeEditor))>
+        <Editor(GetType(MacroStringTypeEditor), GetType(IValueEditor))>
         value As String)
 
         Macro.Expand(value).ToClipboard()
@@ -425,7 +436,7 @@ Public Class GlobalCommands
         <DispName("Header"), Description("Header is optional and may contain macros.")>
         header As String,
         <DispName("Message"), Description("Message is optional and may contain macros."),
-        Editor(GetType(MacroStringTypeEditor), GetType(UITypeEditor))>
+        Editor(GetType(MacroStringTypeEditor), GetType(IValueEditor))>
         message As String)
 
         Log.WriteHeader(Macro.Expand(header))
@@ -436,7 +447,7 @@ Public Class GlobalCommands
     Sub DeleteFiles(
         <DispName("Directory"),
         Description("Directory in which to delete files."),
-        Editor(GetType(MacroStringTypeEditor), GetType(UITypeEditor))>
+        Editor(GetType(MacroStringTypeEditor), GetType(IValueEditor))>
         dir As String,
         <DispName("Filter"),
         Description("Example: '.txt .log'")>
@@ -477,7 +488,7 @@ Public Class GlobalCommands
                   name As String,
                   category As String,
                   <Editor(GetType(MacroStringTypeEditor),
-                  GetType(UITypeEditor))> script As String)
+                  GetType(IValueEditor))> script As String)
 
         p.Script.AddFilter(New VideoFilter(category, name, script.Replace("`""", """").Replace("`n", BR), active))
         g.MainForm.Assistant()
@@ -486,7 +497,7 @@ Public Class GlobalCommands
     <Command("Sets a filter replacing an existing filter of same category.")>
     Sub SetFilter(name As String,
                   category As String,
-                  <Editor(GetType(MacroStringTypeEditor), GetType(UITypeEditor))> script As String)
+                  <Editor(GetType(MacroStringTypeEditor), GetType(IValueEditor))> script As String)
 
         p.Script.SetFilter(category, name, script.Replace("`""", """").Replace("`n", BR))
     End Sub
@@ -522,7 +533,7 @@ Public Class GlobalCommands
     End Sub
 
     <Command("Sets the file path of the target file.")>
-    Sub SetTargetFile(<DispName("Target File Path")> <Editor(GetType(MacroStringTypeEditor), GetType(UITypeEditor))> path As String)
+    Sub SetTargetFile(<DispName("Target File Path")> <Editor(GetType(MacroStringTypeEditor), GetType(IValueEditor))> path As String)
         Dim preparedPath = Macro.Expand(path.TrimQuotes())
 
         p.VideoEncoder.OverridesTargetFileName = False
@@ -575,7 +586,7 @@ Public Class GlobalCommands
             dialog.Filter = "MKV|*.mkv"
 
             If dialog.ShowDialog = DialogResult.OK Then
-                g.RunCodeInTerminal($"& '{Package.mkvinfo.Path}' '{dialog.FileName}'")
+                DesktopHelp.RunInTerminal(ShellHelp.Quote(Package.mkvinfo.Path) + " " + ShellHelp.Quote(dialog.FileName))
             End If
         End Using
     End Sub
@@ -672,7 +683,7 @@ Public Class GlobalCommands
                     customDirectory.Edit.SaveAction = Sub(value) s.Storage.SetString("GifDirectory", value)
                     customDirectory.AddMenu("Browse Folder...", Function() g.BrowseFolder(p.DefaultTargetFolder))
 
-                    AddHandler output.CheckStateChanged, Sub() customDirectory.Visible = output.Checked = True
+                    AddHandler output.CheckedChanged, Sub() customDirectory.Visible = output.Checked = True
 
                     customDirectory.Visible = output.Checked = True
 
@@ -743,7 +754,7 @@ Public Class GlobalCommands
                     settings.Help = "Enable or Disable the Usage of PNG Opt"
                     settings.Checked = s.Storage.GetBool("OptSetting", False)
                     settings.SaveAction = Sub(value) s.Storage.SetBool("OptSetting", value)
-                    AddHandler settings.CheckStateChanged, Sub()
+                    AddHandler settings.CheckedChanged, Sub()
                                                                opt.Visible = settings.Checked = True
                                                            End Sub
 
@@ -768,7 +779,7 @@ Public Class GlobalCommands
                     customDir.Edit.SaveAction = Sub(value) s.Storage.SetString("PNGDirectory", value)
                     customDir.AddMenu("Browse Folder...", Function() g.BrowseFolder(p.DefaultTargetFolder))
 
-                    AddHandler output.CheckStateChanged, Sub()
+                    AddHandler output.CheckedChanged, Sub()
                                                              customDir.Visible = output.Checked = True
                                                          End Sub
 
@@ -810,8 +821,8 @@ Public Class GlobalCommands
                     Dim summaryTD As TaskDialog(Of DialogResult) = Nothing
                     Dim closingTD As TaskDialog(Of DialogResult) = Nothing
                     Dim cts = New CancellationTokenSource()
-                    Dim mainFormClosingHandler As FormClosingEventHandler = Nothing
-                    mainFormClosingHandler = Sub(sender As Object, e As FormClosingEventArgs)
+                    Dim mainFormClosingHandler As EventHandler(Of CancelEventArgs) = Nothing
+                    mainFormClosingHandler = Sub(sender As Object, e As CancelEventArgs)
                                                  If Not e.Cancel Then
                                                      Using closingTD
                                                          closingTD = New TaskDialog(Of DialogResult)(DialogResult.Yes)
@@ -835,7 +846,7 @@ Public Class GlobalCommands
 
                     Dim thumbnailerTask = Task.Run(
                         Async Function()
-                            AddHandler g.MainForm.FormClosing, mainFormClosingHandler
+                            AddHandler g.MainForm.Closing, mainFormClosingHandler
 
                             Dim proceededSources = Await Thumbnailer.RunAsync(cts.Token, p, filePaths)
 
@@ -848,7 +859,7 @@ Public Class GlobalCommands
 
                             sw.Stop()
 
-                            RemoveHandler g.MainForm.FormClosing, mainFormClosingHandler
+                            RemoveHandler g.MainForm.Closing, mainFormClosingHandler
                             Return proceededSources
                         End Function,
                         cts.Token)
@@ -867,7 +878,7 @@ Public Class GlobalCommands
 
                     If reportWhenFinished Then
                         Dim proceededSources = Await thumbnailerTask
-                        RemoveHandler g.MainForm.FormClosing, mainFormClosingHandler
+                        RemoveHandler g.MainForm.Closing, mainFormClosingHandler
                         If proceededSources Is Nothing OrElse Not proceededSources.Any() Then Return
 
                         Dim proceededFailedSources = proceededSources.Where(Function(x) Not x.Value)
@@ -909,7 +920,22 @@ Public Class GlobalCommands
 
             If dialog.ShowDialog = DialogResult.OK Then
                 s.Storage.SetString("MediaInfo Folder View folder", dialog.SelectedPath)
-                g.InvokePowerShellCode($". '{Package.GetMediaInfo.Path}'; Get-ChildItem '{dialog.SelectedPath}' | Get-MediaInfo | Out-GridView")
+                Dim sb As New StringBuilder
+
+                For Each fp In Directory.GetFiles(dialog.SelectedPath).Where(Function(x) FileTypes.Video.Contains(x.Ext) OrElse FileTypes.Audio.Contains(x.Ext)).OrderBy(Function(x) x, New StringLogicalComparer)
+                    Dim mi = MediaInfo.GetMediaInfo(fp)
+
+                    sb.AppendLine(fp.FileName)
+                    sb.AppendLine("    " + {mi.GetGeneral("Format"),
+                                             mi.GetVideo("Format"),
+                                             If(mi.GetVideo("Width") <> "", mi.GetVideo("Width") + "x" + mi.GetVideo("Height"), ""),
+                                             mi.GetGeneral("Duration/String"),
+                                             mi.GetGeneral("FileSize/String"),
+                                             mi.GetGeneral("OverallBitRate/String"),
+                                             MediaInfo.GetAudioCodecs(fp)}.Where(Function(x) x <> "").Join(" | "))
+                Next
+
+                g.ShowCode("MediaInfo Folder View - " + dialog.SelectedPath, sb.ToString)
             End If
         End Using
     End Sub

@@ -1,4 +1,4 @@
-﻿
+
 Imports Microsoft.VisualBasic
 Imports StaxRip.UI
 
@@ -292,7 +292,7 @@ Partial Public Class MainForm
                         End If
                     End If
 
-                    If Not p.Script.IsFilterActive("Cutting") AndAlso Form.ActiveForm Is Me Then
+                    If Not p.Script.IsFilterActive("Cutting") AndAlso g.ActiveForm Is Me Then
                         If ProcessTip("The cutting filter settings don't match with the cutting settings used in the preview." + BR +
                                       "This can usually be fixed by opening and closing the preview.") Then
                             Return Block("Invalid Cutting Settings")
@@ -367,7 +367,7 @@ Partial Public Class MainForm
                     Dim rpuParam = x265.Params.DolbyVisionRpu
                     Dim bufsizeParam = x265.Params.VbvBufSize
                     Dim maxrateParam = x265.Params.VbvMaxRate
-                    Dim optionsLabel = DirectCast(pnEncoder.Controls(0), x265Control).blConfigCodec
+                    Dim optionsLabel = DirectCast(pnEncoder.Content, x265Control).blConfigCodec
 
                     If Not String.IsNullOrWhiteSpace(rpuParam.Value) Then
                         If bufsizeParam?.Value < 1 Then
@@ -438,7 +438,7 @@ Partial Public Class MainForm
                     Next
                 End If
 
-                If Not (MouseButtons = MouseButtons.Left AndAlso ActiveControl Is tbResize) Then
+                If Not (Mouse.Buttons = MouseButtons.Primary AndAlso tbResize.HasFocus) Then
                     Dim err = p.Script.Error
 
                     If err <> "" AndAlso ProcessTip(err) Then

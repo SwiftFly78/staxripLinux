@@ -1,4 +1,4 @@
-﻿
+
 Imports System.Text
 Imports System.Text.RegularExpressions
 Imports System.Threading
@@ -29,6 +29,9 @@ Public Class Proc
     Property Succeeded As Boolean
     Property TrimChars As Char()
     Property Wait As Boolean
+
+    'the command line executed with /bin/sh -c, used for pipes
+    Property ShellCommandLine As String
 
     Private LogItems As List(Of String)
 
@@ -99,8 +102,10 @@ Public Class Proc
 
             Dim ret = ""
 
+            Dim args = If(IsShell, ShellCommandLine, Arguments)
+
             For Each i In Package.Items.Values
-                If header?.Contains(i.Name.ToLowerInvariant) OrElse Arguments?.Contains(i.Filename) Then
+                If header?.Contains(i.Name.ToLowerInvariant) OrElse (i.Filename <> "" AndAlso args?.Contains(i.Filename)) Then
                     ret += " | " + i.Name
                 End If
             Next
@@ -147,6 +152,10 @@ Public Class Proc
 
     Property CommandLine() As String
         Get
+            If IsShell Then
+                Return ShellCommandLine
+            End If
+
             Return File.Escape + " " + Arguments
         End Get
         Set(Value As String)
@@ -160,16 +169,14 @@ Public Class Proc
         End Set
     End Property
 
+    Private StartedArguments As String
+
     Property Arguments() As String
         Get
-            Return Process.StartInfo.Arguments
+            Return If(Process.StartInfo.Arguments <> "", Process.StartInfo.Arguments, StartedArguments)
         End Get
         Set(Value As String)
             Process.StartInfo.Arguments = Value
-
-            If Process.StartInfo.Arguments.Contains("\""") Then
-                Process.StartInfo.Arguments = Process.StartInfo.Arguments.Replace("\""", "\\""")
-            End If
 
             If Process.StartInfo.Arguments.Contains("%") Then
                 Process.StartInfo.Arguments = Environment.ExpandEnvironmentVariables(Process.StartInfo.Arguments)
@@ -184,6 +191,21 @@ Public Class Proc
         End Set
     End Property
 
+    Sub SetShellCommand(commandLine As String)
+        ShellCommandLine = commandLine
+        Process.StartInfo.FileName = ShellHelp.Shell
+        Process.StartInfo.Arguments = ""
+        Process.StartInfo.ArgumentList.Clear()
+        Process.StartInfo.ArgumentList.Add("-c")
+        Process.StartInfo.ArgumentList.Add(commandLine)
+    End Sub
+
+    ReadOnly Property IsShell As Boolean
+        Get
+            Return ShellCommandLine <> ""
+        End Get
+    End Property
+
     Sub WriteLog(value As String)
         If LogItems Is Nothing Then
             LogItems = New List(Of String)
@@ -195,19 +217,18 @@ Public Class Proc
     Sub Kill()
         Try
             If Not Process.HasExited Then
-                If Process.ProcessName = "cmd" Then
-                    For Each i In ProcessHelp.GetChilds(Process)
-                        If {"conhost", Package.avs2pipemod.Filename.Base(), Package.vspipe.Filename.Base()}.Contains(i.ProcessName) Then
-                            Continue For
-                        End If
-
-                        If Not i.HasExited Then
-                            i.Kill()
-                        End If
+                If IsShell Then
+                    For Each i In ProcessHelp.GetDescendants(Process)
+                        Try
+                            If Not i.HasExited Then
+                                i.Kill()
+                            End If
+                        Catch
+                        End Try
                     Next
-                Else
-                    Process.Kill()
                 End If
+
+                Process.Kill(True)
             End If
         Catch
         End Try
@@ -261,8 +282,8 @@ Public Class Proc
             End If
 
             If ReadOutput Then
-                If File = "cmd.exe" AndAlso Arguments.StartsWithEx("/S /C """) AndAlso Arguments.EndsWithEx("""") Then
-                    Log.WriteLine(Arguments.Substring(7, Arguments.Length - 8) + BR2)
+                If IsShell Then
+                    Log.WriteLine(ShellCommandLine + BR2)
                 Else
                     Log.WriteLine(CommandLine + BR2)
                 End If
@@ -277,6 +298,12 @@ Public Class Proc
             End If
 
             SetEnvironmentVariables(Process)
+
+            If Not IsShell AndAlso Process.StartInfo.Arguments <> "" Then
+                StartedArguments = Process.StartInfo.Arguments
+                ShellHelp.SetArguments(Process.StartInfo, StartedArguments)
+            End If
+
             Process.Start()
 
             If ReadOutput Then
@@ -317,6 +344,13 @@ Public Class Proc
             End If
 
             If Wait Then
+                'keep the UI responsive when processes are started on the UI thread
+                If IsUIThread Then
+                    While Not Process.WaitForExit(15)
+                        DoEvents()
+                    End While
+                End If
+
                 Process.WaitForExit()
                 OutputReader?.WaitUtilEOF()
                 ErrorReader?.WaitUtilEOF()
@@ -348,12 +382,8 @@ Public Class Proc
                     sb.AppendLine(New String("~"c, ec.Length))
                     sb.AppendLine()
 
-                    If s.ErrorMessageExtendedByErr Then
-                        Dim errOutput = ProcessHelp.GetConsoleOutput(Package.Err.Path, "/ntstatus.h /winerror.h " & ExitCode)
-                        sb.AppendLine("It's unclear what this exit code means, in case it's")
-                        sb.AppendLine("a Windows system error then it possibly means:")
-                        sb.AppendLine()
-                        sb.AppendLine(errOutput)
+                    If ExitCode > 128 AndAlso ExitCode < 160 Then
+                        sb.AppendLine($"The process was probably terminated by signal {ExitCode - 128}.")
                         sb.AppendLine()
                     End If
 
@@ -404,45 +434,49 @@ Public Class Proc
     End Sub
 
     Sub AddToPath(folder As String)
-        Dim dic = Process.StartInfo.EnvironmentVariables
-        dic("path") = folder + ";" + dic("path")
+        Dim dic = Process.StartInfo.Environment
+        dic("PATH") = folder + IO.Path.PathSeparator + If(dic.ContainsKey("PATH"), dic("PATH"), "")
     End Sub
 
     Shared Sub SetEnvironmentVariables(process As Process)
-        If process.StartInfo.UseShellExecute Then
+        SetEnvironmentVariables(process.StartInfo)
+    End Sub
+
+    Shared Sub SetEnvironmentVariables(psi As ProcessStartInfo)
+        If psi.UseShellExecute Then
             Exit Sub
         End If
 
-        Dim dic = process.StartInfo.EnvironmentVariables
-        dic("AviSynthDLL") = Package.AviSynth.Path
+        Dim dic = psi.Environment
 
-        Dim keys = dic.Keys.OfType(Of String).Select(Function(key) key.ToLowerInvariant)
+        If Package.AviSynth.Path <> "" Then
+            dic("AviSynthDLL") = Package.AviSynth.Path
+        End If
 
         For Each mac In Macro.GetMacros(True, False, False, True, False)
             Dim name = mac.Name.Trim("%"c)
 
-            If Not keys.Contains(name) Then
-                dic(name) = Macro.Expand(mac.Name)
+            If Not dic.ContainsKey(name) Then
+                Try
+                    dic(name) = Macro.Expand(mac.Name)
+                Catch
+                End Try
             End If
         Next
 
-        Dim path = dic("path")
+        Dim paths = If(dic.ContainsKey("PATH"), dic("PATH"), "").Split({IO.Path.PathSeparator}, StringSplitOptions.RemoveEmptyEntries).ToList
 
         For Each pack In Package.Items.Values
-            If pack.Path.Ext = "exe" AndAlso pack.HelpSwitch IsNot Nothing AndAlso
-                pack.Path.FileExists AndAlso Not path.Contains(pack.Directory + ";") Then
+            If pack.HelpSwitch IsNot Nothing AndAlso pack.IsCustomOrBundled Then
+                Dim dir = pack.Directory
 
-                path = pack.Directory + ";" + path
+                If dir <> "" AndAlso Not paths.Contains(dir) Then
+                    paths.Insert(0, dir)
+                End If
             End If
         Next
 
-        Dim cppDir = IO.Path.Combine(Folder.Startup, "Apps", "Support", "VC")
-
-        If Not path.Contains(cppDir + ";") Then
-            path = cppDir + ";" + path
-        End If
-
-        dic("path") = path
+        dic("PATH") = String.Join(IO.Path.PathSeparator, paths)
     End Sub
 
     Function ProcessData(value As String) As (Data As String, Skip As Boolean)
