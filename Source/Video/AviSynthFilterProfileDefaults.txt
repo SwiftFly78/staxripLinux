@@ -1,7 +1,6 @@
 ﻿
 [Source]
 Automatic = # can be configured at: Tools > Settings > Source Filters
-AviSource = AviSource("%source_file%", audio=false)
 
 BestSource = 
     tcFile = "%temp_file%_timestamps.txt" # timestamps file path
@@ -9,8 +8,6 @@ BestSource =
     Exist(tcFile) ? BSVideoSource("%source_file%", track=-1, fpsnum=-1, fpsden=1, rff=False, threads=0, seekpreroll=20, enable_drefs=False, use_absolute_path=False, cachemode=3, cachepath="%source_temp_file%", cachesize=1000, hwdevice="", extrahwframes=9, timecodes=tcFile) : BSVideoSource("%source_file%", track=-1, fpsnum=-1, fpsden=1, rff=False, threads=0, seekpreroll=20, enable_drefs=False, use_absolute_path=False, cachemode=3, cachepath="%source_temp_file%", cachesize=1000, hwdevice="", extrahwframes=9)
 
 D2VSource = D2VSource("%source_file%")
-DirectShowSource = DirectShowSource("%source_file%", audio=false) # specify the frame rate with fps=... for wmv or mov files
-DSS2 = DSS2("%source_file%") # specify the frame rate with fps=... for wmv or mov files
 
 FFMS2 =
     tcFile = "%temp_file%_timestamps.txt" # timestamps file path
@@ -23,7 +20,6 @@ FFVideoSource =
 LSMASHVideoSource = LSMASHVideoSource("%source_file%")
 LWLibavVideoSource = LWLibavVideoSource("%source_file%", cachefile="%source_temp_file%.lwi")
 Manual = # shows the filter selection dialog
-MPEG2Source = MPEG2Source("%source_file%")
 
 [Color]
 ColorYUV | AutoAdjust = AutoAdjust(gamma_limit=1.0, scd_threshold=16, gain_mode=1, auto_gain=$select:msg:Enable Auto Gain?;true;false$, auto_balance=$select:msg:Enable Auto Balance?;true;false$, Input_tv=$select:msg:Is the Input using TV Range?;true;false$, output_tv=$select:msg:Do you want to use TV Range for Output?;true;false$, use_dither=$select:msg:Use Dither?;true;false$, high_quality=$select:msg:Use High Quality Mode?;true;false$, high_bitdepth=$select:msg:Use High Bit Depth Mode?;true;false$, threads_count=$enter_text:How Many Threads do you wish to use?$)
@@ -175,7 +171,6 @@ DFTTest = dfttest($select:msg:Select Strength;Light|sigma=6, tbsize=3;Moderate|s
 DFTTest Neo = neo_dfttest(ftype=0, sigma=2.0, y=3, u=3, v=3)
 FFT3D Neo = neo_fft3d(sigma=2.0, bt=3, y=3, u=3, v=3)
 FFT3DFilter | FFT3DFilter = FFT3DFilter()
-FFT3DFilter | FFT3DGPU = FFT3DGPU(sigma=1.5, bt=3, bw=32, bh=32, ow=16, oh=16, sharpen=0.4, NVPerf=$select:msg:Enable Nvidia Function;True;False$)
 HQDN3D = HQDN3D(ls=4.0, cs=3.0, lt=6.0, ct=4.5, restart=7)
 mClean = mClean(thSAD=400, chroma=true, sharp=10, rn=14, deband=4, depth=0, strength=20)
 MCTemporalDenoise | MCTemporalDenoise = MCTemporalDenoise(settings="$select:msg:Select Strength;Very Low|very low;Low (Default)|low;Medium|medium;High|high;Very High|very high$")
@@ -248,7 +243,6 @@ Advanced | Hardware Encoder = # hardware encoder resizes
 Advanced | NNEDI3_rpow2 = nnedi3_rpow2(rfactor=$select:msg:Enlargement Factor?;2;4;8;16$, cshift="$select:msg:Center Shift Correction Algorithm?;BicubicResize;BilinearResize;BlackmanResize;GaussResize;LanczosResize;Lanczos4Resize;PointResize;SincResize;Spline16Resize;Spline36Resize;Spline64Resize$", fwidth=%target_width%, fheight=%target_height%)
 Advanced | Placebo = libplacebo_Resample(%target_width%, %target_height%, "$select:spline16;spline36;spline64;nearest;bilinear;gaussian;sinc;lanczos;ginseng;ewa_jinc;ewa_lanczos;ewa_lanczossharp;ewa_lanczos4sharpest;ewa_ginseng;ewa_hann;ewa_hanning;bicubic;hermite;catmull_rom;mitchell;mitchell_clamp;robidoux;robidouxsharp;ewa_robidoux;ewa_robidouxsharp$")
 Advanced | ResizeMT = $select:BicubicResizeMT;BilinearResizeMT;BlackmanResizeMT;GaussResizeMT;LanczosResizeMT;Lanczos4ResizeMT;PointResizeMT;SincResizeMT;Spline16ResizeMT;Spline36ResizeMT;Spline64ResizeMT$(%target_width%, %target_height%, prefetch=4)
-Advanced | SuperRes = $select:msg:Select Version;SuperResXBR|SuperResXBR;SuperRes|SuperRes;SuperXBR|SuperXBR$(passes=$select:msg:How many Passes do you wish to perform?;2;3;4;5$, factor=$select:msg:Factor Increase by?;2;4$)
 Resize... = $select:BicubicResize;BilinearResize;BlackmanResize;DPID;GaussResize;LanczosResize;Lanczos4Resize;PointResize;SincResize;Jinc36Resize;Jinc64Resize;Jinc144Resize;Jinc256Resize;Spline16Resize;Spline36Resize;Spline64Resize$(%target_width%, %target_height%)
 
 [Restoration]

@@ -183,7 +183,7 @@ Public Class ApplicationSettings
             Demuxers = Demuxer.GetDefaults()
         End If
 
-        If Check(AviSynthFilterPreferences, "AviSynth Source Filter Preferences", 10) Then
+        If Check(AviSynthFilterPreferences, "AviSynth Source Filter Preferences", 11) Then
             AviSynthFilterPreferences = New StringPairList From {
                 {"*", "FFVideoSource"},
                 {"*:VP9", "LWLibavVideoSource"},
@@ -191,9 +191,7 @@ Public Class ApplicationSettings
                 {"265 h265 hevc hvc", "LWLibavVideoSource"},
                 {"d2v", "D2VSource"},
                 {"mp4 m4v mov", "LSMASHVideoSource"},
-                {"ts m2ts mts m2t m2v", "LWLibavVideoSource"},
-                {"vdr", "AviSource"},
-                {"wmv", "DSS2"}
+                {"ts m2ts mts m2t m2v", "LWLibavVideoSource"}
             }
         End If
 
@@ -315,7 +313,7 @@ Public Class ApplicationSettings
             CustomMenuSize = MainForm.GetDefaultMenuSize
         End If
 
-        If Check(AviSynthProfiles, "AviSynth Filter Profiles", 155) Then
+        If Check(AviSynthProfiles, "AviSynth Filter Profiles", 156) Then
             If AviSynthProfiles Is Nothing Then
                 AviSynthProfiles = FilterCategory.GetAviSynthDefaults
             Else

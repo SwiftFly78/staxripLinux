@@ -1330,14 +1330,7 @@ Partial Public Class MainForm
             AddSourceFilters({"BestSource", "FFVideoSource", "LWLibavVideoSource", "ffms2", "LWLibavSource"}, filters)
         End If
 
-        If g.IsCOMObjectRegistered(GUIDS.LAVSplitter) AndAlso g.IsCOMObjectRegistered(GUIDS.LAVVideoDecoder) Then
-            AddSourceFilters({"DSS2"}, filters)
-        End If
-
-        If {"avi", "avs", "vdr"}.Contains(inputFile.Ext) Then
-            AddSourceFilters({"AVISource"}, filters)
-        End If
-
+        'DSS2 and AVISource use DirectShow and VFW, the FFmpeg based source filters replace them on Linux.
         If inputFile.Ext = "d2v" Then
             AddSourceFilters({"d2vsource", "d2v"}, filters)
         End If

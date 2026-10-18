@@ -20,6 +20,7 @@
   | avs2pipemod | [avs2yuv](https://github.com/DJATOM/avs2yuv) pipes AviSynth+ scripts to the encoders, without it FFmpeg is used, which requires an FFmpeg build with AviSynth support |
   | MPC, mpv.net | [mpv](https://mpv.io) |
   | VSFilterMod, xy-VSFilter | Hardcoded subtitles use [SubText](https://github.com/vapoursynth/subtext) (VapourSynth) and [AssRender](https://github.com/pinterf/assrender) (AviSynth+, text subtitles only) |
+  | DirectShowSource, DSS2, AviSource (DirectShow, VFW) | The FFmpeg based source filters FFMS2, BestSource and L-SMASH Works |
   | AutoCrop | Auto crop runs inside StaxRip |
 
 - VapourSynth scripts are played with mpv and passed to NVEncC, QSVEncC, VCEEncC and rav1e by piping
