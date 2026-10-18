@@ -1331,7 +1331,8 @@ Partial Public Class MainForm
         End If
 
         'DSS2 and AVISource use DirectShow and VFW, the FFmpeg based source filters replace them on Linux.
-        If inputFile.Ext = "d2v" Then
+        'The d2v source filters replace DGDecode, D2V Witch indexes MPEG-2 sources for them like DGIndex.
+        If inputFile.Ext = "d2v" OrElse (Package.D2VWitch.Path <> "" AndAlso MediaInfo.GetVideo(inputFile, "Format") = "MPEG Video") Then
             AddSourceFilters({"d2vsource", "d2v"}, filters)
         End If
 
