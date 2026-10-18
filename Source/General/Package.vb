@@ -617,6 +617,7 @@ Public Class Package
         .Description = "Console app given an AviSynth script as input, avs2pipemod can send video, audio, or information of various types to stdout for consumption by command line encoders or other tools."})
 
     Shared Property avs2yuv As Package = Add(New Package With {
+        .RequiredFunc = Function() p?.Script IsNot Nothing AndAlso p.Script.IsAviSynth AndAlso avs2yuv.Path <> "",
         .Name = "avs2yuv",
         .Filename = "avs2yuv.exe",
         .WebURL = "https://github.com/DJATOM/avs2yuv",
