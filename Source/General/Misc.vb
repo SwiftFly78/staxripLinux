@@ -1781,10 +1781,6 @@ Public Class Subtitle
             Exit Sub
         End If
 
-        If Not Package.AviSynth.VerifyOK(True) Then
-            Throw New AbortException
-        End If
-
         Dim emptySubs As New List(Of Subtitle)
 
         For x = 0 To subtitles.Count - 1

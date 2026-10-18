@@ -664,10 +664,6 @@ Public Class Audio
             Exit Sub
         End If
 
-        If Not Package.AviSynth.VerifyOK(True) Then
-            Throw New AbortException
-        End If
-
         Dim base = ap.File.Base
 
         If Not base.Contains(ap.GetTrackID) Then
