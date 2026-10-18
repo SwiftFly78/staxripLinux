@@ -222,24 +222,23 @@ Public MustInherit Class Muxer
 
         For Each i In files
             If g.IsSourceSameOrSimilar(i) Then
-                If TypeOf Me IsNot WebMMuxer Then
-                    Dim lower = i.ToLowerInvariant
+                Dim lower = i.ToLowerInvariant
 
-                    If lower.Contains("chapters") Then
-                        If TypeOf Me Is MP4Muxer Then
-                            If i.Ext = "txt" Then
-                                ChapterFile = i
-                            End If
-                        Else
-                            If i.Ext.EqualsAny("txt", "xml") Then
-                                ChapterFile = i
-                            End If
+                'WebM supports chapters, mkvmerge removes the elements WebM doesn't allow
+                If lower.Contains("chapters") Then
+                    If TypeOf Me Is MP4Muxer Then
+                        If i.Ext = "txt" Then
+                            ChapterFile = i
                         End If
-                    ElseIf lower.Contains("timestamps") Then
-                        If TypeOf Me Is MkvMuxer Then
-                            If i.Ext = "txt" Then
-                                TimestampsFile = i
-                            End If
+                    Else
+                        If i.Ext.EqualsAny("txt", "xml") Then
+                            ChapterFile = i
+                        End If
+                    End If
+                ElseIf lower.Contains("timestamps") Then
+                    If TypeOf Me Is MkvMuxer AndAlso TypeOf Me IsNot WebMMuxer Then
+                        If i.Ext = "txt" Then
+                            TimestampsFile = i
                         End If
                     End If
                 End If
@@ -836,7 +835,7 @@ Public Class MkvMuxer
             End If
         Next
 
-        If TypeOf Me IsNot WebMMuxer AndAlso File.Exists(ChapterFile) Then
+        If File.Exists(ChapterFile) Then
             If p.Ranges.Count > 0 AndAlso ChapterFile.Ext = "xml" Then
                 Dim xDoc = XDocument.Load(ChapterFile)
                 Dim lstTimeRanges As New List(Of (StartTime As TimeSpan, EndTime As TimeSpan, Offset As TimeSpan))
