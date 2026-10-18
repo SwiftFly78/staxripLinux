@@ -878,7 +878,7 @@ Public Class mkvDemuxer
         Dim outPaths As New List(Of String)
 
         If videoDemuxing Then
-            Dim stdout = ProcessHelp.GetConsoleOutput(Package.mkvmerge.Path, "--identify " + sourcefile.Escape)
+            Dim stdout = ProcessHelp.GetConsoleOutput(Package.mkvmerge.Path, "--identify --ui-language en_US " + sourcefile.Escape)
             Dim id = Regex.Match(stdout, "Track ID (\d+): video").Groups(1).Value.ToInt
             Dim videoStreams = MediaInfo.GetVideoStreams(sourcefile)
 
