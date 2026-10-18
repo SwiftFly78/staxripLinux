@@ -23,6 +23,7 @@
   | DirectShowSource, DSS2, AviSource (DirectShow, VFW) | The FFmpeg based source filters FFMS2, BestSource and L-SMASH Works |
   | NicAudio and DirectShow audio decoding and cutting | FFAudioSource of FFMS2 with AviSynth+, FFmpeg decodes the script, so it must be built with AviSynth support |
   | AutoCrop | Auto crop runs inside StaxRip |
+  | DoViSplit | The editor of [dovi_tool](https://github.com/quietvoid/dovi_tool) trims the Dolby Vision metadata when the video is cut |
 
 - VapourSynth scripts are played with mpv and passed to NVEncC, QSVEncC, VCEEncC and rav1e by piping
   them with vspipe, because many FFmpeg and encoder builds can't read VapourSynth scripts.

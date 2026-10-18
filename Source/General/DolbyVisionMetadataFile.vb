@@ -78,6 +78,13 @@ Public Class DolbyVisionMetadataFile
         End Get
     End Property
 
+    'the _Config suffix excludes it from the HDR10+ metadata search
+    Public ReadOnly Property TrimConfigFilePath As String
+        Get
+            Return If(String.IsNullOrWhiteSpace(Path), "", $"{Path.DirAndBase()}_Trim_Config.json")
+        End Get
+    End Property
+
     Public ReadOnly Property HasPathChanged As Boolean
         Get
             Return Path.FileExists() AndAlso _lastWriteTime <> File.GetLastWriteTimeUtc(Path)
@@ -357,12 +364,25 @@ Public Class DolbyVisionMetadataFile
         Dim inputFilePath = If(ModifiedRpuFilePath.FileExists(), ModifiedRpuFilePath, Path)
         _trimRanges = New List(Of Range)(p.Ranges)
 
+        'DoViSplit only exists for Windows, the editor of dovi_tool removes the frames outside of the ranges
         Try
             Dim frames = Edits.Max(Function(x) x.EndFrame) + 1
-            Dim ranges = String.Join(";", _trimRanges.Select(Function(x) $"{x.Start}-{x.End}"))
-            Dim arguments = $"--input ""{inputFilePath}"" --output ""{TrimmedRpuFilePath}"" --frames {frames} --ranges {ranges}"
+            Dim remove As New List(Of String)
+            Dim nextFrame = 0
+
+            For Each range In _trimRanges.OrderBy(Function(x) x.Start)
+                If range.Start > nextFrame Then remove.Add($"""{nextFrame}-{range.Start - 1}""")
+                nextFrame = Math.Max(nextFrame, range.End + 1)
+            Next
+
+            If nextFrame < frames Then remove.Add($"""{nextFrame}-{frames - 1}""")
+
+            Dim trimConfig = "{""remove"":[" + String.Join(",", remove) + "]}"
+            trimConfig.WriteFileUTF8(TrimConfigFilePath)
+            Dim arguments = "editor -i " + inputFilePath.Escape + " -j " + TrimConfigFilePath.Escape + " -o " + TrimmedRpuFilePath.Escape
+
             Using proc As New Proc
-                proc.Package = Package.DoViSplit
+                proc.Package = Package.DoViTool
                 proc.Project = p
                 proc.Header = "Trimming RPU metadata file"
                 proc.Encoding = Encoding.UTF8
