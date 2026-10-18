@@ -567,6 +567,11 @@ Public Class AudioForm
         mbChannels.Value = TempProfile.Params.ChannelsMode
         mbSamplingRate.Value = TempProfile.Params.SamplingRate
         mbEncoder.Value = TempProfile.Params.Encoder
+        'NicAudio and DirectShow from Windows profiles are replaced with FFAudioSource
+        If TempProfile.Decoder = AudioDecoderMode.NicAudio OrElse TempProfile.Decoder = AudioDecoderMode.DirectShow Then
+            TempProfile.Decoder = AudioDecoderMode.FFAudioSource
+        End If
+
         mbDecoder.Value = TempProfile.Decoder
 
         mbLanguage.Value = TempProfile.Language

@@ -52,9 +52,7 @@ Public Class Audio
                     Case ".mp4"
                         MP4BoxDemuxer.DemuxAudio(ap.File, ap.Stream, ap, p, True)
                     Case Else
-                        If p.Script.GetFilter("Source").Script.ToLowerInvariant.Contains("directshowsource") AndAlso TypeOf ap IsNot MuxAudioProfile Then
-                            ConvertDirectShowSource(ap)
-                        ElseIf Not ap.File.Ext = "m2ts" Then
+                        If Not ap.File.Ext = "m2ts" Then
                             ffmpegDemuxer.DemuxAudio(ap.File, ap.Stream, ap, p, True)
                         End If
                 End Select
@@ -137,118 +135,21 @@ Public Class Audio
         Select Case ap.Decoder
             Case AudioDecoderMode.ffmpeg, AudioDecoderMode.Automatic
                 ConvertFF(ap)
-            Case AudioDecoderMode.FFAudioSource
+            'NicAudio and DirectShowSource only exist for Windows, FFAudioSource replaces them
+            Case AudioDecoderMode.FFAudioSource, AudioDecoderMode.NicAudio, AudioDecoderMode.DirectShow
                 ConvertFFAudioSource(ap)
             Case AudioDecoderMode.eac3to
                 ConvertEac3to(ap)
-            Case AudioDecoderMode.NicAudio
-                ConvertNicAudio(ap)
-            Case AudioDecoderMode.DirectShow
-                ConvertDirectShowSource(ap)
         End Select
-
-        If p.Script.GetFilter("Source").Script.ToLowerInvariant.Contains("directshowsource") Then
-            ConvertDirectShowSource(ap)
-        End If
 
         gap.Params.Normalize = renormalize
         gap.Params.ffmpegNormalizeMode = If(gap.Params.ffmpegNormalizeMode = ffmpegNormalizeMode.dynaudnorm, ffmpegNormalizeMode.volumedetect, gap.Params.ffmpegNormalizeMode)
 
         ConvertFF(ap, renormalize)
         ConvertEac3to(ap)
-        ConvertDirectShowSource(ap)
-    End Sub
 
-    Shared Sub CutNicAudio(ap As AudioProfile)
-        If ap.File.Contains("_cut_") Then
-            Exit Sub
-        End If
-
-        If Not FileTypes.NicAudioInput.Contains(ap.File.Ext) Then
-            Exit Sub
-        End If
-
-        If Not Package.AviSynth.VerifyOK(True) Then
-            Throw New AbortException
-        End If
-
-        ap.Delay = 0
-        Dim d As New VideoScript
-        d.Filters.AddRange(p.Script.Filters)
-        Dim wavPath = Path.Combine(p.TempDir, ap.File.Base + "_cut_na.wav")
-        d.Path = Path.Combine(p.TempDir, ap.File.Base + "_cut_na.avs")
-        d.Filters.Insert(1, New VideoFilter(GetNicAudioCode(ap)))
-
-        If ap.Channels = 2 Then
-            d.Filters.Add(New VideoFilter(GetDown2Code))
-        End If
-
-        d.Synchronize()
-
-        Dim args = "-i " + d.Path.Escape + " -y -hide_banner " + wavPath.Escape
-
-        Using proc As New Proc
-            proc.Header = "AVS to WAV"
-            proc.SkipStrings = {"frame=", "size="}
-            proc.WriteLog(Macro.Expand(d.GetScript) + BR)
-            proc.Encoding = Encoding.UTF8
-            proc.Package = Package.ffmpeg
-            proc.Arguments = args
-            proc.Start()
-        End Using
-
-        If g.FileExists(wavPath) Then
-            ap.File = wavPath
-            Log.WriteLine(MediaInfo.GetSummary(wavPath))
-        Else
-            Log.Write("Error", "no output found")
-        End If
-    End Sub
-
-    Shared Sub ConvertNicAudio(ap As AudioProfile)
-        If ap.File.Ext = ap.ConvertExt Then
-            Exit Sub
-        End If
-
-        If Not FileTypes.NicAudioInput.Contains(ap.File.Ext) Then
-            Exit Sub
-        End If
-
-        If Not Package.AviSynth.VerifyOK(True) Then
-            Throw New AbortException
-        End If
-
-        ap.Delay = 0
-        Dim d As New VideoScript
-        d.Filters.AddRange(p.Script.Filters)
-        d.RemoveFilter("Cutting")
-        Dim outPath = Path.Combine(p.TempDir, ap.File.Base + "_DecodeNicAudio." + ap.ConvertExt)
-        d.Path = Path.Combine(p.TempDir, ap.File.Base + "_DecodeNicAudio.avs")
-        d.Filters.Insert(1, New VideoFilter(GetNicAudioCode(ap)))
-
-        If ap.Channels = 2 Then
-            d.Filters.Add(New VideoFilter(GetDown2Code))
-        End If
-
-        d.Synchronize()
-
-        Dim args = "-i " + d.Path.Escape + " -y -hide_banner " + outPath.Escape
-
-        Using proc As New Proc
-            proc.Header = "AVS to WAV"
-            proc.SkipStrings = {"frame=", "size="}
-            proc.WriteLog(Macro.Expand(d.GetScript) + BR)
-            proc.Encoding = Encoding.UTF8
-            proc.Package = Package.ffmpeg
-            proc.Arguments = args
-            proc.Start()
-        End Using
-
-        If g.FileExists(outPath) Then
-            ap.File = outPath
-            Log.WriteLine(MediaInfo.GetSummary(outPath))
-        Else
-            Log.Write("Error", "no output found")
+        If Package.AviSynth.Path <> "" AndAlso Package.ffms2.Path <> "" Then
+            ConvertFFAudioSource(ap)
         End If
     End Sub
 
@@ -264,31 +165,16 @@ Public Class Audio
         Select Case p.CuttingMode
             Case CuttingMode.mkvmerge
                 CutMkvmerge(ap)
-            Case CuttingMode.NicAudio
-                If FileTypes.NicAudioInput.Contains(ap.File.Ext) AndAlso TypeOf ap IsNot MuxAudioProfile Then
-                    CutNicAudio(ap)
-                Else
-                    CutMkvmerge(ap)
-                End If
-            Case CuttingMode.DirectShow
-                If TypeOf ap IsNot MuxAudioProfile Then
-                    CutDirectShowSource(ap)
+            'NicAudio and DirectShowSource only exist for Windows, FFAudioSource replaces them,
+            'the AviSynth+ script provides the Trim filters
+            Case CuttingMode.FFAudioSource, CuttingMode.NicAudio, CuttingMode.DirectShow
+                If TypeOf ap IsNot MuxAudioProfile AndAlso p.Script.IsAviSynth Then
+                    CutFFAudioSource(ap)
                 Else
                     CutMkvmerge(ap)
                 End If
         End Select
     End Sub
-
-    Shared Function GetNicAudioCode(ap As AudioProfile) As String
-        Select Case ap.File.Ext
-            Case "ac3"
-                Return "AudioDub(last, NicAC3Source(" + VideoScript.ToAviSynthString(ap.File) + ", Channels = " & ap.Channels & "))"
-            Case "mpa", "mp2", "mp3"
-                Return "AudioDub(last, NicMPASource(" + VideoScript.ToAviSynthString(ap.File) + "))"
-            Case "wav"
-                Return "AudioDub(last, RaWavSource(" + VideoScript.ToAviSynthString(ap.File) + ", Channels = " & ap.Channels & "))"
-        End Select
-    End Function
 
     Shared Sub ConvertEac3to(ap As AudioProfile)
         If ap.File.Ext = ap.ConvertExt Then
@@ -485,49 +371,6 @@ Public Class Audio
         Return If(ret = "", "-af dynaudnorm", "-af dynaudnorm=" + ret.Trim(":"c))
     End Function
 
-    Shared Sub ConvertDirectShowSource(ap As AudioProfile, Optional useFlac As Boolean = False)
-        If ap.File.Ext = ap.ConvertExt Then
-            Exit Sub
-        End If
-
-        If Not Package.AviSynth.VerifyOK(True) Then
-            Throw New AbortException
-        End If
-
-        ap.Delay = 0
-        Dim d As New VideoScript
-        d.Filters.AddRange(p.Script.Filters)
-        d.RemoveFilter("Cutting")
-        Dim outPath = Path.Combine(p.TempDir, ap.File.Base + "_convDSS." + ap.ConvertExt)
-        d.Path = Path.Combine(p.TempDir, ap.File.Base + "_DecDSS.avs")
-        d.Filters.Insert(1, New VideoFilter("AudioDub(last,DirectShowSource(" + VideoScript.ToAviSynthString(ap.File) + ", video=false))"))
-
-        If ap.Channels = 2 Then
-            d.Filters.Add(New VideoFilter(GetDown2Code))
-        End If
-
-        d.Synchronize()
-
-        Dim args = "-i " + d.Path.Escape + " -y -hide_banner " + outPath.Escape
-
-        Using proc As New Proc
-            proc.Header = "AVS to WAV"
-            proc.SkipStrings = {"frame=", "size="}
-            proc.WriteLog(Macro.Expand(d.GetScript) + BR)
-            proc.Encoding = Encoding.UTF8
-            proc.Package = Package.ffmpeg
-            proc.Arguments = args
-            proc.Start()
-        End Using
-
-        If g.FileExists(outPath) Then
-            ap.File = outPath
-            Log.WriteLine(MediaInfo.GetSummary(outPath))
-        Else
-            Log.Write("Error", "no output found")
-        End If
-    End Sub
-
     Shared Sub ConvertFFAudioSource(ap As AudioProfile)
         If ap.File.Ext = ap.ConvertExt Then
             Exit Sub
@@ -568,48 +411,6 @@ Public Class Audio
         If g.FileExists(outPath) Then
             ap.File = outPath
             Log.WriteLine(MediaInfo.GetSummary(outPath))
-        Else
-            Log.Write("Error", "no output found")
-        End If
-    End Sub
-
-    Shared Sub CutDirectShowSource(ap As AudioProfile)
-        If ap.File.Contains("_cut_") Then
-            Exit Sub
-        End If
-
-        If Not Package.AviSynth.VerifyOK(True) Then
-            Throw New AbortException
-        End If
-
-        ap.Delay = 0
-        Dim d As New VideoScript
-        d.Filters.AddRange(p.Script.Filters)
-        Dim wavPath = Path.Combine(p.TempDir, ap.File.Base + "_cut_ds.wav")
-        d.Path = Path.Combine(p.TempDir, ap.File.Base + "_cut_ds.avs")
-        d.Filters.Insert(1, New VideoFilter("AudioDub(last,DirectShowSource(" + VideoScript.ToAviSynthString(ap.File) + ", video=false))"))
-
-        If ap.Channels = 2 Then
-            d.Filters.Add(New VideoFilter(GetDown2Code))
-        End If
-
-        d.Synchronize()
-
-        Dim args = "-i " + d.Path.Escape + " -y -hide_banner " + wavPath.Escape
-
-        Using proc As New Proc
-            proc.Header = "AVS to WAV"
-            proc.SkipStrings = {"frame=", "size="}
-            proc.WriteLog(Macro.Expand(d.GetScript) + BR)
-            proc.Encoding = Encoding.UTF8
-            proc.Package = Package.ffmpeg
-            proc.Arguments = args
-            proc.Start()
-        End Using
-
-        If g.FileExists(wavPath) Then
-            ap.File = wavPath
-            Log.WriteLine(MediaInfo.GetSummary(wavPath))
         Else
             Log.Write("Error", "no output found")
         End If
@@ -815,8 +616,9 @@ Public Enum AudioDecoderMode
     Automatic
     ffmpeg
     eac3to
-    NicAudio
-    DirectShow
+    'NicAudio and DirectShow only exist for Windows
+    <ComponentModel.Browsable(False)> NicAudio
+    <ComponentModel.Browsable(False)> DirectShow
     FFAudioSource
 End Enum
 
@@ -829,8 +631,9 @@ End Enum
 
 Public Enum CuttingMode
     mkvmerge
-    DirectShow
-    NicAudio
+    <ComponentModel.Browsable(False)> DirectShow
+    <ComponentModel.Browsable(False)> NicAudio
+    FFAudioSource
 End Enum
 
 Public Enum ffNormalizeMode

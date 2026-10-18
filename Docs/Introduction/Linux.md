@@ -21,6 +21,7 @@
   | MPC, mpv.net | [mpv](https://mpv.io) |
   | VSFilterMod, xy-VSFilter | Hardcoded subtitles use [SubText](https://github.com/vapoursynth/subtext) (VapourSynth) and [AssRender](https://github.com/pinterf/assrender) (AviSynth+, text subtitles only) |
   | DirectShowSource, DSS2, AviSource (DirectShow, VFW) | The FFmpeg based source filters FFMS2, BestSource and L-SMASH Works |
+  | NicAudio and DirectShow audio decoding and cutting | FFAudioSource of FFMS2 with AviSynth+, FFmpeg decodes the script, so it must be built with AviSynth support |
   | AutoCrop | Auto crop runs inside StaxRip |
 
 - VapourSynth scripts are played with mpv and passed to NVEncC, QSVEncC, VCEEncC and rav1e by piping

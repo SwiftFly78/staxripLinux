@@ -399,9 +399,14 @@ Partial Public Class MainForm
 
             moreAudioAction()
 
+            'DirectShow and NicAudio from Windows projects are replaced with FFAudioSource
+            If p.CuttingMode = CuttingMode.DirectShow OrElse p.CuttingMode = CuttingMode.NicAudio Then
+                p.CuttingMode = CuttingMode.FFAudioSource
+            End If
+
             Dim cut = ui.AddMenu(Of CuttingMode)
             cut.Text = "Cutting Method"
-            cut.Help = "Defines which method to use for cutting."
+            cut.Help = "Defines which method to use for cutting. FFAudioSource decodes the audio with AviSynth+ and FFMS2 and requires an AviSynth+ script, otherwise mkvmerge is used."
             cut.Field = NameOf(p.CuttingMode)
 
             Dim demuxAudio = ui.AddMenu(Of DemuxMode)

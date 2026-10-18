@@ -39,6 +39,7 @@ Namespace UI
             Set(value As Object)
                 If Menu.Items.Count = 0 AndAlso TypeOf value Is System.Enum Then
                     For Each i In System.Enum.GetValues(value.GetType)
+                        If Not IsBrowsable(i) Then Continue For
                         Dim text = DispNameAttribute.GetValueForEnum(i)
                         Dim temp = i
                         Items.Add(temp)
@@ -65,6 +66,13 @@ Namespace UI
                 ValueValue = value
             End Set
         End Property
+
+        'enum values of features that only exist for Windows are hidden with <Browsable(False)>
+        Shared Function IsBrowsable(value As Object) As Boolean
+            Dim field = value.GetType.GetField(value.ToString)
+            Return field Is Nothing OrElse field.GetCustomAttributes(GetType(ComponentModel.BrowsableAttribute), False).
+                OfType(Of ComponentModel.BrowsableAttribute).All(Function(i) i.Browsable)
+        End Function
 
         Protected Overrides Sub OnClick(e As EventArgs)
             Menu.Show(Me, New PointF(0, Height))
