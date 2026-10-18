@@ -792,7 +792,7 @@ Public Class x264Params
         .Text = "Pipe",
         .Name = "PipingToolAVS",
         .VisibleFunc = Function() p.Script.Engine = ScriptEngine.AviSynth,
-        .Options = {"Automatic", "None", "avs2pipemod y4m", "avs2pipemod raw", "ffmpeg y4m", "ffmpeg raw"}}
+        .Options = {"Automatic", "None", "avs2yuv y4m", "avs2yuv raw", "ffmpeg y4m", "ffmpeg raw"}}
 
     Property PipingToolVS As New OptionParam With {
         .Text = "Pipe",
@@ -1292,7 +1292,7 @@ Public Class x264Params
 
             If pipeTool = "automatic" Then
                 If p.Script.IsAviSynth Then
-                    pipeTool = If(Package.x264Type <> x264Type.Vanilla, "none", If(FrameServerHelp.GetAviSynthPipeTool() = "ffmpeg", "ffmpegy4m", "avs2pipemody4m"))
+                    pipeTool = If(Package.x264Type <> x264Type.Vanilla, "none", If(FrameServerHelp.GetAviSynthPipeTool() = "ffmpeg", "ffmpegy4m", "avs2yuvy4m"))
                 ElseIf p.Script.IsVapourSynth Then
                     pipeTool = If(Package.x264Type = x264Type.Vanilla, "vspipey4m", "none")
                 End If
@@ -1308,22 +1308,10 @@ Public Class x264Params
                     pipeCmd = Package.vspipe.Path.Escape + " " + script.Path.Escape + " - --container y4m | "
                 Case "vspiperaw"
                     pipeCmd = Package.vspipe.Path.Escape + " " + script.Path.Escape + " - | "
-                Case "avs2pipemody4m"
-                    Dim dll As String = ""
-
-                    If FrameServerHelp.IsPortable Then
-                        dll = " -dll=" + Package.AviSynth.Path.Escape
-                    End If
-
-                    pipeCmd = Package.avs2pipemod.Path.Escape + dll + " -y4mp " + script.Path.Escape + " | "
-                Case "avs2pipemodraw"
-                    Dim dll As String = ""
-
-                    If FrameServerHelp.IsPortable Then
-                        dll = " -dll=" + Package.AviSynth.Path.Escape
-                    End If
-
-                    pipeCmd = Package.avs2pipemod.Path.Escape + dll + " -rawvideo " + script.Path.Escape + " | "
+                Case "avs2yuvy4m"
+                    pipeCmd = FrameServerHelp.GetAvs2yuvCommand(script.Path) + " | "
+                Case "avs2yuvraw"
+                    pipeCmd = FrameServerHelp.GetAvs2yuvCommand(script.Path, raw:=True) + " | "
                 Case "ffmpegy4m"
                     pipeCmd = Package.ffmpeg.Path.Escape + If(p.Script.IsVapourSynth, " -f vapoursynth", "") + " -i " + script.Path.Escape + " -f yuv4mpegpipe -strict -1 -loglevel fatal -hide_banner - | "
                 Case "ffmpegraw"

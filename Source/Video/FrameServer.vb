@@ -676,9 +676,28 @@ Public Class FrameServerHelp
         Return GetAviSynthInstallPath() <> ""
     End Function
 
-    'avs2pipemod is rarely packaged on Linux, ffmpeg usually reads AviSynth scripts
+    'avs2pipemod only exists for Windows, avs2yuv pipes AviSynth+ scripts on Linux,
+    'ffmpeg reads them only when it's built with AviSynth support
     Shared Function GetAviSynthPipeTool() As String
-        Return If(Package.avs2pipemod.Path <> "", "avs2pipemod", "ffmpeg")
+        Return If(Package.avs2yuv.Path <> "", "avs2yuv", "ffmpeg")
+    End Function
+
+    'endFrame 0 pipes all frames
+    Shared Function GetAvs2yuvCommand(scriptPath As String, Optional startFrame As Integer = 0,
+                                      Optional endFrame As Integer = 0, Optional raw As Boolean = False) As String
+
+        Dim ret = Package.avs2yuv.Path.Escape + " -nstdr"
+
+        'avs2yuv loads libavisynth.so with the dynamic linker
+        If IsAviSynthPortable() AndAlso Package.AviSynth.Path <> "" Then
+            ret = "LD_LIBRARY_PATH=" + Package.AviSynth.Directory.TrimEnd("/"c).Escape + "${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH} " + ret
+        End If
+
+        If endFrame > 0 Then
+            ret += $" -seek {startFrame} -frames {endFrame - startFrame + 1}"
+        End If
+
+        Return ret + If(raw, " -raw", "") + " " + scriptPath.Escape + " -o -"
     End Function
 
     Shared Function IsAviSynth() As Boolean

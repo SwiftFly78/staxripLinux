@@ -242,7 +242,7 @@ Public Class ffmpegEnc
             .Text = "Pipe",
             .Name = "PipingToolAVS",
             .VisibleFunc = Function() p.Script.IsAviSynth AndAlso Decoder.Value = 0,
-            .Options = {"Automatic", "avs2pipemod", "ffmpeg"}}
+            .Options = {"Automatic", "avs2yuv", "ffmpeg"}}
 
         Property PipingToolVS As New OptionParam With {
             .Text = "Pipe",
@@ -315,12 +315,8 @@ Public Class ffmpegEnc
                         End If
 
                         Select Case pipeTool
-                            Case "avs2pipemod"
-                                sb.Append(Package.avs2pipemod.Path.Escape())
-                                sb.Append(If(FrameServerHelp.IsPortable, $" -dll={Package.AviSynth.Path.Escape}", ""))
-                                sb.Append(" -y4mp ")
-                                'sb.Append($" --frames {endFrame - startFrame + 1}")
-                                sb.Append(sourcePath.Escape())
+                            Case "avs2yuv"
+                                sb.Append(FrameServerHelp.GetAvs2yuvCommand(sourcePath))
                                 sb.Append(" | ")
                                 sb.Append(Package.ffmpeg.Path.Escape())
                                 sb.Append(" -i -")

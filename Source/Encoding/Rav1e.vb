@@ -338,9 +338,11 @@ Public Class Rav1eParams
         Dim sb As New StringBuilder
 
         If includePaths AndAlso includeExecutable Then
-            'many FFmpeg builds can't read VapourSynth scripts
+            'many FFmpeg builds can't read VapourSynth and AviSynth scripts
             If script.Path.Ext = "vpy" Then
                 sb.Append(Package.vspipe.Path.Escape + " " + script.Path.Escape + " - --container y4m | " + Package.Rav1e.Path.Escape)
+            ElseIf FrameServerHelp.GetAviSynthPipeTool() = "avs2yuv" Then
+                sb.Append(FrameServerHelp.GetAvs2yuvCommand(script.Path) + " | " + Package.Rav1e.Path.Escape)
             Else
                 sb.Append(Package.ffmpeg.Path.Escape + " -loglevel fatal -hide_banner -i " + script.Path.Escape + " -f yuv4mpegpipe -strict -1 - | " + Package.Rav1e.Path.Escape)
             End If

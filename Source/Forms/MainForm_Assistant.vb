@@ -393,7 +393,7 @@ Partial Public Class MainForm
 
                     If ProcessTip("x264 AviSynth input supports only YUV420P8, YUV422P8, YUV444P8 and BGR32 " +
                                  $"as input colorspace.{BR}Consider to use a pipe tool: " +
-                                  "x264 Options > Input/Output > Pipe > avs2pipemod y4m") Then
+                                  "x264 Options > Input/Output > Pipe > avs2yuv y4m") Then
                         Return Block("Incompatible colorspace")
                     End If
                 End If

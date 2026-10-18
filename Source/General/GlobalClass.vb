@@ -2165,12 +2165,14 @@ Public Class GlobalClass
             Using td As New TaskDialog(Of String)
                 td.Title = "Choose below"
                 td.AddCommand("Info()")
-                td.AddCommand("avs2pipemod info")
+                td.AddCommand("avs2yuv info")
 
+                'avs2yuv replaces avs2pipemod, which only exists for Windows
                 Select Case td.Show()
-                    Case "avs2pipemod info"
-                        DesktopHelp.RunInTerminal(GetVersionEcho(Package.avs2pipemod) + Package.avs2pipemod.Path.Escape +
-                            " -dll=" + Package.AviSynth.Path.Escape + " -info " + script.Path.Escape)
+                    Case "avs2yuv info"
+                        If Package.avs2yuv.VerifyOK(True) Then
+                            DesktopHelp.RunInTerminal(Package.avs2yuv.Path.Escape + " -frames 1 " + script.Path.Escape + " -o /dev/null")
+                        End If
                     Case "Info()"
                         Dim infoScript = New VideoScript
                         infoScript.AddFilter(New VideoFilter("Import(" + VideoScript.ToAviSynthString(script.Path) + ")"))
@@ -2281,7 +2283,7 @@ Public Class GlobalClass
 
     Function ContainsPipeTool(value As String) As Boolean
         If value <> "" Then
-            Return value.Contains("ffmpeg") OrElse value.Contains("avs2pipemod") OrElse value.Contains("vspipe")
+            Return value.Contains("ffmpeg") OrElse value.Contains("avs2yuv") OrElse value.Contains("vspipe")
         End If
     End Function
 

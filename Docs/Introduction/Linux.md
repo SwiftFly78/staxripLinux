@@ -16,6 +16,7 @@
   | qaac | [fdkaac](https://github.com/nu774/fdkaac), AAC profiles in automatic mode use it if it's installed, otherwise the AAC encoder of FFmpeg |
   | DGIndex | [D2V Witch](https://github.com/dubhater/D2VWitch) indexes MPEG-2 sources when a d2v source filter is selected |
   | DGDecode | [D2VSource](https://github.com/Asd-g/MPEG2DecPlus) (AviSynth+) and [d2vsource](https://github.com/dwbuiten/d2vsource) (VapourSynth) open the d2v index |
+  | avs2pipemod | [avs2yuv](https://github.com/DJATOM/avs2yuv) pipes AviSynth+ scripts to the encoders, without it FFmpeg is used, which requires an FFmpeg build with AviSynth support |
   | MPC, mpv.net | [mpv](https://mpv.io) |
   | VSFilterMod, xy-VSFilter | Hardcoded subtitles use [SubText](https://github.com/vapoursynth/subtext) (VapourSynth) |
   | AutoCrop | Auto crop runs inside StaxRip |
@@ -44,8 +45,8 @@
   NVEncC (`nvencc`), QSVEncC (`qsvencc`) or VCEEncC (`vceencc`). vvenc installs vvencFFapp only when it's built
   with `-DVVENC_INSTALL_FULLFEATURE_APP=ON`. VCEEncC and the AMF encoders of FFmpeg require AMD's AMF runtime
   (`libamfrt64.so.1`, `amf-amdgpu-pro` in the AUR).
-- Optional: mpv, opusenc, fdkaac, dovi_tool, hdr10plus_tool, D2V Witch, the subtitle plugin SubText and the d2v
-  source filters d2vsource and D2VSource
+- Optional: mpv, opusenc, fdkaac, dovi_tool, hdr10plus_tool, D2V Witch, avs2yuv, the subtitle plugin SubText and
+  the d2v source filters d2vsource and D2VSource
 
 Package names differ between distributions, some examples:
 
@@ -59,7 +60,7 @@ sudo pacman -S dotnet-runtime gtk3 libmediainfo mkvtoolnix-cli ffmpeg vapoursynt
 `fdkaac`, `avisynthplus`, `dovi-tool` and `hdr10plus-tool` (Dolby Vision and HDR10+ metadata) are in the official
 repositories as well. The AUR has packages for the other tools and plugins that replace the Windows tools:
 `d2vwitch-git`, `vapoursynth-plugin-d2vsource`, `vapoursynth-plugin-subtext-git` and, for AviSynth+,
-`avisynth-plugin-mpeg2decplus-git` (D2VSource).
+`avs2yuv-git` and `avisynth-plugin-mpeg2decplus-git` (D2VSource).
 
 Fedora (x264 and x265 are available from [RPM Fusion](https://rpmfusion.org), which also has a complete FFmpeg):
 

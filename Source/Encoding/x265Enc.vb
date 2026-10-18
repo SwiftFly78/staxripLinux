@@ -629,7 +629,7 @@ Public Class x265Params
         .Text = "Pipe",
         .Name = "PipingToolAVS",
         .VisibleFunc = Function() p.Script.IsAviSynth AndAlso Decoder.Value = 0,
-        .Options = {"Automatic", "avs2pipemod", "ffmpeg"}}
+        .Options = {"Automatic", "avs2yuv", "ffmpeg"}}
 
     Property PipingToolVS As New OptionParam With {
         .Text = "Pipe",
@@ -1712,10 +1712,8 @@ Public Class x265Params
                     End If
 
                     Select Case pipeTool
-                        Case "avs2pipemod"
-                            Dim chunk = If(isSingleChunk, "", $" -trim={startFrame},{endFrame}")
-                            Dim dll = If(FrameServerHelp.IsPortable, $" -dll={Package.AviSynth.Path.Escape}", "")
-                            pipeString = Package.avs2pipemod.Path.Escape + dll + chunk + " -y4mp " + script.Path.Escape + " | "
+                        Case "avs2yuv"
+                            pipeString = FrameServerHelp.GetAvs2yuvCommand(script.Path, startFrame, endFrame) + " | "
                             sb.Append(pipeString + Package.x265.Path.Escape)
 
                             If isSingleChunk Then
