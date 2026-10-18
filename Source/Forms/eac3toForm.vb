@@ -172,10 +172,10 @@ Public Class eac3toForm
         Dim args = ""
 
         If File.Exists(M2TSFile) Then
-            args = M2TSFile.Escape + " -progressnumbers"
+            args = WineHelp.ToWinePath(M2TSFile).Escape + " -progressnumbers"
             Project.Log.Write("Process M2TS file using eac3to", Package.eac3to.Path.Escape + " " + args + BR2)
         ElseIf Directory.Exists(PlaylistFolder) Then
-            args = PlaylistFolder.Escape + " " & PlaylistID & ") -progressnumbers" + GetPlaylistOptions(Project)
+            args = WineHelp.ToWinePath(PlaylistFolder).Escape + " " & PlaylistID & ") -progressnumbers" + GetPlaylistOptions(Project)
             Project.Log.Write("Process playlist file using eac3to", Package.eac3to.Path.Escape + " " + args + BR2)
         End If
 
@@ -426,7 +426,7 @@ Public Class eac3toForm
         If videoStream IsNot Nothing AndAlso Not cbVideoOutput.Text = "Nothing" Then
             Dim outFile = Path.Combine(OutputFolder, baseName + "." + cbVideoOutput.Text.ToLowerInvariant)
             If Not outFile.FileExists() Then
-                ret += " " & videoStream.ID & ": " + outFile.Escape
+                ret += " " & videoStream.ID & ": " + WineHelp.ToWinePath(outFile).Escape
                 outFiles.Add(outFile)
             End If
         End If
@@ -436,7 +436,7 @@ Public Class eac3toForm
             If el IsNot Nothing Then
                 Dim outFile = Path.Combine(OutputFolder, baseName + "_EL.h265")
                 If Not outFile.FileExists() Then
-                    ret += " " & el.ID & ": " + outFile.Escape
+                    ret += " " & el.ID & ": " + WineHelp.ToWinePath(outFile).Escape
                     outFiles.Add(outFile)
                 End If
             End If
@@ -452,7 +452,7 @@ Public Class eac3toForm
 
                 outFile += "." + stream.OutputType
                 outFiles.Add(outFile)
-                ret += " " & stream.ID & ": " + outFile.Escape
+                ret += " " & stream.ID & ": " + WineHelp.ToWinePath(outFile).Escape
 
                 If stream.Options <> "" Then
                     ret += " " + stream.Options.Trim
@@ -470,13 +470,13 @@ Public Class eac3toForm
 
                 outFile += ".sup"
                 outFiles.Add(outFile)
-                ret += " " & stream.ID & ": " + outFile.Escape
+                ret += " " & stream.ID & ": " + WineHelp.ToWinePath(outFile).Escape
             End If
 
             If stream.IsChapters AndAlso cbChapters.Checked Then
                 Dim outFile = Path.Combine(OutputFolder, baseName + "_chapters.txt")
                 outFiles.Add(outFile)
-                ret += " " & stream.ID & ": " + outFile.Escape
+                ret += " " & stream.ID & ": " + WineHelp.ToWinePath(outFile).Escape
             End If
         Next
 

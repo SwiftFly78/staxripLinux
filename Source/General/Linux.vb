@@ -132,6 +132,15 @@ Public Class ShellHelp
     End Function
 End Class
 
+'tools that only exist for Windows like eac3to run with Wine, which maps the drive Z: to the root folder
+Public Class WineHelp
+    'eac3to reads arguments that start with / as options
+    Shared Function ToWinePath(path As String) As String
+        If path Is Nothing OrElse Not path.StartsWith("/") Then Return path
+        Return "Z:" + path.Replace("/"c, "\"c)
+    End Function
+End Class
+
 'resolves the Windows DLL names used in DllImport declarations to Linux shared libraries
 Public Class NativeLibraries
     Private Shared Initialized As Boolean

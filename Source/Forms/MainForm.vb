@@ -1471,7 +1471,7 @@ Partial Public Class MainForm
         Log.Write("Process Blu-Ray folder using eac3to", """" + Package.eac3to.Path + """ """ + srcPath + """" + minDuration + BR2)
         Log.WriteLine("Source Drive Type: " + New DriveInfo(srcPath).DriveType.ToString + BR)
 
-        Dim output = ProcessHelp.GetConsoleOutput(Package.eac3to.Path, srcPath.Escape & minDuration).Replace(VB6.vbBack, "")
+        Dim output = ProcessHelp.GetConsoleOutput(Package.eac3to.Path, WineHelp.ToWinePath(srcPath).Escape & minDuration).Replace(VB6.vbBack, "")
         Log.WriteLine(output)
 
         Dim a = Regex.Split(output, "^\d+\)", RegexOptions.Multiline).ToList
@@ -1526,7 +1526,7 @@ Partial Public Class MainForm
             Log.WriteLine("Source Drive Type: " + New DriveInfo(srcPath).DriveType.ToString + BR)
             Log.WriteLine("Mounted ISO File:  " + isoPath.Escape() + BR)
 
-            Dim output = ProcessHelp.GetConsoleOutput(Package.eac3to.Path, srcPath.Escape & minDuration).Replace(VB6.vbBack, "")
+            Dim output = ProcessHelp.GetConsoleOutput(Package.eac3to.Path, WineHelp.ToWinePath(srcPath).Escape & minDuration).Replace(VB6.vbBack, "")
             Log.WriteLine(output)
 
             Dim a = Regex.Split(output, "^\d+\)", RegexOptions.Multiline).ToList
@@ -4455,7 +4455,7 @@ Partial Public Class MainForm
                         pr.SkipStrings = {"analyze: ", "process: "}
                         pr.Package = Package.eac3to
                         Dim outFiles As New List(Of String)
-                        pr.Process.StartInfo.Arguments = form.GetArgs(playlistFolder.Escape + " " & playlistID & ")", title, outFiles) + eac3toForm.GetPlaylistOptions(p)
+                        pr.Process.StartInfo.Arguments = form.GetArgs(WineHelp.ToWinePath(playlistFolder).Escape + " " & playlistID & ")", title, outFiles) + eac3toForm.GetPlaylistOptions(p)
                         pr.OutputFiles = outFiles
 
                         Try

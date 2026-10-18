@@ -196,7 +196,7 @@ Public Class eac3toDemuxer
                     proc.Header = "Demux M2TS"
                     proc.Package = Package.eac3to
                     Dim outFiles As New List(Of String)
-                    proc.Arguments = form.GetArgs(proj.SourceFile.Escape, proj.SourceFile.Base, outFiles)
+                    proc.Arguments = form.GetArgs(WineHelp.ToWinePath(proj.SourceFile).Escape, proj.SourceFile.Base, outFiles)
                     proc.OutputFiles = outFiles
 
                     Try

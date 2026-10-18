@@ -1163,8 +1163,8 @@ Public Class GUIAudioProfile
         End If
 
         If includePaths Then
-            sb.Append(Package.eac3to.Path.Escape + " " + id + File.LongPathPrefix.Escape +
-                " " + GetOutputFile.LongPathPrefix.Escape)
+            sb.Append(Package.eac3to.Path.Escape + " " + id + WineHelp.ToWinePath(File).Escape +
+                " " + WineHelp.ToWinePath(GetOutputFile).Escape)
         Else
             sb.Append(Package.eac3to.Filename.Base)
         End If

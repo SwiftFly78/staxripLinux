@@ -30,6 +30,9 @@
 - The ffmpeg encoder has VA-API profiles (`ffmpeg | VAAPI | H.264`, `H.265` and `AV1`), which use the hardware
   encoders of AMD and Intel GPUs through Mesa or the Intel media driver without proprietary runtimes. The device
   is `/dev/dri/renderD128` unless another render node is defined in the encoder options.
+- eac3to only exists for Windows. StaxRip runs it with Wine when a command named `eac3to` starts it, like the
+  wrapper script of the AUR package `eac3to` (`wine /path/to/eac3to.exe "$@"`). StaxRip passes the paths as Wine
+  paths (`Z:\...`), because eac3to reads arguments that start with `/` as options.
 - Thumbnail sheets can be saved as JPEG, PNG, BMP and TIFF, but not as GIF.
 - The controls use the GTK theme. The StaxRip themes only define the colors of highlighting and other custom drawn
   content and are only used with a dark GTK theme.
@@ -51,8 +54,8 @@
   NVEncC (`nvencc`), QSVEncC (`qsvencc`) or VCEEncC (`vceencc`). vvenc installs vvencFFapp only when it's built
   with `-DVVENC_INSTALL_FULLFEATURE_APP=ON`. VCEEncC and the AMF encoders of FFmpeg require AMD's AMF runtime
   (`libamfrt64.so.1`, `amf-amdgpu-pro` in the AUR).
-- Optional: mpv, opusenc, fdkaac, dovi_tool, hdr10plus_tool, D2V Witch, avs2yuv, the subtitle plugins SubText and
-  AssRender and the d2v source filters d2vsource and D2VSource
+- Optional: mpv, opusenc, fdkaac, dovi_tool, hdr10plus_tool, D2V Witch, avs2yuv, eac3to (with Wine), the subtitle
+  plugins SubText and AssRender and the d2v source filters d2vsource and D2VSource
 
 Package names differ between distributions, some examples:
 

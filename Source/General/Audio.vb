@@ -186,7 +186,7 @@ Public Class Audio
         End If
 
         Dim outPath = Path.Combine(p.TempDir, ap.File.Base + "." + ap.ConvertExt)
-        Dim args = ap.File.Escape + " " + outPath.Escape
+        Dim args = WineHelp.ToWinePath(ap.File).Escape + " " + WineHelp.ToWinePath(outPath).Escape
 
         If ap.Channels = 6 Then
             args += " -down6"
