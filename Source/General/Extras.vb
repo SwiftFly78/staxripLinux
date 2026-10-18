@@ -71,7 +71,7 @@ Public Class Animation
     Shared Sub aPNG(inputFile As String, proj As Project)
         If Not File.Exists(inputFile) Then Exit Sub
         If Not Package.ffmpeg.VerifyOK(True) Then Exit Sub
-        If Not Package.PNGopt.VerifyOK(True) Then Exit Sub
+        If s.Storage.GetBool("OptSetting", False) AndAlso Not Package.PNGopt.VerifyOK(True) Then Exit Sub
 
         If proj Is Nothing Then
             proj = New Project
