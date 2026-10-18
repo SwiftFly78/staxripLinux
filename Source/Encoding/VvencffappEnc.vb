@@ -12,6 +12,8 @@ Public Class VvencffappEnc
         Name = "vvencFFapp"
         Params.ApplyPresetDefaultValues()
         Params.ApplyPresetValues()
+        'mkvmerge doesn't support VVC
+        SetMuxer()
     End Sub
 
     Overloads Shared ReadOnly Property Package As Package
