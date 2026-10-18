@@ -209,7 +209,14 @@ Public Class GlobalCommands
         <Description("Semicolon separated arguments passed to the script host. May contain macros.")>
         Optional args As String = Nothing)
 
-        g.InvokePowerShellCode(Macro.Expand(filepath).ReadAllText, Macro.Expand(args).SplitNoEmpty(";"c))
+        filepath = Macro.Expand(filepath)
+
+        If Not File.Exists(filepath) Then
+            MsgError("PowerShell script file not found", filepath)
+            Exit Sub
+        End If
+
+        g.InvokePowerShellCode(filepath.ReadAllText, Macro.Expand(args).SplitNoEmpty(";"c))
     End Sub
 
     <Command("Sets crop values")>
