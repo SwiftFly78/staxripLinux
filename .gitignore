@@ -20,3 +20,4 @@
 /Source/TaskDialog/WPFTest/obj
 *.aps
 /publish
+.env
