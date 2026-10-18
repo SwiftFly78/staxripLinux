@@ -495,7 +495,7 @@ Public Class Audio
         Dim mkvPath = Path.Combine(p.TempDir, base + "_cut_.mkv")
 
         Dim args2 = "-o " + mkvPath.Escape + " " + aviPath.Escape + " " + ap.File.Escape
-        args2 += " --split parts-frames:" + p.Ranges.Select(Function(v) v.Start & "-" & (v.End + 1)).Join(",+")
+        args2 += " --split " + Range.GetMkvmergePartsFrames(p.Ranges)
         args2 += " --engage append_and_split_flac --ui-language en_US"
 
         Using proc As New Proc

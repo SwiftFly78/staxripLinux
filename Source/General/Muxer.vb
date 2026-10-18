@@ -889,7 +889,7 @@ Public Class MkvMuxer
         End If
 
         If TypeOf p.VideoEncoder Is NullEncoder AndAlso p.Ranges.Count > 0 Then
-            args += " --split parts-frames:" + p.Ranges.Select(Function(v) v.Start & "-" & v.End).Join(",+")
+            args += " --split " + Range.GetMkvmergePartsFrames(p.Ranges)
         End If
 
         If File.Exists(TagFile) Then

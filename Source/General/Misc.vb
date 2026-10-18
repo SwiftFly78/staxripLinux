@@ -81,6 +81,12 @@ Public Class Range
         If sc <> 0 Then Return sc
         Return [End].CompareTo(other.End)
     End Function
+
+    'mkvmerge numbers frames from 1 and excludes the end frame of a range,
+    'StaxRip ranges start at 0 and include the end frame
+    Shared Function GetMkvmergePartsFrames(ranges As IEnumerable(Of Range)) As String
+        Return "parts-frames:" + ranges.Select(Function(v) (v.Start + 1) & "-" & (v.End + 2)).Join(",+")
+    End Function
 End Class
 
 Public Class Calc
@@ -1830,7 +1836,7 @@ Public Class Subtitle
 
             If Not FileTypes.SubtitleSingle.Contains(inSub.Path.Ext) Then args += " --subtitle-tracks " & id
             args += " " + inSub.Path.Escape
-            args += " --split parts-frames:" + p.Ranges.Select(Function(v) v.Start & "-" & v.End).Join(",+")
+            args += " --split " + Range.GetMkvmergePartsFrames(p.Ranges)
             args += " --ui-language en_US"
 
             Using proc As New Proc
