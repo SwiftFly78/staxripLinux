@@ -258,6 +258,14 @@ Public Class ffmpegDemuxer
         Dim audioDemuxing = MediaInfo.GetAudioCount(proj.SourceFile) > 0
         Dim subtitlesDemuxing = MediaInfo.GetSubtitleCount(proj.SourceFile) > 0
 
+        'the active eac3to demuxer extracts the selected audio and subtitle streams of these files
+        If Not proj.NoDialogs AndAlso Not proj.BatchMode AndAlso s.Demuxers.Any(Function(i) i.Active AndAlso
+            TypeOf i Is eac3toDemuxer AndAlso i.InputExtensions.Contains(proj.SourceFile.Ext)) Then
+
+            audioDemuxing = False
+            subtitlesDemuxing = False
+        End If
+
         If Not proj.NoDialogs AndAlso Not proj.BatchMode AndAlso
             ((audioDemuxing AndAlso proj.DemuxAudio = DemuxMode.Dialog) OrElse
             (subtitlesDemuxing AndAlso proj.SubtitleMode = SubtitleMode.Dialog)) OrElse
