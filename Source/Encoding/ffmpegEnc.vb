@@ -78,6 +78,9 @@ Public Class ffmpegEnc
                             {"FFV1", "https://trac.ffmpeg.org/wiki/Encode/FFV1"},
                             {"Intel H.264", "https://trac.ffmpeg.org/wiki/Hardware/QuickSync"},
                             {"Intel H.265", "https://trac.ffmpeg.org/wiki/Hardware/QuickSync"},
+                            {"VAAPI | H.264", "https://trac.ffmpeg.org/wiki/Hardware/VAAPI"},
+                            {"VAAPI | H.265", "https://trac.ffmpeg.org/wiki/Hardware/VAAPI"},
+                            {"VAAPI | AV1", "https://trac.ffmpeg.org/wiki/Hardware/VAAPI"},
                             {"AV1", "https://trac.ffmpeg.org/wiki/Encode/AV1"}}
 
                          Dim help = $"<h2>ffmpeg Online Help</h2>" +
@@ -127,11 +130,11 @@ Public Class ffmpegEnc
                     Return "ogg"
                 Case "VP | VP8", "VP | VP9"
                     Return "webm"
-                Case "x264", "AMD | AMD AMF H.264", "Intel | Intel H.264", "Nvidia | Nvidia H.264"
+                Case "x264", "AMD | AMD AMF H.264", "Intel | Intel H.264", "Nvidia | Nvidia H.264", "VAAPI | H.264"
                     Return "h264"
-                Case "x265", "AMD | AMD AMF H.265", "Intel | Intel H.265", "Nvidia | Nvidia H.265"
+                Case "x265", "AMD | AMD AMF H.265", "Intel | Intel H.265", "Nvidia | Nvidia H.265", "VAAPI | H.265"
                     Return "h265"
-                Case "AOM-AV1", "AMD | AMD AMF AV1", "Intel | Intel AV1", "Nvidia | Nvidia AV1"
+                Case "AOM-AV1", "AMD | AMD AMF AV1", "Intel | Intel AV1", "Nvidia | Nvidia AV1", "VAAPI | AV1"
                     Return "ivf"
                 Case Else
                     Return "mkv"
@@ -219,13 +222,15 @@ Public Class ffmpegEnc
                         "AMD | AMD AMF H.264", "AMD | AMD AMF H.265", "AMD | AMD AMF AV1",
                         "Intel | Intel H.264", "Intel | Intel H.265", "Intel | Intel AV1",
                         "Nvidia | Nvidia H.264", "Nvidia | Nvidia H.265", "Nvidia | Nvidia AV1",
-                        "VP | VP8", "VP | VP9"},
+                        "VP | VP8", "VP | VP9",
+                        "VAAPI | H.264", "VAAPI | H.265", "VAAPI | AV1"},
             .Values = {"libx264", "libx265", "libaom-av1", "libxvid", "mpeg4", "libtheora", "prores", "prores_ks",
                        "r210", "v210", "utvideo", "cfhd", "ffv1",
                        "h264_amf", "hevc_amf", "av1_amf",
                        "h264_qsv", "hevc_qsv", "av1_qsv",
                        "h264_nvenc", "hevc_nvenc", "av1_nvenc",
-                       "libvpx", "libvpx-vp9"}}
+                       "libvpx", "libvpx-vp9",
+                       "h264_vaapi", "hevc_vaapi", "av1_vaapi"}}
 
         Property Mode As New OptionParam With {
             .Name = "Mode",
@@ -250,6 +255,27 @@ Public Class ffmpegEnc
             .VisibleFunc = Function() p.Script.IsVapourSynth AndAlso Decoder.Value = 0,
             .Options = {"Automatic", "vspipe", "ffmpeg"}}
 
+        'VA-API is the hardware video API of Mesa (AMD, Intel) and the Intel media driver on Linux
+        Property VaapiDevice As New StringParam With {
+            .Name = "vaapi device",
+            .Text = "VA-API Device",
+            .Value = "/dev/dri/renderD128",
+            .Help = "Render node of the GPU, systems with several GPUs have /dev/dri/renderD129 and higher.",
+            .VisibleFunc = Function() IsVaapi(),
+            .ArgsFunc = Function() "-vaapi_device " + If(VaapiDevice.Value <> "", VaapiDevice.Value, "/dev/dri/renderD128").Escape}
+
+        Property VaapiQuality As New NumParam With {
+            .Name = "vaapi quality",
+            .Text = "Quality",
+            .Switch = "-global_quality",
+            .Config = {0, 255},
+            .Help = "Constant quantizer, lower values give better quality, H.264 and H.265 use 1-51, AV1 1-255, 0 uses the default of the driver.",
+            .VisibleFunc = Function() IsVaapi() AndAlso Mode.Value = EncodingMode.Quality}
+
+        Function IsVaapi() As Boolean
+            Return Codec.ValueText.EndsWith("_vaapi")
+        End Function
+
         Property h264_nvenc_rc As New OptionParam With {
             .Name = "h264_nvenc rc",
             .Switch = "-rc",
@@ -268,7 +294,7 @@ Public Class ffmpegEnc
                     ItemsValue = New List(Of CommandLineParam)
 
                     Add("Main",
-                        Decoder, PipingToolAVS, PipingToolVS, Codec, Mode,
+                        Decoder, PipingToolAVS, PipingToolVS, Codec, Mode, VaapiDevice, VaapiQuality,
                         New OptionParam With {.Name = "x264/x265 preset", .Text = "Preset", .Switch = "-preset", .Init = 5, .Options = {"Ultrafast", "Superfast", "Veryfast", "Faster", "Fast", "Medium", "Slow", "Slower", "Veryslow", "Placebo"}, .VisibleFunc = Function() Codec.OptionText.EqualsAny("x264", "x265")},
                         New OptionParam With {.Name = "x264/x265 tune", .Text = "Tune", .Switch = "-tune", .Options = {"None", "Film", "Animation", "Grain", "Stillimage", "Psnr", "Ssim", "Fastdecode", "Zerolatency"}, .VisibleFunc = Function() Codec.OptionText.EqualsAny("x264", "x265")},
                         New OptionParam With {.Switch = "-profile:v", .Text = "Profile", .VisibleFunc = Function() Codec.OptionText = "ProRes" OrElse Codec.OptionText = "ProRes-KS", .Init = 2, .IntegerValue = True, .Options = {"Proxy", "LT", "Standard", "HQ"}},
@@ -281,7 +307,7 @@ Public Class ffmpegEnc
                         h264_nvenc_rc,
                         New OptionParam With {.Name = "utVideoPred", .Switch = "-pred", .Text = "Prediction", .Init = 3, .Options = {"None", "Left", "Gradient", "Median"}, .VisibleFunc = Function() Codec.ValueText = "utvideo"},
                         New OptionParam With {.Name = "utVideoPixFmt", .Switch = "-pix_fmt", .Text = "Pixel Format", .Options = {"YUV420P", "YUV422P", "YUV444P", "RGB24", "RGBA"}, .VisibleFunc = Function() Codec.ValueText = "utvideo"},
-                        New NumParam With {.Name = "Quality", .Text = "Quality", .Init = -1, .VisibleFunc = Function() Mode.Value = EncodingMode.Quality AndAlso Not Codec.ValueText.EqualsAny("prores", "prores_ks", "utvideo", "cfhd", "ffv1"), .ArgsFunc = AddressOf GetQualityArgs, .Config = {-1, 63, 0.5, 1}},
+                        New NumParam With {.Name = "Quality", .Text = "Quality", .Init = -1, .VisibleFunc = Function() Mode.Value = EncodingMode.Quality AndAlso Not Codec.ValueText.EqualsAny("prores", "prores_ks", "utvideo", "cfhd", "ffv1") AndAlso Not IsVaapi(), .ArgsFunc = AddressOf GetQualityArgs, .Config = {-1, 63, 0.5, 1}},
                         New NumParam With {.Switch = "-threads", .Text = "Threads", .Config = {0, 64}},
                         New NumParam With {.Switch = "-tile-columns", .Text = "Tile Columns", .VisibleFunc = Function() Codec.OptionText = "VP9", .Value = 6, .DefaultValue = -1},
                         New NumParam With {.Switch = "-frame-parallel", .Text = "Frame Parallel", .VisibleFunc = Function() Codec.OptionText = "VP9", .Value = 1, .DefaultValue = -1},
@@ -372,6 +398,13 @@ Public Class ffmpegEnc
             If Calc.IsARSignalingRequired Then
                 sb.Append(" -aspect " + Calc.GetTargetDAR.ToInvariantString.Shorten(8))
             End If
+
+            'VA-API encodes frames in the memory of the GPU, H.264 is limited to 8-bit
+            If IsVaapi() Then
+                Dim is10Bit = p.Script.Info.BitDepth > 8 AndAlso Codec.ValueText <> "h264_vaapi"
+                sb.Append(" -vf format=" + If(is10Bit, "p010", "nv12") + ",hwupload")
+            End If
+
             Select Case Mode.Value
                 Case EncodingMode.TwoPass
                     sb.Append(" -pass " & pass)

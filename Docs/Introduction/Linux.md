@@ -27,6 +27,9 @@
 - VapourSynth scripts are played with mpv and passed to NVEncC, QSVEncC, VCEEncC and rav1e by piping
   them with vspipe, because many FFmpeg and encoder builds can't read VapourSynth scripts.
 - The hardware decoding options of the encoders use VAAPI (Intel, AMD) and CUDA (NVIDIA) instead of DXVA2.
+- The ffmpeg encoder has VA-API profiles (`ffmpeg | VAAPI | H.264`, `H.265` and `AV1`), which use the hardware
+  encoders of AMD and Intel GPUs through Mesa or the Intel media driver without proprietary runtimes. The device
+  is `/dev/dri/renderD128` unless another render node is defined in the encoder options.
 - Thumbnail sheets can be saved as JPEG, PNG, BMP and TIFF, but not as GIF.
 - The controls use the GTK theme. The StaxRip themes only define the colors of highlighting and other custom drawn
   content and are only used with a dark GTK theme.
