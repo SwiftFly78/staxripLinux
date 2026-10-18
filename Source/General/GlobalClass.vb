@@ -1831,7 +1831,9 @@ Public Class GlobalClass
     End Sub
 
     Sub AddHardcodedSubtitle()
-        Dim validSubtitles = p.VideoEncoder?.Muxer?.Subtitles?.Where(Function(x) x.Path.Ext().ToLowerEx().EqualsAny("srt", "ass", "idx"))
+        'AssRender for AviSynth+ only renders text subtitles
+        Dim types = If(p.Script.IsAviSynth, {"srt", "ass", "ssa"}, {"srt", "ass", "ssa", "idx", "sup"})
+        Dim validSubtitles = p.VideoEncoder?.Muxer?.Subtitles?.Where(Function(x) x.Path.Ext().ToLowerEx().EqualsAny(types))
         Dim enabledValidSubtitles = validSubtitles?.Where(Function(x) x.Enabled)
         Dim selectedSubtitle As Subtitle = If(enabledValidSubtitles?.Any(), enabledValidSubtitles?.FirstOrDefault(), validSubtitles?.FirstOrDefault())
 

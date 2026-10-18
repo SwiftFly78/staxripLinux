@@ -19,7 +19,7 @@
   | AVSMeter | `Project > Advanced Script Info` shows the info of a script and benchmarks it with [avs2yuv](https://github.com/DJATOM/avs2yuv) (AviSynth+) or vspipe (VapourSynth) |
   | avs2pipemod | [avs2yuv](https://github.com/DJATOM/avs2yuv) pipes AviSynth+ scripts to the encoders, without it FFmpeg is used, which requires an FFmpeg build with AviSynth support |
   | MPC, mpv.net | [mpv](https://mpv.io) |
-  | VSFilterMod, xy-VSFilter | Hardcoded subtitles use [SubText](https://github.com/vapoursynth/subtext) (VapourSynth) |
+  | VSFilterMod, xy-VSFilter | Hardcoded subtitles use [SubText](https://github.com/vapoursynth/subtext) (VapourSynth) and [AssRender](https://github.com/pinterf/assrender) (AviSynth+, text subtitles only) |
   | AutoCrop | Auto crop runs inside StaxRip |
 
 - VapourSynth scripts are played with mpv and passed to NVEncC, QSVEncC, VCEEncC and rav1e by piping
@@ -46,8 +46,8 @@
   NVEncC (`nvencc`), QSVEncC (`qsvencc`) or VCEEncC (`vceencc`). vvenc installs vvencFFapp only when it's built
   with `-DVVENC_INSTALL_FULLFEATURE_APP=ON`. VCEEncC and the AMF encoders of FFmpeg require AMD's AMF runtime
   (`libamfrt64.so.1`, `amf-amdgpu-pro` in the AUR).
-- Optional: mpv, opusenc, fdkaac, dovi_tool, hdr10plus_tool, D2V Witch, avs2yuv, the subtitle plugin SubText and
-  the d2v source filters d2vsource and D2VSource
+- Optional: mpv, opusenc, fdkaac, dovi_tool, hdr10plus_tool, D2V Witch, avs2yuv, the subtitle plugins SubText and
+  AssRender and the d2v source filters d2vsource and D2VSource
 
 Package names differ between distributions, some examples:
 
@@ -61,7 +61,7 @@ sudo pacman -S dotnet-runtime gtk3 libmediainfo mkvtoolnix-cli ffmpeg vapoursynt
 `fdkaac`, `avisynthplus`, `dovi-tool` and `hdr10plus-tool` (Dolby Vision and HDR10+ metadata) are in the official
 repositories as well. The AUR has packages for the other tools and plugins that replace the Windows tools:
 `d2vwitch-git`, `vapoursynth-plugin-d2vsource`, `vapoursynth-plugin-subtext-git` and, for AviSynth+,
-`avs2yuv-git` and `avisynth-plugin-mpeg2decplus-git` (D2VSource).
+`avs2yuv-git`, `avisynth-plugin-assrender-git` and `avisynth-plugin-mpeg2decplus-git` (D2VSource).
 
 Fedora (x264 and x265 are available from [RPM Fusion](https://rpmfusion.org), which also has a complete FFmpeg):
 

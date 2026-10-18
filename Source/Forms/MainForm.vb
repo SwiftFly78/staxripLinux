@@ -3630,7 +3630,8 @@ Partial Public Class MainForm
             dialog.SetInitDir(initDir)
 
             If dialog.ShowDialog = DialogResult.OK Then
-                If dialog.FileName.Ext = "idx" Then
+                'AssRender for AviSynth+ doesn't render idx subtitles
+                If dialog.FileName.Ext = "idx" AndAlso p.Script.IsVapourSynth Then
                     Dim subs = Subtitle.Create(dialog.FileName)
 
                     If subs.Count = 0 Then

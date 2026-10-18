@@ -1308,6 +1308,15 @@ Public Class Package
         .DownloadURL = "https://github.com/pinterf/xy-VSFilter/releases",
         .AvsFilterNames = {"VobSub", "TextSub"}})
 
+    Shared Property AssRender As Package = Add(New PluginPackage With {
+        .Name = "AssRender",
+        .Filename = "assrender.dll",
+        .Description = "AviSynth+ subtitle plugin based on libass that renders ASS, SSA and SRT subtitles, " +
+                       "it replaces VSFilter for hardcoded subtitles.",
+        .WebURL = "https://github.com/pinterf/assrender",
+        .DownloadURL = "https://github.com/pinterf/assrender/releases",
+        .AvsFilterNames = {"AssRender"}})
+
     Shared Property DFTTestAVS As Package = Add(New PluginPackage With {
         .Name = "DFTTest",
         .Filename = "dfttest.dll",

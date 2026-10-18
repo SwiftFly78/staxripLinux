@@ -304,26 +304,21 @@ Public Class Project
 
     Sub AddHardcodedSubtitleFilter(path As String, showErrorMsg As Boolean)
         If p.Script.IsAviSynth Then
-            Dim filterName As String
+            'AssRender replaces VSFilter, which only exists for Windows
+            If Not path.Ext.EqualsAny("srt", "ass", "ssa") Then
+                If showErrorMsg Then
+                    MsgError("AviSynth+ renders srt, ass and ssa subtitles with AssRender.",
+                             "Image based subtitles like idx and sup can be hardcoded with VapourSynth and SubText.")
+                End If
 
-            Select Case path.Ext
-                Case "idx"
-                    filterName = "VobSub"
-                Case "srt", "ass"
-                    filterName = "TextSub"
-                Case Else
-                    If showErrorMsg Then
-                        MsgError("Only idx, srt and ass file types are supported.")
-                    End If
-
-                    Exit Sub
-            End Select
+                Exit Sub
+            End If
 
             Dim filter As New VideoFilter With {
                 .Category = "Subtitle",
                 .Path = path.FileName,
                 .Active = True,
-                .Script = filterName + "(" + VideoScript.ToAviSynthString(path) + ")"
+                .Script = "AssRender(" + VideoScript.ToAviSynthString(path) + ")"
             }
             Dim insertCat = If(p.Script.IsFilterActive("Crop"), "Crop", "Source")
             Script.InsertAfter(insertCat, filter)
@@ -334,10 +329,10 @@ Public Class Project
             Select Case path.Ext
                 Case "idx", "sup"
                     filterName = "core.sub.ImageFile"
-                Case "srt", "ass"
+                Case "srt", "ass", "ssa"
                     filterName = "core.sub.TextFile"
                 Case Else
-                    If showErrorMsg Then MsgError("Only idx, srt, ass and sup file types are supported.")
+                    If showErrorMsg Then MsgError("Only idx, srt, ass, ssa and sup file types are supported.")
                     Exit Sub
             End Select
 
