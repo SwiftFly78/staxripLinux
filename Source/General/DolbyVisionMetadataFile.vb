@@ -200,7 +200,7 @@ Public Class DolbyVisionMetadataFile
 
             _lastWriteTimeL5 = File.GetLastWriteTimeUtc(Level5JsonFilePath)
         Catch ex As AbortException
-            Throw ex
+            Throw
         Catch ex As Exception
             g.ShowException(ex)
             Throw New AbortException
@@ -237,7 +237,7 @@ Public Class DolbyVisionMetadataFile
                 proc.Start()
             End Using
         Catch ex As AbortException
-            Throw ex
+            Throw
         Catch ex As Exception
             g.ShowException(ex)
             Throw New AbortException
@@ -304,7 +304,7 @@ Public Class DolbyVisionMetadataFile
             Dim result = $"{{""mode"":{mode + 0},""active_area"":{{""crop"":false,{p},{e}}}}}"
             result.WriteFileUTF8(EditorConfigFilePath)
         Catch ex As AbortException
-            Throw ex
+            Throw
         Catch ex As Exception
             g.ShowException(ex)
             Throw New AbortException
@@ -339,7 +339,7 @@ Public Class DolbyVisionMetadataFile
                 proc.Start()
             End Using
         Catch ex As AbortException
-            Throw ex
+            Throw
         Catch ex As Exception
             g.ShowException(ex)
             Throw New AbortException
@@ -374,7 +374,7 @@ Public Class DolbyVisionMetadataFile
             End Using
         Catch ex As AbortException
             _trimRanges = Nothing
-            Throw ex
+            Throw
         Catch ex As Exception
             _trimRanges = Nothing
             g.ShowException(ex)

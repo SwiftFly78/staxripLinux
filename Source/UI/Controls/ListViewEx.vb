@@ -551,7 +551,7 @@ Namespace UI
             Catch ex As DivideByZeroException
                 If m.Msg = &H20A Then 'WM_MOUSEWHEEL
                 Else
-                    Throw ex
+                    Throw
                 End If
             End Try
         End Sub

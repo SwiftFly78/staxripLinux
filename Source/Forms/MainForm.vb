@@ -3186,7 +3186,7 @@ Partial Public Class MainForm
                         Log.Save()
                         ProcController.Aborted = False
                     Catch ex As Exception
-                        Throw ex
+                        Throw
                     End Try
                 End If
 
@@ -3557,7 +3557,7 @@ Partial Public Class MainForm
                         End Try
                     End If
                 Catch ex As AbortException
-                    Throw ex
+                    Throw
                 Catch ex As Exception
                     g.ShowException(ex)
                     Throw New AbortException
@@ -3656,7 +3656,7 @@ Partial Public Class MainForm
                 Catch ex As AbortException
                     g.ShowException(ex)
                     doviFile = Nothing
-                    Throw ex
+                    Throw
                 Catch ex As Exception
                     g.ShowException(ex)
                     doviFile = Nothing

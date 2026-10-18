@@ -701,7 +701,7 @@ Public Class BatchEncoder
                 Try
                     proc.Start()
                 Catch ex As AbortException
-                    Throw ex
+                    Throw
                 Catch ex As Exception
                     g.ShowException(ex)
                     Throw New AbortException

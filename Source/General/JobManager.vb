@@ -166,7 +166,7 @@ Public Class JobManager
                 counter += 1
 
                 If counter > 9 Then
-                    Throw ex
+                    Throw
                 End If
             End Try
         End While

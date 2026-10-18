@@ -294,9 +294,9 @@ Public Class Proc
                 ErrorReader.BeginReadLine()
             End If
         Catch ex As AbortException
-            Throw ex
+            Throw
         Catch ex As SkipException
-            Throw ex
+            Throw
         Catch ex As Exception
             Dim msg = ex.Message
 
@@ -363,7 +363,7 @@ Public Class Proc
                 Succeeded = True
             End If
         Catch e As ErrorAbortException
-            Throw e
+            Throw
         End Try
 
         If Abort Then Throw New AbortException
