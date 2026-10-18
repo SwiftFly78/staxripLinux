@@ -2166,12 +2166,17 @@ Public Class GlobalClass
                 td.Title = "Choose below"
                 td.AddCommand("Info()")
                 td.AddCommand("avs2yuv info")
+                td.AddCommand("avs2yuv benchmark")
 
-                'avs2yuv replaces avs2pipemod, which only exists for Windows
+                'avs2yuv replaces avs2pipemod and AVSMeter, which only exist for Windows
                 Select Case td.Show()
                     Case "avs2yuv info"
                         If Package.avs2yuv.VerifyOK(True) Then
                             DesktopHelp.RunInTerminal(Package.avs2yuv.Path.Escape + " -frames 1 " + script.Path.Escape + " -o /dev/null")
+                        End If
+                    Case "avs2yuv benchmark"
+                        If Package.avs2yuv.VerifyOK(True) Then
+                            DesktopHelp.RunInTerminal(Package.avs2yuv.Path.Escape + " " + script.Path.Escape + " -o /dev/null")
                         End If
                     Case "Info()"
                         Dim infoScript = New VideoScript
@@ -2194,10 +2199,14 @@ Public Class GlobalClass
                 td.Title = "Choose below"
                 td.AddCommand("ClipInfo()")
                 td.AddCommand("vspipe info")
+                td.AddCommand("vspipe benchmark")
 
                 Select Case td.Show()
                     Case "vspipe info"
                         DesktopHelp.RunInTerminal(GetVersionEcho(Package.vspipe) + Package.vspipe.Path.Escape + " --info " + script.Path.Escape + " -")
+                    Case "vspipe benchmark"
+                        'the output . discards the frames
+                        DesktopHelp.RunInTerminal(GetVersionEcho(Package.vspipe) + Package.vspipe.Path.Escape + " --progress " + script.Path.Escape + " .")
                     Case "ClipInfo()"
                         Dim infoScript = script.GetNewScript
                         infoScript.Path = Path.Combine(p.TempDir, p.TargetFile.Base + "_info." + script.FileType)
