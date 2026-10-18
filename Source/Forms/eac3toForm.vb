@@ -883,12 +883,14 @@ Public Class eac3toForm
                     End If
 
                     If ms.IsAudio OrElse ms.IsSubtitle Then
-                        For Each lng In Language.Languages
-                            If ms.Text.Contains(", [" + lng.CultureInfo.ThreeLetterISOLanguageName) Then
-                                ms.Language = lng
-                                Exit For
-                            End If
-                        Next
+                        'eac3to 3.54 and older show the English name instead of the code
+                        Dim lang = If(Language.Languages.FirstOrDefault(Function(lng) ms.Text.Contains(", [" + lng.CultureInfo.ThreeLetterISOLanguageName)),
+                                      Language.Languages.FirstOrDefault(Function(lng) ms.Text.Contains(", " + lng.CultureInfo.EnglishName + ",") OrElse
+                                                                                      ms.Text.EndsWith(", " + lng.CultureInfo.EnglishName)))
+
+                        If lang IsNot Nothing Then
+                            ms.Language = lang
+                        End If
 
                         If ms.IsAudio Then
                             Dim ot As String
