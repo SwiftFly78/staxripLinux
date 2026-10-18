@@ -1093,18 +1093,18 @@ Public Class GlobalClass
 
         If ret Is Nothing OrElse Not ret.IsDetermined Then
             For Each lng In Language.Languages.OrderByDescending(Function(x) x.Name.Length)
-                If lng.EnglishName.Contains(" (") AndAlso path.ToUpperInvariant().Contains(lng.EnglishName.Left(" (").ToUpperInvariant()) Then
+                If lng.EnglishName.Contains(" (") AndAlso ContainsWord(path, lng.EnglishName.Left(" (")) Then
                     ret = lng
                 End If
 
-                If path.ToUpperInvariant().Contains(lng.LocalName.ToUpperInvariant()) Then
+                If ContainsWord(path, lng.LocalName) Then
                     ret = lng
                 End If
 
-                If path.ToUpperInvariant().Contains(lng.EnglishName.ToUpperInvariant()) Then
+                If ContainsWord(path, lng.EnglishName) Then
                     ret = lng
 
-                    If filename.ToUpperInvariant().Contains(lng.EnglishName.ToUpperInvariant()) Then
+                    If ContainsWord(filename, lng.EnglishName) Then
                         ret = lng
                         Exit For
                     End If
@@ -1113,6 +1113,24 @@ Public Class GlobalClass
         End If
 
         Return ret
+    End Function
+
+    'language names must be whole words, otherwise Rwa is found in Hinterwald
+    Shared Function ContainsWord(text As String, word As String) As Boolean
+        If text = "" OrElse word = "" Then Return False
+
+        Dim index = text.IndexOf(word, StringComparison.OrdinalIgnoreCase)
+
+        While index >= 0
+            Dim isWordStart = index = 0 OrElse Not Char.IsLetter(text(index - 1))
+            Dim isWordEnd = index + word.Length = text.Length OrElse Not Char.IsLetter(text(index + word.Length))
+
+            If isWordStart AndAlso isWordEnd Then Return True
+
+            index = text.IndexOf(word, index + 1, StringComparison.OrdinalIgnoreCase)
+        End While
+
+        Return False
     End Function
 
     Function GetSourceBase() As String
