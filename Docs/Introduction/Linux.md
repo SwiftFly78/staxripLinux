@@ -125,9 +125,24 @@ dotnet publish StaxRip.vbproj -c Release -r linux-x64 --self-contained false -o 
 
 StaxRip can be started from the output folder with `../publish/StaxRip`.
 
+## Installation
+
+The build output contains an install script that copies StaxRip to `~/.local/lib/staxrip`, creates the
+`~/.local/bin/staxrip` command and adds StaxRip with its icon to the application menu:
+
+```sh
+../publish/Linux/install.sh
+```
+
+Use `PREFIX=/usr/local` (as root) for a system wide installation and `install.sh --uninstall` to remove StaxRip.
+The settings in `~/.config/StaxRip` are kept when StaxRip is removed.
+
+On Wayland, desktops show the icon of the installed `staxrip.desktop` file in the title bar and task bar,
+when StaxRip is started without installation, a generic icon is shown instead.
+
 ## Troubleshooting
 
-- Start StaxRip from a terminal, errors are also written to the terminal.
+- Start StaxRip from a terminal with the `staxrip` command, errors are also written to the terminal.
 - If StaxRip can't find a tool, the apps dialog shows its status and how to install it or define a custom path.
 - If a VapourSynth script fails with a missing namespace like `sub` or `ffms2`, the plugin isn't installed or not
   in a folder StaxRip searches, see above.

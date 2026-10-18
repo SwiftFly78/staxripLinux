@@ -67,4 +67,9 @@
     <None Include="..\License.txt" Link="License.txt" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="Linux\**" CopyToOutputDirectory="PreserveNewest" LinkBase="Linux" />
+    <None Include="Resources\StaxRip.png" Link="Linux\staxrip.png" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

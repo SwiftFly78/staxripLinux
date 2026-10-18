@@ -1289,6 +1289,14 @@ Public Class Startup
         Dim app As New Application(Eto.Platforms.Gtk)
         EtoHelp.InitMainThread()
 
+        'the app ID of the windows on Wayland, desktops show the icon of staxrip.desktop,
+        'GTK# sets the name from the assembly name when GTK is initialized
+        GLib.Global.ProgramName = "staxrip"
+        GLib.Global.ApplicationName = "StaxRip"
+
+        'the window class on X11, the desktop file uses it as StartupWMClass
+        Global.Gdk.Global.ProgramClass = "StaxRip"
+
         'GTK opens the menu bar with F10, which StaxRip uses for the settings
         Global.Gtk.Settings.Default.MenuBarAccel = ""
         AddHandler app.UnhandledException, Sub(sender, e) g.OnException(TryCast(e.ExceptionObject, Exception))

@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=StaxRip
+GenericName=Video Encoder
+Comment=Video and audio encoding GUI for VapourSynth, AviSynth+ and command line encoders
+Exec=staxrip %F
+Icon=staxrip
+Terminal=false
+Categories=AudioVideo;Video;AudioVideoEditing;
+MimeType=video/x-matroska;video/mp4;video/quicktime;video/x-msvideo;video/mpeg;video/mp2t;video/webm;video/x-m4v;
+Keywords=encode;transcode;x264;x265;av1;vapoursynth;avisynth;
+StartupWMClass=StaxRip
