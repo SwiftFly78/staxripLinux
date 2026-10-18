@@ -2244,7 +2244,7 @@ Partial Public Class MainForm
         End If
 
         If inputFile.Ext = "d2v" Then
-            AddSourceFilters({"d2vsource"}, filters)
+            AddSourceFilters({"d2vsource", "d2v"}, filters)
         End If
 
         If p.Script.IsAviSynth Then
