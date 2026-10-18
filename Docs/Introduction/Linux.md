@@ -31,6 +31,10 @@
 - The ffmpeg encoder has VA-API profiles (`ffmpeg | VAAPI | H.264`, `H.265` and `AV1`), which use the hardware
   encoders of AMD and Intel GPUs through Mesa or the Intel media driver without proprietary runtimes. The device
   is `/dev/dri/renderD128` unless another render node is defined in the encoder options.
+- The SVT-AV1 forks Essential, HDR, PSYEX and Tritium all name their encoder `SvtAv1EncApp`. StaxRip accepts the
+  `SvtAv1EncApp` found in `PATH` for a fork only if its version output names that fork. Otherwise define the path of
+  a fork build in the apps dialog (`Tools > Edit Path`) and confirm its version (`Version`, F12). Dolby Vision and
+  HDR10+ require a build with `-DLIBDOVI_FOUND=ON -DLIBHDR10PLUS_RS_FOUND=ON` (libdovi and libhdr10plus-rs).
 - eac3to only exists for Windows. StaxRip runs it with Wine when a command named `eac3to` starts it, like the
   wrapper script of the AUR package `eac3to` (`wine /path/to/eac3to.exe "$@"`). StaxRip passes the paths as Wine
   paths (`Z:\...`), because eac3to reads arguments that start with `/` as options.

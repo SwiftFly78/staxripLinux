@@ -682,6 +682,7 @@ Public Class Package
         .DownloadURL = "https://github.com/Patman86/SVT-AV1-Mod-by-Patman/releases",
         .RequiredFunc = Function() TypeOf p.VideoEncoder Is SvtAv1EssentialEnc,
         .HelpSwitch = "--help",
+        .StatusFunc = Function() GetSvtAv1ForkStatus(SvtAv1EncAppEssential, "SVT-AV1-Essential"),
         .Description = "The Scalable Video Technology for AV1 with perceptual enhancements for psychovisually optimal AV1 encoding."})
 
     Shared Property SvtAv1EncAppHdr As Package = Add(New Package With {
@@ -693,6 +694,7 @@ Public Class Package
         .DownloadURL = "https://github.com/Patman86/SVT-AV1-Mod-by-Patman/releases",
         .RequiredFunc = Function() TypeOf p.VideoEncoder Is SvtAv1HdrEnc,
         .HelpSwitch = "--help",
+        .StatusFunc = Function() GetSvtAv1ForkStatus(SvtAv1EncAppHdr, "SVT-AV1-HDR"),
         .Description = "The Scalable Video Technology for AV1 with perceptual enhancements for psychovisually optimal AV1 encoding."})
 
     Shared Property SvtAv1EncAppPsyex As Package = Add(New Package With {
@@ -704,6 +706,7 @@ Public Class Package
         .DownloadURL = "https://github.com/Patman86/SVT-AV1-Mod-by-Patman/releases",
         .RequiredFunc = Function() TypeOf p.VideoEncoder Is SvtAv1PsyexEnc,
         .HelpSwitch = "--help",
+        .StatusFunc = Function() GetSvtAv1ForkStatus(SvtAv1EncAppPsyex, "SVT-AV1-PSYEX"),
         .Description = "The Scalable Video Technology for AV1 with perceptual enhancements for psychovisually optimal AV1 encoding."})
 
     Shared Property SvtAv1EncAppTritium As Package = Add(New Package With {
@@ -715,6 +718,7 @@ Public Class Package
         .DownloadURL = "https://github.com/Patman86/SVT-AV1-Mod-by-Patman/releases",
         .RequiredFunc = Function() TypeOf p.VideoEncoder Is SvtAv1TritiumEnc,
         .HelpSwitch = "--help",
+        .StatusFunc = Function() GetSvtAv1ForkStatus(SvtAv1EncAppTritium, "SVT-AV1-Tritium"),
         .Description = "The Scalable Video Technology for AV1 with perceptual enhancements for psychovisually optimal AV1 encoding."})
 
     Shared Property Rav1e As Package = Add(New Package With {
@@ -3202,6 +3206,23 @@ Public Class Package
 
     Function IsCustomPathAllowed() As Boolean
         Return Not Path.PathStartsWith(Folder.System) AndAlso AllowCustomPath
+    End Function
+
+    Shared ReadOnly SvtAv1Forks As New Concurrent.ConcurrentDictionary(Of String, String)
+
+    'the SVT-AV1 forks all name their encoder SvtAv1EncApp, so the one found in PATH may be another fork,
+    'the first word of the version output is the name of the fork
+    Shared Function GetSvtAv1ForkStatus(pack As Package, fork As String) As String
+        If Not pack.IsSystemInstalled() Then Return ""
+
+        Dim filePath = pack.Path
+        Dim found = SvtAv1Forks.GetOrAdd(filePath + "|" + File.GetLastWriteTimeUtc(filePath).Ticks.ToString,
+            Function(key) Regex.Match(ProcessHelp.GetConsoleOutput(filePath, "--version"), "^\S+").Value)
+
+        If found = "" OrElse found.IsEqualIgnoreCase(fork) Then Return ""
+
+        Return $"The SvtAv1EncApp found in PATH ({filePath}) is {found}, not {fork}. " +
+            $"Install {fork} or define the path of an {fork} build.{BR}Tools > Edit Path (Ctrl+P)"
     End Function
 
     Shared ReadOnly Property x264Type As x264Type
