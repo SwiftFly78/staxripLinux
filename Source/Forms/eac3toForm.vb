@@ -276,7 +276,9 @@ Public Class eac3toForm
                         {"AC3 Surround", "ac3"},
                         {"AC3 Headphone", "ac3"},
                         {"E-AC3", "eac3"},
+                        {"EAC3", "eac3"},
                         {"E-AC3 EX", "eac3"},
+                        {"E-AC3 Surround", "eac3"},
                         {"TrueHD/AC3 (Atmos)", "thd"},
                         {"TrueHD/AC3", "thd"},
                         {"TrueHD (Atmos)", "thd"},
@@ -290,6 +292,8 @@ Public Class eac3toForm
                         {"DTS Hi-Res", "dtshr"},
                         {"RAW/PCM", "flac"},
                         {"AAC", "m4a"},
+                        {"MP2", "mp2"},
+                        {"MP3", "mp3"},
                         {"Subtitle (ASS)", "ass"}
                     }
 
