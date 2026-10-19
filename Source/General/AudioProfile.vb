@@ -1195,8 +1195,9 @@ Public Class GUIAudioProfile
                 sb.Append(" -speedup")
             End If
 
+            'eac3to 3.54 joins -slowdown with the previous argument, like "normalizeowdown"
             If Params.FrameRateMode = AudioFrameRateMode.Slowdown Then
-                sb.Append(" -slowdown")
+                sb.Append(" -25.000 -changeTo23.976")
             End If
 
             If Delay <> 0 Then
