@@ -1680,6 +1680,11 @@ Public Class Subtitle
         End Get
     End Property
 
+    'eac3to names demuxed subtitles like "source ID1 English.sup", StaxRip like "ID1_[en].srt"
+    Shared Function IsChosenByID(path As String, autoCode As IEnumerable(Of String)) As Boolean
+        Return autoCode.Any(Function(i) i.IsInt AndAlso (path.Contains("ID" & i.ToInt & " ") OrElse path.FileName.StartsWith("ID" & i.ToInt & "_")))
+    End Function
+
     Shared Function Create(path As String) As List(Of Subtitle)
         path = path.TrimQuotes()
         Dim ret As New List(Of Subtitle)
@@ -1703,7 +1708,7 @@ Public Class Subtitle
                     Dim autoCode = p.PreferredSubtitles.ToLowerInvariant.SplitNoEmptyAndWhiteSpace(",", ";", " ")
                     Dim prefLang = autoCode.ContainsAny("all", st.Language.TwoLetterCode, st.Language.ThreeLetterCode) OrElse p.SubtitleMode = SubtitleMode.All
                     Dim goodMode = p.SubtitleMode <> SubtitleMode.PreferredNoMux AndAlso p.SubtitleMode <> SubtitleMode.Disabled
-                    st.Enabled = prefLang AndAlso goodMode
+                    st.Enabled = (prefLang OrElse IsChosenByID(path, autoCode)) AndAlso goodMode
                     st.Forced = path.ToLowerEx().Contains("forced")
                     st.Commentary = path.ToLowerEx().Contains("commentary")
                     st.Hearingimpaired = path.ToLowerEx().Contains("hearingimpaired")
@@ -1737,8 +1742,9 @@ Public Class Subtitle
 
                 Dim autoCode = p.PreferredSubtitles.ToLowerInvariant.SplitNoEmptyAndWhiteSpace(",", ";", " ")
                 Dim prefLang = autoCode.ContainsAny("all", st.Language.TwoLetterCode, st.Language.ThreeLetterCode) OrElse p.SubtitleMode = SubtitleMode.All
+                Dim prefID = autoCode.Any(Function(i) i.IsInt AndAlso i.ToInt = st.Index + 1)
                 Dim goodMode = p.SubtitleMode <> SubtitleMode.PreferredNoMux AndAlso p.SubtitleMode <> SubtitleMode.Disabled
-                st.Enabled = prefLang AndAlso goodMode
+                st.Enabled = (prefLang OrElse prefID) AndAlso goodMode
                 st.Path = path
 
                 ret.Add(st)
@@ -1759,17 +1765,11 @@ Public Class Subtitle
             Dim autoCode = p.PreferredSubtitles.ToLowerInvariant.SplitNoEmptyAndWhiteSpace(",", ";", " ")
             Dim prefLang = autoCode.ContainsAny("all", st.Language.TwoLetterCode, st.Language.ThreeLetterCode) OrElse p.SubtitleMode = SubtitleMode.All
             Dim goodMode = p.SubtitleMode <> SubtitleMode.PreferredNoMux AndAlso p.SubtitleMode <> SubtitleMode.Disabled
-            st.Enabled = prefLang AndAlso goodMode
+            st.Enabled = (prefLang OrElse IsChosenByID(path, autoCode)) AndAlso goodMode
             st.Path = path
             st.Forced = path.Base.ToLowerEx().Contains("forced")
             st.Commentary = path.Base.ToLowerEx().Contains("commentary")
             st.Hearingimpaired = path.Base.ToLowerEx().ContainsAny("hearingimpaired", "sdh")
-
-            For Each i In autoCode
-                If i.IsInt AndAlso st.Path.Contains("ID" & i.ToInt & " ") Then
-                    st.Enabled = True
-                End If
-            Next
 
             ret.Add(st)
         End If
