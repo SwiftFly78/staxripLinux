@@ -84,6 +84,9 @@ Public Class eac3toForm
     Private Output As String
     Private ReadOnly AudioOutputFormats As String() = {"m4a", "ac3", "dts", "flac", "pcm", "wav", "dtsma", "dtshr", "eac3", "thd"}
 
+    'eac3to 3.60 and newer use the "DTS-HD" names
+    Private ReadOnly DtsHdCodecs As String() = {"DTS Master Audio", "DTS-HD Master Audio", "DTS-HD Master Audio X", "DTS Hi-Res", "DTS-HD High Resolution"}
+
     Private Project As Project
 
     Sub New(proj As Project)
@@ -537,7 +540,7 @@ Public Class eac3toForm
             ms.OutputType = cbAudioOutput.SelectedItem.ToString
             ms.ListViewItem.Text = ms.ToString
 
-            If ms.OutputType = "dts" AndAlso {"DTS Master Audio", "DTS Hi-Res"}.Contains(ms.Codec) AndAlso Not ms.Options.Contains("-core") Then
+            If ms.OutputType = "dts" AndAlso DtsHdCodecs.Contains(ms.Codec) AndAlso Not ms.Options.Contains("-core") Then
                 If ms.Options = "" Then
                     ms.Options = "-core"
                 End If
@@ -674,7 +677,7 @@ Public Class eac3toForm
             If str.Checked AndAlso str.IsAudio Then
                 If {"dtsma", "dtshr"}.Contains(str.OutputType) Then
                     hdCounter += 1
-                ElseIf str.OutputType = "dts" AndAlso {"DTS Master Audio", "DTS Hi-Res"}.Contains(str.Codec) Then
+                ElseIf str.OutputType = "dts" AndAlso DtsHdCodecs.Contains(str.Codec) Then
                     hdCounter -= 1
                 End If
             End If
