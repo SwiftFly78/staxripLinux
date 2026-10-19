@@ -136,6 +136,9 @@ Public Class ffmpegEnc
                     Return "h265"
                 Case "AOM-AV1", "AMD | AMD AMF AV1", "Intel | Intel AV1", "Nvidia | Nvidia AV1", "VAAPI | AV1"
                     Return "ivf"
+                Case "UT Video", "GoPro CineForm HD", "FFV1"
+                    'the AVI container of ffmpeg accepts only AVI video
+                    Return If(TryCast(Muxer, ffmpegMuxer)?.OutputFormat = "AVI", "avi", "mkv")
                 Case Else
                     Return "mkv"
             End Select
