@@ -35,13 +35,17 @@ Public Class Audio
         If ap.HasStream Then
             Dim cutting = p.Ranges.Count > 0
 
+            'mkvmerge can't read the RIFF CDXA files of Video CDs
+            Dim isContainerSupported = p.VideoEncoder.Muxer.IsSupported(ap.File.Ext) AndAlso
+                Not MediaInfo.GetGeneral(ap.File, "Format").StartsWith("CDXA")
+
             Dim directMux = TypeOf ap Is MuxAudioProfile AndAlso
                 p.VideoEncoder.Muxer.IsSupported(ap.Stream.Ext) AndAlso
-                p.VideoEncoder.Muxer.IsSupported(ap.File.Ext) AndAlso Not cutting
+                isContainerSupported AndAlso Not cutting
 
             Dim trackIsSupportedButNotContainer = TypeOf ap Is MuxAudioProfile AndAlso
                 p.VideoEncoder.Muxer.IsSupported(ap.Stream.Ext) AndAlso
-                Not p.VideoEncoder.Muxer.IsSupported(ap.File.Ext)
+                Not isContainerSupported
 
             If ((cutting OrElse Not ap.IsInputSupported) AndAlso Not directMux) OrElse
                 trackIsSupportedButNotContainer Then
