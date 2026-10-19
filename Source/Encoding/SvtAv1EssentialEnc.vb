@@ -30,6 +30,13 @@ Public Class SvtAv1EssentialEnc
             If ParamsValue Is Nothing Then
                 ParamsValue = New SvtAv1EssentialEncParams
                 ParamsValue.Init(ParamsStore)
+
+                'SpeedHigh used the stored value of SpeedLow before it got its own
+                If Not ParamsStore.Int.ContainsKey(ParamsValue.SpeedHigh.GetKey) AndAlso
+                    ParamsStore.Int.ContainsKey(ParamsValue.SpeedLow.GetKey) Then
+
+                    ParamsValue.SpeedHigh.Value = ParamsValue.SpeedLow.Value
+                End If
             End If
 
             Return ParamsValue
@@ -532,7 +539,10 @@ Public Class SvtAv1EssentialEncParams
         .Values = {"0", "1"},
         .Init = 1}
 
+    'the default speed depends on the height, so both options are synchronized but stored
+    'separately, a shared value is removed when it's the default of one of them
     Property SpeedHigh As New OptionParam With {
+        .Name = "SpeedHigh",
         .HelpSwitch = "--speed",
         .Text = "Speed",
         .Expanded = True,
@@ -1675,9 +1685,11 @@ Public Class SvtAv1EssentialEncParams
             End If
         End If
 
-        If Not IsCustom(pass, SpeedLow.HelpSwitch) Then
-            If SpeedLow.Value > 0 AndAlso Not SpeedLow.IsDefaultValue Then
-                sb.Append($" {SpeedLow.HelpSwitch} {SpeedLow.ValueText}")
+        Dim speed = If(SpeedHigh.Visible, SpeedHigh, SpeedLow)
+
+        If Not IsCustom(pass, speed.HelpSwitch) Then
+            If speed.Value > 0 AndAlso Not speed.IsDefaultValue Then
+                sb.Append($" {speed.HelpSwitch} {speed.ValueText}")
             End If
         End If
 

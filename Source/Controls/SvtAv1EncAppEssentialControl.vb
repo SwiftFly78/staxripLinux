@@ -165,6 +165,7 @@ Public Class SvtAv1EncAppEssentialControl
 
     Sub SetSpeed(index As Integer, value As Integer)
         Params.SpeedLow.Value = value
+        Params.SpeedHigh.Value = value
 
         Params.ApplyPresetValues()
 
@@ -177,6 +178,7 @@ Public Class SvtAv1EncAppEssentialControl
 
     Sub SetPreset(index As Integer, value As Integer)
         Params.SpeedLow.Value = 0
+        Params.SpeedHigh.Value = 0
         Params.Preset.Value = value
 
         Params.ApplyPresetValues()
