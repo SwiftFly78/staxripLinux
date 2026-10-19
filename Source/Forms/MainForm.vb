@@ -900,6 +900,7 @@ Partial Public Class MainForm
                 Text += " (32 bit)"
             End If
 
+            ClosePreviewForms()
             PreviewScript = Nothing
             SkipAssistant = True
 
@@ -1658,6 +1659,7 @@ Partial Public Class MainForm
             End If
 
             FiltersListView.IsLoading = True
+            ClosePreviewForms()
             PreviewScript = Nothing
 
             Dim preferredSourceFilter As VideoFilter = Nothing
@@ -3195,6 +3197,13 @@ Partial Public Class MainForm
         End If
     End Sub
 
+    'previews cut the current project, so they must not outlive their source
+    Sub ClosePreviewForms()
+        For Each form In PreviewForm.Instances.ToArray
+            form.Close()
+        Next
+    End Sub
+
     <Command("Dialog to configure the main menu.")>
     Sub ShowMainMenuEditor()
         s.CustomMenuMainForm = CustomMainMenu.Edit()
@@ -3264,9 +3273,7 @@ Partial Public Class MainForm
             Exit Sub
         End If
 
-        For Each form In PreviewForm.Instances.ToArray
-            form.Close()
-        Next
+        ClosePreviewForms()
 
         If AssistantPassed Then
             If AbortDueToLowDiskSpace() Then Exit Sub
