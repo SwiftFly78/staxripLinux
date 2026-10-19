@@ -452,7 +452,7 @@ Public Class Package
         .HelpSwitch = ""})
 
     Shared Property BDSup2SubPP As Package = Add(New Package With {
-        .RequiredFunc = Function() False,
+        .RequiredFunc = Function() p.ConvertSup2Sub,
         .Name = "BDSup2Sub++",
         .Filename = "bdsup2sub++.exe",
         .Location = IO.Path.Combine("Subtitles", "BDSup2Sub++"),

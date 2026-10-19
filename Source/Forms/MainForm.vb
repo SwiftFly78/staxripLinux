@@ -2310,6 +2310,12 @@ Partial Public Class MainForm
                     idxContent.WriteFileSystemEncoding(path)
                 End If
 
+                'BDSup2Sub++ is optional on Linux
+                If Package.BDSup2SubPP.Path = "" Then
+                    Log.Write("Extract forced subtitles if existing", "Skipped, BDSup2Sub++ is not installed." + BR2)
+                    Continue For
+                End If
+
                 Using proc As New Proc
                     proc.Header = "Extract forced subtitles if existing"
                     proc.SkipString = "# "
