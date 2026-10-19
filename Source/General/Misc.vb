@@ -349,7 +349,7 @@ Public Class Calc
                 Dim val = ParseCustomAR(p.CustomTargetPAR, 0, 0)
 
                 If val.X <> 0 Then
-                    Return Reduce(val)
+                    Return LimitAR(val.X, val.Y)
                 End If
             End If
 
@@ -366,7 +366,7 @@ Public Class Calc
                 Dim val = ParseCustomAR(p.CustomTargetDAR, 0, 0)
 
                 If val.X <> 0 Then
-                    Return Reduce(New System.Drawing.Point(CInt(val.X * croppedHeight), CInt(val.Y * croppedWidth)))
+                    Return LimitAR(CLng(val.X) * croppedHeight, CLng(val.Y) * croppedWidth)
                 End If
             End If
 
@@ -429,6 +429,30 @@ Public Class Calc
         End While
 
         Return p
+    End Function
+
+    'the SAR of H.264, H.265 and AV1 consists of 16 bit numbers, larger fractions are replaced
+    'with their closest continued fraction convergent, x265 truncates them otherwise
+    Shared Function LimitAR(x As Long, y As Long, Optional max As Long = 65535) As System.Drawing.Point
+        Dim h0 = 0L, h1 = 1L, k0 = 1L, k1 = 0L
+
+        While y <> 0
+            Dim a = x \ y
+            Dim h2 = a * h1 + h0
+            Dim k2 = a * k1 + k0
+
+            If h2 > max OrElse k2 > max Then Exit While
+
+            h0 = h1
+            h1 = h2
+            k0 = k1
+            k1 = k2
+            Dim remainder = x Mod y
+            x = y
+            y = remainder
+        End While
+
+        Return New System.Drawing.Point(CInt(h1), CInt(k1))
     End Function
 
     Shared Function GetGCD(a As Integer, b As Integer) As Integer
