@@ -527,29 +527,62 @@ Public Class QSVEnc
             .HelpSwitch = "--cqp",
             .Text = "QP",
             .Init = 18,
-            .VisibleFunc = Function() Mode.Value = 2 AndAlso Not QPAdvanced.Value,
+            .VisibleFunc = Function() Mode.Value = 2 AndAlso Not QPAdvanced.Value AndAlso Codec.ValueText <> "av1",
             .Config = {0, 63}}
+
+        'AV1 uses the quantizer range 0-255, the names keep the values apart from the other codecs
+        Property QPAV1 As New NumParam With {
+            .Name = "QPAV1",
+            .HelpSwitch = "--cqp",
+            .Text = "QP",
+            .Init = 50,
+            .VisibleFunc = Function() Mode.Value = 2 AndAlso Not QPAdvanced.Value AndAlso Codec.ValueText = "av1",
+            .Config = {0, 255}}
 
         Property QPI As New NumParam With {
             .HelpSwitch = "--cqp",
             .Text = "QP I",
             .Init = 18,
-            .VisibleFunc = Function() Mode.Value = 2 AndAlso QPAdvanced.Value,
+            .VisibleFunc = Function() Mode.Value = 2 AndAlso QPAdvanced.Value AndAlso Codec.ValueText <> "av1",
             .Config = {0, 63}}
+
+        Property QPIAV1 As New NumParam With {
+            .Name = "QPIAV1",
+            .HelpSwitch = "--cqp",
+            .Text = "QP I",
+            .Init = 50,
+            .VisibleFunc = Function() Mode.Value = 2 AndAlso QPAdvanced.Value AndAlso Codec.ValueText = "av1",
+            .Config = {0, 255}}
 
         Property QPP As New NumParam With {
             .HelpSwitch = "--cqp",
             .Text = "QP P",
             .Init = 20,
-            .VisibleFunc = Function() Mode.Value = 2 AndAlso QPAdvanced.Value,
+            .VisibleFunc = Function() Mode.Value = 2 AndAlso QPAdvanced.Value AndAlso Codec.ValueText <> "av1",
             .Config = {0, 63}}
+
+        Property QPPAV1 As New NumParam With {
+            .Name = "QPPAV1",
+            .HelpSwitch = "--cqp",
+            .Text = "QP P",
+            .Init = 70,
+            .VisibleFunc = Function() Mode.Value = 2 AndAlso QPAdvanced.Value AndAlso Codec.ValueText = "av1",
+            .Config = {0, 255}}
 
         Property QPB As New NumParam With {
             .HelpSwitch = "--cqp",
             .Text = "QP B",
             .Init = 24,
-            .VisibleFunc = Function() Mode.Value = 2 AndAlso QPAdvanced.Value,
+            .VisibleFunc = Function() Mode.Value = 2 AndAlso QPAdvanced.Value AndAlso Codec.ValueText <> "av1",
             .Config = {0, 63}}
+
+        Property QPBAV1 As New NumParam With {
+            .Name = "QPBAV1",
+            .HelpSwitch = "--cqp",
+            .Text = "QP B",
+            .Init = 100,
+            .VisibleFunc = Function() Mode.Value = 2 AndAlso QPAdvanced.Value AndAlso Codec.ValueText = "av1",
+            .Config = {0, 255}}
 
         Property QPOffsetI As New NumParam With {
             .HelpSwitch = "--qp-offset",
@@ -952,7 +985,7 @@ Public Class QSVEnc
                         New OptionParam With {.Name = "LevelAV1", .Switch = "--level", .Text = "Level", .VisibleFunc = Function() Codec.ValueText = "av1", .Options = {"Automatic", "2", "2.1", "2.2", "2.3", "3", "3.1", "3.2", "3.3", "4", "4.1", "4.2", "4.3", "5", "5.1", "5.2", "5.3", "6", "6.1", "6.2", "6.3", "7", "7.1", "7.2", "7.3"}},
                         Tune, OutputDepth,
                         New OptionParam With {.Switch = "--output-csp", .Text = "Colorspace", .Options = {"YUV420 (Default)", "YUV444", "RGB", "YUVA420"}, .Values = {"yuv420", "yuv444", "rgb", "yuva420"}},
-                        QPAdvanced, QP, QPI, QPP, QPB, Bitrate, QvbrQuality, Quality)
+                        QPAdvanced, QP, QPAV1, QPI, QPIAV1, QPP, QPPAV1, QPB, QPBAV1, Bitrate, QvbrQuality, Quality)
                     Add("Analysis",
                         New OptionParam With {.Switch = "--trellis", .Text = "Trellis", .Options = {"Automatic", "Off", "I", "IP", "All"}},
                         New OptionParam With {.Switch = "--ctu", .Text = "CTU", .Options = {"16", "32", "64"}, .VisibleFunc = Function() Codec.ValueText = "hevc"},
@@ -1339,7 +1372,11 @@ Public Class QSVEnc
                 Case "icq", "la-icq"
                     ret += " --" + Mode.ValueText + " " & CInt(Quality.Value)
                 Case "cqp"
-                    ret += If(QPAdvanced.Value, $" --cqp {QPI.Value.ToInvariantString()}:{QPP.Value.ToInvariantString()}:{QPB.Value.ToInvariantString()}", $" --cqp {QP.Value.ToInvariantString()}")
+                    If Codec.ValueText = "av1" Then
+                        ret += If(QPAdvanced.Value, $" --cqp {QPIAV1.Value.ToInvariantString()}:{QPPAV1.Value.ToInvariantString()}:{QPBAV1.Value.ToInvariantString()}", $" --cqp {QPAV1.Value.ToInvariantString()}")
+                    Else
+                        ret += If(QPAdvanced.Value, $" --cqp {QPI.Value.ToInvariantString()}:{QPP.Value.ToInvariantString()}:{QPB.Value.ToInvariantString()}", $" --cqp {QP.Value.ToInvariantString()}")
+                    End If
 
                     If QPOffsetI.Value <> QPOffsetI.DefaultValue OrElse
                         QPOffsetP.Value <> QPOffsetP.DefaultValue OrElse
