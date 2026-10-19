@@ -162,3 +162,35 @@ when StaxRip is started without installation, a generic icon is shown instead.
 - If a VapourSynth script fails with a missing namespace like `sub` or `ffms2`, the plugin isn't installed or not
   in a folder StaxRip searches, see above.
 - StaxRip uses classic scrollbars. Set the environment variable `GTK_OVERLAY_SCROLLING=1` to use overlay scrollbars.
+
+## Versioning
+
+The Linux port has its own version, independent of the StaxRip version in the title bar. It follows
+[Semantic Versioning](https://semver.org), began with v1.0.0 at the commit that ported StaxRip to Linux, and every
+commit gets an annotated tag with its version. The tags of StaxRip itself, like v2.52.6, aren't versions of the port.
+
+Commit messages follow [Conventional Commits](https://www.conventionalcommits.org), the version of a commit is derived
+from its message:
+
+| Commit message | Version |
+|---|---|
+| `!` after the type or scope like `feat!: ...`, or a `BREAKING CHANGE: ...` footer | Major |
+| `feat: ...` | Minor |
+| `fix:`, `build:`, `chore:`, `ci:`, `docs:`, `perf:`, `refactor:`, `revert:`, `style:`, `test:` | Patch |
+
+Unlike in the specification, every type changes at least the patch version, so that each commit has its own version.
+Merge commits and reverts with the messages git writes change the patch version as well, a merge that brings new
+features, like a newer StaxRip version, needs a message like `feat: merge StaxRip v2.53.0`. The commits that are older
+than this convention were tagged retroactively up to v1.10.23.
+
+After committing, tag the new commits:
+
+```sh
+Source/version.sh
+```
+
+It tags the commits of the port up to HEAD that have no version yet, from the oldest one, and prints the command to
+push the tags. `Source/version.sh -n` only shows the versions, `Source/version.sh current` shows the version of HEAD.
+Fetch the tags of other contributors first (`git fetch --tags`), so that no version is used twice. The script needs
+[node-semver](https://github.com/npm/node-semver), the package `semver` on Arch Linux and `node-semver` on Debian and
+Ubuntu, otherwise it runs node-semver with `npx` (Node.js).
