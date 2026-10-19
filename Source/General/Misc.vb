@@ -1747,7 +1747,7 @@ Public Class Subtitle
             Dim st As New Subtitle With {
                 .Size = New FileInfo(path).Length
             }
-            Dim idMatch = Regex.Match(path, "\\ID(\d+)")
+            Dim idMatch = Regex.Match(path, "[\\/]ID(\d+)")
 
             If idMatch.Success Then
                 st.StreamOrder = idMatch.Groups(1).Value.ToInt - 1
