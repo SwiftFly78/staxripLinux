@@ -2343,6 +2343,11 @@ Partial Public Class MainForm
         Dim subtitleCount = MediaInfo.GetSubtitleCount(ifoPath)
 
         If subtitleCount > 0 Then
+            If Package.VSRip.Path = "" Then
+                Log.Write("Demux subtitles using VSRip", "Skipped, VSRip is only available on Windows." + BR2)
+                Exit Sub
+            End If
+
             Dim pgcCount As Byte
             Dim sectorPointer As Integer
             Dim buffer = File.ReadAllBytes(ifoPath)
