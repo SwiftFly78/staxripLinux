@@ -1523,6 +1523,7 @@ Public Class AudioStream
                 Case "MPEG Audio"
                     If FormatProfile = "Layer 2" Then Return "mp2"
                     If FormatProfile = "Layer 3" Then Return "mp3"
+                    Return "mpa"
                 Case "TrueHD / AC3"
                     Return "thd"
                 Case "FLAC"
