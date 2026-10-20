@@ -445,9 +445,19 @@ clipname.set_output()" + BR
             End If
         End If
 
-        code = ExpandMacros(code, Engine)
+        'macros like %current_time% expand to a new value every time, the comparison leaves
+        'them out, otherwise all chunk encoders of a job rewrite the script at the same time
+        Dim volatileMacros As New List(Of String)
+        Dim key = ExpandMacros(Regex.Replace(code, "%(current_date|current_time|current_time24|random:\d+)%",
+            Function(m)
+                volatileMacros.Add(m.Value)
+                Return VB.ChrW(&HE000) & (volatileMacros.Count - 1) & VB.ChrW(&HE001)
+            End Function), Engine)
 
-        If Me.Error <> "" OrElse code <> LastCode OrElse (comparePath AndAlso Path <> LastPath) Then
+        code = Regex.Replace(key, VB.ChrW(&HE000) & "(\d+)" & VB.ChrW(&HE001),
+            Function(m) Macro.Expand(volatileMacros(CInt(m.Groups(1).Value))))
+
+        If Me.Error <> "" OrElse key <> LastCode OrElse (comparePath AndAlso Path <> LastPath) Then
             If Path.Dir.DirExists Then
                 If Engine = ScriptEngine.VapourSynth Then
                     ModifyScript(code, Engine).WriteFileUTF8(Path)
@@ -473,7 +483,7 @@ clipname.set_output()" + BR
                     Me.Error = server.Error
                 End Using
 
-                LastCode = code
+                LastCode = key
                 LastPath = Path
             End If
         End If
