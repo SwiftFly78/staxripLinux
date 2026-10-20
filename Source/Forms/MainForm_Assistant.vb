@@ -430,7 +430,7 @@ Partial Public Class MainForm
 
                 If TypeOf p.VideoEncoder.Muxer Is MP4Muxer Then
                     For Each i In p.VideoEncoder.Muxer.Subtitles
-                        If Not i.Path.Ext.EqualsAny("idx", "srt", "sub") Then
+                        If i.Enabled AndAlso Not i.Path.Ext.EqualsAny("idx", "srt", "sub") Then
                             If ProcessTip("MP4 supports only SUB, SRT and IDX subtitles.") Then
                                 Return Block("Invalid subtitle format")
                             End If
