@@ -540,21 +540,18 @@ Public Class Macro
             If value.Contains("%crop_right%") Then value = value.Replace("%crop_right%", Protect(proj.CropRight.ToString, shell))
             If value.Contains("%crop_bottom%") Then value = value.Replace("%crop_bottom%", Protect(proj.CropBottom.ToString, shell))
             If value.Contains("%video_bitrate%") Then value = value.Replace("%video_bitrate%", Protect(proj.VideoBitrate.ToString, shell))
-            If value.Contains("%audio_bitrate%") Then value = value.Replace("%audio_bitrate%", Protect(proj.AudioTracks.Sum(Function(x) x.AudioProfile.Bitrate).ToString, shell))
+            If value.Contains("%audio_bitrate%") Then value = value.Replace("%audio_bitrate%", Protect(CInt(proj.AudioTracks.Sum(Function(x) x.AudioProfile.Bitrate)).ToString, shell))
 
             matches = Regex.Matches(value, "%audio_bitrate:(\d+)?%")
             For Each match As Match In matches
-                Select Case match.Groups.Count
-                    Case 1
-                        value = value.Replace(match.Value, Protect(proj.AudioTracks.Sum(Function(x) x.AudioProfile.Bitrate).ToString, shell))
-                    Case 2
-                        Dim track = match.Groups(1).Value.ToInt() - 1
-                        If track < proj.AudioTracks.Count Then
-                            value = value.Replace(match.Value, Protect(proj.AudioTracks(track).AudioProfile.Bitrate.ToString, shell))
-                        End If
-                    Case Else
-                        Throw New NotImplementedException("Macro %audio_bitrate:%")
-                End Select
+                If Not match.Groups(1).Success Then
+                    value = value.Replace(match.Value, Protect(CInt(proj.AudioTracks.Sum(Function(x) x.AudioProfile.Bitrate)).ToString, shell))
+                Else
+                    Dim track = match.Groups(1).Value.ToInt() - 1
+                    If track >= 0 AndAlso track < proj.AudioTracks.Count Then
+                        value = value.Replace(match.Value, Protect(CInt(proj.AudioTracks(track).AudioProfile.Bitrate).ToString, shell))
+                    End If
+                End If
             Next
 
             matches = Regex.Matches(value, "%audio_channels:(\d+)%")
