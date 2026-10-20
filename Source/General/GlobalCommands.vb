@@ -965,7 +965,7 @@ Public Class GlobalCommands
 
         If sb.Show = DialogResult.OK Then
             s.Versions(sb.SelectedValue) = -1
-            MsgInfo("Will be reseted on next startup.", sb.SelectedValue)
+            MsgInfo("Will be reset on the next startup.", sb.SelectedValue)
         End If
     End Sub
 

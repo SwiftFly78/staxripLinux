@@ -620,7 +620,7 @@ Public Class x264Params
     Property CQM As New OptionParam With {
         .Switch = "--cqm",
         .Options = {"Flat", "JVT"},
-        .Text = "Quant Matrice Preset"}
+        .Text = "Quant Matrix Preset"}
 
     Property Mbtree As New BoolParam With {
         .NoSwitch = "--no-mbtree",

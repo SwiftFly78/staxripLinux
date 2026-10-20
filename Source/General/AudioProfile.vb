@@ -738,20 +738,20 @@ Public Class MuxAudioProfile
 
             Dim cb = ui.AddBool(page)
             cb.Text = "Default"
-            cb.Help = "Flaged as default."
+            cb.Help = "Flagged as default."
             cb.Checked = [Default]
             cb.SaveAction = Sub(value) [Default] = value
 
             If TypeOf p.VideoEncoder.Muxer Is MkvMuxer Then
                 cb = ui.AddBool(page)
                 cb.Text = "Forced"
-                cb.Help = "Flaged as forced in MKV."
+                cb.Help = "Flagged as forced in MKV."
                 cb.Checked = Forced
                 cb.SaveAction = Sub(value) Forced = value
 
                 cb = ui.AddBool(page)
                 cb.Text = "Commentary"
-                cb.Help = "Flaged as commentary in MKV."
+                cb.Help = "Flagged as commentary in MKV."
                 cb.Checked = Commentary
                 cb.SaveAction = Sub(value) Commentary = value
             End If

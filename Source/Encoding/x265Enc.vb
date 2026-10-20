@@ -731,7 +731,7 @@ Public Class x265Params
 
     Property SAOnonDeblock As New BoolParam With {
         .Switch = "--sao-non-deblock",
-        .Text = "Specify how to handle depencency between SAO and deblocking filter"}
+        .Text = "Specify how to handle dependency between SAO and deblocking filter"}
 
     Property SAO As New BoolParam With {
         .Switch = "--sao",
@@ -1357,7 +1357,7 @@ Public Class x265Params
     Property RSkip As New OptionParam With {
         .Switch = "--rskip",
         .Text = "Recursion Skip",
-        .Options = {"0 - Disabled", "1 - RD Level 0-4 Neighbour costs and CU homogenity, RD Level 5-6 Comparison with inter2Nx2N", "2 - RD Level 0-6 CU edge denstiy"},
+        .Options = {"0 - Disabled", "1 - RD Level 0-4 Neighbour costs and CU homogeneity, RD Level 5-6 Comparison with inter2Nx2N", "2 - RD Level 0-6 CU edge density"},
         .Values = {"0", "1", "2"},
         .Init = 1}
 

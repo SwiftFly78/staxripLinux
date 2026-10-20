@@ -212,7 +212,7 @@ Partial Public Class MainForm
 
             Dim fsFrameInterval = ui.AddNum()
             fsFrameInterval.Text = "Frame interval:"
-            fsFrameInterval.Help = "Frame interval betwen analyzed frames."
+            fsFrameInterval.Help = "Frame interval between analyzed frames."
             fsFrameInterval.Config = {1, 3600, 5, 0}
             fsFrameInterval.Field = NameOf(p.AutoCropFrameIntervalFrameSelection)
             fsFrameInterval.Margin = New Padding(0, 6, 0, 3)
@@ -227,7 +227,7 @@ Partial Public Class MainForm
 
             Dim luminanceThreshold = ui.AddNum()
             luminanceThreshold.Text = "Luminance Threshold in percent:"
-            luminanceThreshold.Help = "Max brightness in peercent of those lines, that are considered to be cropped."
+            luminanceThreshold.Help = "Max brightness in percent of those lines, that are considered to be cropped."
             luminanceThreshold.Config = {0, 99, 0.1, 1}
             luminanceThreshold.Field = NameOf(p.AutoCropLuminanceThreshold)
             luminanceThreshold.Margin = New Padding(0, 6, 0, 3)

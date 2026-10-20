@@ -520,7 +520,7 @@ Public Class Audio
 
             If streams.Count > 0 Then
                 mkvDemuxer.Demux(mkvPath, {streams(0)}, Nothing, ap, p, False, False, True,
-                    "Demux cutted MKV " & (ap.GetTrackIndex + 1), False)
+                    "Demux cut MKV " & (ap.GetTrackIndex + 1), False)
             Else
                 fail = True
             End If

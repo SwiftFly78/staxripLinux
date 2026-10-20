@@ -1197,7 +1197,7 @@ Public Class Package
         .Name = "TemporalDegrain2",
         .Filename = "TemporalDegrain2.avsi",
         .WebURL = "http://avisynth.nl/index.php/TemporalDegrain2",
-        .Description = "Builds on Temporal Degrain but it is able to clean the noise even further while impoving the sharpness in cases where orignal version had severe drops in visual quality.",
+        .Description = "Builds on Temporal Degrain but it is able to clean the noise even further while improving the sharpness in cases where original version had severe drops in visual quality.",
         .AvsFilterNames = {"TemporalDegrain2"}})
 
     Shared Property NNEDI3CL As Package = Add(New PluginPackage With {
@@ -1829,7 +1829,7 @@ Public Class Package
             .Name = "MAA2Mod",
             .Location = IO.Path.Combine("Plugins", "AVS", "MAA2"),
             .Filename = "maa2mod.avsi",
-            .Description = "Updated version of the MAA antialising script from AnimeIVTC. MAA2 uses tp7's SangNom2, which provides a nice speedup for SangNom-based antialiasing, especially when only processing the luma plane. Mod version also includes support for EEDI3 along with a few other new functions.",
+            .Description = "Updated version of the MAA antialiasing script from AnimeIVTC. MAA2 uses tp7's SangNom2, which provides a nice speedup for SangNom-based antialiasing, especially when only processing the luma plane. Mod version also includes support for EEDI3 along with a few other new functions.",
             .HelpFilename = "Readme.txt",
             .WebURL = "http://avisynth.nl/index.php/MAA2",
             .DownloadURL = "https://github.com/realfinder/AVS-Stuff/blob/Community/avs%202.6%20and%20up/maa2.avsi",
@@ -1920,7 +1920,7 @@ Public Class Package
         Add(New PluginPackage With {
             .Name = "AVSTP",
             .Location = IO.Path.Combine("Plugins", "AVS", "AVSTP"),
-            .Description = "AVSTP is a programming library for Avisynth plug-in developers. It helps supporting native multi-threading in plug-ins. It works by sharing a thread pool between multiple plug-ins, so the number of threads stays low whatever the number of instantiated plug-ins. This helps saving resources, especially when working in an Avisynth MT environment. This documentation is mostly targeted to plug-ins developpers, but contains installation instructions for Avisynth users too.",
+            .Description = "AVSTP is a programming library for Avisynth plug-in developers. It helps supporting native multi-threading in plug-ins. It works by sharing a thread pool between multiple plug-ins, so the number of threads stays low whatever the number of instantiated plug-ins. This helps saving resources, especially when working in an Avisynth MT environment. This documentation is mostly targeted to plug-ins developers, but contains installation instructions for Avisynth users too.",
             .HelpFilename = "avstp.html",
             .Filename = "avstp.dll",
             .WebURL = "http://avisynth.nl/index.php/AVSTP",
@@ -1928,7 +1928,7 @@ Public Class Package
 
         Add(New PluginPackage With {
             .Name = "Dither AVSI",
-            .Description = "This package offers a set of tools to manipulate high-bitdepth (16 bits per plane) video clips. The most proeminent features are color banding artifact removal, dithering to 8 bits, colorspace conversions and resizing.",
+            .Description = "This package offers a set of tools to manipulate high-bitdepth (16 bits per plane) video clips. The most prominent features are color banding artifact removal, dithering to 8 bits, colorspace conversions and resizing.",
             .HelpFilename = "dither.html",
             .Location = IO.Path.Combine("Plugins", "AVS", "Dither"),
             .Filename = "dither.avsi",
@@ -1939,7 +1939,7 @@ Public Class Package
         Add(New PluginPackage With {
             .Name = "Dither DLL",
             .Location = IO.Path.Combine("Plugins", "AVS", "Dither"),
-            .Description = "This package offers a set of tools to manipulate high-bitdepth (16 bits per plane) video clips. The most proeminent features are color banding artifact removal, dithering to 8 bits, colorspace conversions and resizing.",
+            .Description = "This package offers a set of tools to manipulate high-bitdepth (16 bits per plane) video clips. The most prominent features are color banding artifact removal, dithering to 8 bits, colorspace conversions and resizing.",
             .HelpFilename = "dither.html",
             .Filename = "dither.dll",
             .DownloadURL = "https://forum.doom9.org/showpost.php?p=1386559&postcount=3",

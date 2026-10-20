@@ -137,7 +137,7 @@ Partial Public Class MainForm
                 If Not p.VideoEncoder.Muxer.CoverFile.Base.EqualsAny("cover", "small_cover", "cover_land", "small_cover_land") OrElse
                     Not p.VideoEncoder.Muxer.CoverFile.Ext.EqualsAny("jpg", "png") Then
 
-                    If ProcessTip("The cover file name bust be cover, small_cover, cover_land or small_cover_land, the file type must be jpg or png.") Then
+                    If ProcessTip("The cover file name must be cover, small_cover, cover_land or small_cover_land, the file type must be jpg or png.") Then
                         Return Block("Invalid Cover File Name")
                     End If
                 End If
@@ -237,7 +237,7 @@ Partial Public Class MainForm
                     End If
 
                     If ap.File = p.TargetFile AndAlso ProcessTip("The audio source and target filepath is identical.") Then
-                        Return Block("Invalid Targetpath", GetAudioTextBox(ap), tbTargetFile)
+                        Return Block("Invalid Target Path", GetAudioTextBox(ap), tbTargetFile)
                     End If
 
                     If Math.Abs(ap.Delay) > 2000 AndAlso ProcessTip("The audio delay is unusual high indicating a sync problem.") Then

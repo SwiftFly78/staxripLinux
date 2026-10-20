@@ -518,7 +518,7 @@ Public Class AV1Params
                     New BoolParam With {.Switch = "--enable-palette", .Text = "Palette prediction mode", .Init = True, .IntegerValue = True},
                     New BoolParam With {.Switch = "--enable-intrabc", .Text = "Intra block copy prediction mode", .Init = True, .IntegerValue = True},
                     New BoolParam With {.Switch = "--enable-angle-delta", .Text = "Intra angle delta", .Init = True, .IntegerValue = True},
-                    New OptionParam With {.Switch = "--disable-trellis-quant", .Text = "Disable Trellis Quant", .IntegerValue = True, .Init = 3, .Options = {"0 - False", "1 - True", "2 - True for RD Search", "3 - True for estimare yrd search (default)"}},
+                    New OptionParam With {.Switch = "--disable-trellis-quant", .Text = "Disable Trellis Quant", .IntegerValue = True, .Init = 3, .Options = {"0 - False", "1 - True", "2 - True for RD Search", "3 - True for estimate yrd search (default)"}},
                     New BoolParam With {.Switch = "--enable-qm", .Text = "Enable QM", .Init = False, .IntegerValue = True},
                     New NumParam With {.Switch = "--qm-min", .Text = "Min QM Flatness", .Init = 8, .Config = {0, 15}},
                     New NumParam With {.Switch = "--qm-max", .Text = "Max QM Flatness", .Init = 15, .Config = {0, 15}})
@@ -536,7 +536,7 @@ Public Class AV1Params
                     New BoolParam With {.Switch = "--error-resilient", .Text = "Error Resilient", .Init = False, .IntegerValue = True},
                     New OptionParam With {.Switch = "--aq-mode", .Text = "AQ Mode", .IntegerValue = True, .Options = {"Disabled", "Variance", "Complexity", "Cyclic Refresh"}},
                     DeltaqMode,
-                    New NumParam With {.Switch = "--deltaq-strength", .Text = "Delta QIndex Strengh %", .Init = 100, .Config = {0, 1000, 5}, .VisibleFunc = Function() DeltaqMode.Value = 4},
+                    New NumParam With {.Switch = "--deltaq-strength", .Text = "Delta QIndex Strength %", .Init = 100, .Config = {0, 1000, 5}, .VisibleFunc = Function() DeltaqMode.Value = 4},
                     New BoolParam With {.Switch = "--delta-lf-mode", .Text = "Delta-lf-Mode", .Init = False, .IntegerValue = True},
                     New BoolParam With {.Switch = "--frame-boost", .Text = "Enable frame periodic boost", .Init = False, .IntegerValue = True},
                     New NumParam With {.Switch = "--noise-sensitivity", .Text = "Noise Sensitivity"},
@@ -559,7 +559,7 @@ Public Class AV1Params
 
                 Add("AV1 Specific 7",
                     New NumParam With {.Switch = "--max-reference-frames", .Text = "Max ref frames per frame", .Config = {3, 7}, .Init = 7},
-                    New BoolParam With {.Switch = "--reduced-reference-set", .Text = "Rreduced set of refs", .Init = False, .IntegerValue = True},
+                    New BoolParam With {.Switch = "--reduced-reference-set", .Text = "Reduced set of refs", .Init = False, .IntegerValue = True},
                     New NumParam With {.Switch = "--enable-ref-frame-mvs", .Text = "Temporal mv prediction", .Init = 1},
                     New StringParam With {.Switch = "--target-seq-level-idx", .Text = "Target sequence level index"},  'Possible values are in the form of "ABxy"(pad leading zeros if less than 4 digits). AB: Operating Point(OP) index; xy: Target level index for the OP. E.g. "0" means target level index 0 for the 0th OP; "1021" means target level index 21 for the 10th OP.
                     New OptionParam With {.Switch = "--set-tier-mask", .Text = "Tier mask", .IntegerValue = True, .Options = {"Main tier (default)", "High tier"}},

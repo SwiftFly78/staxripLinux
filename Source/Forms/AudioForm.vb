@@ -1165,7 +1165,7 @@ Public Class AudioForm
             n.Property = NameOf(TempProfile.Params.ffmpegDynaudnormF)
 
             n = ui.AddNum()
-            n.Text = "Gaus filter win size"
+            n.Text = "Gauss filter window size"
             n.Help = helpUrl
             n.Config = {3, 301, 2, 0}
             n.Property = NameOf(TempProfile.Params.ffmpegDynaudnormG)

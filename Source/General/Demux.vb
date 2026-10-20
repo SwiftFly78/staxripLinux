@@ -35,7 +35,7 @@ Public MustInherit Class Demuxer
 
             Dim cb = ui.AddBool(page)
             cb.Text = "Recreate already existing files"
-            cb.Help = "Demux even when ouput files already exist."
+            cb.Help = "Demux even when output files already exist."
             cb.Checked = OverrideExisting
             cb.SaveAction = Sub(val) OverrideExisting = val
 

@@ -50,7 +50,7 @@ Partial Public Class MainForm
 
             n = ui.AddNum()
             n.Text = "Timeout error messages on job processing"
-            n.Help = "Duration of error messages being shown if an error occures and before the next job shall start."
+            n.Help = "Duration of error messages being shown if an error occurs and before the next job shall start."
             n.Config = {-1, 3600, 5, 0}
             n.Field = NameOf(s.ErrorMessageTimeout)
 #End Region
@@ -133,7 +133,7 @@ Partial Public Class MainForm
             stsd.Button.ValueChangedAction.Invoke(s.ShowTemplateSelectionDefault)
 
             stst.Text = "Timeout"
-            stst.Help = "Timeout in seconds the Template Selection is shown befor the current template is used"
+            stst.Help = "Timeout in seconds the Template Selection is shown before the current template is used"
             stst.Config = {1, Integer.MaxValue}
             stst.Field = NameOf(s.ShowTemplateSelectionTimeout)
 #End Region

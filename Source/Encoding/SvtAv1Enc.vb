@@ -1000,7 +1000,7 @@ Public Class SvtAv1EncParams
         .Text = "ALT-REF Frames",
         .Expanded = True,
         .IntegerValue = True,
-        .Options = {"0: Off", "1: On (default)", "2: Aadaptive"},
+        .Options = {"0: Off", "1: On (default)", "2: Adaptive"},
         .Init = 1}
 
     Property EnableTfKey As New OptionParam With {

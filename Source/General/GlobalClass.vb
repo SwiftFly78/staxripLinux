@@ -324,7 +324,7 @@ Public Class GlobalClass
         Try
             Return PowerShell.Invoke(code, variableName, variableValue, args)
         Catch ex As RuntimeException
-            g.ShowException(ex, "PowerShell Scipt Exception",
+            g.ShowException(ex, "PowerShell Script Exception",
                 ex.ErrorRecord.ScriptStackTrace.Replace(" <ScriptBlock>, <No file>", ""))
         Catch ex As Exception
             ShowException(ex)
@@ -1702,7 +1702,7 @@ Public Class GlobalClass
         Dim logfileOpened = False
         Dim fp = Log.GetPath
 
-        If MsgQuestion("An error occured", "Do you want to open the log file?",
+        If MsgQuestion("An error occurred", "Do you want to open the log file?",
                        TaskButton.YesNo) = DialogResult.Yes Then
 
             g.ShellExecute(fp)
