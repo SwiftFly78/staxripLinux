@@ -838,34 +838,32 @@ Public Class MkvMuxer
         If File.Exists(ChapterFile) Then
             If p.Ranges.Count > 0 AndAlso ChapterFile.Ext = "xml" Then
                 Dim xDoc = XDocument.Load(ChapterFile)
-                Dim lstTimeRanges As New List(Of (StartTime As TimeSpan, EndTime As TimeSpan, Offset As TimeSpan))
-                Dim offsetRecord As TimeSpan
-                Dim lstValidChapterAtoms As New List(Of XElement)
+                Dim frameTicks = 10000000 / p.CutFrameRate
+                Dim getTicks = Function(element As XElement) TimeSpan.Parse(Left(element.Value, 16)).Ticks
 
-                For Each r In p.Ranges
-                    lstTimeRanges.Add((
-                        New TimeSpan(CLng(10000000L * r.Start / p.CutFrameRate)),
-                        New TimeSpan(CLng(10000000L * r.End / p.CutFrameRate)),
-                        offsetRecord
-                    ))
+                'ranges include their end frame
+                Dim parts = p.Ranges.Select(Function(r) (Start:=CLng(r.Start * frameTicks), [End]:=CLng((r.End + 1) * frameTicks))).ToArray
 
-                    offsetRecord += lstTimeRanges.Last.EndTime - lstTimeRanges.Last.StartTime
+                'times in removed parts move to the start of the next part
+                Dim getCutTime = Function(element As XElement) New TimeSpan(parts.Sum(
+                    Function(part) Math.Clamp(getTicks(element) - part.Start, 0, part.End - part.Start))).ToString()
 
-                    For Each elAtom In xDoc.Descendants("ChapterAtom")
-                        Dim elChapterTimeStart = elAtom.Element("ChapterTimeStart")
+                For Each elAtom In xDoc.Descendants("ChapterAtom").ToArray
+                    Dim elStart = elAtom.Element("ChapterTimeStart")
+                    Dim elEnd = elAtom.Element("ChapterTimeEnd")
+                    Dim startTicks = getTicks(elStart)
 
-                        If Not lstValidChapterAtoms.Contains(elAtom) Then
-                            Dim tsStart = TimeSpan.Parse(Left(elAtom.Element("ChapterTimeStart").Value, 16))
+                    'chapters belong to the nearest frame, their times are often rounded to milliseconds
+                    If parts.Any(Function(part) startTicks >= part.Start - frameTicks / 2 AndAlso startTicks < part.End - frameTicks / 2) Then
+                        elStart.Value = getCutTime(elStart)
 
-                            If tsStart >= lstTimeRanges.Last.StartTime And tsStart <= lstTimeRanges.Last.EndTime Then
-                                elAtom.Element("ChapterTimeStart").Value = (lstTimeRanges.Last.Offset + (tsStart - lstTimeRanges.Last.StartTime)).ToString()
-                                lstValidChapterAtoms.Add(elAtom)
-                            End If
+                        If elEnd IsNot Nothing Then
+                            elEnd.Value = getCutTime(elEnd)
                         End If
-                    Next
+                    Else
+                        elAtom.Remove()
+                    End If
                 Next
-
-                xDoc.Descendants("ChapterAtom").Where(Function(Atom) Not lstValidChapterAtoms.Contains(Atom)).Remove()
 
                 If xDoc.Descendants("ChapterAtom").Count > 0 Then
                     Dim CutChapterFile = Path.Combine(Path.GetDirectoryName(ChapterFile), "cut_cpt" + ".xml")
