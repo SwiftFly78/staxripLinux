@@ -1468,9 +1468,9 @@ Public Class VCEEnc
         Function GetPmdArgs() As String
             If Pmd.Value Then
                 Dim ret = ""
-                If PmdApplyCount.Value <> PmdApplyCount.DefaultValue Then ret += ",apply_count=" & PmdApplyCount.Value
-                If PmdStrength.Value <> PmdStrength.DefaultValue Then ret += ",strength=" & PmdStrength.Value
-                If PmdThreshold.Value <> PmdThreshold.DefaultValue Then ret += ",threshold=" & PmdThreshold.Value
+                If PmdApplyCount.Value <> PmdApplyCount.DefaultValue Then ret += ",apply_count=" & PmdApplyCount.Value.ToInvariantString
+                If PmdStrength.Value <> PmdStrength.DefaultValue Then ret += ",strength=" & PmdStrength.Value.ToInvariantString
+                If PmdThreshold.Value <> PmdThreshold.DefaultValue Then ret += ",threshold=" & PmdThreshold.Value.ToInvariantString
                 Return ("--vpp-pmd " + ret.TrimStart(","c)).Trim()
             End If
             Return ""
