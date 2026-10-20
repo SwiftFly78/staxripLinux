@@ -324,17 +324,17 @@ Partial Public Class MainForm
     End Sub
 
     Function GetIfoFile() As String
-        Dim ret = p.SourceFile.Dir
+        Dim dir = p.SourceFile.Dir
 
-        If New DirectoryInfo(ret).Name.EndsWithEx("_temp") Then
-            ret = ret.Parent
+        If New DirectoryInfo(dir).Name.EndsWithEx("_temp") Then
+            dir = dir.Parent
         End If
 
-        ret = Path.Combine(ret, p.SourceFile.FileName.DeleteRight(5) + "0.ifo")
+        If Not Directory.Exists(dir) Then Return Nothing
 
-        If File.Exists(ret) Then
-            Return ret
-        End If
+        'the file names of DVDs are usually upper case
+        Dim name = p.SourceFile.FileName.DeleteRight(5) + "0.ifo"
+        Return Directory.EnumerateFiles(dir).FirstOrDefault(Function(i) i.FileName.Equals(name, StringComparison.OrdinalIgnoreCase))
     End Function
 
     Sub RenameDVDTracks()
