@@ -228,7 +228,9 @@ Partial Public Class MainForm
                         End If
                     End If
 
-                    If ap.AudioCodec = AudioCodec.AC3 AndAlso CInt(ap.Bitrate) Mod If(CInt(ap.Bitrate) > 256, 64, 32) <> 0 Then
+                    If ap.AudioCodec = AudioCodec.AC3 AndAlso
+                        Not {32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320, 384, 448, 512, 576, 640}.Contains(CInt(ap.Bitrate)) Then
+
                         If ProcessTip($"The AC3 bitrate {CInt(ap.Bitrate)} is not specification compliant.") Then
                             Return Warn("Invalid Audio Bitrate", GetAudioTextBox(ap))
                         End If
