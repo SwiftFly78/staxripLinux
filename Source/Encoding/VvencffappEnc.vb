@@ -553,6 +553,7 @@ Public Class VvencffappParams
         Dim sb As New StringBuilder
         Dim pipeTool = If(p.Script.IsAviSynth, PipingToolAVS, PipingToolVS).ValueText.ToLowerInvariant()
         Dim isSingleChunk = endFrame = 0
+        Dim isRangeInPipe = False
 
         If includePaths AndAlso includeExecutable Then
             Dim isCropped = (p.CropLeft Or p.CropTop Or p.CropRight Or p.CropBottom) <> 0 AndAlso Decoder.ValueText <> "avs" AndAlso p.Script.IsFilterActive("Crop")
@@ -568,10 +569,12 @@ Public Class VvencffappParams
                     Select Case pipeTool
                         Case "avs2yuv"
                             pipeString = FrameServerHelp.GetAvs2yuvCommand(script.Path, startFrame, endFrame)
+                            isRangeInPipe = True
 
                             sb.Append(pipeString & " | " & Package.VVenCFFapp.Path.Escape)
                         Case "vspipe"
                             Dim chunk = If(isSingleChunk, "", $" --start {startFrame} --end {endFrame}")
+                            isRangeInPipe = True
                             pipeString = Package.vspipe.Path.Escape + " " + script.Path.Escape + " - --container y4m" + chunk
 
                             sb.Append(pipeString & " | " & Package.VVenCFFapp.Path.Escape)
@@ -630,10 +633,10 @@ Public Class VvencffappParams
                 maxFrames = If(maxFrames < 0, 0, maxFrames)
                 sb.Append($" --FramesToBeEncoded {Math.Min(maxFrames, FramesToBeEncoded.Value)}")
             End If
-            'Else
-            '    If includePaths Then
-            '        sb.Append($" --FrameSkip {startFrame} --FramesToBeEncoded {endFrame - startFrame + 1}")
-            '    End If
+        ElseIf Not isRangeInPipe Then
+            'ffmpeg and the decoders send all frames
+            If startFrame > 0 Then sb.Append($" --FrameSkip {startFrame}")
+            sb.Append($" --FramesToBeEncoded {endFrame - startFrame + 1}")
         End If
 
         If includePaths Then
