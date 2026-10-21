@@ -334,9 +334,10 @@ Public Class AudioForm
                 numBitrate.Minimum = 96
                 If {6}.Contains(TempProfile.SourceChannels) OrElse TempProfile.Params.DeezyChannelsDd = DeezyChannelsDd._6 Then numBitrate.Minimum = 224
             Else
+                'steps of the AC3 specification, which ends at 640
                 numBitrate.Increment = 32
-                setIncrement(320, 64)
-                numBitrate.Maximum = 1664
+                setIncrement(256, 64)
+                numBitrate.Maximum = 640
                 numBitrate.Minimum = 32
             End If
         ElseIf TempProfile.Params.Codec = AudioCodec.AC4 Then
