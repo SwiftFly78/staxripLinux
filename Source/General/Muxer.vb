@@ -59,6 +59,10 @@ Public MustInherit Class Muxer
         End Get
     End Property
 
+    Overridable Function IsSupported(subtitle As Subtitle) As Boolean
+        Return True
+    End Function
+
     Private AdditionalGeneralSwitchesValue As String
 
     Property AdditionalGeneralSwitches As String
@@ -194,7 +198,7 @@ Public MustInherit Class Muxer
                 If TypeOf Me Is MP4Muxer AndAlso Not {"idx", "srt", "sub"}.Contains(fp.Ext) Then Continue For
 
                 For Each iSubtitle In Subtitle.Create(fp)
-                    If p.PreferredSubtitles <> "" Then
+                    If p.PreferredSubtitles <> "" AndAlso IsSupported(iSubtitle) Then
                         If fp.ToLowerEx.ContainsAny("_forced", ".forced.") Then
                             iSubtitle.Forced = True
                         End If
@@ -217,7 +221,7 @@ Public MustInherit Class Muxer
             MediaInfo.GetSubtitleCount(p.FirstOriginalSourceFile) > 0 AndAlso
             TypeOf Me Is MkvMuxer Then
 
-            Subtitles.AddRange(Subtitle.Create(p.FirstOriginalSourceFile))
+            Subtitles.AddRange(Subtitle.Create(p.FirstOriginalSourceFile).Where(AddressOf IsSupported))
         End If
 
         For Each i In files
@@ -670,6 +674,10 @@ Public Class MkvMuxer
     Overrides Sub Mux()
         WriteTagfile()
 
+        For Each subtitle In Subtitles.Where(Function(i) i.Enabled AndAlso Not IsSupported(i))
+            Log.WriteLine($"Skipped subtitle {subtitle.Path.FileName}, {OutputExt.ToUpperInvariant} doesn't support {subtitle.TypeName}" + BR)
+        Next
+
         Using proc As New Proc
             proc.Header = "Muxing to MKV"
             proc.SkipStrings = {"Progress: ", "+-> Pre-parsing"}
@@ -804,7 +812,7 @@ Public Class MkvMuxer
         ExpandMacros()
 
         For Each subtitle In Subtitles
-            If subtitle.Enabled AndAlso File.Exists(subtitle.Path) Then
+            If subtitle.Enabled AndAlso File.Exists(subtitle.Path) AndAlso IsSupported(subtitle) Then
                 id = If(FileTypes.SubtitleSingle.Contains(subtitle.Path.Ext), 0, subtitle.StreamOrder)
 
                 If Not FileTypes.SubtitleExludingContainers.Contains(subtitle.Path.Ext) Then
@@ -1021,6 +1029,11 @@ Public Class WebMMuxer
             Return "webm"
         End Get
     End Property
+
+    'the WebM mode of mkvmerge allows no subtitles
+    Overrides Function IsSupported(subtitle As Subtitle) As Boolean
+        Return False
+    End Function
 End Class
 
 <Serializable()>
