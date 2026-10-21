@@ -407,14 +407,6 @@ Partial Public Class MainForm
                 Case Else
                     Throw New NotImplementedException()
             End Select
-
-            If g.ProjectPath Is Nothing Then
-                If Not OpenSaveProjectDialog() Then
-                    Return True
-                End If
-            Else
-                SaveProjectPath(g.ProjectPath)
-            End If
         End If
 
         If ObjectHelp.GetCompareString(g.SavedProject) <> ObjectHelp.GetCompareString(p) Then
