@@ -766,7 +766,10 @@ Public Class AudioForm
                         mbRateMode.Text = "Rate Mode:"
                         mbRateMode.Expanded = True
                         mbRateMode.Button.Value = TempProfile.Params.ffmpegOpusRateMode
-                        mbRateMode.Button.SaveAction = Sub(value) TempProfile.Params.ffmpegOpusRateMode = value
+                        mbRateMode.Button.SaveAction = Sub(value)
+                                                           TempProfile.Params.ffmpegOpusRateMode = value
+                                                           TempProfile.Params.RateMode = If(value = OpusRateMode.CBR, AudioRateMode.CBR, AudioRateMode.VBR)
+                                                       End Sub
 
                         Dim mbOpusApp = ui.AddMenu(Of OpusApp)
                         mbOpusApp.Text = "Application Type:"
@@ -986,7 +989,7 @@ Public Class AudioForm
                 mbMode.Button.Value = TempProfile.Params.OpusencOpusRateMode
                 mbMode.Button.SaveAction = Sub(value)
                                                TempProfile.Params.OpusencOpusRateMode = value
-                                               TempProfile.Params.RateMode = If(TempProfile.Params.OpusencOpusRateMode = (OpusRateMode.VBR Or OpusRateMode.CVBR), AudioRateMode.VBR, AudioRateMode.CBR)
+                                               TempProfile.Params.RateMode = If(value = OpusRateMode.CBR, AudioRateMode.CBR, AudioRateMode.VBR)
                                                UpdateBitrate()
                                            End Sub
 
