@@ -146,8 +146,10 @@ Public Class Audio
                 ConvertEac3to(ap)
         End Select
 
-        gap.Params.Normalize = renormalize
-        gap.Params.ffmpegNormalizeMode = If(gap.Params.ffmpegNormalizeMode = ffmpegNormalizeMode.dynaudnorm, ffmpegNormalizeMode.volumedetect, gap.Params.ffmpegNormalizeMode)
+        If isGUIAP Then
+            gap.Params.Normalize = renormalize
+            gap.Params.ffmpegNormalizeMode = If(gap.Params.ffmpegNormalizeMode = ffmpegNormalizeMode.dynaudnorm, ffmpegNormalizeMode.volumedetect, gap.Params.ffmpegNormalizeMode)
+        End If
 
         ConvertFF(ap, renormalize)
         ConvertEac3to(ap)
@@ -268,7 +270,12 @@ Public Class Audio
             End If
         End If
 
-        If gap.Params.CenterOptimizedStereo AndAlso ((gap?.Params.Codec <> AudioCodec.Opus AndAlso gap?.Params.ChannelsMode = ChannelsMode._2) OrElse (gap?.Params.Codec = AudioCodec.Opus AndAlso gap?.Params.OpusencDownmix = OpusDownmix.Stereo)) Then
+        'command line audio profiles have no channel options
+        If gap Is Nothing Then
+            If Not force Then
+                args += " -ac " & ap.Channels
+            End If
+        ElseIf gap.Params.CenterOptimizedStereo AndAlso ((gap?.Params.Codec <> AudioCodec.Opus AndAlso gap?.Params.ChannelsMode = ChannelsMode._2) OrElse (gap?.Params.Codec = AudioCodec.Opus AndAlso gap?.Params.OpusencDownmix = OpusDownmix.Stereo)) Then
             If gap.SourceChannels = 8 Then
                 args += " -af pan=stereo|c0=c2+0.30c0+0.30c4+0.30c6|c1=c2+0.30c1+0.30c5+0.30c7"
             Else
@@ -339,7 +346,11 @@ Public Class Audio
             End If
 
             ap.Gain = 0
-            gap.Params.CenterOptimizedStereo = False
+
+            If gap IsNot Nothing Then
+                gap.Params.CenterOptimizedStereo = False
+            End If
+
             ap.File = outPath
             Log.WriteLine(MediaInfo.GetSummary(outPath))
         Else
