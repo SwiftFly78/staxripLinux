@@ -550,9 +550,7 @@ Public Class GlobalCommands
         p.TargetFile = preparedPath
         Dim newEncodeFile = IO.Path.Combine(p.TempDir, p.TargetFile.Base + "_out." + p.VideoEncoder.OutputExt)
 
-        If File.Exists(oldEncodeFile) Then
-            File.Move(oldEncodeFile, newEncodeFile)
-        End If
+        FileHelp.Move(oldEncodeFile, newEncodeFile)
     End Sub
 
     <Command("Opens StaxRip without taking focus")>
