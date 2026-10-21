@@ -3112,7 +3112,9 @@ Partial Public Class MainForm
                     Case DynamicMenuItemID.AudioProfiles
                         For j = 0 To p.AudioTracks.Count - 1
                             Dim index = j
-                            g.PopulateProfileMenu(i.DropDownItems, s.AudioProfiles, Sub() ShowAudioProfilesDialog(index), Sub(profile) g.LoadAudioProfile(profile, index))
+                            Dim trackItem As New MenuItemEx($"Track {index + 1}")
+                            i.DropDownItems.Add(trackItem)
+                            g.PopulateProfileMenu(trackItem.DropDownItems, s.AudioProfiles, Sub() ShowAudioProfilesDialog(index), Sub(profile) g.LoadAudioProfile(profile, index))
                         Next
                     Case DynamicMenuItemID.FilterSetupProfiles
                         g.PopulateProfileMenu(i.DropDownItems, s.FilterSetupProfiles, AddressOf ShowFilterSetupProfilesDialog, AddressOf LoadFilterSetup)
