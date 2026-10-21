@@ -329,10 +329,10 @@ Public Class Project
             Select Case path.Ext
                 Case "idx", "sup"
                     filterName = "core.sub.ImageFile"
-                Case "srt", "ass", "ssa"
+                Case "srt", "ass", "ssa", "vtt", "webvtt"
                     filterName = "core.sub.TextFile"
                 Case Else
-                    If showErrorMsg Then MsgError("Only idx, srt, ass, ssa and sup file types are supported.")
+                    If showErrorMsg Then MsgError("Only idx, srt, ass, ssa, vtt and sup file types are supported.")
                     Exit Sub
             End Select
 
