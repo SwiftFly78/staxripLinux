@@ -291,8 +291,8 @@ Public Class VCEEnc
             Dim luminanceMatch = Regex.Match(MasteringDisplay_Luminance, "min: ([\d\.]+) cd/m2, max: ([\d\.]+) cd/m2")
 
             If luminanceMatch.Success Then
-                Dim luminanceMin = luminanceMatch.Groups(1).Value.ToDouble * 10000
-                Dim luminanceMax = luminanceMatch.Groups(2).Value.ToDouble * 10000
+                Dim luminanceMin = CLng(luminanceMatch.Groups(1).Value.ToDouble * 10000)
+                Dim luminanceMax = CLng(luminanceMatch.Groups(2).Value.ToDouble * 10000)
 
                 If MasteringDisplay_ColorPrimaries.Contains("Display P3") Then
                     cl += " --output-depth 10"
