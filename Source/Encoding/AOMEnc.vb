@@ -524,10 +524,10 @@ Public Class AV1Params
                     New NumParam With {.Switch = "--qm-max", .Text = "Max QM Flatness", .Init = 15, .Config = {0, 15}})
 
                 Add("AV1 Specific 5",
-                    New BoolParam With {.Switch = "--reduced-tx-type-set", .Text = "Reduced set of transform types"},
-                    New BoolParam With {.Switch = "--use-intra-dct-only", .Text = "DCT only for INTRA modes"},
-                    New BoolParam With {.Switch = "--use-inter-dct-only", .Text = "DCT only for INTER modes"},
-                    New BoolParam With {.Switch = "--use-intra-default-tx-only", .Text = "Default-transform only for INTRA modes"},
+                    New BoolParam With {.Switch = "--reduced-tx-type-set", .Text = "Reduced set of transform types", .IntegerValue = True},
+                    New BoolParam With {.Switch = "--use-intra-dct-only", .Text = "DCT only for INTRA modes", .IntegerValue = True},
+                    New BoolParam With {.Switch = "--use-inter-dct-only", .Text = "DCT only for INTER modes", .IntegerValue = True},
+                    New BoolParam With {.Switch = "--use-intra-default-tx-only", .Text = "Default-transform only for INTRA modes", .IntegerValue = True},
                     New OptionParam With {.Switch = "--quant-b-adapt", .Text = "Adaptive quantize_b", .IntegerValue = True, .Init = 0, .Options = {"Off", "On"}},
                     New OptionParam With {.Switch = "--coeff-cost-upd-freq", .Text = "Update freq for coeff costs", .Init = 0, .Options = {"Undefined", "0 - SB", "1 - SB Row per Tile", "2 - Tile", "3 - Off"}, .Values = {"undefined", "0", "1", "2", "3"}},
                     New OptionParam With {.Switch = "--mode-cost-upd-freq", .Text = "Update freq for mode costs", .Init = 0, .Options = {"Undefined", "0 - SB", "1 - SB Row per Tile", "2 - Tile", "3 - Off"}, .Values = {"undefined", "0", "1", "2", "3"}},
