@@ -1581,7 +1581,7 @@ Public Class x265Params
                     New BoolParam With {.Switch = "--mcstf", .NoSwitch = "--no-mcstf", .Text = "GOP-based Temporal Filter", .Init = False, .IntegerValue = False},
                     McstfRefRange,
                     New BoolParam With {.Switch = "--selective-mcstf", .NoSwitch = "--no-selective-mcstf", .Text = "Skip MCSTF for GOPs estimated as clean (low noise)", .Init = False, .IntegerValue = False},
-                    New BoolParam With {.Switch = "--alpha", .Text = "Alpha channel support", .Help = "Enable alpha channel support", .Init = False, .IntegerValue = True},
+                    New BoolParam With {.Switch = "--alpha", .Text = "Alpha channel support", .Help = "Enable alpha channel support", .Init = False},
                     Format, ScreenContentCoding,
                     New StringParam With {.Switch = "--abr-ladder", .Text = "ABR Ladder File", .BrowseFile = True}
                 )
