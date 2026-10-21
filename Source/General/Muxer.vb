@@ -1111,13 +1111,20 @@ Public Class ffmpegMuxer
         Dim mapping = " -map 0:v"
 
         For Each track In p.AudioTracks
-            If TypeOf track.AudioProfile IsNot NullAudioProfile AndAlso File.Exists(track.AudioProfile.File) AndAlso IsSupported(track.AudioProfile.OutputFileType) Then
+            Dim ap = track.AudioProfile
+
+            If TypeOf ap IsNot NullAudioProfile AndAlso File.Exists(ap.File) AndAlso IsSupported(ap.OutputFileType) Then
                 id += 1
-                args += " -i " + track.AudioProfile.File.Escape
+
+                If ap.Delay <> 0 AndAlso Not ap.HandlesDelay AndAlso Not (ap.HasStream AndAlso ap.Stream.Delay <> 0) Then
+                    args += " -itsoffset " + (ap.Delay / 1000).ToInvariantString
+                End If
+
+                args += " -i " + ap.File.Escape
                 mapping += " -map " & id
 
-                If track.AudioProfile.Stream IsNot Nothing Then
-                    mapping += ":" & track.AudioProfile.Stream.StreamOrder
+                If ap.Stream IsNot Nothing Then
+                    mapping += ":" & ap.Stream.StreamOrder
                 End If
             End If
         Next
