@@ -3108,7 +3108,7 @@ Partial Public Class MainForm
                     Case DynamicMenuItemID.EncoderProfiles
                         g.PopulateProfileMenu(i.DropDownItems, s.VideoEncoderProfiles, AddressOf ShowEncoderProfilesDialog, AddressOf g.LoadVideoEncoder)
                     Case DynamicMenuItemID.MuxerProfiles
-                        g.PopulateProfileMenu(i.DropDownItems, s.MuxerProfiles, AddressOf ShowMuxerProfilesDialog, AddressOf p.VideoEncoder.LoadMuxer)
+                        g.PopulateProfileMenu(i.DropDownItems, s.MuxerProfiles, AddressOf ShowMuxerProfilesDialog, Sub(profile) p.VideoEncoder.LoadMuxer(profile))
                     Case DynamicMenuItemID.AudioProfiles
                         For j = 0 To p.AudioTracks.Count - 1
                             Dim index = j
