@@ -3477,7 +3477,7 @@ Partial Public Class MainForm
                     filterProfiles = FilterCategory.ParseFilterProfilesIniContent(dialog.MacroEditorControl.Value)
 
                     For Each i In getDefaults()
-                        Dim found As Boolean
+                        Dim found = False
 
                         For Each i2 In filterProfiles
                             If i.Name = i2.Name Then
