@@ -898,12 +898,14 @@ Public Class Macro
                     Dim input = match.Groups(1).Value.Trim()
                     Dim oldValue = New String(match.Groups(2).Value.SkipWhile(Function(x, y) y = 0 AndAlso Char.IsWhiteSpace(x)).ToArray())
                     Dim newValue = New String(match.Groups(3).Value.SkipWhile(Function(x, y) y = 0 AndAlso Char.IsWhiteSpace(x)).ToArray())
-                    Dim output = ""
+                    Dim output = input
 
                     If Not String.IsNullOrEmpty(input) AndAlso Not String.IsNullOrEmpty(oldValue) Then
-                        Dim replaced = input.Replace(oldValue, newValue)
-                        value = value.Replace(match.Value, replaced)
+                        output = input.Replace(oldValue, newValue)
                     End If
+
+                    'the match is always replaced, otherwise the loop doesn't end
+                    value = value.Replace(match.Value, output)
                 Next
             End While
         End If
