@@ -177,43 +177,43 @@ Public Class PreviewForm
 
     Sub bnRight1_Click() Handles bnRight1.Click
         For Each i In Instances
-            SetRelativePos(1)
+            i.SetRelativePos(1)
         Next
     End Sub
 
     Sub bnLeft1_Click() Handles bnLeft1.Click
         For Each i In Instances
-            SetRelativePos(-1)
+            i.SetRelativePos(-1)
         Next
     End Sub
 
     Sub bnStartCutRange_Click() Handles bnStartCutRange.Click
         For Each i In Instances
-            SetRangeStart()
+            i.SetRangeStart()
         Next
     End Sub
 
     Sub bnEndCutRange_Click() Handles bnEndCutRange.Click
         For Each i In Instances
-            SetRangeEnd()
+            i.SetRangeEnd()
         Next
     End Sub
 
     Sub bnLeft2_Click() Handles bnLeft2.Click
         For Each i In Instances
-            SetRelativePos(-10)
+            i.SetRelativePos(-10)
         Next
     End Sub
 
     Sub bnRight2_Click() Handles bnRight2.Click
         For Each i In Instances
-            SetRelativePos(10)
+            i.SetRelativePos(10)
         Next
     End Sub
 
     Sub bnDelete_Click() Handles bnDelete.Click
         For Each i In Instances
-            DeleteRange()
+            i.DeleteRange()
         Next
     End Sub
 
@@ -225,7 +225,7 @@ Public Class PreviewForm
 
     Sub bnRight3_Click() Handles bnRight3.Click
         For Each i In Instances
-            SetRelativePos(100)
+            i.SetRelativePos(100)
         Next
     End Sub
 
