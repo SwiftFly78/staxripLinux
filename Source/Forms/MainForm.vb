@@ -1148,9 +1148,8 @@ Partial Public Class MainForm
                         If Not Regex.IsMatch(item(k).Base(), $"ID{id}\D") Then Continue For
 
                         addAudioTrack(j, k)
+                        fileAdded = True
                     Next
-
-                    fileAdded = True
                 Next
 
                 If Not fileAdded Then
