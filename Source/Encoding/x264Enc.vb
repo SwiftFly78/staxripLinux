@@ -1076,8 +1076,8 @@ Public Class x264Params
                     New NumParam With {.Switch = "--cplxblur", .Text = "T. Blur Complexity", .Config = {0, 0, 0.1, 1}, .Init = 20},
                     New NumParam With {.Switch = "--qblur", .Text = "Temp. Blur Quants", .Config = {0, 0, 0.1, 1}, .Init = 0.5},
                     Mbtree,
-                    New BoolParam With {.Switch = "--cqm4", .Text = "Set all 4x4 quant matrices"},
-                    New BoolParam With {.Switch = "--cqm8", .Text = "Set all 8x8 quant matrices"})
+                    New StringParam With {.Switch = "--cqm4", .Text = "Set all 4x4 quant matrices"},
+                    New StringParam With {.Switch = "--cqm8", .Text = "Set all 8x8 quant matrices"})
                 Add("Rate Control 3",
                     New StringParam With {.Switch = "--qpfile", .Text = "QP File", .BrowseFile = True},
                     New StringParam With {.Switch = "--cqmfile", .Text = "CQM File", .BrowseFile = True},
