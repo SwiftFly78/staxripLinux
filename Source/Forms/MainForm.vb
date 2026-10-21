@@ -1886,7 +1886,7 @@ Partial Public Class MainForm
                 End If
 
                 If content.Contains("Frame_Rate=29970") Then
-                    Dim m = Regex.Match(content, "FINISHED\s+(\d{1,2}(?:\.\d{1,2}))\s?%\s+FILM")
+                    Dim m = Regex.Match(content, "FINISHED\s+(\d{1,3}(?:\.\d{1,2})?)\s?%\s+FILM")
 
                     If m.Success Then
                         Dim film = m.Groups(1).Value.ToSingle()
