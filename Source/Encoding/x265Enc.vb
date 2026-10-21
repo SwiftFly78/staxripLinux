@@ -1646,15 +1646,10 @@ Public Class x265Params
     Protected Overrides Sub OnValueChanged(item As CommandLineParam)
         If BlockValueChanged Then Exit Sub
 
-        If item Is Preset Then
+        'tunes change preset values, so these are restored first
+        If item Is Preset OrElse item Is Tune Then
             BlockValueChanged = True
             ApplyPresetValues()
-            ApplyTuneValues()
-            BlockValueChanged = False
-        End If
-
-        If item Is Tune Then
-            BlockValueChanged = True
             ApplyTuneValues()
             BlockValueChanged = False
         End If
