@@ -631,7 +631,7 @@ Public Class MuxerForm
             Select Case td.Show
                 Case 1
                     For Each i In SubtitleItems
-                        i.Title = i.Language.CultureInfo.EnglishName
+                        i.Title = i.Language.EnglishName
 
                         If i.Forced Then i.Title += " (forced)"
                         If i.Commentary Then i.Title += " (commentary)"
@@ -641,7 +641,7 @@ Public Class MuxerForm
                     dgvSubtitles.RefreshData()
                 Case 2
                     For Each i In SubtitleItems
-                        i.Title = i.Language.CultureInfo.NeutralCulture.DisplayName
+                        i.Title = If(i.Language.IsDetermined, i.Language.CultureInfo.NeutralCulture.DisplayName, i.Language.LocalName)
 
                         If i.Forced Then i.Title += " (forced)"
                         If i.Commentary Then i.Title += " (commentary)"
