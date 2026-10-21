@@ -5024,7 +5024,9 @@ Partial Public Class MainForm
                 ap = ObjectHelp.GetCopy(ap)
                 Audio.Process(ap)
                 ap.Encode()
-            Catch
+            Catch ex As AbortException
+            Catch ex As Exception
+                g.ShowException(ex)
             Finally
                 If cleanTemp Then p.TempDir = ""
             End Try
@@ -5047,7 +5049,9 @@ Partial Public Class MainForm
                     Dim ap = ObjectHelp.GetCopy(track.AudioProfile)
                     Audio.Process(ap)
                     ap.Encode()
-                Catch
+                Catch ex As AbortException
+                Catch ex As Exception
+                    g.ShowException(ex)
                 Finally
                     If cleanTemp Then p.TempDir = ""
                 End Try
