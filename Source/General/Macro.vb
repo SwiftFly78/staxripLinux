@@ -557,7 +557,7 @@ Public Class Macro
             matches = Regex.Matches(value, "%audio_channels:(\d+)%")
             For Each match As Match In matches
                 Dim track = match.Groups(1).Value.ToInt() - 1
-                If track < proj.AudioTracks.Count Then
+                If track >= 0 AndAlso track < proj.AudioTracks.Count Then
                     value = value.Replace(match.Value, Protect(proj.AudioTracks(track).AudioProfile.Channels.ToString, shell))
                 End If
             Next
@@ -565,7 +565,7 @@ Public Class Macro
             matches = Regex.Matches(value, "%audio_codec:(\d+)%")
             For Each match As Match In matches
                 Dim track = match.Groups(1).Value.ToInt() - 1
-                If track < proj.AudioTracks.Count Then
+                If track >= 0 AndAlso track < proj.AudioTracks.Count Then
                     value = value.Replace(match.Value, Protect(proj.AudioTracks(track).AudioProfile.AudioCodec.ToString, shell))
                 End If
             Next
@@ -573,7 +573,7 @@ Public Class Macro
             matches = Regex.Matches(value, "%audio_delay:(\d+)%")
             For Each match As Match In matches
                 Dim track = match.Groups(1).Value.ToInt() - 1
-                If track < proj.AudioTracks.Count Then
+                If track >= 0 AndAlso track < proj.AudioTracks.Count Then
                     value = value.Replace(match.Value, Protect(proj.AudioTracks(track).AudioProfile.Delay.ToString, shell))
                 End If
             Next
@@ -581,7 +581,7 @@ Public Class Macro
             matches = Regex.Matches(value, "%audio_file:(\d+)%")
             For Each match As Match In matches
                 Dim track = match.Groups(1).Value.ToInt() - 1
-                If track < proj.AudioTracks.Count Then
+                If track >= 0 AndAlso track < proj.AudioTracks.Count Then
                     value = value.Replace(match.Value, Protect(proj.AudioTracks(track).AudioProfile.File, shell))
                 End If
             Next
