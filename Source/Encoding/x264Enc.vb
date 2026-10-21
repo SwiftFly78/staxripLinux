@@ -1374,28 +1374,29 @@ Public Class x264Params
 
             If dmx <> "" Then
                 sb.Append($" --demuxer {dmx}")
+            End If
 
-                If isSingleChunk Then
-                    If Seek.Value > 0 Then
-                        sb.Append($" --seek {Seek.Value}")
-                    End If
-
-                    If Frames.Value = 0 Then
-                        sb.Append($" --frames {script.GetFrameCount - Seek.Value}")
-                    Else
-                        sb.Append($" --frames {Frames.Value}")
-                    End If
-                Else
-                    sb.Append($" --seek {startFrame} --frames {endFrame - startFrame + 1}")
+            'also when x264 reads the script itself
+            If isSingleChunk Then
+                If Seek.Value > 0 Then
+                    sb.Append($" --seek {Seek.Value}")
                 End If
 
-                If dmx = "raw" Then
-                    Dim info = script.GetInfo
-                    sb.Append($" --input-res {info.Width}x{info.Height}")
+                If Frames.Value = 0 Then
+                    sb.Append($" --frames {script.GetFrameCount - Seek.Value}")
+                Else
+                    sb.Append($" --frames {Frames.Value}")
+                End If
+            Else
+                sb.Append($" --seek {startFrame} --frames {endFrame - startFrame + 1}")
+            End If
 
-                    If Not sb.ToString.Contains("--fps ") Then
-                        sb.Append($" --fps {info.FrameRateNum}/{info.FrameRateDen}")
-                    End If
+            If dmx = "raw" Then
+                Dim info = script.GetInfo
+                sb.Append($" --input-res {info.Width}x{info.Height}")
+
+                If Not sb.ToString.Contains("--fps ") Then
+                    sb.Append($" --fps {info.FrameRateNum}/{info.FrameRateDen}")
                 End If
             End If
 
