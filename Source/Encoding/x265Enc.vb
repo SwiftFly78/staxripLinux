@@ -1552,7 +1552,7 @@ Public Class x265Params
                     RepeatHeaders, Info, HRD,
                     New BoolParam With {.Switch = "--idr-recovery-sei", .Init = False, .Text = "Recovery SEI"},
                     New BoolParam With {.Switch = "--single-sei", .Init = False, .Text = "Single SEI"},
-                    New BoolParam With {.Switch = "--temporal-layers", .Text = "Temporal Layers"},
+                    New OptionParam With {.Switch = "--temporal-layers", .Text = "Temporal Layers", .Options = {"Disabled", "2", "3", "4", "5"}, .Values = {"", "2", "3", "4", "5"}},
                     AUD,
                     New BoolParam With {.Switch = "--eob", .NoSwitch = "--no-eob", .Text = "Emit end of bitstream nal unit"},
                     New BoolParam With {.Switch = "--eos", .NoSwitch = "--no-eos", .Text = "Emit end of sequence nal unit"}
