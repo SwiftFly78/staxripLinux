@@ -830,7 +830,8 @@ Public Class PreviewForm
                     Dim current = p.Ranges(x)
 
                     If current.End < Renderer.Position Then
-                        frames += current.End - current.Start
+                        'ranges include their end frame
+                        frames += current.End - current.Start + 1
                     Else
                         Dim pos = Renderer.Position
                         Return TimeSpan.FromSeconds((frames + (pos - current.Start)) / FrameServer.FrameRate)
