@@ -196,9 +196,10 @@ Friend Class JobsForm
                 AllJobs.Clear()
                 AllJobs.AddRange(lv.Items.OfType(Of ListViewItem).Select(Function(x) DirectCast(x.Tag, Job)))
             End If
-
-            If Not BlockSave Then SaveJobs()
         End If
+
+        'a filtered list shows the same jobs, so its checked states are saved too
+        If Not BlockSave Then SaveJobs()
 
         UpdateControls()
     End Sub
