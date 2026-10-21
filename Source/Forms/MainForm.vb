@@ -4494,17 +4494,6 @@ Partial Public Class MainForm
         End Using
     End Sub
 
-    Function GetSourceFilesFromDir(path As String) As String()
-        For Each i In FileTypes.Video
-            Dim files = Directory.GetFiles(path, "*." + i)
-            Array.Sort(files)
-
-            If files.Length > 0 Then
-                Return files
-            End If
-        Next
-    End Function
-
     Sub tbSource_DoubleClick() Handles tbSourceFile.DoubleClick
         SetLastModifiedTemplate()
 
@@ -4813,18 +4802,6 @@ Partial Public Class MainForm
         End If
 
         MsgWarn("Invalid format")
-    End Sub
-
-    Sub SetAutoAspectRatio(isAnamorphic As Boolean)
-        p.SourceAnamorphic = isAnamorphic
-        p.CustomSourcePAR = ""
-        p.CustomSourceDAR = ""
-
-        If p.Script.IsFilterActive("Resize)") Then
-            SetTargetImageSize(p.TargetWidth, 0)
-        End If
-
-        Assistant()
     End Sub
 
     Sub SetTip()
