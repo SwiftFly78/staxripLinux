@@ -984,7 +984,7 @@ Public Class QSVEnc
                         New OptionParam With {.Name = "LevelVp9", .Switch = "--level", .Text = "Level", .VisibleFunc = Function() Codec.ValueText = "vp9", .Options = {"0", "1", "2", "3"}},
                         New OptionParam With {.Name = "LevelAV1", .Switch = "--level", .Text = "Level", .VisibleFunc = Function() Codec.ValueText = "av1", .Options = {"Automatic", "2", "2.1", "2.2", "2.3", "3", "3.1", "3.2", "3.3", "4", "4.1", "4.2", "4.3", "5", "5.1", "5.2", "5.3", "6", "6.1", "6.2", "6.3", "7", "7.1", "7.2", "7.3"}},
                         Tune, OutputDepth,
-                        New OptionParam With {.Switch = "--output-csp", .Text = "Colorspace", .Options = {"YUV420 (Default)", "YUV444", "RGB", "YUVA420"}, .Values = {"yuv420", "yuv444", "rgb", "yuva420"}},
+                        New OptionParam With {.Switch = "--output-csp", .Text = "Colorspace", .Options = {"YUV420 (Default)", "YUV444", "RGB"}, .Values = {"yuv420", "yuv444", "rgb"}},
                         QPAdvanced, QP, QPAV1, QPI, QPIAV1, QPP, QPPAV1, QPB, QPBAV1, Bitrate, QvbrQuality, Quality)
                     Add("Analysis",
                         New OptionParam With {.Switch = "--trellis", .Text = "Trellis", .Options = {"Automatic", "Off", "I", "IP", "All"}},
