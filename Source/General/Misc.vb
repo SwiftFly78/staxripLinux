@@ -1961,7 +1961,7 @@ Public Class FileTypes
     Shared Property eac3toInput As String() = {"dts", "dtshd", "dtshr", "dtsma", "evo", "vob", "ts", "m2ts", "wav", "w64", "pcm", "raw", "flac", "ac3", "ec3", "eac3", "thd", "thd+ac3", "mlp", "mp2", "mp3", "mpa"}
     Shared Property OpusencInput As String() = {"aif", "aiff", "flac", "ogg", "pcm", "wav", "w64"}
     Shared Property SubtitleExludingContainers As String() = {"srt", "ass", "idx", "sup", "ttxt", "ssa", "smi", "vtt", "webvtt"}
-    Shared Property SubtitleSingle As String() = {"srt", "ass", "sup", "ttxt", "ssa", "smi"}
+    Shared Property SubtitleSingle As String() = {"srt", "ass", "sup", "ttxt", "ssa", "smi", "vtt", "webvtt"}
     Shared Property SubtitleIncludingContainers As String() = {"m2ts", "mkv", "mks", "mp4", "m4v", "ass", "idx", "smi", "srt", "ssa", "sup", "ttxt", "vtt", "webvtt"}
     Shared Property TextSub As String() = {"ass", "idx", "smi", "srt", "ssa", "ttxt", "usf", "ssf", "psb", "sub", "vtt", "webvtt"}
     Shared Property Projects As String() = {"srip"}
