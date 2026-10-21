@@ -1266,7 +1266,7 @@ Public Class NVEncParams
                     New OptionParam With {.Switch = "--output-buf", .Text = "Output Buffer", .Options = {"8", "16", "32", "64", "128"}},
                     New OptionParam With {.Switch = "--output-thread", .Text = "Output Thread", .Options = {"Automatic", "Disabled", "One Thread"}, .Values = {"-1", "0", "1"}},
                     New NumParam With {.Switch = "--perf-monitor-interval", .Init = 500, .Config = {50, Integer.MaxValue}, .Text = "Perf. Mon. Interval"},
-                    New BoolParam With {.Switch = "--max-procfps", .Text = "Limit performance to lower resource usage"},
+                    New NumParam With {.Switch = "--max-procfps", .Text = "Max Processing FPS", .Config = {0, 1000}},
                     New BoolParam With {.Switch = "--lowlatency", .Text = "Low Latency"},
                     New BoolParam With {.Switch = "--task-perf-monitor", .Text = "Task Perf Monitor"})
                 Add("Statistic",

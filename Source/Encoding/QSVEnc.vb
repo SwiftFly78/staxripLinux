@@ -1025,7 +1025,7 @@ Public Class QSVEnc
                         New NumParam With {.Switch = "--output-thread", .Text = "Output Thread", .Config = {0, 64}},
                         New NumParam With {.Switch = "--async-depth", .Text = "Async Depth", .Config = {0, 64}},
                         New BoolParam With {.Switch = "--min-memory", .Text = "Minimize memory usage"},
-                        New BoolParam With {.Switch = "--max-procfps", .Text = "Limit performance to lower resource usage"})
+                        New NumParam With {.Switch = "--max-procfps", .Text = "Max Processing FPS", .Config = {0, 1000}})
                     Add("VPP | Misc",
                         New StringParam With {.Switch = "--vpp-subburn", .Text = "Subburn"},
                         New OptionParam With {.Switch = "--vpp-rotate", .Text = "Rotate", .Options = {"Disabled", "90", "180", "270"}},
