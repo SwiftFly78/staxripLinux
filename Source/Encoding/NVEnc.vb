@@ -1620,7 +1620,7 @@ Public Class NVEncParams
         Return ""
     End Function
 
-    Function ImportNgxTruehdrArgs(param As String, arg As String) As String
+    Sub ImportNgxTruehdrArgs(param As String, arg As String)
         Dim contrastMatch = Regex.Match(arg, "(?:^|,)contrast=(\d+)?")
         Dim saturationMatch = Regex.Match(arg, "(?:^|,)saturation=(\d+)?")
         Dim middlegrayMatch = Regex.Match(arg, "(?:^|,)middlegray=(\d+)?")
@@ -1636,7 +1636,7 @@ Public Class NVEncParams
         If saturationMatch.Success Then NgxTruehdrSaturation.Value = saturationMatch.Groups(1).Value.ToDouble(NgxTruehdrSaturation.DefaultValue)
         If middlegrayMatch.Success Then NgxTruehdrMiddleGray.Value = middlegrayMatch.Groups(1).Value.ToDouble(NgxTruehdrMiddleGray.DefaultValue)
         If maxluminanceMatch.Success Then NgxTruehdrMaxLuminance.Value = maxluminanceMatch.Groups(1).Value.ToDouble(NgxTruehdrMaxLuminance.DefaultValue)
-    End Function
+    End Sub
 
     Function GetLibPlaceboDebandArgs() As String
         If LibPlaceboDeband.Value Then
@@ -1653,7 +1653,7 @@ Public Class NVEncParams
         Return ""
     End Function
 
-    Function ImportLibPlaceboDebandArgs(param As String, arg As String) As String
+    Sub ImportLibPlaceboDebandArgs(param As String, arg As String)
         Dim match1 = Regex.Match(arg, "(?:^|,)iterations=(\d+(\.\d+)?)?")
         Dim match2 = Regex.Match(arg, "(?:^|,)threshold=(\d+(\.\d+)?)?")
         Dim match3 = Regex.Match(arg, "(?:^|,)radius=(\d+(\.\d+)?)?")
@@ -1678,7 +1678,7 @@ Public Class NVEncParams
         If match5.Success Then LibPlaceboDebandGrainC.Value = match5.Groups(1).Value.ToDouble(LibPlaceboDebandGrainC.DefaultValue)
         If match6.Success AndAlso Array.IndexOf(LibPlaceboDebandDither.Values, match6.Groups(1).Value.ToLowerInvariant()) > -1 Then LibPlaceboDebandDither.Value = Array.IndexOf(LibPlaceboDebandDither.Values, match6.Groups(1).Value.ToLowerInvariant())
         If match7.Success AndAlso Array.IndexOf(LibPlaceboDebandLutSize.Values, match7.Groups(1).Value.ToLowerInvariant()) > -1 Then LibPlaceboDebandLutSize.Value = Array.IndexOf(LibPlaceboDebandLutSize.Values, match7.Groups(1).Value.ToLowerInvariant())
-    End Function
+    End Sub
 
     Function GetLibPlaceboShaderArgs() As String
         If LibPlaceboShader.Value Then
@@ -1699,7 +1699,7 @@ Public Class NVEncParams
         Return ""
     End Function
 
-    Function ImportLibPlaceboShaderArgs(param As String, arg As String) As String
+    Sub ImportLibPlaceboShaderArgs(param As String, arg As String)
         LibPlaceboShader.Value = True
 
         Dim setDouble = Sub(numParam As NumParam, match As Match)
@@ -1750,7 +1750,7 @@ Public Class NVEncParams
             LibPlaceboShaderRadius.Value = 1
             setDouble(LibPlaceboShaderRadiusValue, m)
         End If
-    End Function
+    End Sub
 
     Function GetLibPlaceboTonemappingArgs() As String
         If LibPlaceboTonemapping.Value Then
@@ -1795,7 +1795,7 @@ Public Class NVEncParams
         Return ""
     End Function
 
-    Function ImportLibPlaceboTonemappingArgs(param As String, arg As String) As String
+    Sub ImportLibPlaceboTonemappingArgs(param As String, arg As String)
         LibPlaceboTonemapping.Value = True
 
         Dim setDouble = Sub(numParam As NumParam, match As Match)
@@ -1850,7 +1850,7 @@ Public Class NVEncParams
         setOption(LibPlaceboTonemappingFunctionShowClipping, Regex.Match(arg, "(?:^|,)show_clipping=([^,]*)"))
         setOption(LibPlaceboTonemappingFunctionVisualizeLut, Regex.Match(arg, "(?:^|,)visualize_lut=([^,]*)"))
         setOption(LibPlaceboTonemappingFunctionLutType, Regex.Match(arg, "(?:^|,)lut_type=([^,]*)"))
-    End Function
+    End Sub
 
     Function GetPmdArgs() As String
         If Pmd.Value Then
