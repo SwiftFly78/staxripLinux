@@ -780,16 +780,7 @@ Partial Public Class MainForm
     Function OpenSaveTemplateDialog() As Boolean
         If p.SourceFile = "" Then
             Using dialog As New SaveFileDialog
-                Dim tp As String
-                Try
-                    Dim dirName = Path.GetDirectoryName(p.TemplatePath)
-                    If Directory.Exists(dirName) Then tp = dirName
-                Catch ex As Exception
-                    tp = Folder.Template
-                End Try
-                
-                dialog.SetInitDir(tp)
-
+                dialog.SetInitDir(p.TemplatePath.Dir, Folder.Template)
                 dialog.FileName = If(p.TemplateName <> "", p.TemplateName, "Untitled")
                 dialog.Filter = $"StaxRip Template Files (*.srip)|*.srip"
 
