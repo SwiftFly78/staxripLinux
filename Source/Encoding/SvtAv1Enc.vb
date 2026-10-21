@@ -621,18 +621,6 @@ Public Class SvtAv1EncParams
         .Config = {0, 6, 1, 0},
         .Init = 0}
 
-    Property PinnedExecution As New NumParam With {
-        .Switch = "--pin",
-        .Text = "Pinned Execution",
-        .Config = {0, OS.Hardware.Threads, 1, 0},
-        .Init = 0}
-
-    Property TargetSocket As New NumParam With {
-        .Switch = "--ss",
-        .Text = "Target Socket",
-        .Config = {-1, 1, 1, 0},
-        .Init = -1}
-
     Property FastDecode As New OptionParam With {
         .Switch = "--fast-decode",
         .Text = "Fast Decode",
@@ -982,13 +970,6 @@ Public Class SvtAv1EncParams
         .IntegerValue = True,
         .Init = True}
 
-    Property EnableTPLModel As New BoolParam With {
-        .Switch = "--enable-tpl-la",
-        .Text = "Temporal Dependency Model",
-        .VisibleFunc = Function() RateControlMode.Value = SvtAv1EncAppRateMode.Quality,
-        .IntegerValue = True,
-        .Init = True}
-
     Property Mfmv As New NumParam With {
         .Switch = "--enable-mfmv",
         .Text = "Motion Field Motion Vector",
@@ -1297,7 +1278,7 @@ Public Class SvtAv1EncParams
                     FramesToBeEncoded, FramesToBeSkipped,
                     EncoderColorFormat,
                     StatReport,
-                    Asm, LevelOfParallelism, PinnedExecution, TargetSocket
+                    Asm, LevelOfParallelism
                 )
                 Add("Basic",
                     Preset, Profile, Level, Tune, FastDecode, AdaptiveFilmGrain, MaxTxSize
@@ -1314,7 +1295,7 @@ Public Class SvtAv1EncParams
                 )
                 Add("AV1 Specific 1",
                     TileRow, TileCol, LoopFilterEnable,
-                    CDEFLevel, EnableRestoration, EnableTPLModel, Mfmv, EnableTF, EnableTfKey, EnableOverlays, ScreenContentMode, EnableIntraBC,
+                    CDEFLevel, EnableRestoration, Mfmv, EnableTF, EnableTfKey, EnableOverlays, ScreenContentMode, EnableIntraBC,
                     FilmGrain, FilmGrainDenoise, FGSTable
                 )
                 Add("AV1 Specific 2",

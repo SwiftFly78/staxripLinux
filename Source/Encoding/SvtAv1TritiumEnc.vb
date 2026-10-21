@@ -645,18 +645,6 @@ Public Class SvtAv1TritiumEncParams
         .Config = {0, 6, 1, 0},
         .Init = 0}
 
-    Property PinnedExecution As New NumParam With {
-        .Switch = "--pin",
-        .Text = "Pinned Execution",
-        .Config = {0, OS.Hardware.Threads, 1, 0},
-        .Init = 0}
-
-    Property TargetSocket As New NumParam With {
-        .Switch = "--ss",
-        .Text = "Target Socket",
-        .Config = {-1, 1, 1, 0},
-        .Init = -1}
-
     Property FastDecode As New OptionParam With {
         .Switch = "--fast-decode",
         .Text = "Fast Decode",
@@ -1049,13 +1037,6 @@ Public Class SvtAv1TritiumEncParams
         .IntegerValue = True,
         .Init = True}
 
-    Property EnableTPLModel As New BoolParam With {
-        .Switch = "--enable-tpl-la",
-        .Text = "Temporal Dependency Model",
-        .VisibleFunc = Function() RateControlMode.Value = SvtAv1EncAppRateMode.Quality,
-        .IntegerValue = True,
-        .Init = True}
-
     Property Mfmv As New NumParam With {
         .Switch = "--enable-mfmv",
         .Text = "Motion Field Motion Vector",
@@ -1401,14 +1382,6 @@ Public Class SvtAv1TritiumEncParams
         .Config = {0, 8, 0.01, 2},
         .Init = 1}
 
-    Property Max32TxSize As New OptionParam With {
-        .Switch = "--max-32-tx-size",
-        .Text = "Max 32x32px Tx Size",
-        .Expanded = True,
-        .IntegerValue = True,
-        .Options = {"0: Off (default)", "1: On"},
-        .Init = 0}
-
     Property MaxChromaQmLevel As New NumParam With {
         .Switch = "--chroma-qm-max",
         .Text = "Max chroma quant matrix flatness",
@@ -1504,7 +1477,7 @@ Public Class SvtAv1TritiumEncParams
                     FramesToBeEncoded, FramesToBeSkipped,
                     EncoderColorFormat,
                     StatReport,
-                    Asm, LevelOfParallelism, PinnedExecution, TargetSocket
+                    Asm, LevelOfParallelism
                 )
                 Add("Basic",
                     Preset, Profile, Level, Tune, FastDecode, LowMemory
@@ -1521,7 +1494,7 @@ Public Class SvtAv1TritiumEncParams
                 )
                 Add("AV1 Specific 1",
                     TileRow, TileCol, LoopFilterEnable,
-                    CDEFLevel, CDEFScaling, EnableDaala, EnableRestoration, EnableTPLModel, Mfmv, EnableTF, EnableTfKey, EnableOverlays, ScreenContentMode,
+                    CDEFLevel, CDEFScaling, EnableDaala, EnableRestoration, Mfmv, EnableTF, EnableTfKey, EnableOverlays, ScreenContentMode,
                     FilmGrain, FilmGrainDenoise, FGSTable
                 )
                 Add("AV1 Specific 2",
@@ -1532,7 +1505,7 @@ Public Class SvtAv1TritiumEncParams
                 )
                 Add("Tritium Specific 1",
                     Hdr10PlusJson, DolbyVisionRpu, DolbyVisionRpuMode,
-                    QpScaleCompressStrength, Max32TxSize,
+                    QpScaleCompressStrength,
                     AltSsimTuning, NoiseNormStrength, AdaptiveFilmGrain, MaxTxSize, KeyframeTemporalFilteringStrength, AltLambdaFactors
                 )
                 Add("Tritium Specific 2",

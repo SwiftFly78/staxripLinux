@@ -667,12 +667,6 @@ Public Class SvtAv1EssentialEncParams
         .Config = {0, OS.Hardware.Threads, 1, 0},
         .Init = 0}
 
-    Property TargetSocket As New NumParam With {
-        .Switch = "--ss",
-        .Text = "Target Socket",
-        .Config = {-1, 1, 1, 0},
-        .Init = -1}
-
     Property FastDecode As New OptionParam With {
         .Switch = "--fast-decode",
         .Text = "Fast Decode",
@@ -1131,13 +1125,6 @@ Public Class SvtAv1EssentialEncParams
         .IntegerValue = True,
         .Init = True}
 
-    Property EnableTPLModel As New BoolParam With {
-        .Switch = "--enable-tpl-la",
-        .Text = "Temporal Dependency Model",
-        .VisibleFunc = Function() RateControlMode.Value = SvtAv1EncAppRateMode.Quality,
-        .IntegerValue = True,
-        .Init = True}
-
     Property Mfmv As New NumParam With {
         .Switch = "--enable-mfmv",
         .Text = "Motion Field Motion Vector",
@@ -1445,7 +1432,7 @@ Public Class SvtAv1EssentialEncParams
                     FramesToBeEncoded, FramesToBeSkipped,
                     EncoderColorFormat,
                     StatReport,
-                    Asm, LevelOfParallelism, PinnedExecution, TargetSocket
+                    Asm, LevelOfParallelism, PinnedExecution
                 )
                 Add("Basic",
                     SpeedLow, SpeedHigh, Preset, Profile, Level, Tune, AdaptiveFilmGrain, MaxTxSize, LowMemory, FastDecode, NoiseNormStrength
@@ -1465,7 +1452,7 @@ Public Class SvtAv1EssentialEncParams
                 )
                 Add("AV1 Specific 1",
                     TileRow, TileCol, LoopFilterEnable,
-                    CDEFLevel, EnableRestoration, EnableTPLModel, Mfmv, EnableTF, EnableOverlays, ScreenContentMode,
+                    CDEFLevel, EnableRestoration, Mfmv, EnableTF, EnableOverlays, ScreenContentMode,
                     FilmGrain, FilmGrainDenoise, FGSTable, PhotonNoise, PhotonNoiseChroma
                 )
                 Add("AV1 Specific 2",
