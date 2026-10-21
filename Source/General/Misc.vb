@@ -1652,6 +1652,8 @@ Public Class Subtitle
                     Return "ssa"
                 Case "S_TEXT/USF", "USF"
                     Return "usf"
+                Case "S_TEXT/WEBVTT", "WebVTT"
+                    Return "vtt"
                 Case "S_DVBSUB", "DVB Subtitle"
                     Return "mks"
             End Select
@@ -1669,6 +1671,8 @@ Public Class Subtitle
                     Return "ssa"
                 Case "S_TEXT/USF", "USF"
                     Return "usf"
+                Case "S_TEXT/WEBVTT", "WebVTT"
+                    Return "vtt"
                 Case "S_DVBSUB", "DVB Subtitle"
                     Return "mks"
             End Select
