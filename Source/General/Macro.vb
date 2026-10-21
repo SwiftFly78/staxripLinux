@@ -805,110 +805,117 @@ Public Class Macro
             End If
         End If
 
-        If value.Contains("<lower(") Then
-            Const pattern = "<lower\(((?:(?!<\w+?\().)+?)\)>"
+        'nested functions of any type are expanded from the inside out
+        For pass = 1 To 100
+            Dim before = value
 
-            While Regex.IsMatch(value, pattern)
-                matches = Regex.Matches(value, pattern)
+            If value.Contains("<lower(") Then
+                Const pattern = "<lower\(((?:(?!<\w+?\().)+?)\)>"
 
-                For i = matches.Count - 1 To 0 Step -1
-                    Dim match = matches(i)
-                    Dim replaced = match.Groups(1).Value.ToLower()
-                    value = value.Replace(match.Value, replaced)
-                Next
-            End While
-        End If
+                While Regex.IsMatch(value, pattern)
+                    matches = Regex.Matches(value, pattern)
 
-        If value.Contains("<title(") Then
-            Const pattern = "<title\(((?:(?!<\w+?\().)+?)\)>"
+                    For i = matches.Count - 1 To 0 Step -1
+                        Dim match = matches(i)
+                        Dim replaced = match.Groups(1).Value.ToLower()
+                        value = value.Replace(match.Value, replaced)
+                    Next
+                End While
+            End If
 
-            While Regex.IsMatch(value, pattern)
-                matches = Regex.Matches(value, pattern)
+            If value.Contains("<title(") Then
+                Const pattern = "<title\(((?:(?!<\w+?\().)+?)\)>"
 
-                For i = matches.Count - 1 To 0 Step -1
-                    Dim match = matches(i)
-                    Dim replaced = match.Groups(1).Value.ToTitleCase()
-                    value = value.Replace(match.Value, replaced)
-                Next
-            End While
-        End If
+                While Regex.IsMatch(value, pattern)
+                    matches = Regex.Matches(value, pattern)
 
-        If value.Contains("<upper(") Then
-            Const pattern = "<upper\(((?:(?!<\w+?\().)+?)\)>"
+                    For i = matches.Count - 1 To 0 Step -1
+                        Dim match = matches(i)
+                        Dim replaced = match.Groups(1).Value.ToTitleCase()
+                        value = value.Replace(match.Value, replaced)
+                    Next
+                End While
+            End If
 
-            While Regex.IsMatch(value, pattern)
-                matches = Regex.Matches(value, pattern)
+            If value.Contains("<upper(") Then
+                Const pattern = "<upper\(((?:(?!<\w+?\().)+?)\)>"
 
-                For i = matches.Count - 1 To 0 Step -1
-                    Dim match = matches(i)
-                    Dim replaced = match.Groups(1).Value.ToUpper()
-                    value = value.Replace(match.Value, replaced)
-                Next
-            End While
-        End If
+                While Regex.IsMatch(value, pattern)
+                    matches = Regex.Matches(value, pattern)
 
-        If value.Contains("<trim(") Then
-            Const pattern = "<trim\(((?:(?!<\w+?\().)+?)\)>"
+                    For i = matches.Count - 1 To 0 Step -1
+                        Dim match = matches(i)
+                        Dim replaced = match.Groups(1).Value.ToUpper()
+                        value = value.Replace(match.Value, replaced)
+                    Next
+                End While
+            End If
 
-            While Regex.IsMatch(value, pattern)
-                matches = Regex.Matches(value, pattern)
+            If value.Contains("<trim(") Then
+                Const pattern = "<trim\(((?:(?!<\w+?\().)+?)\)>"
 
-                For i = matches.Count - 1 To 0 Step -1
-                    Dim match = matches(i)
-                    Dim replaced = match.Groups(1).Value.Trim()
-                    value = value.Replace(match.Value, replaced)
-                Next
-            End While
-        End If
+                While Regex.IsMatch(value, pattern)
+                    matches = Regex.Matches(value, pattern)
 
-        If value.Contains("<if(") Then
-            Const pattern = "<if\(((?:(?!<if\().)+?);((?:(?!<if\().)+?);((?:(?!<if\().)+?)\)>"
+                    For i = matches.Count - 1 To 0 Step -1
+                        Dim match = matches(i)
+                        Dim replaced = match.Groups(1).Value.Trim()
+                        value = value.Replace(match.Value, replaced)
+                    Next
+                End While
+            End If
 
-            While Regex.IsMatch(value, pattern)
-                matches = Regex.Matches(value, pattern)
+            If value.Contains("<if(") Then
+                Const pattern = "<if\(((?:(?!<\w+?\().)+?);((?:(?!<\w+?\().)+?);((?:(?!<\w+?\().)+?)\)>"
 
-                For i = matches.Count - 1 To 0 Step -1
-                    Dim match = matches(i)
-                    Dim condition = match.Groups(1).Value.Trim()
-                    Dim trueValue = New String(match.Groups(2).Value.SkipWhile(Function(x, y) y = 0 AndAlso Char.IsWhiteSpace(x)).ToArray())
-                    Dim falseValue = New String(match.Groups(3).Value.SkipWhile(Function(x, y) y = 0 AndAlso Char.IsWhiteSpace(x)).ToArray())
-                    Dim newValue = "INVALID"
+                While Regex.IsMatch(value, pattern)
+                    matches = Regex.Matches(value, pattern)
 
-                    Try
-                        Dim result = Convert.ToBoolean(New System.Data.DataTable().Compute(condition, Nothing))
-                        newValue = If(result, trueValue, falseValue)
-                    Catch ex As Exception
-                        newValue = $"##{ex.Message}##"
-                    End Try
+                    For i = matches.Count - 1 To 0 Step -1
+                        Dim match = matches(i)
+                        Dim condition = match.Groups(1).Value.Trim()
+                        Dim trueValue = New String(match.Groups(2).Value.SkipWhile(Function(x, y) y = 0 AndAlso Char.IsWhiteSpace(x)).ToArray())
+                        Dim falseValue = New String(match.Groups(3).Value.SkipWhile(Function(x, y) y = 0 AndAlso Char.IsWhiteSpace(x)).ToArray())
+                        Dim newValue = "INVALID"
 
-                    newValue = newValue.Replace("''", "")
-                    value = value.Substring(0, match.Index) & newValue & value.Substring(match.Index + match.Length)
-                Next
-            End While
-        End If
+                        Try
+                            Dim result = Convert.ToBoolean(New System.Data.DataTable().Compute(condition, Nothing))
+                            newValue = If(result, trueValue, falseValue)
+                        Catch ex As Exception
+                            newValue = $"##{ex.Message}##"
+                        End Try
 
-        If value.Contains("<replace(") Then
-            Const pattern = "<replace\(((?:(?!<if\().)+?);((?:(?!<if\().)+?);((?:(?!<if\().)+?)\)>"
+                        newValue = newValue.Replace("''", "")
+                        value = value.Substring(0, match.Index) & newValue & value.Substring(match.Index + match.Length)
+                    Next
+                End While
+            End If
 
-            While Regex.IsMatch(value, pattern)
-                matches = Regex.Matches(value, pattern)
+            If value.Contains("<replace(") Then
+                Const pattern = "<replace\(((?:(?!<\w+?\().)+?);((?:(?!<\w+?\().)+?);((?:(?!<\w+?\().)+?)\)>"
 
-                For i = matches.Count - 1 To 0 Step -1
-                    Dim match = matches(i)
-                    Dim input = match.Groups(1).Value.Trim()
-                    Dim oldValue = New String(match.Groups(2).Value.SkipWhile(Function(x, y) y = 0 AndAlso Char.IsWhiteSpace(x)).ToArray())
-                    Dim newValue = New String(match.Groups(3).Value.SkipWhile(Function(x, y) y = 0 AndAlso Char.IsWhiteSpace(x)).ToArray())
-                    Dim output = input
+                While Regex.IsMatch(value, pattern)
+                    matches = Regex.Matches(value, pattern)
 
-                    If Not String.IsNullOrEmpty(input) AndAlso Not String.IsNullOrEmpty(oldValue) Then
-                        output = input.Replace(oldValue, newValue)
-                    End If
+                    For i = matches.Count - 1 To 0 Step -1
+                        Dim match = matches(i)
+                        Dim input = match.Groups(1).Value.Trim()
+                        Dim oldValue = New String(match.Groups(2).Value.SkipWhile(Function(x, y) y = 0 AndAlso Char.IsWhiteSpace(x)).ToArray())
+                        Dim newValue = New String(match.Groups(3).Value.SkipWhile(Function(x, y) y = 0 AndAlso Char.IsWhiteSpace(x)).ToArray())
+                        Dim output = input
 
-                    'the match is always replaced, otherwise the loop doesn't end
-                    value = value.Replace(match.Value, output)
-                Next
-            End While
-        End If
+                        If Not String.IsNullOrEmpty(input) AndAlso Not String.IsNullOrEmpty(oldValue) Then
+                            output = input.Replace(oldValue, newValue)
+                        End If
+
+                        'the match is always replaced, otherwise the loop doesn't end
+                        value = value.Replace(match.Value, output)
+                    Next
+                End While
+            End If
+
+            If value = before Then Exit For
+        Next
 
         Return value
     End Function
