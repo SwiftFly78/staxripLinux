@@ -150,6 +150,7 @@ Public Class FiltersListView
         p.Script.Filters.Insert(index - 1, sel)
         Load()
         RaiseEvent Changed
+        Items(index - 1).Selected = True
     End Sub
 
     Sub MoveDown()
@@ -168,6 +169,7 @@ Public Class FiltersListView
         p.Script.Filters.Insert(index + 1, sel)
         Load()
         RaiseEvent Changed
+        Items(index + 1).Selected = True
     End Sub
 
     Sub ShowCodeEditor()
