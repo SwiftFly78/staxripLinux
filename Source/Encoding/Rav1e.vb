@@ -60,10 +60,11 @@ Public Class Rav1e
 
     Overrides Sub Encode()
         p.Script.Synchronize()
-        Encode("Video encoding", GetArgs(1, p.Script), s.EncoderProcessPriority)
+        Dim twoPass = Params.Passes.Visible AndAlso Params.Passes.Value = 1
+        Encode(If(twoPass, "Video encoding pass 1", "Video encoding"), GetArgs(1, p.Script), s.EncoderProcessPriority)
 
-        If Params.Passes.Visible AndAlso Params.Passes.Value = 1 Then
-            Encode("Video encoding", GetArgs(2, p.Script), s.EncoderProcessPriority)
+        If twoPass Then
+            Encode("Video encoding pass 2", GetArgs(2, p.Script), s.EncoderProcessPriority)
         End If
     End Sub
 
@@ -72,7 +73,7 @@ Public Class Rav1e
 
         Using proc As New Proc
             proc.Package = Package.Rav1e
-            proc.Header = "Video encoding"
+            proc.Header = passName
             proc.FrameCount = p.Script.GetFrameCount
             proc.Encoding = Encoding.UTF8
             proc.Priority = priority
