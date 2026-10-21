@@ -429,7 +429,7 @@ Public Class ffmpegDemuxer
                 format = " -f matroska"
             End If
 
-            If Not overrideExisting AndAlso outpath.FileExists Then Exit Sub
+            If Not overrideExisting AndAlso outpath.FileExists Then Continue For
 
             If MediaInfo.GetSubtitleCount(proj.SourceFile) > 1 Then
                 args += " -map 0:s:" & subtitle.Index
