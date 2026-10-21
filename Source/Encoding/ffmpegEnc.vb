@@ -74,14 +74,14 @@ Public Class ffmpegEnc
                             {"x264", "https://trac.ffmpeg.org/wiki/Encode/H.264"},
                             {"x265", "https://trac.ffmpeg.org/wiki/Encode/H.265"},
                             {"XviD", "https://trac.ffmpeg.org/wiki/Encode/MPEG-4"},
-                            {"VP9", "https://trac.ffmpeg.org/wiki/Encode/VP9"},
+                            {"VP | VP9", "https://trac.ffmpeg.org/wiki/Encode/VP9"},
                             {"FFV1", "https://trac.ffmpeg.org/wiki/Encode/FFV1"},
-                            {"Intel H.264", "https://trac.ffmpeg.org/wiki/Hardware/QuickSync"},
-                            {"Intel H.265", "https://trac.ffmpeg.org/wiki/Hardware/QuickSync"},
+                            {"Intel | Intel H.264", "https://trac.ffmpeg.org/wiki/Hardware/QuickSync"},
+                            {"Intel | Intel H.265", "https://trac.ffmpeg.org/wiki/Hardware/QuickSync"},
                             {"VAAPI | H.264", "https://trac.ffmpeg.org/wiki/Hardware/VAAPI"},
                             {"VAAPI | H.265", "https://trac.ffmpeg.org/wiki/Hardware/VAAPI"},
                             {"VAAPI | AV1", "https://trac.ffmpeg.org/wiki/Hardware/VAAPI"},
-                            {"AV1", "https://trac.ffmpeg.org/wiki/Encode/AV1"}}
+                            {"AOM-AV1", "https://trac.ffmpeg.org/wiki/Encode/AV1"}}
 
                          Dim help = $"<h2>ffmpeg Online Help</h2>" +
                                      "<p><a href=""{Package.ffmpeg.HelpURL}"">ffmpeg Online Help</a></p>"
@@ -301,9 +301,9 @@ Public Class ffmpegEnc
                         New OptionParam With {.Name = "x264/x265 preset", .Text = "Preset", .Switch = "-preset", .Init = 5, .Options = {"Ultrafast", "Superfast", "Veryfast", "Faster", "Fast", "Medium", "Slow", "Slower", "Veryslow", "Placebo"}, .VisibleFunc = Function() Codec.OptionText.EqualsAny("x264", "x265")},
                         New OptionParam With {.Name = "x264/x265 tune", .Text = "Tune", .Switch = "-tune", .Options = {"None", "Film", "Animation", "Grain", "Stillimage", "Psnr", "Ssim", "Fastdecode", "Zerolatency"}, .VisibleFunc = Function() Codec.OptionText.EqualsAny("x264", "x265")},
                         New OptionParam With {.Switch = "-profile:v", .Text = "Profile", .VisibleFunc = Function() Codec.OptionText = "ProRes" OrElse Codec.OptionText = "ProRes-KS", .Init = 2, .IntegerValue = True, .Options = {"Proxy", "LT", "Standard", "HQ"}},
-                        New OptionParam With {.Switch = "-speed", .Text = "Speed", .AlwaysOn = True, .VisibleFunc = Function() Codec.OptionText.EqualsAny("VP8", "VP9"), .Options = {"6 - Fastest", "5 - Faster", "4 - Fast", "3 - Medium", "2 - Slow", "1 - Slower", "0 - Slowest"}, .Values = {"6", "5", "4", "3", "2", "1", "0"}, .Value = 5},
-                        New OptionParam With {.Switch = "-cpu-used", .Text = "CPU Used", .Init = 1, .VisibleFunc = Function() Codec.OptionText = "AV1", .IntegerValue = True, .Options = {"0 - Slowest", "1 - Very Slow", "2 - Slower", "3 - Slow", "4 - Medium", "5 - Fast", "6 - Faster", "7 - Very Fast", "8 - Fastest"}},
-                        New OptionParam With {.Switch = "-aq-mode", .Text = "AQ Mode", .VisibleFunc = Function() Codec.OptionText = "VP9", .Options = {"Disabled", "0", "1", "2", "3"}, .Values = {"Disabled", "0", "1", "2", "3"}},
+                        New OptionParam With {.Switch = "-speed", .Text = "Speed", .AlwaysOn = True, .VisibleFunc = Function() Codec.ValueText.EqualsAny("libvpx", "libvpx-vp9"), .Options = {"6 - Fastest", "5 - Faster", "4 - Fast", "3 - Medium", "2 - Slow", "1 - Slower", "0 - Slowest"}, .Values = {"6", "5", "4", "3", "2", "1", "0"}, .Value = 5},
+                        New OptionParam With {.Switch = "-cpu-used", .Text = "CPU Used", .Init = 1, .VisibleFunc = Function() Codec.ValueText = "libaom-av1", .IntegerValue = True, .Options = {"0 - Slowest", "1 - Very Slow", "2 - Slower", "3 - Slow", "4 - Medium", "5 - Fast", "6 - Faster", "7 - Very Fast", "8 - Fastest"}},
+                        New OptionParam With {.Switch = "-aq-mode", .Text = "AQ Mode", .VisibleFunc = Function() Codec.ValueText = "libvpx-vp9", .Options = {"Disabled", "0", "1", "2", "3"}, .Values = {"Disabled", "0", "1", "2", "3"}},
                         New OptionParam With {.Name = "h264_nvenc profile", .Switch = "-profile", .Text = "Profile", .Options = {"Baseline", "Main", "High", "High444p"}, .Init = 1, .VisibleFunc = Function() Codec.ValueText = "h264_nvenc"},
                         New OptionParam With {.Name = "h264_nvenc preset", .Switch = "-preset", .Text = "Preset", .Options = {"Default", "Slow", "Medium", "Fast", "HP", "HQ", "BD", "LL", "LLHQ", "LLHP", "Lossless", "Losslesshp"}, .Init = 2, .VisibleFunc = Function() Codec.ValueText = "h264_nvenc"},
                         New OptionParam With {.Name = "h264_nvenc level", .Switch = "-level", .Text = "Level", .Options = {"Auto", "1", "1.0", "1b", "1.0b", "1.1", "1.2", "1.3", "2", "2.0", "2.1", "2.2", "3", "3.0", "3.1", "3.2", "4", "4.0", "4.1", "4.2", "5", "5.0", "5.1"}, .VisibleFunc = Function() Codec.ValueText = "h264_nvenc"},
@@ -312,10 +312,10 @@ Public Class ffmpegEnc
                         New OptionParam With {.Name = "utVideoPixFmt", .Switch = "-pix_fmt", .Text = "Pixel Format", .Options = {"YUV420P", "YUV422P", "YUV444P", "RGB24", "RGBA"}, .VisibleFunc = Function() Codec.ValueText = "utvideo"},
                         New NumParam With {.Name = "Quality", .Text = "Quality", .Init = -1, .VisibleFunc = Function() Mode.Value = EncodingMode.Quality AndAlso Not Codec.ValueText.EqualsAny("prores", "prores_ks", "utvideo", "cfhd", "ffv1") AndAlso Not IsVaapi(), .ArgsFunc = AddressOf GetQualityArgs, .Config = {-1, 63, 0.5, 1}},
                         New NumParam With {.Switch = "-threads", .Text = "Threads", .Config = {0, 64}},
-                        New NumParam With {.Switch = "-tile-columns", .Text = "Tile Columns", .VisibleFunc = Function() Codec.OptionText = "VP9", .Value = 6, .DefaultValue = -1},
-                        New NumParam With {.Switch = "-frame-parallel", .Text = "Frame Parallel", .VisibleFunc = Function() Codec.OptionText = "VP9", .Value = 1, .DefaultValue = -1},
-                        New NumParam With {.Switch = "-auto-alt-ref", .Text = "Auto Alt Ref", .VisibleFunc = Function() Codec.OptionText = "VP9", .Value = 1, .DefaultValue = -1},
-                        New NumParam With {.Switch = "-lag-in-frames", .Text = "Lag In Frames", .VisibleFunc = Function() Codec.OptionText = "VP9", .Value = 25, .DefaultValue = -1},
+                        New NumParam With {.Switch = "-tile-columns", .Text = "Tile Columns", .VisibleFunc = Function() Codec.ValueText = "libvpx-vp9", .Value = 6, .DefaultValue = -1},
+                        New NumParam With {.Switch = "-frame-parallel", .Text = "Frame Parallel", .VisibleFunc = Function() Codec.ValueText = "libvpx-vp9", .Value = 1, .DefaultValue = -1},
+                        New NumParam With {.Switch = "-auto-alt-ref", .Text = "Auto Alt Ref", .VisibleFunc = Function() Codec.ValueText = "libvpx-vp9", .Value = 1, .DefaultValue = -1},
+                        New NumParam With {.Switch = "-lag-in-frames", .Text = "Lag In Frames", .VisibleFunc = Function() Codec.ValueText = "libvpx-vp9", .Value = 25, .DefaultValue = -1},
                         New BoolParam With {.Name = "h264_qsv Lookahead", .Text = "Lookahead", .Switch = "-look_ahead 1", .NoSwitch = "-look_ahead 0", .Value = False, .DefaultValue = True, .VisibleFunc = Function() Codec.ValueText = "h264_qsv"},
                         New BoolParam With {.Name = "h264_qsv VCM", .Text = "VCM", .Switch = "-vcm 1", .NoSwitch = "-vcm 0", .Value = False, .DefaultValue = True, .VisibleFunc = Function() Codec.ValueText = "h264_qsv"},
                         Custom)
@@ -461,9 +461,9 @@ Public Class ffmpegEnc
                 Dim param = GetNumParamByName("Quality")
 
                 If param.Value <> param.DefaultValue Then
-                    If Codec.OptionText.EqualsAny("VP8", "VP9") Then
+                    If Codec.ValueText.EqualsAny("libvpx", "libvpx-vp9") Then
                         Return "-crf " + param.Value.ToInvariantString & " -b:v 0"
-                    ElseIf Codec.OptionText.EqualsAny("x264", "x265", "AV1") Then
+                    ElseIf Codec.ValueText.EqualsAny("libx264", "libx265", "libaom-av1") Then
                         Return "-crf " + param.Value.ToInvariantString
                     ElseIf Codec.ValueText.EqualsAny("h264_nvenc") Then
                         If h264_nvenc_rc.OptionText = "Constqp" Then
