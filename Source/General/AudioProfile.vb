@@ -464,7 +464,7 @@ Public MustInherit Class AudioProfile
         If value.Contains("%delay%") Then value = value.Replace("%delay%", Delay.ToString)
         If value.Contains("%language%") Then value = value.Replace("%language%", Macro.Protect(Language.Name, shell))
         If value.Contains("%language_english%") Then value = value.Replace("%language_english%", Macro.Protect(Language.EnglishName, shell))
-        If value.Contains("%language_native%") Then value = value.Replace("%language_native%", Macro.Protect(Language.CultureInfo.NativeName, shell))
+        If value.Contains("%language_native%") Then value = value.Replace("%language_native%", Macro.Protect(Language.NativeName, shell))
         If value.Contains("%streamid0%") AndAlso Stream IsNot Nothing Then value = value.Replace("%streamid0%", (Stream?.ID - 1)?.ToString)
         If value.Contains("%streamid1%") Then value = value.Replace("%streamid1%", Stream?.ID.ToString)
 

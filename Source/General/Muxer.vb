@@ -132,7 +132,7 @@ Public MustInherit Class Muxer
         For Each i In Subtitles
             If i.Title?.Contains("%") Then
                 If i.Title.Contains("%language_native%") Then
-                    i.Title = i.Title.Replace("%language_native%", i.Language.CultureInfo.NativeName)
+                    i.Title = i.Title.Replace("%language_native%", i.Language.NativeName)
                 End If
 
                 If i.Title.Contains("%language_english%") Then

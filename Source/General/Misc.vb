@@ -813,6 +813,12 @@ Public Class Language
         End Get
     End Property
 
+    ReadOnly Property NativeName() As String
+        Get
+            Return If(CultureInfo.TwoLetterISOLanguageName = "iv", "Undetermined", CultureInfo.NativeName)
+        End Get
+    End Property
+
     'ms is the delay unit in the audio file names of D2V Witch
     Shared ReadOnly Property ConfusingTwoLetterISOLanguageNames As String()
         Get
