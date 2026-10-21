@@ -897,7 +897,7 @@ Partial Public Class MainForm
             deleteCustomLabel.Visible = p.DeleteTempFilesMode <> DeleteMode.Disabled AndAlso p.DeleteTempFilesSelection = DeleteSelection.Custom
 
             Dim customAddFunc = Function(extensions As String()) As String
-                                    Dim exts = deleteCustom.Edit.Text.ToLower().SplitNoEmpty(BR, " ")
+                                    Dim exts = deleteCustom.Edit.Text.FixBreak.ToLower().SplitNoEmpty(BR, " ")
                                     Dim allExts = exts.Union(extensions)
                                     Return allExts.Distinct().Sort().Join(" ")
                                 End Function
@@ -907,7 +907,7 @@ Partial Public Class MainForm
             deleteCustom.Edit.MultilineHeightFactor = 8
             deleteCustom.Edit.Expand = True
             deleteCustom.Edit.Text = p.DeleteTempFilesCustomSelection.Join(" ")
-            deleteCustom.Edit.SaveAction = Sub(value) p.DeleteTempFilesCustomSelection = value.ToLower().SplitNoEmpty(BR, " ")
+            deleteCustom.Edit.SaveAction = Sub(value) p.DeleteTempFilesCustomSelection = value.FixBreak.ToLower().SplitNoEmpty(BR, " ")
             deleteCustom.AddMenu("Add project file types", Function() customAddFunc(FileTypes.Projects))
             deleteCustom.AddMenu("Add log file types", Function() customAddFunc(FileTypes.Logs))
             deleteCustom.AddMenu("Add script file types", Function() customAddFunc(FileTypes.Scripts))
