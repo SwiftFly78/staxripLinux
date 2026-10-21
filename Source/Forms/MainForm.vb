@@ -4991,7 +4991,7 @@ Partial Public Class MainForm
         End If
 
         Dim moreFilesAction = Sub()
-                                  s.Storage.SetInt("last selected muxer tab", 1)
+                                  s.Storage.SetInt("last selected muxer tab", 0) 'audio tab
                                   p.VideoEncoder.OpenMuxerConfigDialog()
                               End Sub
 
