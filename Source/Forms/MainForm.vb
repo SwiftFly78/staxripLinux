@@ -4450,7 +4450,7 @@ Partial Public Class MainForm
                     If di.AvailableFreeSpace / PrefixedSize(3).Factor < s.MinimumDiskSpace Then
                         Using td As New TaskDialog(Of String)
                             td.Title = "Low Disk Space"
-                            td.Content = $"The target drive {Path.GetPathRoot(p.TargetFile)} has only " +
+                            td.Content = $"The temp folder {form.OutputFolder} has only " +
                                          $"{(di.AvailableFreeSpace / PrefixedSize(3).Factor):f2} {PrefixedSize(3).Unit} free disk space."
                             td.Icon = TaskIcon.Warning
                             td.AddButton("Continue")
