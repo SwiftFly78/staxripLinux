@@ -1131,6 +1131,9 @@ Public Class ffmpegMuxer
 
         args += mapping + " -c:v copy -c:a copy -strict -2 "
         args += If(OutputFormat.EqualsAny("MOV", "MP4", "ISMV"), "-movflags +faststart ", "")
+
+        'AVI has no timestamps, shifting the video for the encoder delay of MP3 audio inserts a frame
+        args += If(OutputFormat = "AVI", "-avoid_negative_ts disabled ", "")
         args += p.TargetFile.Escape
 
         Using proc As New Proc
