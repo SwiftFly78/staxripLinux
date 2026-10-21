@@ -1110,7 +1110,7 @@ Public Class NVEncParams
                     New BoolParam With {.Switch = "--aq-temporal", .Text = "Adaptive Quantization (Temporal)"},
                     Lossless)
                 Add("Slice Decision",
-                    New OptionParam With {.Switch = "--direct", .Text = "B-Direct Mode", .Options = {"Automatic", "None", "Spatial", "Temporal"}, .VisibleFunc = Function() Codec.ValueText = "h264"},
+                    New OptionParam With {.Switch = "--direct", .Text = "B-Direct Mode", .Options = {"Automatic", "Disabled", "Spatial", "Temporal"}, .VisibleFunc = Function() Codec.ValueText = "h264"},
                     New OptionParam With {.Switch = "--bref-mode", .Text = "B-Frame Ref. Mode", .Options = {"Auto", "Disabled", "Each", "Middle"}},
                     BFrames,
                     New NumParam With {.Switch = "--ref", .Text = "Ref Frames", .Init = 3, .Config = {0, 16}},
