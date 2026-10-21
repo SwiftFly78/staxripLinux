@@ -1496,8 +1496,11 @@ Partial Public Class MainForm
         If Not isoPath.FileExists() Then Return False
 
         Try
-            Dim drive = IsoHelp.Mount(isoPath)
-            Dim srcPath = drive & Path.VolumeSeparatorChar & Path.DirectorySeparatorChar
+            Dim srcPath = IsoHelp.Mount(isoPath)
+
+            If srcPath = "" Then
+                Return False
+            End If
 
             If Directory.Exists(Path.Combine(srcPath, "BDMV")) Then
                 srcPath = Path.Combine(srcPath, "BDMV")
