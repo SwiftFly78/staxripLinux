@@ -99,7 +99,7 @@ Friend Class JobsForm
         cms.Add("Select All", Sub() SelectAll(), Keys.Control Or Keys.S, Function() lv.Items.Count > lv.SelectedItems.Count)
         cms.Add("Select None", Sub() SelectNone(), Keys.Shift Or Keys.S, Function() lv.SelectedItems.Count > 0)
         cms.Add("-")
-        cms.Add("Check Selection", Sub() CheckSelection(), Keys.Shift Or Keys.C, Function() lv.SelectedItems.Count > lv.CheckedItems.OfType(Of ListViewItem).Where(Function(item) item.Checked).Count).ShortcutKeyDisplayString = "Space"
+        cms.Add("Check Selection", Sub() CheckSelection(), Keys.Shift Or Keys.C, Function() lv.SelectedItems.OfType(Of ListViewItem).Where(Function(item) Not item.Checked).Count > 0).ShortcutKeyDisplayString = "Space"
         cms.Add("Check All", Sub() CheckAll(), Keys.Control Or Keys.C, Function() lv.Items.Count > lv.CheckedItems.Count)
         cms.Add("-")
         cms.Add("Uncheck Selection", Sub() UncheckSelection(), Keys.Shift Or Keys.U, Function() lv.SelectedItems.OfType(Of ListViewItem).Where(Function(item) item.Checked).Count > 0).ShortcutKeyDisplayString = "Space"
