@@ -1603,7 +1603,7 @@ Public Class GUIAudioProfile
                 If Params.ffmpegLibFdkAAC Then
                     sb.Append(" -c:a libfdk_aac")
 
-                    If Params.RateMode = SimpleAudioRateMode.CBR Then
+                    If Params.SimpleRateMode = SimpleAudioRateMode.CBR Then
                         sb.Append(" -b:a " & CInt(Bitrate) & "k")
                     Else
                         sb.Append(" -vbr " & CInt(Params.Quality))
@@ -1611,7 +1611,7 @@ Public Class GUIAudioProfile
                 Else
                     sb.Append(" -c:a aac")
 
-                    If Params.RateMode = SimpleAudioRateMode.CBR Then
+                    If Params.SimpleRateMode = SimpleAudioRateMode.CBR Then
                         sb.Append(" -b:a " & CInt(Bitrate) & "k")
                     ElseIf Params.Encoder = GuiAudioEncoder.Automatic Then
                         'the quality of automatic mode uses the qaac scale
