@@ -4305,7 +4305,7 @@ Partial Public Class MainForm
                                 proc.Start()
                             Catch ex As Exception
                                 g.ShowException(ex)
-                                MsgInfo("Manual Merging", "Please merge the files manually with an appropriate tool or visit the support forum].")
+                                MsgInfo("Manual Merging", "Please merge the files manually with an appropriate tool or visit the support forum.")
                                 Throw New AbortException
                             End Try
 
