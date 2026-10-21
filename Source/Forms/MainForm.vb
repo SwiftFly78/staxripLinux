@@ -5238,7 +5238,7 @@ Partial Public Class MainForm
                     'If String.IsNullOrWhiteSpace(line) Then Continue Do
                     If line Like "========*" Then Continue Do
 
-                    Dim readoutVersionMatch = Regex.Match(line, "^(v(?<version>\d+\.\d+(?:\.\d+)*(?:-(RC\d+))?))\W+\((?<text>.*)\)")
+                    Dim readoutVersionMatch = Regex.Match(line, "^(v(?<version>\d+\.\d+(?:\.\d+)*)(?:-(RC\d+))?)\W+\((?<text>.*)\)")
                     readoutVersion = If(readoutVersionMatch.Success, New Version(readoutVersionMatch.Groups("version").Value), readoutVersion)
 
                     If readoutVersionMatch.Success Then
