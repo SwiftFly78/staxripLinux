@@ -199,7 +199,7 @@ Partial Public Class MainForm
                         End If
                     End If
 
-                    Dim streamGroups = p.AudioTracks.Where(Function(x) x.AudioProfile.Stream IsNot Nothing).GroupBy(Function(g) g.AudioProfile.Stream.Index).Where(Function(x) x.Count() > 1).ToList()
+                    Dim streamGroups = p.AudioTracks.Where(Function(x) x.AudioProfile.Stream IsNot Nothing).GroupBy(Function(g) (g.AudioProfile.File, g.AudioProfile.Stream.Index)).Where(Function(x) x.Count() > 1).ToList()
                     If streamGroups.Any() Then
                         If ProcessTip($"Some audio source streams are identical.") Then
                             Return Warn("Suspicious Audio Settings", streamGroups.SelectMany(Function(x) x.AsEnumerable().Select(Function(s) s.TextEdit)).ToArray())
