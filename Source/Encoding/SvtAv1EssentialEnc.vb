@@ -1538,6 +1538,7 @@ Public Class SvtAv1EssentialEncParams
         Dim sb As New StringBuilder
         Dim pipeTool = If(p.Script.IsAviSynth, PipingToolAVS, PipingToolVS).ValueText.ToLowerInvariant()
         Dim isSingleChunk = endFrame = 0
+        Dim isRangeInPipe = False
         Dim statsPath = (p.VideoEncoder.OutputPath.DirAndBase + chunkName + "_2pass.log").Escape
 
         If includePaths AndAlso includeExecutable Then
@@ -1554,10 +1555,12 @@ Public Class SvtAv1EssentialEncParams
                     Select Case pipeTool
                         Case "avs2yuv"
                             pipeString = FrameServerHelp.GetAvs2yuvCommand(script.Path, startFrame, endFrame)
+                            isRangeInPipe = True
 
                             sb.Append(pipeString & " | " & Package.Path.Escape)
                         Case "vspipe"
                             Dim chunk = If(isSingleChunk, "", $" --start {startFrame} --end {endFrame}")
+                            isRangeInPipe = True
                             pipeString = Package.vspipe.Path.Escape + " " + script.Path.Escape + " - --container y4m" + chunk
 
                             sb.Append(pipeString & " | " & Package.Path.Escape)
@@ -1607,6 +1610,8 @@ Public Class SvtAv1EssentialEncParams
                 sb.Append($" --frames {n}")
             End If
         Else
+            'ffmpeg and the decoders send all frames
+            If Not isRangeInPipe AndAlso startFrame > 0 Then sb.Append($" --skip {startFrame}")
             sb.Append($" --frames {endFrame - startFrame + 1}")
         End If
 
