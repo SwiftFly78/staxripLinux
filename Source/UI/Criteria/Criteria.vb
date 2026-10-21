@@ -138,7 +138,7 @@ Namespace UI
         Overrides Property PropertyString() As String
             Get
                 If PropertyValue Is Nothing Then PropertyValue = ""
-                Return Value
+                Return PropertyValue
             End Get
             Set(value As String)
                 PropertyValue = value
@@ -176,7 +176,7 @@ Namespace UI
 
         Overrides Property PropertyString() As String
             Get
-                Return Value.ToString
+                Return PropertyValue.ToString
             End Get
             Set(value As String)
                 If Not value Is Nothing AndAlso value.ToUpperInvariant = "TRUE" Then
