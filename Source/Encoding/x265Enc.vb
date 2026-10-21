@@ -1536,7 +1536,7 @@ Public Class x265Params
                 )
                 Add("VUI",
                     New StringParam With {.Switch = "--sar", .Text = "Sample Aspect Ratio", .Init = "auto", .Menu = s.ParMenu, .ArgsFunc = AddressOf GetSAR},
-                    New OptionParam With {.Switch = "--display-window", .Text = "Display Window", .Options = {"Undefined", "Left", "Top", "Right", "Bottom"}},
+                    New StringParam With {.Switch = "--display-window", .Text = "Display Window", .RemoveSpace = True},
                     New OptionParam With {.Switch = "--overscan", .Text = "Overscan", .Options = {"Undefined", "Show", "Crop"}},
                     New OptionParam With {.Switch = "--videoformat", .Text = "Videoformat", .Options = {"Undefined", "Component", "PAL", "NTSC", "SECAM", "MAC"}},
                     Range, ColorPrim, Transfer, ColorMatrix, Chromaloc
