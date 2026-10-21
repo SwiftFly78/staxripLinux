@@ -866,7 +866,7 @@ Public Class MkvMuxer
                 Next
 
                 If xDoc.Descendants("ChapterAtom").Count > 0 Then
-                    Dim CutChapterFile = Path.Combine(Path.GetDirectoryName(ChapterFile), "cut_cpt" + ".xml")
+                    Dim CutChapterFile = Path.Combine(p.TempDir, "cut_cpt.xml")
                     xDoc.Save(CutChapterFile)
                     args += " --chapters " + CutChapterFile.Escape
                 End If
