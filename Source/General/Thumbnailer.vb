@@ -27,9 +27,18 @@ Public Class Thumbnailer
 
             For Each path In pSourcePaths
                 taskList.Add(New Task(Function()
-                                          Dim succeeded = RunAsync(pProject, path, pToken).Result
+                                          Dim succeeded = False
+
+                                          'a failed file, like in a read-only folder, must not stop the others
+                                          Try
+                                              succeeded = RunAsync(pProject, path, pToken).Result
+                                          Catch ex As Exception
+                                              Console.Error.WriteLine(ex.ToString())
+                                          Finally
+                                              semaSlim.Release()
+                                          End Try
+
                                           proceededSources(path) = succeeded
-                                          semaSlim.Release()
                                           Return succeeded
                                       End Function)
                 )
