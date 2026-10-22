@@ -12,6 +12,7 @@ Public Class DownloadForm
 
     Private ReadOnly Cancellation As New CancellationTokenSource
     Private ReadOnly Url As String
+    Private IsClosed As Boolean
 
     Property Path As String
 
@@ -32,6 +33,8 @@ Public Class DownloadForm
     End Sub
 
     Async Sub Download()
+        Dim created = False
+
         Try
             Using client As New HttpClient
                 client.DefaultRequestHeaders.Add("User-Agent", "StaxRip")
@@ -43,6 +46,7 @@ Public Class DownloadForm
 
                     Using source = Await response.Content.ReadAsStreamAsync(Cancellation.Token)
                         Using target = File.Create(Path)
+                            created = True
                             Dim buffer(81919) As Byte
                             Dim received As Long
 
@@ -55,6 +59,7 @@ Public Class DownloadForm
 
                                 Await target.WriteAsync(buffer, 0, count, Cancellation.Token)
                                 received += count
+                                Cancellation.Token.ThrowIfCancellationRequested()
                                 UpdateProgress(received, total)
                             End While
                         End Using
@@ -62,13 +67,33 @@ Public Class DownloadForm
                 End Using
             End Using
 
-            DialogResult = DialogResult.OK
-        Catch ex As OperationCanceledException
-            DialogResult = DialogResult.Cancel
+            Finish(DialogResult.OK)
         Catch ex As Exception
-            MsgError("Download failed.", ex.Message)
-            DialogResult = DialogResult.Cancel
+            'an incomplete download isn't kept
+            If created Then
+                FileHelp.Delete(Path)
+            End If
+
+            If TypeOf ex IsNot OperationCanceledException AndAlso Not IsClosed Then
+                MsgError("Download failed.", ex.Message)
+            End If
+
+            Finish(DialogResult.Cancel)
         End Try
+    End Sub
+
+    'the dialog can't be closed again, it can be disposed already
+    Sub Finish(result As DialogResult)
+        If Not IsClosed Then
+            DialogResult = result
+        End If
+    End Sub
+
+    'closing the window cancels the download like the cancel button
+    Protected Overrides Sub OnClosed(e As EventArgs)
+        IsClosed = True
+        Cancellation.Cancel()
+        MyBase.OnClosed(e)
     End Sub
 
     Sub UpdateProgress(received As Long, total As Long)
