@@ -72,9 +72,10 @@ Namespace UI
         End Property
     End Class
 
+    'macros like %source_framerate% and %progress% have decimal values
     <Serializable()>
     Public Class IntCriteria
-        Inherits GenericCriteria(Of IntegerCondition, Integer)
+        Inherits GenericCriteria(Of IntegerCondition, Double)
 
         Overrides Function Eval() As Boolean
             Select Case Condition
@@ -91,19 +92,19 @@ Namespace UI
 
         Overrides Property ValueString() As String
             Get
-                Return Value.ToString
+                Return Value.ToInvariantString
             End Get
             Set(value As String)
-                Me.Value = value.ToInt(Me.Value)
+                Me.Value = value.ToDouble(Me.Value)
             End Set
         End Property
 
         Overrides Property PropertyString() As String
             Get
-                Return PropertyValue.ToString()
+                Return PropertyValue.ToInvariantString
             End Get
             Set(value As String)
-                PropertyValue = value.ToInt(PropertyValue)
+                PropertyValue = value.ToDouble()
             End Set
         End Property
     End Class
