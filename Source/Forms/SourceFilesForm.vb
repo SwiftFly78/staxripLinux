@@ -70,16 +70,17 @@ Public Class SourceFilesForm
     Sub bnAddFolder_Click() Handles bnAddFolder.Click
         Using dialog As New FolderBrowserDialog
             If dialog.ShowDialog = DialogResult.OK Then
-                Dim subfolders = Directory.GetDirectories(dialog.SelectedPath)
-                Dim opt = SearchOption.TopDirectoryOnly
+                'folders that can't be read, like lost+found, are skipped
+                Dim options As New EnumerationOptions With {.AttributesToSkip = 0, .IgnoreInaccessible = True}
+                Dim subfolders = Directory.GetDirectories(dialog.SelectedPath, "*", options)
 
-                If subfolders.Count > 0 Then
+                If subfolders.Length > 0 Then
                     If MsgQuestion("Include sub folders?", TaskButton.YesNo) = DialogResult.Yes Then
-                        opt = SearchOption.AllDirectories
+                        options.RecurseSubdirectories = True
                     End If
                 End If
 
-                lb.Items.AddRange(Directory.GetFiles(dialog.SelectedPath, "*.*", opt).Where(Function(val) FileTypes.Video.Contains(val.Ext)).OrderBy(Function(x) x, New StringLogicalComparer()).ToArray)
+                lb.Items.AddRange(Directory.GetFiles(dialog.SelectedPath, "*", options).Where(Function(val) FileTypes.Video.Contains(val.Ext)).OrderBy(Function(x) x, New StringLogicalComparer()).ToArray)
                 lb.SelectedIndex = lb.Items.Count - 1
             End If
         End Using
