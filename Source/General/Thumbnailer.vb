@@ -85,7 +85,10 @@ Public Class Thumbnailer
         Dim spacerPercent = Mathf.Clamp(settings.GetInt("SpacerPercent", 20), 0, 1000)
         Dim spacer = CInt(thumbWidth / 10.0F * (spacerPercent / 100.0F))
 
-        Dim timestampFontName = settings.GetString("TimestampFontName", FontManager.GetThumbnailFont().FamilyName)
+        'Eto fonts create GTK widgets, which only the UI thread may do
+        Dim defaultFontName = UIInvoke(Function() FontManager.GetThumbnailFont().FamilyName)
+
+        Dim timestampFontName = settings.GetString("TimestampFontName", defaultFontName)
         Dim timestampFontSizePercent = Mathf.Clamp(settings.GetInt("TimestampFontSizePercent", 100), 10, 1000)
         Dim timestampFontSize = (thumbWidth / 20.0F) * (timestampFontSizePercent / 100.0F)
         Dim timestampFontColorValue = settings.GetString("TimestampFontColor", New ColorHSL(0, 0, 0.9, 1).ToHTML())
@@ -111,7 +114,7 @@ Public Class Thumbnailer
         Dim header = settings.GetBool("Header", True)
         Dim headerBackColorValue = settings.GetString("HeaderBackColor", defaultImageBackColor.ToHTML())
         Dim headerBackColor = headerBackColorValue.ToColor(defaultImageBackColor)
-        Dim headerFontName = settings.GetString("HeaderFontName", FontManager.GetThumbnailFont().FamilyName)
+        Dim headerFontName = settings.GetString("HeaderFontName", defaultFontName)
         Dim headerFontSizePercent = Mathf.Clamp(settings.GetInt("HeaderFontSizePercent", 100), 10, 1000)
         Dim headerFontSize = (thumbWidth / 25.0F) * (columns / 4.0F) * (headerFontSizePercent / 100.0F)
         Dim headerFontColorValue = settings.GetString("HeaderFontColor", New ColorHSL(0, 0, 0.8, 1).ToHTML())
