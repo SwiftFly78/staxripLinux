@@ -261,10 +261,10 @@ Public Class Rav1eParams
 
     Property Light As New NumParam With {
         .Text = "Content Light",
-        .Switch = "--content_light",
+        .Switch = "--content-light",
         .Path = "VUI",
         .Config = {0, Integer.MaxValue, 50},
-        .ArgsFunc = Function() If(Light.Value <> 0 OrElse MaxFALL.Value <> 0, "--content_light """ & Light.Value & "," & MaxFALL.Value & """", ""),
+        .ArgsFunc = Function() If(Light.Value <> 0 OrElse MaxFALL.Value <> 0, "--content-light """ & Light.Value & "," & MaxFALL.Value & """", ""),
         .ImportAction = Sub(param, arg)
                             If arg = "" Then
                                 Exit Sub
@@ -276,7 +276,7 @@ Public Class Rav1eParams
                         End Sub}
 
     Property MaxFALL As New NumParam With {
-        .Switches = {"--content_light"},
+        .Switches = {"--content-light"},
         .Text = "Maximum FALL",
         .Path = "VUI",
         .Config = {0, Integer.MaxValue, 50}}
