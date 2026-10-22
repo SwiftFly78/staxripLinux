@@ -838,7 +838,7 @@ clipname.set_output()" + BR
                 wordStart -= 1
             End While
 
-            scriptIndex = script.LastIndexOf("("c, scriptIndex - 1)
+            scriptIndex = If(scriptIndex > 0, script.LastIndexOf("("c, scriptIndex - 1), -1)
 
             If IsFunctionCommented(script, wordStart) Then
                 Continue While
