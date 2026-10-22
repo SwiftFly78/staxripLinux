@@ -32,26 +32,31 @@ Public Class ToolUpdate
             Exit Sub
         End If
 
-        Dim content = Await HttpClient.GetStringAsync(Package.DownloadURL)
-        Dim matches = Regex.Matches(content, "href=(""|')[^ ]+\.(7z|zip|tar\.gz|tar\.xz|tar\.bz2|tar\.zst|tgz)(""|')")
+        'exceptions of an Async Sub are unhandled and terminate StaxRip
+        Try
+            Dim content = Await HttpClient.GetStringAsync(Package.DownloadURL)
+            Dim matches = Regex.Matches(content, "href=(""|')[^ ]+\.(7z|zip|tar\.gz|tar\.xz|tar\.bz2|tar\.zst|tgz)(""|')")
 
-        For Each match As Match In matches
-            Dim url = match.Value
+            For Each match As Match In matches
+                Dim url = match.Value
 
-            If Ignore(url) Then Continue For
-            If Package.Include <> "" AndAlso Not url.Contains(Package.Include) Then Continue For
+                If Ignore(url) Then Continue For
+                If Package.Include <> "" AndAlso Not url.Contains(Package.Include) Then Continue For
 
-            url = url.Substring(6, url.Length - 7)
+                url = url.Substring(6, url.Length - 7)
 
-            If Not url.StartsWith("http") Then
-                Dim match2 = Regex.Match(Package.DownloadURL, "https?://[^/]+")
-                url = match2.Value + If(url.StartsWith("/"), "", "/") + url
-            End If
+                If Not url.StartsWith("http") Then
+                    Dim match2 = Regex.Match(Package.DownloadURL, "https?://[^/]+")
+                    url = match2.Value + If(url.StartsWith("/"), "", "/") + url
+                End If
 
-            DownloadFile = IO.Path.Combine(Folder.Desktop, IO.Path.GetFileName(url))
-            Download(url)
-            Exit For
-        Next
+                DownloadFile = IO.Path.Combine(Folder.Desktop, IO.Path.GetFileName(url))
+                Download(url)
+                Exit For
+            Next
+        Catch ex As Exception
+            g.ShowException(ex, "Update of " + Package.Name + " failed")
+        End Try
     End Sub
 
     Sub Download(url As String)
