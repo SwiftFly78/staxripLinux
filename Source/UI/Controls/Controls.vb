@@ -2,6 +2,7 @@
 Imports System.Collections.ObjectModel
 Imports System.ComponentModel
 Imports System.Text.RegularExpressions
+Imports System.Threading.Tasks
 
 Namespace UI
     Public Class ButtonEx
@@ -123,7 +124,24 @@ Namespace UI
             MyBase.OnClick(e)
         End Sub
 
-        Sub ShowBold()
+        Private RegularFont As Font
+        Private BoldCount As Integer
+
+        'the bold text shows for a moment that a click had an effect
+        Async Sub ShowBold()
+            If BoldCount = 0 Then
+                'GTK frees the font of a widget when it changes, so a copy is kept
+                RegularFont = New Font(Font.Family, Font.Size, Font.FontStyle)
+            End If
+
+            BoldCount += 1
+            Font = New Font(RegularFont.Family, RegularFont.Size, FontStyle.Bold)
+            Await Task.Delay(300)
+            BoldCount -= 1
+
+            If BoldCount = 0 AndAlso Not IsDisposed Then
+                Font = RegularFont
+            End If
         End Sub
 
         Sub SetFontStyle(style As FontStyle)
