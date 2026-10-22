@@ -112,7 +112,7 @@ Public Class MediaInfo
                     End If
 
                     If at.Bitrate = 0 Then
-                        at.Bitrate = GetAudio(index, "FromStats_BitRate").ToInt
+                        at.Bitrate = CInt(GetAudio(index, "FromStats_BitRate").ToInt / 1000)
                     End If
 
                     at.Delay = GetAudio(index, "Video_Delay").ToInt
