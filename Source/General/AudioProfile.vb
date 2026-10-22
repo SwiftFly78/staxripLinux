@@ -1644,7 +1644,13 @@ Public Class GUIAudioProfile
                         Case WaveBitDepth.f32
                             sb.Append(" -c:a pcm_f32le")
                         Case Else
-                            If SourceBitDepth > 0 Then sb.Append($" -c:a pcm_s{SourceBitDepth}le")
+                            'ffmpeg has no encoders like pcm_s8le or pcm_s20le
+                            If SourceBitDepth = 8 Then
+                                sb.Append(" -c:a pcm_u8")
+                            ElseIf SourceBitDepth > 0 Then
+                                Dim bits = {16, 24, 32, 64}.First(Function(i) i >= Math.Min(SourceBitDepth, 64))
+                                sb.Append($" -c:a pcm_s{bits}le")
+                            End If
                     End Select
                 End If
         End Select
