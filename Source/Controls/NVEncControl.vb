@@ -59,7 +59,8 @@ Public Class NVEncControl
 
     Sub UpdateMenu()
         cms.Items.ClearAndDisplose
-        Dim offset = If(Encoder.QualityMode, 0, 1)
+        Dim quality = GetQualityParam()
+        Dim offset = If(quality IsNot Nothing, 0, 1)
         Dim add = Sub(path As String, action As Action, isSelected As Boolean, help As String)
                       Dim item = MenuItemEx.Add(cms.Items, path & "  ", action, help)
                       item.Marked = isSelected
@@ -69,18 +70,10 @@ Public Class NVEncControl
             Dim selectedIndex = lv.SelectedIndices(0)
             Select Case selectedIndex
                 Case 0 - offset
-                    Dim param As NumParam
-                    If Params.QVBR.Visible Then param = Params.QVBR
-                    If Params.QVBRAV1.Visible Then param = Params.QVBRAV1
-                    If Params.QP.Visible Then param = Params.QP
-                    If Params.QPAV1.Visible Then param = Params.QPAV1
-                    If Params.VbrQuality.Visible Then param = Params.VbrQuality
-                    If param IsNot Nothing Then
-                        For Each def In QualityDefinitions
-                            Dim p = def.Value & If(Not String.IsNullOrWhiteSpace(def.Text), $": {def.Text}", "")
-                            add(p, Sub() SetQuality(selectedIndex, def.Value), param.Value = def.Value, def.Tooltip)
-                        Next
-                    End If
+                    For Each def In QualityDefinitions
+                        Dim p = def.Value & If(Not String.IsNullOrWhiteSpace(def.Text), $": {def.Text}", "")
+                        add(p, Sub() SetQuality(selectedIndex, def.Value), quality.Value = def.Value, def.Tooltip)
+                    Next
                 Case 1 - offset
                     Dim param = Params.Mode
                     For x = 0 To param.Options.Length - 1
@@ -210,19 +203,24 @@ Public Class NVEncControl
         UpdateControls()
     End Sub
 
+    'the quality row and the menus of the rows depend on it,
+    'the advanced QP settings have no single quality value
+    Function GetQualityParam() As NumParam
+        If Not Encoder.QualityMode Then
+            Return Nothing
+        End If
+
+        Return {Params.QVBR, Params.QVBRAV1, Params.QP, Params.QPAV1, Params.VbrQuality}.LastOrDefault(Function(i) i.Visible)
+    End Function
+
     Sub UpdateControls()
         lv.Items.Clear()
-        If Encoder.QualityMode Then
-            Dim val = -1.0
-            val = If(Params.QVBR.Visible, Params.QVBR.Value, val)
-            val = If(Params.QVBRAV1.Visible, Params.QVBRAV1.Value, val)
-            val = If(Params.QP.Visible, Params.QP.Value, val)
-            val = If(Params.QPAV1.Visible, Params.QPAV1.Value, val)
-            val = If(Params.VbrQuality.Visible, Params.VbrQuality.Value, val)
-            If val >= 0 Then
-                lv.Items.Add(New ListViewItem({"Quality", GetQualityCaption(val)}))
-            End If
+        Dim quality = GetQualityParam()
+
+        If quality IsNot Nothing Then
+            lv.Items.Add(New ListViewItem({"Quality", GetQualityCaption(quality.Value)}))
         End If
+
         lv.Items.Add(New ListViewItem({"Mode", Params.Mode.OptionText}))
         lv.Items.Add(New ListViewItem({"Preset", Params.Preset.OptionText}))
         Dim tuneParam = Params.Tune
