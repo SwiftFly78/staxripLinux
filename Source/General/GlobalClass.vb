@@ -1406,6 +1406,10 @@ Public Class GlobalClass
                     ec.CommandParameters IsNot Nothing Then
 
                     Dim command = g.MainForm.CustomMainMenu.CommandManager.GetCommand(ec.CommandParameters.MethodName)
+
+                    'the settings of older versions can contain commands that were removed
+                    If command Is Nothing Then Continue For
+
                     Dim params = command.FixParameters(ec.CommandParameters.Parameters)
 
                     If s.LogEventCommand AndAlso p.SourceFile <> "" Then
