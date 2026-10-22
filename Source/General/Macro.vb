@@ -159,7 +159,7 @@ Public Class Macro
             ret.Add(New Macro("script_file", "Script Path", GetType(String), "Path of the AviSynth/VapourSynth script."))
             ret.Add(New Macro("sel_end", "Selection End", GetType(Integer), "End position of the first selection in the preview."))
             ret.Add(New Macro("sel_start", "Selection Start", GetType(Integer), "Start position of the first selection in the preview."))
-            ret.Add(New Macro("settings_dir", "Settings Directory", GetType(String), "Path of the settings direcory."))
+            ret.Add(New Macro("settings_dir", "Settings Directory", GetType(String), "Path of the settings directory."))
             ret.Add(New Macro("source_dar", "Source Display Aspect Ratio", GetType(String), "Source display aspect ratio."))
             ret.Add(New Macro("source_dir", "Source Directory", GetType(String), "Directory of the source file."))
             ret.Add(New Macro("source_dir_name", "Source Directory Name", GetType(String), "Name of the source file directory."))
