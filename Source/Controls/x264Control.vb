@@ -140,16 +140,14 @@ Public Class x264Control
     End Function
 
     Sub UpdateControls()
-        If Encoder.QualityMode AndAlso lv.Items.Count < 4 Then
-            lv.Items.Clear()
+        lv.Items.Clear()
+
+        If Encoder.QualityMode Then
             lv.Items.Add(New ListViewItem({"Quality", GetQualityCaption(Params.Quant.Value)}))
-            lv.Items.Add(New ListViewItem({"Preset", Params.Preset.OptionText}))
-            lv.Items.Add(New ListViewItem({"Tune", Params.Tune.OptionText}))
-        ElseIf Params.Mode.Value <> 2 AndAlso lv.Items.Count <> 3 Then
-            lv.Items.Clear()
-            lv.Items.Add(New ListViewItem({"Preset", Params.Preset.OptionText}))
-            lv.Items.Add(New ListViewItem({"Tune", Params.Tune.OptionText}))
         End If
+
+        lv.Items.Add(New ListViewItem({"Preset", Params.Preset.OptionText}))
+        lv.Items.Add(New ListViewItem({"Tune", Params.Tune.OptionText}))
 
         tblOverrideName.State = Encoder.OverridesTargetFileName
         blCompCheck.Visible = Params.Mode.Value = x264RateMode.TwoPass Or Params.Mode.Value = x264RateMode.ThreePass
