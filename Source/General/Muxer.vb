@@ -195,7 +195,7 @@ Public MustInherit Class Muxer
                 Not fp.Contains("_Temp.") Then
 
                 If p.ConvertSup2Sub AndAlso fp.Ext = "sup" Then Continue For
-                If TypeOf Me Is MP4Muxer AndAlso Not {"idx", "srt", "sub"}.Contains(fp.Ext) Then Continue For
+                If TypeOf Me Is MP4Muxer AndAlso Not {"idx", "srt", "sub", "vtt"}.Contains(fp.Ext) Then Continue For
 
                 For Each iSubtitle In Subtitle.Create(fp)
                     If p.PreferredSubtitles <> "" AndAlso IsSupported(iSubtitle) Then
