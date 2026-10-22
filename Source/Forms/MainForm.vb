@@ -1843,7 +1843,7 @@ Partial Public Class MainForm
                            "core = vs.core" + BR +
                            "from importlib.machinery import SourceFileLoader" + BR +
                            $"SourceFileLoader('clip', {VideoScript.ToPythonString(p.SourceFile)}).load_module()" + BR +
-                           "clip = vs.get_output()"
+                           "clip = vs.get_output().clip"
                 p.Script.Filters.Add(New VideoFilter("Source", "VS Script Import", code))
             End If
 
