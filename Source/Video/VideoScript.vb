@@ -978,7 +978,7 @@ clipname.set_output()" + BR
 
                 If Filters.Count = 0 OrElse Filters(0).Category <> "Source" Then
                     MsgError("The first filter must be a source filter.")
-                    Filters = GetDefaults(0).Filters
+                    Filters = GetDefaults().First(Function(i) i.Engine = Engine).Filters
                 End If
 
                 Return DialogResult.OK
