@@ -103,10 +103,6 @@ Public Class Animation
             Proc.Start()
         End Using
 
-        If File.Exists(NewFile) = True Then
-            File.Delete(NewFile)
-        End If
-
         If Opt = True Then
             If File.Exists(OptOut) = True Then
                 File.Delete(OptOut)
@@ -136,7 +132,7 @@ Public Class Animation
             Catch ex As Exception
             End Try
         Else
-            File.Move(Path, NewFile)
+            File.Move(Path, If(DirectoryStatus, Export, NewFile), True)
         End If
     End Sub
 End Class
