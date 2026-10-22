@@ -64,6 +64,9 @@ Public Class Thumbnailer
         Dim defaultImageBackColor = New ColorHSL(0, 0, 0.05, 1)
         Dim dar = MediaInfo.GetVideo(pSourcePath, "DisplayAspectRatio").ToSingle()
 
+        'audio files, scripts and index files have no aspect ratio
+        If dar <= 0 Then Return False
+
         Dim headerInfoTask = GetHeaderInfosAsync(pSourcePath)
 
         Dim settings As ObjectStorage = proj.ThumbnailerSettings
