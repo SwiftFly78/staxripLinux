@@ -163,8 +163,8 @@ Partial Public Class MainForm
             t.Edit.SaveAction = Sub(value) s.SvtAv1EncAppQualityDefinitions = value.ToSvtAv1EncAppQualityItems()?.ToList()
 
             t = ui.AddText()
-            t.Text = "vccencFFapp"
-            t.Help = "Create custom quality definitions for vccencFFapp." + BR2 + helpAddition
+            t.Text = "vvencFFapp"
+            t.Help = "Create custom quality definitions for vvencFFapp." + BR2 + helpAddition
             t.Edit.Expand = True
             t.Edit.Text = s.VvencffappQualityDefinitions.ToSeparatedString()
             t.Edit.SaveAction = Sub(value) s.VvencffappQualityDefinitions = value.ToVvencffappQualityItems()?.ToList()
