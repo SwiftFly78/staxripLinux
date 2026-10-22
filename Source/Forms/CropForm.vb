@@ -108,9 +108,9 @@ Public Class CropForm
 
         If p.CropWithTonemapping Then
             If p.SourceVideoBitDepth > 8 AndAlso Not p.SourceVideoHdrFormat?.EqualsAny("", "SDR") Then
-                If p.Script.Engine = ScriptEngine.AviSynth AndAlso Package.AVSLibPlacebo.RequirementsFulfilled Then
+                If p.Script.Engine = ScriptEngine.AviSynth AndAlso Package.AVSLibPlacebo.IsAvailable() Then
                     script.Filters.Add(New VideoFilter("Color", "Tonemap", "ConvertBits(16)" + BR + "libplacebo_Tonemap()" + BR + "ConvertToYUV420()" + BR + "ConvertBits(8)"))
-                ElseIf p.Script.Engine = ScriptEngine.VapourSynth AndAlso Package.VSLibPlacebo.RequirementsFulfilled Then
+                ElseIf p.Script.Engine = ScriptEngine.VapourSynth AndAlso Package.VSLibPlacebo.IsAvailable() AndAlso Package.Fmtconv.IsAvailable() Then
                     script.Filters.Add(New VideoFilter("Color", "Tonemap", "clip = core.fmtc.bitdepth(clip, bits=16)" + BR + "clip = core.placebo.Tonemap(clip, src_csp=1, dst_csp=0, dynamic_peak_detection=0, tone_mapping_function=7)" + BR + $"clip = clip.resize.Bicubic(format = vs.YUV420P8)"))
                 End If
             End If

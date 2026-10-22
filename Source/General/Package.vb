@@ -1526,6 +1526,7 @@ Public Class Package
         .HelpFilename = "imwri.rst",
         .VsFilterNames = {"imwri.Read", "imwri.Write"}})
 
+    Shared Property Fmtconv As Package
 
     Shared Sub New()
         Add(New PluginPackage With {
@@ -2514,7 +2515,7 @@ Public Class Package
             .WebURL = "https://github.com/dubhater/vapoursynth-awarpsharp2",
             .VsFilterNames = {"warp.AWarpSharp2"}})
 
-        Add(New PluginPackage With {
+        Fmtconv = Add(New PluginPackage With {
             .Name = "fmtconv",
             .Filename = "fmtconv.dll",
             .Location = IO.Path.Combine("Plugins", "Dual", "fmtconv"),
@@ -3144,6 +3145,11 @@ Public Class Package
 
     Function GetStatusDisplay() As String
         Return If(GetStatus() <> "", GetStatus(), "OK")
+    End Function
+
+    'scripts can use plugins that are found or loaded by VapourSynth itself
+    Function IsAvailable() As Boolean
+        Return RequirementsFulfilled AndAlso GetStatusLocation() = ""
     End Function
 
     Function GetStatusLocation() As String

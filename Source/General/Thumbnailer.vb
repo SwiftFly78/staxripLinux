@@ -276,7 +276,7 @@ Public Class Thumbnailer
                 Dim fileHdrFormat = MediaInfo.GetVideo(filePath, "HDR_Format_Commercial")
 
                 If fileBitDepth > 8 AndAlso Not String.IsNullOrWhiteSpace(fileHdrFormat) AndAlso fileHdrFormat <> "SDR" Then
-                    If Package.VSLibPlacebo.RequirementsFulfilled Then
+                    If Package.VSLibPlacebo.IsAvailable() AndAlso Package.Fmtconv.IsAvailable() Then
                         script.Filters.Add(New VideoFilter("clip = core.fmtc.bitdepth(clip, bits=16)" + BR + "clip = core.placebo.Tonemap(clip, src_csp=1, dst_csp=0, dynamic_peak_detection=0, tone_mapping_function=7)" + BR + $"clip = clip.resize.Bicubic(format = vs.YUV420P8)"))
                     End If
                 End If
