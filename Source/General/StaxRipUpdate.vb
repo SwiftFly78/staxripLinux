@@ -108,7 +108,10 @@ Public Class StaxRipUpdate
             End If
 
             s.CheckForUpdatesLastRequest = DateTime.Now
-        Catch
+        Catch ex As Exception
+            If force Then
+                MsgError("Checking for updates failed.", ex.Message)
+            End If
         End Try
     End Sub
 End Class
