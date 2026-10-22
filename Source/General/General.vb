@@ -293,9 +293,25 @@ Public Class SafeSerialization
 
         Try
             path = path.TrimQuotes().LongPathPrefix()
-            Using fs As New FileStream(path, FileMode.Create)
-                bf.Serialize(fs, list)
-            End Using
+            Dim info = New FileInfo(path)
+
+            If info.LinkTarget IsNot Nothing Then
+                path = info.ResolveLinkTarget(True).FullName
+            End If
+
+            'a failed write, like on a full disk, keeps the previous file
+            Dim tempPath = path + ".tmp"
+
+            Try
+                Using fs As New FileStream(tempPath, FileMode.Create)
+                    bf.Serialize(fs, list)
+                End Using
+
+                File.Move(tempPath, path, True)
+            Catch
+                FileHelp.Delete(tempPath)
+                Throw
+            End Try
         Catch ex As Exception
             g.ShowException(ex)
         End Try
