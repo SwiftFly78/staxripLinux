@@ -797,7 +797,17 @@ Public Class GlobalClass
     End Sub
 
     Function CanEncodeVideo() As Boolean
-        Return Not (p.SkipVideoEncoding AndAlso TypeOf p.VideoEncoder IsNot NullEncoder AndAlso File.Exists(p.VideoEncoder.OutputPath))
+        If Not p.SkipVideoEncoding OrElse TypeOf p.VideoEncoder Is NullEncoder Then
+            Return True
+        End If
+
+        'chunks are encoded to separate files
+        If p.VideoEncoder.CanChunkEncode() Then
+            Return Not Enumerable.Range(1, p.VideoEncoder.GetChunks()).All(
+                Function(i) File.Exists(p.VideoEncoder.OutputPath.DirAndBase + "_chunk" & i & p.VideoEncoder.OutputPath.ExtFull))
+        End If
+
+        Return Not File.Exists(p.VideoEncoder.OutputPath)
     End Function
 
     Sub DeleteTempFiles(Optional proj As Project = Nothing)
