@@ -875,6 +875,7 @@ clipname.set_output()" + BR
     Shared Function ModifyAVSScript(script As String) As String
         Dim ret = New StringBuilder()
         Dim sb = New StringBuilder()
+        Dim autoloadDirs = New StringBuilder()
         Dim newScript As String
         newScript = GetAvsLoadCode(script, "") & script
         newScript = GetAVSLoadCodeFromImports(newScript) & BR & newScript
@@ -884,8 +885,9 @@ clipname.set_output()" + BR
             Do
                 line = sr.ReadLine()
                 If line IsNot Nothing Then
+                    'the order of the directories is kept, it defines their priority
                     If line.StartsWithEx("AddAutoloadDir(") Then
-                        sb.Insert(0, line)
+                        autoloadDirs.AppendLine(line)
                     Else
                         sb.AppendLine(line)
                     End If
@@ -908,6 +910,7 @@ clipname.set_output()" + BR
             Next
         End If
 
+        ret.Append(autoloadDirs)
         ret.Append(sb)
 
         Return ret.ToString()
