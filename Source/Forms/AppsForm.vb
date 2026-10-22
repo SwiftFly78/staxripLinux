@@ -342,7 +342,17 @@ Public Class AppsForm
 
     Sub AppsForm_FilesDropped(files As String()) Handles Me.FilesDropped
         BeginInvoke(Sub()
-                        If Not files.NothingOrEmpty AndAlso CurrentPackage IsNot Nothing Then
+                        If files.NothingOrEmpty OrElse CurrentPackage Is Nothing Then
+                            Exit Sub
+                        End If
+
+                        'the update replaces all files in the folder of the tool
+                        If CurrentPackage.IsSystemInstalled Then
+                            MsgInfo(CurrentPackage.Name + " is installed system wide, please update it with the package manager.", CurrentPackage.Path)
+                            Exit Sub
+                        End If
+
+                        Try
                             If files.Length = 1 AndAlso (files(0).Ext.EqualsAny("zip", "7z") OrElse
                                 files(0).ToLowerInvariant.EndsWithAny(".tar.gz", ".tar.xz", ".tar.bz2", ".tar.zst", ".tgz")) Then
 
@@ -361,7 +371,9 @@ Public Class AppsForm
                                 ToolUpdate.DeleteOldFiles()
                                 FolderHelp.Delete(ToolUpdate.ExtractDir)
                             End If
-                        End If
+                        Catch ex As Exception
+                            g.ShowException(ex, "Update of " + CurrentPackage.Name + " failed")
+                        End Try
                     End Sub)
     End Sub
 
