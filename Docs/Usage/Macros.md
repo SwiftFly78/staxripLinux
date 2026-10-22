@@ -53,7 +53,7 @@ for example in scripts or settings. Most of them are also used for [events](Even
 | `%script_file%` | Path of the AviSynth/VapourSynth script. |
 | `%sel_end%` | End position of the first selecion in the preview. |
 | `%sel_start%` | Start position of the first selecion in the preview. |
-| `%settings_dir%` | Path of the settings direcory. |
+| `%settings_dir%` | Path of the settings directory. |
 | `%source_dar%` | Source display aspect ratio. |
 | `%source_dir%` | Directory of the source file. |
 | `%source_dir_name%` | Name of the source file directory. |
