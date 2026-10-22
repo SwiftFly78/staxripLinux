@@ -123,14 +123,13 @@ Public Class VvencffappControl
     End Function
 
     Sub UpdateControls()
-        If Params.Mode.Value = VvencffappRateMode.SingleQuant AndAlso lv.Items.Count < 2 Then
-            lv.Items.Clear()
+        lv.Items.Clear()
+
+        If Params.Mode.Value = VvencffappRateMode.SingleQuant Then
             lv.Items.Add(New ListViewItem({"Quality", GetQualityCaption(Params.Quant.Value)}))
-            lv.Items.Add(New ListViewItem({"Preset", Params.Preset.OptionText}))
-        ElseIf Params.Mode.Value <> VvencffappRateMode.TwoPass AndAlso lv.Items.Count <> 1 Then
-            lv.Items.Clear()
-            lv.Items.Add(New ListViewItem({"Preset", Params.Preset.OptionText}))
         End If
+
+        lv.Items.Add(New ListViewItem({"Preset", Params.Preset.OptionText}))
 
         tblOverrideName.State = Encoder.OverridesTargetFileName
         blCompCheck.Visible = Params.Mode.Value = VvencffappRateMode.TwoPass
