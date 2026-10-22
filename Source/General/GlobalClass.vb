@@ -1962,6 +1962,11 @@ Public Class GlobalClass
                 startFrame += p.AutoCropFrameRangeThresholdBegin
                 endFrame -= p.AutoCropFrameRangeThresholdEnd
             End If
+            'the thresholds can exceed short sources
+            If startFrame > endFrame Then
+                startFrame = 0
+                endFrame = frameCount - 1
+            End If
             Dim consideredFrames = endFrame - startFrame
             Dim minFrames = 5
             Dim interval = CInt(VB6.Conversion.Fix(frameRate * 60))
