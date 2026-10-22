@@ -1426,13 +1426,17 @@ Public Class Cuda
 End Class
 
 Public Class Vulkan
-    Private Shared _result As VkResult = Nothing
+    'VkResult.Success is 0 like Nothing, so the result is nullable
+    Private Shared _result As VkResult?
 
     <UnmanagedFunctionPointer(CallingConvention.Cdecl)>
     Public Delegate Function vkCreateInstanceDelegate(ByRef createInfo As VkInstanceCreateInfo, allocator As IntPtr, ByRef instance As IntPtr) As VkResult
 
     <UnmanagedFunctionPointer(CallingConvention.Cdecl)>
     Public Delegate Function vkEnumeratePhysicalDevicesDelegate(instance As IntPtr, ByRef deviceCount As Integer, devices As IntPtr) As VkResult
+
+    <UnmanagedFunctionPointer(CallingConvention.Cdecl)>
+    Public Delegate Sub vkDestroyInstanceDelegate(instance As IntPtr, allocator As IntPtr)
 
     <DllImport("vulkan-1.dll", CallingConvention:=CallingConvention.Cdecl)>
     Public Shared Function vkGetInstanceProcAddr(instance As IntPtr, name As String) As IntPtr
@@ -1442,7 +1446,7 @@ Public Class Vulkan
     Public Shared ReadOnly Property IsSupported As Boolean
         Get
             Try
-                If _result = Nothing Then
+                If Not _result.HasValue Then
                     Dim createInstancePtr = vkGetInstanceProcAddr(IntPtr.Zero, "vkCreateInstance")
                     If createInstancePtr = IntPtr.Zero Then Throw New Exception()
 
@@ -1453,20 +1457,28 @@ Public Class Vulkan
                     Dim instance As IntPtr = IntPtr.Zero
                     If vkCreateInstance.Invoke(ci, IntPtr.Zero, instance) <> VkResult.Success Then Throw New Exception()
 
-                    Dim enumDevicesPtr = vkGetInstanceProcAddr(instance, "vkEnumeratePhysicalDevices")
-                    If enumDevicesPtr = IntPtr.Zero Then Throw New Exception()
+                    Try
+                        Dim enumDevicesPtr = vkGetInstanceProcAddr(instance, "vkEnumeratePhysicalDevices")
+                        If enumDevicesPtr = IntPtr.Zero Then Throw New Exception()
 
-                    Dim vkEnumeratePhysicalDevices = CType(Marshal.GetDelegateForFunctionPointer(enumDevicesPtr, GetType(vkEnumeratePhysicalDevicesDelegate)), vkEnumeratePhysicalDevicesDelegate)
-                    Dim deviceCount = 0
-                    vkEnumeratePhysicalDevices.Invoke(instance, deviceCount, IntPtr.Zero)
-                    If deviceCount < 1 Then Throw New Exception()
+                        Dim vkEnumeratePhysicalDevices = CType(Marshal.GetDelegateForFunctionPointer(enumDevicesPtr, GetType(vkEnumeratePhysicalDevicesDelegate)), vkEnumeratePhysicalDevicesDelegate)
+                        Dim deviceCount = 0
+                        vkEnumeratePhysicalDevices.Invoke(instance, deviceCount, IntPtr.Zero)
+                        If deviceCount < 1 Then Throw New Exception()
+                    Finally
+                        Dim destroyInstancePtr = vkGetInstanceProcAddr(instance, "vkDestroyInstance")
+
+                        If destroyInstancePtr <> IntPtr.Zero Then
+                            Marshal.GetDelegateForFunctionPointer(Of vkDestroyInstanceDelegate)(destroyInstancePtr).Invoke(instance, IntPtr.Zero)
+                        End If
+                    End Try
 
                     _result = VkResult.Success
                 End If
             Catch ex As Exception
                 _result = VkResult.ErrorInitializationFailed
             End Try
-            Return _result = VkResult.Success
+            Return _result.Value = VkResult.Success
         End Get
     End Property
 End Class
