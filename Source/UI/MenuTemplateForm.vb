@@ -11,7 +11,9 @@ Namespace UI
 
         Sub New(item As CustomMenuItem)
             tv = New TreeViewEx
+            'GTK selects no item initially, so OK is enabled for selected items only
             bnOK = CreateButton("OK", DialogResult.OK)
+            bnOK.Enabled = False
             bnCancel = CreateButton("Cancel", DialogResult.Cancel)
             DefaultButton = bnOK
             AbortButton = bnCancel
