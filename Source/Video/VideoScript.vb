@@ -385,7 +385,8 @@ Public Class VideoScript
                     code += BR + "clip.set_output()"
                 End If
 
-                Dim match = Regex.Match(code, "(\w+)\.set_output\(\)")
+                'scripts also use set_output(0), the frame server reads output 0 anyway
+                Dim match = Regex.Match(code, "(\w+)\.set_output\([^)]*\)")
                 Dim clipname = match.Groups(1).Value
 
                 Dim vsCode = ""
@@ -441,7 +442,10 @@ else:
 clipname = clipname.resize.Bicubic(matrix_in = matrix, transfer_in = transfer, primaries_in = primaries, format = vs.RGB24)
 clipname.set_output()" + BR
                 vsCode = vsCode.Replace("clipname", clipname)
-                code = code.Replace(match.Value, vsCode).Trim
+                'outputs like core.std.BlankClip().set_output() have no clip name and stay unconverted
+                If match.Success Then
+                    code = code.Replace(match.Value, vsCode).Trim
+                End If
             End If
         End If
 
