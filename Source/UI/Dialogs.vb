@@ -2,7 +2,12 @@
 'WinForms like wrappers around the Eto file, folder and color dialogs,
 'they marshal to the UI thread and accept WinForms filter strings.
 Public Class FileDialogHelp
-    Shared Function ParseFilter(filter As String) As List(Of FileFilter)
+    'GTK matches the patterns of filters case sensitive, like *.mp4 doesn't show C0001.MP4 of cameras
+    Shared Function GetCaseInsensitivePattern(extension As String) As String
+        Return String.Concat(extension.Select(Function(c) If(Char.IsLetter(c), $"[{Char.ToLowerInvariant(c)}{Char.ToUpperInvariant(c)}]", c.ToString)))
+    End Function
+
+    Shared Function ParseFilter(filter As String, Optional ignoreCase As Boolean = False) As List(Of FileFilter)
         Dim ret As New List(Of FileFilter)
 
         If String.IsNullOrWhiteSpace(filter) Then
@@ -29,6 +34,10 @@ Public Class FileDialogHelp
                     extensions.Add(p)
                 End If
             Next
+
+            If ignoreCase Then
+                extensions = extensions.Select(Function(i) If(i.StartsWith("."), GetCaseInsensitivePattern(i), i)).ToList
+            End If
 
             ret.Add(New FileFilter(name, extensions.ToArray))
         Next
@@ -81,7 +90,7 @@ Public Class OpenFileDialog
                                     dialog.Title = Title
                                 End If
 
-                                For Each i In FileDialogHelp.ParseFilter(Filter)
+                                For Each i In FileDialogHelp.ParseFilter(Filter, True)
                                     dialog.Filters.Add(i)
                                 Next
 
