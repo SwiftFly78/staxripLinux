@@ -463,9 +463,11 @@ Public Class PowerRequest
         End If
 
         Try
-            Dim psi As New ProcessStartInfo(inhibit) With {.UseShellExecute = False, .RedirectStandardError = True, .RedirectStandardOutput = True}
+            Dim psi As New ProcessStartInfo(inhibit) With {.UseShellExecute = False, .RedirectStandardInput = True,
+                .RedirectStandardError = True, .RedirectStandardOutput = True}
 
-            For Each arg In {"--what=sleep:idle", "--who=StaxRip", "--why=Encoding", "--mode=block", "sleep", "infinity"}
+            'cat ends when the input pipe closes, which also happens when StaxRip crashes or is killed
+            For Each arg In {"--what=sleep:idle", "--who=StaxRip", "--why=Encoding", "--mode=block", "cat"}
                 psi.ArgumentList.Add(arg)
             Next
 
