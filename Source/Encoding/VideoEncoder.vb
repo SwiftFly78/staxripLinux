@@ -753,7 +753,15 @@ Public Class BatchEncoder
             End Try
         End Using
 
-        Dim bits = (New FileInfo(Path.Combine(p.TempDir, p.TargetFile.Base + "_CompCheck." + OutputExt)).Length) * 8
+        Dim outputFile = Path.Combine(p.TempDir, p.TargetFile.Base + "_CompCheck." + OutputExt)
+
+        'the command line is written by the user and can write another file
+        If Not File.Exists(outputFile) Then
+            MsgError("The compressibility check created no output file.", "The command line must write the file:" + BR2 + outputFile)
+            Exit Sub
+        End If
+
+        Dim bits = New FileInfo(outputFile).Length * 8
         p.Compressibility = (bits / script.GetFrameCount) / (p.TargetWidth * p.TargetHeight)
 
         OnAfterCompCheck()
