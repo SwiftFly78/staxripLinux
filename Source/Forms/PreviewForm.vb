@@ -351,9 +351,10 @@ Public Class PreviewForm
         Dim d As Date
         d = d.AddSeconds(Renderer.Position / FrameServer.FrameRate)
         Dim value = InputBox.Show("Go To Time", d.ToString("HH:mm:ss.fff"))
+        Dim time As TimeSpan
 
-        If value <> "" Then
-            SetPos(CInt((TimeSpan.Parse(value).TotalMilliseconds / 1000) * FrameServer.FrameRate))
+        If value <> "" AndAlso TimeSpan.TryParse(value, time) Then
+            SetPos(CInt((time.TotalMilliseconds / 1000) * FrameServer.FrameRate))
         End If
     End Sub
 
