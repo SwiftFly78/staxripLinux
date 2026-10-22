@@ -1703,11 +1703,15 @@ Public Class GUIAudioProfile
             Return ""
         End If
 
-        If SourceChannels = 8 Then
-            Return " -af pan=stereo|c0=c2+0.30*c0+0.30*c4+0.30*c6|c1=c2+0.30*c1+0.30*c5+0.30*c7"
-        End If
+        'the filters use the channel order of 5.1 and 7.1, other sources get a regular downmix
+        Select Case SourceChannels
+            Case 6
+                Return " -af pan=stereo|c0=c2+0.30*c0+0.30*c4|c1=c2+0.30*c1+0.30*c5"
+            Case 8
+                Return " -af pan=stereo|c0=c2+0.30*c0+0.30*c4+0.30*c6|c1=c2+0.30*c1+0.30*c5+0.30*c7"
+        End Select
 
-        Return " -af pan=stereo|c0=c2+0.30*c0+0.30*c4|c1=c2+0.30*c1+0.30*c5"
+        Return ""
     End Function
 
     Function SupportsNormalize() As Boolean
