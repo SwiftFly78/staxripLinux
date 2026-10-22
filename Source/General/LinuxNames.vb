@@ -506,7 +506,8 @@ Public Class VapourSynthInfo
             Exit Sub
         End If
 
-        Dim dir = Path.Combine(Folder.Temp, "staxrip-" + Environment.UserName)
+        'other users could own a folder with this name in /tmp and replace the script
+        Dim dir = Path.Combine(Folder.XdgCacheHome, "staxrip")
         Directory.CreateDirectory(dir)
         Dim scriptPath = Path.Combine(dir, "vs-info.vpy")
         Dim outputPath = Path.Combine(dir, "vs-info.txt")
