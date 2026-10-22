@@ -102,10 +102,10 @@ Namespace UI
         End Sub
 
         Sub UpdateControls()
-            If Not Block Then
+            Dim n As TreeNode = tv.SelectedNode
+
+            If Not Block AndAlso n IsNot Nothing Then
                 Block = True
-                Dim n As TreeNode = tv.SelectedNode
-                If n Is Nothing Then Exit Sub
                 Dim item = CType(n.Tag, CustomMenuItem)
                 tbText.Text = item.Text
                 tbHotkey.Text = KeysHelp.GetKeyString(item.KeyData)
