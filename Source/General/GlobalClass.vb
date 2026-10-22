@@ -332,7 +332,7 @@ Public Class GlobalClass
     End Function
 
     Sub LoadPowerShellScripts()
-        For Each dirPath In {Path.Combine(Folder.Apps, "Scripts"), Folder.Scripts + "Auto Load"}
+        For Each dirPath In {Path.Combine(Folder.Apps, "Scripts"), Path.Combine(Folder.Scripts, "Auto Load")}
             If dirPath.DirExists Then
                 For Each fp In Directory.GetFiles(dirPath, "*.ps1")
                     g.DefaultCommands.ExecutePowerShellFile(fp)
