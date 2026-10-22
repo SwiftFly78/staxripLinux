@@ -762,7 +762,7 @@ clipname.set_output()" + BR
             Dim wordStart = scriptIndex - 1
             Dim wordEnd = scriptIndex + 1
 
-            If script.Chars(wordEnd).IsDigit() Or Not AllowedFunctionChars.Contains(script.Chars(wordEnd)) Then
+            If wordEnd >= script.Length OrElse script.Chars(wordEnd).IsDigit() OrElse Not AllowedFunctionChars.Contains(script.Chars(wordEnd)) Then
                 scriptIndex = script.LastIndexOf("."c, scriptIndex - 1)
                 Continue While
             End If
