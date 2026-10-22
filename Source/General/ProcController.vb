@@ -753,7 +753,12 @@ Public Class ProcController
         SyncLock Procs
             For Each pc In Procs
                 If Not pc.Proc.IsSilent Then
-                    Return pc.Proc.Process?.PriorityClass
+                    'processes that aren't started yet or have exited have no priority
+                    Try
+                        Return pc.Proc.Process?.PriorityClass
+                    Catch ex As InvalidOperationException
+                        Return Nothing
+                    End Try
                 End If
             Next
         End SyncLock
