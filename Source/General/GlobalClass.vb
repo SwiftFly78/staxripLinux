@@ -1966,7 +1966,8 @@ Public Class GlobalClass
             Dim minFrames = 5
             Dim interval = CInt(VB6.Conversion.Fix(frameRate * 60))
             If p.AutoCropFrameSelectionMode = AutoCropFrameSelectionMode.FixedFrames Then
-                interval = consideredFrames \ (p.AutoCropFixedFramesFrameSelection - 1)
+                'a single frame is taken from the middle
+                interval = If(p.AutoCropFixedFramesFrameSelection > 1, consideredFrames \ (p.AutoCropFixedFramesFrameSelection - 1), consideredFrames + 1)
             ElseIf p.AutoCropFrameSelectionMode = AutoCropFrameSelectionMode.FrameInterval Then
                 interval = p.AutoCropFrameIntervalFrameSelection
                 If interval * minFrames > consideredFrames Then
