@@ -1736,13 +1736,13 @@ Partial Public Class MainForm
             p.SourceVideoHdrFormat = If(String.IsNullOrWhiteSpace(p.SourceVideoHdrFormat), "SDR", p.SourceVideoHdrFormat)
             p.SourceVideoHdrFormat = If(p.SourceVideoHdrFormat = "Dolby Vision", "DV", p.SourceVideoHdrFormat)
 
-            If p.SourceVideoHdrFormat.ContainsAny("SDR", "HDR10", "HDR10+", "Dolby Vision") Then
+            If p.SourceVideoHdrFormat.ContainsAny("SDR", "HDR10", "HDR10+", "Dolby Vision", "DV") Then
                 Dim hdrFormat = MediaInfo.GetVideo(p.LastOriginalSourceFile, "HDR_Format/String")
 
                 If hdrFormat.ContainsEx("Dolby Vision") Then
                     p.SourceVideoHdrFormat = "DV"
 
-                    Dim profileMatch = Regex.Match(hdrFormat, "Profile (\d\.\d),")
+                    Dim profileMatch = Regex.Match(hdrFormat, "Profile (\d+(?:\.\d+)?),")
                     If profileMatch.Success Then
                         p.SourceVideoHdrFormat += " " + profileMatch.Groups(1).Value
                     End If
