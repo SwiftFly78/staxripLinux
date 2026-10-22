@@ -1313,9 +1313,10 @@ End Enum
 Public Class Startup
     <STAThread()>
     Shared Sub Main(args As String())
+        'the first use of g creates a project, which uses vulkan-1.dll to check the Vulkan support
+        NativeLibraries.Init()
         AddHandler AppDomain.CurrentDomain.UnhandledException, AddressOf g.OnUnhandledException
         AppContext.SetSwitch("System.Runtime.Serialization.EnableUnsafeBinaryFormatterSerialization", True)
-        NativeLibraries.Init()
 
         'overlay scrollbars hide that pages can be scrolled
         If Environment.GetEnvironmentVariable("GTK_OVERLAY_SCROLLING") Is Nothing Then
