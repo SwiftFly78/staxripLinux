@@ -212,7 +212,10 @@ Public Class ProfilesForm
                 Dim p = DirectCast(lbMain.Items(x), Profile)
 
                 If p.Name.Contains(" | ") Then
-                    p.Name = p.Name.Right(" | ")
+                    'the menu of the profile is removed, not the top level menu
+                    Dim menu = p.Name.LeftLast(" | ")
+                    Dim name = p.Name.RightLast(" | ")
+                    p.Name = If(menu.Contains(" | "), menu.LeftLast(" | ") + " | " + name, name)
                     lbMain.Items(x) = lbMain.Items(x)
                 End If
             End If
