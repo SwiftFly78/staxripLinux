@@ -325,19 +325,12 @@ Public Class GlobalCommands
 
         If includeName Then sb.Append(AppInfo.ProductName)
         If includeVersion Then
-            sb.Append($" v{version.Major}.{version.Minor}")
+            sb.Append(" " + BuildInfo.PortVersion)
 
-            If version.Build > 0 OrElse version.Revision > 0 Then
-                sb.Append($".{version.Build}")
-            End If
-
-            If version.Revision > 0 Then
-                sb.Append($".{version.Revision}")
-            End If
-
+            'the assembly version is the StaxRip version the port is based on, which settings use
             If includeSettingsVersion AndAlso s?.Version IsNot Nothing Then
                 If version.Minor <> s.Version.Minor AndAlso version.Minor <> s.Version.Minor - 1 Then
-                    sb.Append($" [v{s.Version.Major}.{s.Version.Minor}.{s.Version.Build}]")
+                    sb.Append($" [settings v{s.Version.Major}.{s.Version.Minor}.{s.Version.Build}]")
                 End If
             End If
         End If

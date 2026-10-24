@@ -72,4 +72,13 @@
     <None Include="Resources\StaxRip.png" Link="Linux\staxrip.png" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
+  <!-- the version of the port comes from its git tags -->
+  <Target Name="GenerateBuildInfo" BeforeTargets="BeforeBuild">
+    <Exec Command="sh &quot;$(MSBuildProjectDirectory)/build-info.sh&quot; &quot;$(MSBuildProjectDirectory)/$(IntermediateOutputPath)&quot;" />
+
+    <ItemGroup>
+      <Compile Include="$(IntermediateOutputPath)BuildInfo.vb" />
+    </ItemGroup>
+  </Target>
+
 </Project>

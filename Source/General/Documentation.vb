@@ -277,7 +277,7 @@ Public Class Documentation
     Shared Function GetTools() As String
         Dim sb As New StringBuilder()
 
-        sb.Append("This page is based on the StaxRip version " + AppInfo.ProductVersion + BR2)
+        sb.Append("This page is based on " + AppInfo.ProductName + " " + BuildInfo.PortVersion + BR2)
         sb.Append("[Console App](Tools#console-app)" + BR2)
         sb.Append("[GUI App](Tools#gui-app)" + BR2)
         sb.Append("[AviSynth Plugin](Tools#avisynth-plugin)" + BR2)

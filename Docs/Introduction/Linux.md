@@ -165,9 +165,14 @@ when StaxRip is started without installation, a generic icon is shown instead.
 
 ## Versioning
 
-The Linux port has its own version, independent of the StaxRip version in the title bar. It follows
-[Semantic Versioning](https://semver.org), began with v1.0.0 at the commit that ported StaxRip to Linux, and every
-commit gets an annotated tag with its version. The tags of StaxRip itself, like v2.52.6, aren't versions of the port.
+The Linux port has its own version, which the title bar shows. It follows [Semantic Versioning](https://semver.org),
+began with v1.0.0 at the commit that ported StaxRip to Linux, and every commit gets an annotated tag with its version.
+The tags of StaxRip itself, like v2.52.6, aren't versions of the port. The assembly version is still the one of the
+StaxRip version the port is based on, settings and the update check use it.
+
+The build takes the version from the tags with `git describe`, so it needs a clone that contains them. A commit without
+a tag yet gets the version of the last tag with the number of commits since then and the commit, like
+`v1.10.159-2-g1a2b3c4`, and uncommitted changes add `-dirty`. Builds without git show no version.
 
 Commit messages follow [Conventional Commits](https://www.conventionalcommits.org), the version of a commit is derived
 from its message:

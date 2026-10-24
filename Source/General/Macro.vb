@@ -202,7 +202,7 @@ Public Class Macro
             ret.Add(New Macro("temp_file", "Temp File", GetType(String), "File located in the temp directory using the same name as the source file."))
             ret.Add(New Macro("template_name", "Template Name", GetType(String), "Name of the template the active project is based on."))
             ret.Add(New Macro("text_editor", "Text Editor", GetType(String), "Path of the application currently associated with TXT files."))
-            ret.Add(New Macro("version", "Version", GetType(String), "StaxRip version."))
+            ret.Add(New Macro("version", "Version", GetType(String), "Version of the app, like 1.10.159."))
             ret.Add(New Macro("video_bitrate", "Video Bitrate", GetType(Integer), "Video bitrate in Kbps."))
             ret.Add(New Macro("working_dir", "Working Directory", GetType(String), "Directory of the source file or the temp directory if enabled."))
         End If
@@ -486,7 +486,7 @@ Public Class Macro
             If value.Contains("%target_temp_file%") Then value = value.Replace("%target_temp_file%", Protect(Path.Combine(proj.TempDir, proj.TargetFile.Base), shell))
             If value.Contains("%source_name%") Then value = value.Replace("%source_name%", Protect(proj.SourceFile.Base, shell))
             If value.Contains("%source_ext%") Then value = value.Replace("%source_ext%", Protect(proj.FirstOriginalSourceFile.Ext, shell))
-            If value.Contains("%version%") Then value = value.Replace("%version%", Protect(AppInfo.ProductVersion, shell))
+            If value.Contains("%version%") Then value = value.Replace("%version%", Protect(BuildInfo.PortVersion.TrimStart("v"c), shell))
             If value.Contains("%source_width%") Then value = value.Replace("%source_width%", Protect(proj.SourceWidth.ToString, shell))
             If value.Contains("%source_height%") Then value = value.Replace("%source_height%", Protect(proj.SourceHeight.ToString, shell))
             If value.Contains("%source_seconds%") Then value = value.Replace("%source_seconds%", Protect(proj.SourceSeconds.ToString, shell))

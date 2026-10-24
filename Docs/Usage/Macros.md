@@ -97,7 +97,7 @@ for example in scripts or settings. Most of them are also used for [events](Even
 | `%temp_file%` | File located in the temp directory using the same name as the source file. |
 | `%template_name%` | Name of the template the active project is based on. |
 | `%text_editor%` | Path of the application currently associated with TXT files. |
-| `%version%` | StaxRip version. |
+| `%version%` | Version of the app, like 1.10.159. |
 | `%video_bitrate%` | Video bitrate in Kbps. |
 | `%working_dir%` | Directory of the source file or the temp directory if enabled. |
 
