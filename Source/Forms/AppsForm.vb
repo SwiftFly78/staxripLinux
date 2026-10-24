@@ -739,7 +739,7 @@ Public Class AppsForm
         Try
             Dim pathTarget = EnvironmentVariableTarget.Process
             Dim dir = CurrentPackage.Directory
-            Dim pathVar = If(Environment.GetEnvironmentVariable("path", pathTarget), "")
+            Dim pathVar = If(Environment.GetEnvironmentVariable("PATH", pathTarget), "")
             Dim pathItems = pathVar.Split(New String() {Path.PathSeparator}, StringSplitOptions.RemoveEmptyEntries).ToList()
 
             Using td As New TaskDialog(Of String)
@@ -753,13 +753,13 @@ Public Class AppsForm
                             MsgError("Folder is already in PATH")
                         Else
                             pathItems.Add(dir)
-                            Environment.SetEnvironmentVariable("path", String.Join(Path.PathSeparator, pathItems), pathTarget)
+                            Environment.SetEnvironmentVariable("PATH", String.Join(Path.PathSeparator, pathItems), pathTarget)
                             MsgInfo("Folder was added to PATH")
                         End If
                     Case "remove"
                         If pathItems.Contains(dir) Then
                             pathItems.Remove(dir)
-                            Environment.SetEnvironmentVariable("path", String.Join(Path.PathSeparator, pathItems), pathTarget)
+                            Environment.SetEnvironmentVariable("PATH", String.Join(Path.PathSeparator, pathItems), pathTarget)
                             MsgInfo("Folder was removed from PATH")
                         Else
                             MsgError("Folder is not in PATH")
