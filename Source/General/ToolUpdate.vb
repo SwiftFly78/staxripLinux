@@ -130,7 +130,8 @@ Public Class ToolUpdate
             Dim subDirs As New List(Of String)
 
             For Each subDir In Directory.GetDirectories(ExtractDir, "*", SearchOption.AllDirectories)
-                If (Path.Combine(subDir, Package.Filename)).FileExists AndAlso Not Ignore(subDir) Then
+                'folders of the archive's location like /media/user/Windows don't matter
+                If (Path.Combine(subDir, Package.Filename)).FileExists AndAlso Not Ignore(subDir.Substring(ExtractDir.Length)) Then
                     subDirs.Add(subDir)
                 End If
             Next
