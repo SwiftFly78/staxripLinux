@@ -63,7 +63,6 @@
     <EmbeddedResource Include="Video\AviSynthFilterProfileDefaults.txt" LogicalName="StaxRip.AviSynthFilterProfileDefaults.txt" />
     <EmbeddedResource Include="Video\VapourSynthFilterProfileDefaults.txt" LogicalName="StaxRip.VapourSynthFilterProfileDefaults.txt" />
     <EmbeddedResource Include="..\CHANGELOG.md" LogicalName="StaxRip.CHANGELOG.md" Link="CHANGELOG.md" />
-    <EmbeddedResource Include="..\CHANGELOG-SUPPORTER.md" LogicalName="StaxRip.CHANGELOG-SUPPORTER.md" Link="CHANGELOG-SUPPORTER.md" />
     <None Include="..\License.txt" Link="License.txt" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
@@ -72,12 +71,13 @@
     <None Include="Resources\StaxRip.png" Link="Linux\staxrip.png" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
-  <!-- the version of the port comes from its git tags -->
+  <!-- the version and the changes of the port come from its git tags -->
   <Target Name="GenerateBuildInfo" BeforeTargets="BeforeBuild">
     <Exec Command="sh &quot;$(MSBuildProjectDirectory)/build-info.sh&quot; &quot;$(MSBuildProjectDirectory)/$(IntermediateOutputPath)&quot;" />
 
     <ItemGroup>
       <Compile Include="$(IntermediateOutputPath)BuildInfo.vb" />
+      <EmbeddedResource Include="$(IntermediateOutputPath)CHANGELOG-LINUX.txt" LogicalName="StaxRip.CHANGELOG-LINUX.txt" />
     </ItemGroup>
   </Target>
 

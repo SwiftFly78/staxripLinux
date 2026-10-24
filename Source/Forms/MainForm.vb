@@ -5203,118 +5203,100 @@ Partial Public Class MainForm
         End If
     End Sub
 
-    <Command("Shows the latest changes.")>
+    <Command("Shows the changes of all versions of the port.")>
     Sub ShowChangelog(force As Boolean)
         Dim appDetails = g.DefaultCommands.GetApplicationDetails(True, True, False)
         If Not force AndAlso s.ShowChangelog = appDetails Then Exit Sub
 
+        Using td As New TaskDialog(Of String)()
+            td.Title = $"What's new in {appDetails}:"
+            td.Icon = TaskIcon.Shield
+            td.Content = GetChangelog()
+            td.AddButton("OK")
+            td.Show()
+        End Using
+
+        s.ShowChangelog = appDetails
+        If Not force Then g.SaveSettings()
+    End Sub
+
+    'the versions of the port, newest first, followed by the notes of the StaxRip release it's based on
+    Shared Function GetChangelog() As String
         Dim ass = Assembly.GetExecutingAssembly()
-        Dim currentVersion = ass.GetName().Version
-        If Not force AndAlso currentVersion.Minor >= 99 Then Exit Sub
+        Dim versions As New List(Of String())
+        Dim sb As New StringBuilder()
 
-        Dim filepath = If(g.IsSupporterRelease, "StaxRip.CHANGELOG-SUPPORTER.md", "StaxRip.CHANGELOG.md")
+        Using stream = ass.GetManifestResourceStream("StaxRip.CHANGELOG-LINUX.txt")
+            If stream IsNot Nothing Then
+                Using reader As New StreamReader(stream)
+                    For Each line In reader.ReadToEnd().SplitLinesNoEmpty()
+                        Dim fields = line.Split(ChrW(9))
 
-        Using stream = ass.GetManifestResourceStream(filepath)
+                        If fields.Length = 3 Then
+                            versions.Add(fields)
+                        End If
+                    Next
+                End Using
+            End If
+        End Using
+
+        If versions.Count > 0 Then
+            Dim width = versions.Max(Function(i) i(0).Length)
+            sb.AppendLine("Versions of the port, newest first:" + BR)
+
+            For Each i In versions
+                sb.AppendLine($"{i(0).PadRight(width)}  {i(1)}  {i(2)}")
+            Next
+        Else
+            sb.AppendLine("Only builds from a git clone with the tags of the port list its versions.")
+        End If
+
+        Dim baseVersion = ass.GetName().Version.ToString(3)
+        Dim notes = GetStaxRipReleaseNotes(baseVersion)
+
+        If notes.Notes <> "" Then
+            sb.AppendLine()
+            sb.AppendLine($"The port is based on StaxRip v{baseVersion} ({notes.Date}):" + BR)
+            sb.Append(notes.Notes)
+        End If
+
+        Return sb.ToString().Trim()
+    End Function
+
+    Shared Function GetStaxRipReleaseNotes(version As String) As (Notes As String, [Date] As String)
+        Dim sb As New StringBuilder()
+        Dim releaseDate = ""
+        Dim inRelease = False
+        Dim inComment = False
+
+        Using stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("StaxRip.CHANGELOG.md")
             Using reader As New StreamReader(stream)
-                Dim lastChangelogVersionMatch = Regex.Match(s.ShowChangelog, "\d+\.\d+(?:\.\d+)*")
-                Dim lastChangelogVersion = If(lastChangelogVersionMatch.Success, New Version(lastChangelogVersionMatch.Value), Nothing)
-
-                Dim releases As New List(Of (Version As Version, VersionText As String, Changelog As String))
-                Dim readoutVersion As Version = Nothing
-                Dim lastReadoutVersion As Version
-                Dim lastReadoutVersionText As String
-                Dim sb As New StringBuilder()
-
-                Dim isComment = False
-
                 Do While Not reader.EndOfStream
                     Dim line = reader.ReadLine()
 
-                    If line = "<!--" Then isComment = True
-                    If isComment Then
-                        If line = "-->" Then isComment = False
-                        Continue Do
-                    End If
-                    'If String.IsNullOrWhiteSpace(line) Then Continue Do
-                    If line Like "========*" Then Continue Do
-
-                    Dim readoutVersionMatch = Regex.Match(line, "^(v(?<version>\d+\.\d+(?:\.\d+)*)(?:-(RC\d+))?)\W+\((?<text>.*)\)")
-                    readoutVersion = If(readoutVersionMatch.Success, New Version(readoutVersionMatch.Groups("version").Value), readoutVersion)
-
-                    If readoutVersionMatch.Success Then
-                        If readoutVersion.Minor > currentVersion.Minor Then
-                            sb.Clear()
-                            Continue Do
-                        End If
-
-                        releases.Add((lastReadoutVersion, lastReadoutVersionText, sb.ToString().Trim()))
-
-                        lastReadoutVersion = readoutVersion
-                        lastReadoutVersionText = readoutVersionMatch.Groups("text").Value
-
-                        sb.Clear()
+                    If line.Trim() = "<!--" Then inComment = True
+                    If inComment Then
+                        If line.Trim() = "-->" Then inComment = False
                         Continue Do
                     End If
 
-                    line = Regex.Replace(line, "(?<=\W\(?\[#\d+\])(\(/\.\./\.\./\w+/\d+\))(?=\)|(?>,|\)|$))", "", RegexOptions.CultureInvariant)
-                    line = Regex.Replace(line, "(?<=^| ) (?= |-)", "  ", RegexOptions.CultureInvariant)
+                    Dim heading = Regex.Match(line, "^v(?<version>\d+\.\d+(?:\.\d+)*)\S*\s+\((?<date>[^)]*)\)")
 
-                    sb.AppendLine(line)
+                    If heading.Success Then
+                        If inRelease Then Exit Do
+                        inRelease = heading.Groups("version").Value = version
+                        releaseDate = heading.Groups("date").Value
+                        Continue Do
+                    End If
+
+                    If inRelease AndAlso Not line.StartsWith("====") Then
+                        'issue links of GitHub like ([#1741](/../../issues/1741)) keep only the number
+                        sb.AppendLine(Regex.Replace(line, "\[(#\d+)\]\([^)]*\)", "$1"))
+                    End If
                 Loop
-
-                Dim leftover = sb.ToString()
-                If Not String.IsNullOrWhiteSpace(leftover) Then
-                    releases.Add((lastReadoutVersion, lastReadoutVersionText, leftover.Trim()))
-                End If
-
-                releases = releases.Where(Function(x) x.Version IsNot Nothing).ToList()
-
-                Dim selectedReleases = releases.SkipWhile(Function(x) Not x.VersionText.IsDate AndAlso x.Version.Minor > currentVersion.Minor)
-                selectedReleases = selectedReleases.Where(Function(x) x.Version.Minor = currentVersion.Minor AndAlso x.Version.Build <= Math.Max(currentVersion.Build, 0))
-                If lastChangelogVersion IsNot Nothing Then
-                    selectedReleases = selectedReleases.Where(Function(x) x.Version.Minor > lastChangelogVersion.Minor OrElse (x.Version.Minor = lastChangelogVersion.Minor AndAlso x.Version.Build > Math.Max(lastChangelogVersion.Build, 0)))
-                End If
-                selectedReleases = selectedReleases.ToList()
-
-                Dim result = ""
-                Dim versionLineBuilder = Function(version As Version, versionText As String) As String
-                                             Dim versionLiner = New String("."c, 50)
-                                             Return $"{versionLiner}  v{version}  [{versionText}]  {versionLiner}"
-                                         End Function
-
-                If selectedReleases.Count() = 1 Then
-                    result = selectedReleases.Select(Function(x) x.Changelog).First()
-                ElseIf selectedReleases.Count() > 1 Then
-                    result = selectedReleases.Select(Function(x) $"{versionLineBuilder(x.Version, x.VersionText)}{BR2}{x.Changelog}").Join(BR2)
-                ElseIf force Then
-                    Dim currentRelease = releases.Where(Function(x) x.Version.Minor = currentVersion.Minor AndAlso x.Version.Build = Math.Max(currentVersion.Build, 0)).ToList()
-
-                    If currentRelease.Any() Then
-                        Dim release = currentRelease.FirstOrDefault()
-                        result = release.Changelog
-                    End If
-                Else
-                    If force Then
-                        result = "Nothing to show..."
-                    End If
-                End If
-
-                If Not String.IsNullOrWhiteSpace(result) Then
-                    Using td As New TaskDialog(Of String)()
-                        td.Title = $"What's new in {appDetails}:"
-                        td.Icon = TaskIcon.Shield
-                        td.Content = result
-
-                        td.AddButton("OK")
-
-                        Dim answer = td.Show()
-
-                        s.ShowChangelog = appDetails
-
-                        If Not force Then g.SaveSettings()
-                    End Using
-                End If
             End Using
         End Using
-    End Sub
+
+        Return (sb.ToString().Trim(), releaseDate)
+    End Function
 End Class

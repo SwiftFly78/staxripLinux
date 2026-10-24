@@ -27,7 +27,9 @@ a dialog will pop up and ask you, if you want to enable it, which you should acc
 For more Information see: [Long Path Support](Long-Path-Support.md)
 
 ## What's New
-After your decision the *What's New* dialog appears and shows you the latest changes in the version you are running:
+After your decision the *What's New* dialog appears. It lists all versions of the Linux port with their changes, newest
+first, followed by the notes of the StaxRip release the port is based on. It appears again once after each update, and
+*Help > What's new...* shows it any time:
 
 <img width=400 src="../../Images/Screenshots/WhatsNew.png">
 

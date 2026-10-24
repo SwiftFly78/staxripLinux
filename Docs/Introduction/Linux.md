@@ -172,7 +172,8 @@ StaxRip version the port is based on, settings and the update check use it.
 
 The build takes the version from the tags with `git describe`, so it needs a clone that contains them. A commit without
 a tag yet gets the version of the last tag with the number of commits since then and the commit, like
-`v1.10.159-2-g1a2b3c4`, and uncommitted changes add `-dirty`. Builds without git show no version.
+`v1.10.159-2-g1a2b3c4`, and uncommitted changes add `-dirty`. Builds without git show no version. The build also takes
+the versions with the subjects of their commits from the tags, *Help > What's new...* lists them.
 
 Commit messages follow [Conventional Commits](https://www.conventionalcommits.org), the version of a commit is derived
 from its message:
