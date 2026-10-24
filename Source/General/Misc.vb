@@ -1313,6 +1313,12 @@ End Enum
 Public Class Startup
     <STAThread()>
     Shared Sub Main(args As String())
+        'command lines are built with the culture, but tools reject the minus sign U+2212 of cultures like sv-SE
+        Dim culture = DirectCast(CultureInfo.CurrentCulture.Clone(), CultureInfo)
+        culture.NumberFormat.NegativeSign = "-"
+        CultureInfo.CurrentCulture = culture
+        CultureInfo.DefaultThreadCurrentCulture = culture
+
         'the first use of g creates a project, which uses vulkan-1.dll to check the Vulkan support
         NativeLibraries.Init()
         AddHandler AppDomain.CurrentDomain.UnhandledException, AddressOf g.OnUnhandledException
