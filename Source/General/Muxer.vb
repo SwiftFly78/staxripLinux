@@ -587,7 +587,7 @@ Public Class BatchMuxer
     End Sub
 
     Overrides Function Edit() As DialogResult
-        Using form As New SimpleSettingsForm("Batch Muxer", "The Batch Muxer dialog allows to configure StaxRip to use a command line or batch code as muxer.")
+        Using form As New SimpleSettingsForm("Batch Muxer", "The Batch Muxer dialog allows to configure StaxRipLinux to use a command line or batch code as muxer.")
             form.Height = CInt(form.Height * 0.6)
 
             Dim ui = form.SimpleUI

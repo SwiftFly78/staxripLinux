@@ -709,12 +709,12 @@ Public Class GlobalClass
                                                      closingTD = New TaskDialog(Of DialogResult)(DialogResult.Yes)
                                                      closingTD.Icon = TaskIcon.Warning
                                                      closingTD.Title = "Close while Thumbnailer is running?"
-                                                     closingTD.Content = "StaxRip shall be closed while Thumbnailer is still running."
+                                                     closingTD.Content = "StaxRipLinux shall be closed while Thumbnailer is still running."
                                                      closingTD.Content += $"{BR2}These are your options:"
-                                                     closingTD.Content += $"{BR}(1) Leave this dialog open and StaxRip will continue the closing procedure as soon as Thumbnailer finishes."
+                                                     closingTD.Content += $"{BR}(1) Leave this dialog open and StaxRipLinux will continue the closing procedure as soon as Thumbnailer finishes."
                                                      closingTD.Content += $" If you have modified the project, you may be asked to save it first."
-                                                     closingTD.Content += $"{BR}(2) YES - Forces Thumbnailer to stop immediately and StaxRip will continue closing."
-                                                     closingTD.Content += $"{BR}(3) NO  - Cancels the closing procedure and StaxRip keeps running."
+                                                     closingTD.Content += $"{BR}(2) YES - Forces Thumbnailer to stop immediately and StaxRipLinux will continue closing."
+                                                     closingTD.Content += $"{BR}(3) NO  - Cancels the closing procedure and StaxRipLinux keeps running."
                                                      closingTD.AddButton(DialogResult.Yes)
                                                      closingTD.AddButton(DialogResult.No)
 
@@ -1752,7 +1752,7 @@ Public Class GlobalClass
     Function ShowTrayIcon(clickAction As Action) As Boolean
         Try
             If TrayIndicator Is Nothing Then
-                TrayIndicator = New TrayIndicator With {.Image = Icon, .Title = "StaxRip"}
+                TrayIndicator = New TrayIndicator With {.Image = Icon, .Title = AppInfo.ProductName}
                 AddHandler TrayIndicator.Activated, Sub() TrayClickAction?.Invoke()
             End If
 

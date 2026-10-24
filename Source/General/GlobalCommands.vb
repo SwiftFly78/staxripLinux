@@ -25,7 +25,7 @@ Public Class GlobalCommands
         End If
     End Sub
 
-    <Command("Allows to use StaxRip's demuxing GUIs independently.")>
+    <Command("Allows to use StaxRipLinux's demuxing GUIs independently.")>
     Sub ShowDemuxTool()
         Using form As New SimpleSettingsForm("Demux")
             form.ScaleClientSize(27, 10)
@@ -119,7 +119,7 @@ Public Class GlobalCommands
         DefaultValue(False)>
         waitForExit As Boolean,
         <DispName("Show Process Window"),
-        Description("Redirects the output of console apps to StaxRips process window. Disables Shell Execute."),
+        Description("Redirects the output of console apps to the process window of StaxRipLinux. Disables Shell Execute."),
         DefaultValue(False)>
         showProcessWindow As Boolean,
         <DispName("Use Shell Execute"),
@@ -187,7 +187,7 @@ Public Class GlobalCommands
         <Editor(GetType(MacroStringTypeEditor), GetType(IValueEditor))>
         code As String,
         <DispName("Use External Shell")>
-        <Description("Execute in StaxRip to automate StaxRip or use external shell.")>
+        <Description("Execute in StaxRipLinux to automate StaxRipLinux or use external shell.")>
         Optional externalShell As Boolean = False)
 
         code = Macro.Expand(code)
@@ -546,7 +546,7 @@ Public Class GlobalCommands
         FileHelp.Move(oldEncodeFile, newEncodeFile)
     End Sub
 
-    <Command("Opens StaxRip without taking focus")>
+    <Command("Opens StaxRipLinux without taking focus")>
     Sub NoFocus()
     End Sub
 
@@ -826,12 +826,12 @@ Public Class GlobalCommands
                                                          closingTD = New TaskDialog(Of DialogResult)(DialogResult.Yes)
                                                          closingTD.Icon = TaskIcon.Warning
                                                          closingTD.Title = "Close while Thumbnailer is running?"
-                                                         closingTD.Content = "StaxRip shall be closed while Thumbnailer is still running."
+                                                         closingTD.Content = "StaxRipLinux shall be closed while Thumbnailer is still running."
                                                          closingTD.Content += $"{BR2}These are your options:"
-                                                         closingTD.Content += $"{BR}(1) Leave this dialog open and StaxRip will continue the closing procedure as soon as Thumbnailer finishes."
+                                                         closingTD.Content += $"{BR}(1) Leave this dialog open and StaxRipLinux will continue the closing procedure as soon as Thumbnailer finishes."
                                                          closingTD.Content += $" If you have modified the project, you may be asked to save it first."
-                                                         closingTD.Content += $"{BR}(2) YES - Forces Thumbnailer to stop immediately and StaxRip will continue closing."
-                                                         closingTD.Content += $"{BR}(3) NO  - Cancels the closing procedure and StaxRip keeps running."
+                                                         closingTD.Content += $"{BR}(2) YES - Forces Thumbnailer to stop immediately and StaxRipLinux will continue closing."
+                                                         closingTD.Content += $"{BR}(3) NO  - Cancels the closing procedure and StaxRipLinux keeps running."
                                                          closingTD.AddButton(DialogResult.Yes)
                                                          closingTD.AddButton(DialogResult.No)
 

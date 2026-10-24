@@ -756,7 +756,7 @@ Partial Public Class MainForm
 
             dialog.FileName = If(p.SourceFile <> "", p.TargetFile.Base, "Untitled")
 
-            dialog.Filter = $"StaxRip Project Files (*.srip)|*.srip"
+            dialog.Filter = $"StaxRipLinux Project Files (*.srip)|*.srip"
 
             If dialog.ShowDialog() = DialogResult.OK Then
                 If Not dialog.FileName.ToLowerInvariant.EndsWith(".srip") Then
@@ -774,7 +774,7 @@ Partial Public Class MainForm
             Using dialog As New SaveFileDialog
                 dialog.SetInitDir(p.TemplatePath.Dir, Folder.Template)
                 dialog.FileName = If(p.TemplateName <> "", p.TemplateName, "Untitled")
-                dialog.Filter = $"StaxRip Template Files (*.srip)|*.srip"
+                dialog.Filter = $"StaxRipLinux Template Files (*.srip)|*.srip"
 
                 If dialog.ShowDialog() = DialogResult.OK Then
                     Dim fp = Path.GetFullPath(dialog.FileName)
@@ -3006,7 +3006,7 @@ Partial Public Class MainForm
         p.VideoEncoder.RunCompCheck()
     End Sub
 
-    <Command("Launches a new instance of StaxRip.")>
+    <Command("Launches a new instance of StaxRipLinux.")>
     Sub StartNewInstance()
         Using p As New Process()
             p.StartInfo.FileName = AppInfo.ExecutablePath
@@ -3014,12 +3014,12 @@ Partial Public Class MainForm
         End Using
     End Sub
 
-    <Command("Exits StaxRip.")>
+    <Command("Exits StaxRipLinux.")>
     Sub [Exit]()
         Close()
     End Sub
 
-    <Command("Exits StaxRip without saving an unsaved project.")>
+    <Command("Exits StaxRipLinux without saving an unsaved project.")>
     Sub ExitWithoutSaving()
         s.ApplicationExitMode = ApplicationExitMode.BypassProjectSaving
         Close()
@@ -3582,7 +3582,7 @@ Partial Public Class MainForm
         ret.Add("Apps|Media Info|MediaInfo Folder", NameOf(g.DefaultCommands.ShowMediaInfoFolderViewDialog))
         ret.Add("Apps|Players|mpv", NameOf(g.DefaultCommands.StartTool), {"mpv"})
         ret.Add("Apps|Indexing|D2V Witch", NameOf(g.DefaultCommands.StartTool), {"D2V Witch"})
-        ret.Add("Apps|Thumbnails|StaxRip Thumbnailer (using project options)", NameOf(g.DefaultCommands.ShowThumbnailerDialogAsync))
+        ret.Add("Apps|Thumbnails|StaxRipLinux Thumbnailer (using project options)", NameOf(g.DefaultCommands.ShowThumbnailerDialogAsync))
         ret.Add("Apps|Animation|Animated GIF", NameOf(g.DefaultCommands.SaveGIF))
         ret.Add("Apps|Animation|Animated PNG", NameOf(g.DefaultCommands.SavePNG))
         ret.Add("Apps|Other|MKVToolnix GUI", NameOf(g.DefaultCommands.StartTool), {"MKVToolnix GUI"})

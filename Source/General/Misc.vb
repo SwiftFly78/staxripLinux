@@ -1335,7 +1335,7 @@ Public Class Startup
         'the app ID of the windows on Wayland, desktops show the icon of staxrip.desktop,
         'GTK# sets the name from the assembly name when GTK is initialized
         GLib.Global.ProgramName = "staxrip"
-        GLib.Global.ApplicationName = "StaxRip"
+        GLib.Global.ApplicationName = AppInfo.ProductName
 
         'the window class on X11, the desktop file uses it as StartupWMClass
         Global.Gdk.Global.ProgramClass = "StaxRip"

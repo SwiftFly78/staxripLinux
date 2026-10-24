@@ -1018,7 +1018,7 @@ Partial Public Class MainForm
             Dim filtersCustomPage = ui.CreateFlowPage("Filters | Custom", True)
 
             l = ui.AddLabel(filtersCustomPage, "Code appended to trim functions:")
-            l.Help = "Code appended to trim functions StaxRip generates using the cut feature."
+            l.Help = "Code appended to trim functions StaxRipLinux generates using the cut feature."
             l.MarginTop = FontHeight \ 2
 
             t = ui.AddText(filtersCustomPage)
@@ -1030,7 +1030,7 @@ Partial Public Class MainForm
             t.Edit.SaveAction = Sub(value) p.TrimCode = value
 
             l = ui.AddLabel(filtersCustomPage, "Code inserted at top of scripts:")
-            l.Help = "Code inserted at the top of every script StaxRip generates."
+            l.Help = "Code inserted at the top of every script StaxRipLinux generates."
             l.MarginTop = FontHeight \ 2
 
             t = ui.AddText(filtersCustomPage)
@@ -1042,7 +1042,7 @@ Partial Public Class MainForm
             t.Edit.SaveAction = Sub(value) p.CodeAtTop = value
 
             l = ui.AddLabel(filtersCustomPage, "Code inserted at bottom of scripts:")
-            l.Help = "Code inserted at the bottom of every script StaxRip generates."
+            l.Help = "Code inserted at the bottom of every script StaxRipLinux generates."
             l.MarginTop = FontHeight \ 2
 
             t = ui.AddText(filtersCustomPage)

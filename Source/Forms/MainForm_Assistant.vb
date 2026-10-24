@@ -346,7 +346,7 @@ Partial Public Class MainForm
 
                 If p.Script.IsFilterActive("Crop") AndAlso p.VideoEncoder?.IsDolbyVisionSet Then
                     If p.HdrDolbyVisionMetadataFile Is Nothing Then
-                        If ProcessTip($"You have set a Dolby Vision metadata file, that is unknown to StaxRip, while cropping the video. Please make sure it is extracted with the source file.") Then
+                        If ProcessTip($"You have set a Dolby Vision metadata file, that is unknown to StaxRipLinux, while cropping the video. Please make sure it is extracted with the source file.") Then
                             Return Block("Unknown RPU File", AddressOf p.VideoEncoder.ShowConfigDialog)
                         End If
                     End If

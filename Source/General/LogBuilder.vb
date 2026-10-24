@@ -133,7 +133,7 @@ Public Class LogBuilder
                                       End Function)
 
             EnvironmentString =
-                "StaxRip:" + g.DefaultCommands.GetApplicationDetails(False, True) + BR +
+                AppInfo.ProductName + ":" + g.DefaultCommands.GetApplicationDetails(False, True) + BR +
                 $"Settings: v{s.Version.Major}.{s.Version.Minor}.{s.Version.Build}{BR}" +
                 $"OS: {OSVersion.VersionString}" + BR +
                 ".NET:" + Environment.Version.ToString + BR +

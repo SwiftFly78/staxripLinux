@@ -1,5 +1,5 @@
 #!/bin/sh
-# Installs StaxRip from the build output for the current user.
+# Installs StaxRipLinux from the build output for the current user.
 # PREFIX=/usr/local installs system wide, --uninstall removes the installation.
 set -eu
 
@@ -12,7 +12,7 @@ desktop_dir=$prefix/share/applications
 if [ "${1:-}" = "--uninstall" ]; then
     rm -rf "$target"
     rm -f "$prefix/bin/staxrip" "$desktop_dir/staxrip.desktop" "$icon_dir/staxrip.png"
-    echo "StaxRip was removed from $prefix"
+    echo "StaxRipLinux was removed from $prefix"
     exit 0
 fi
 
@@ -36,4 +36,4 @@ if command -v update-desktop-database > /dev/null 2>&1; then
     update-desktop-database "$desktop_dir" > /dev/null 2>&1 || true
 fi
 
-echo "StaxRip was installed to $target"
+echo "StaxRipLinux was installed to $target"

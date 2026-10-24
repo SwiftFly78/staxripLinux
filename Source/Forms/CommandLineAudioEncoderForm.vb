@@ -112,7 +112,7 @@ Public Class CommandLineAudioEncoderForm
         TipProvider.SetTip("Audio delay to be fixed. Macro: %delay%", tbDelay, lDelay)
         TipProvider.SetTip("File types accepted as input, leave empty to support any file type.", tbInput, lInput)
         TipProvider.SetTip("Track name used by the muxer. The track name may contain macros.", tbStreamName, lStreamName)
-        TipProvider.SetTip("If no name is defined StaxRip auto generate the name.", laProfileName, tbProfileName)
+        TipProvider.SetTip("If no name is defined StaxRipLinux auto generate the name.", laProfileName, tbProfileName)
         TipProvider.SetTip("Default MKV Track.", cbDefault)
         TipProvider.SetTip("Forced MKV Track.", cbForced)
 

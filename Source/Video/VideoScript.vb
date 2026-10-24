@@ -605,7 +605,7 @@ clipname.set_output()" + BR
                     "core.std.LoadPlugin(" + ToPythonString(plugin.Path) + ", altsearchpath=True)")
 
                 If Not plugin.RequirementsFulfilled Then
-                    code += "# !! The following line is commented out by StaxRip, because the system does not fulfill all requirements to execute it !!" & BR & "# "
+                    code += "# !! The following line is commented out by StaxRipLinux, because the system does not fulfill all requirements to execute it !!" & BR & "# "
                 End If
 
                 code = line + BR + code
@@ -681,7 +681,7 @@ clipname.set_output()" + BR
                                             load = "LoadPlugin(" + ToAviSynthString(fp2) + ")" + BR
 
                                             If Not dep.RequirementsFulfilled Then
-                                                load = "# !! The following line is commented out by StaxRip, because the system does not fulfill all requirements to execute it !!" & BR & "# " & load
+                                                load = "# !! The following line is commented out by StaxRipLinux, because the system does not fulfill all requirements to execute it !!" & BR & "# " & load
                                             End If
 
                                             If Not scriptLower.Contains(load.ToLowerInvariant) AndAlso
@@ -722,7 +722,7 @@ clipname.set_output()" + BR
                                             Dim load = "LoadPlugin(" + ToAviSynthString(fp2) + ")" + BR
 
                                             If Not dep.RequirementsFulfilled Then
-                                                load = "# !! The following line is commented out by StaxRip, because the system does not fulfill all requirements to execute it !!" & BR & "# " & load
+                                                load = "# !! The following line is commented out by StaxRipLinux, because the system does not fulfill all requirements to execute it !!" & BR & "# " & load
                                             End If
 
                                             If Not scriptLower.Contains(load.ToLowerInvariant) AndAlso

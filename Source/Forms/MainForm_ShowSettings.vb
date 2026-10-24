@@ -78,7 +78,7 @@ Partial Public Class MainForm
 
             Dim mb = ui.AddMenu(Of String)()
             mb.Text = "Startup Template:"
-            mb.Help = "Template loaded when StaxRip starts."
+            mb.Help = "Template loaded when StaxRipLinux starts."
             mb.Field = NameOf(s.StartupTemplate)
             mb.Expanded = True
             Dim templates = Directory.GetFiles(Folder.Template, "*.srip", SearchOption.AllDirectories).OrderBy(Function(x) x.Count(Function(c) c = Path.DirectorySeparatorChar)).ThenBy(Function(x) x)
@@ -210,13 +210,13 @@ Partial Public Class MainForm
 
             Dim encProcPrio = ui.AddMenu(Of ProcessPriorityClass)
             encProcPrio.Text = "Encoder Process Priority"
-            encProcPrio.Help = "Process priority of the encoders StaxRip launches."
+            encProcPrio.Help = "Process priority of the encoders StaxRipLinux launches."
             encProcPrio.Expanded = True
             encProcPrio.Field = NameOf(s.EncoderProcessPriority)
 
             Dim toolProcPrio = ui.AddMenu(Of ProcessPriorityClass)
             toolProcPrio.Text = "Tool Process Priority"
-            toolProcPrio.Help = "Process priority of the applications StaxRip launches."
+            toolProcPrio.Help = "Process priority of the applications StaxRipLinux launches."
             toolProcPrio.Expanded = True
             toolProcPrio.Field = NameOf(s.ToolProcessPriority)
 
@@ -234,7 +234,7 @@ Partial Public Class MainForm
 
             n = ui.AddNum
             n.Text = "Minimum Disk Space"
-            n.Help = "Minimum allowed disk space in GB before StaxRip shows an error message."
+            n.Help = "Minimum allowed disk space in GB before StaxRipLinux shows an error message."
             n.Config = {0, 10000}
             n.Field = NameOf(s.MinimumDiskSpace)
 
@@ -246,13 +246,13 @@ Partial Public Class MainForm
 
             n = ui.AddNum
             n.Text = "Focus Steal prevention until"
-            n.Help = "StaxRip Main window will not steal focus from other active programs within the given time (in seconds) after a job in StaxRip (in the same instance) has started."
+            n.Help = "StaxRipLinux Main window will not steal focus from other active programs within the given time (in seconds) after a job in StaxRipLinux (in the same instance) has started."
             n.Config = {-1, 1000000}
             n.Field = NameOf(s.PreventFocusStealUntil)
 
             n = ui.AddNum
             n.Text = "Focus Steal prevention after"
-            n.Help = "StaxRip Main window will not steal focus from other active programs, if a job in StaxRip (in the same instance) takes longer than the given time (in seconds)."
+            n.Help = "StaxRipLinux Main window will not steal focus from other active programs, if a job in StaxRipLinux (in the same instance) takes longer than the given time (in seconds)."
             n.Config = {-1, 1000000}
             n.Field = NameOf(s.PreventFocusStealAfter)
 
@@ -345,7 +345,7 @@ Partial Public Class MainForm
 
             n = ui.AddNum()
             n.Text = "Scale Factor"
-            n.Help = "Requires to restart StaxRip."
+            n.Help = "Requires to restart StaxRipLinux."
             n.Config = {0.3, 3, 0.05, 2}
             n.Field = NameOf(s.UIScaleFactor)
 
@@ -383,7 +383,7 @@ Partial Public Class MainForm
             b = ui.AddBool()
             b.Text = "Use binary prefix (MiB) instead of decimal prefix (MB) for sizes"
             b.Help = "Binary: 1 MiB = 1024 KiB" + BR + "Decimal: 1 MB = 1000 KB" + BR2 +
-                            "When selected, Staxrip will use binary prefix instead of decimal in the display and calculation of sizes." + BR +
+                            "When selected, StaxRipLinux will use binary prefix instead of decimal in the display and calculation of sizes." + BR +
                             "This will not affect external tools behavior nor their displayed information."
             b.Checked = s.BinaryPrefix
             b.SaveAction = Sub(value)
@@ -503,7 +503,7 @@ Partial Public Class MainForm
             End If
 
             If restartId <> GetRestartId() Then
-                MsgInfo("Please restart StaxRip.")
+                MsgInfo("Please restart StaxRipLinux.")
             End If
 
             ui.SaveLast("last settings page")
@@ -518,7 +518,7 @@ Partial Public Class MainForm
         Dim filterPage = ui.CreateDataPage(pagePath)
 
         Dim fn = Function() As StringPairList
-                     Dim ret As New StringPairList From {{" Filters Menu", "StaxRip allows to assign a source filter profile to a particular source file type or format. The source filter profiles can be customized by right-clicking the filters menu in the main dialog."}}
+                     Dim ret As New StringPairList From {{" Filters Menu", "StaxRipLinux allows to assign a source filter profile to a particular source file type or format. The source filter profiles can be customized by right-clicking the filters menu in the main dialog."}}
 
                      For Each i In profiles.Where(Function(v) v.Name = "Source").First.Filters
                          If i.Script <> "" Then

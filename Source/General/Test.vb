@@ -32,7 +32,7 @@ Public Class ConsolAppTester
         Dim implemented = Regex.Matches(compressedCode, "--[\w-]+").OfType(Of Match).Select(Function(x) x.Value)
         log += "implemented switches" + BR
         log += "-------------------" + BR
-        log += "implementation found in StaxRip code" + BR2
+        log += "implementation found in StaxRipLinux code" + BR2
         log += implemented.Join(BR) + BR2
         Dim missing = implemented.Where(Function(x) Not documented.Contains(x) AndAlso Not undocumented.Contains(x))
         Dim unknown = documented.Where(Function(x) Not implemented.Contains(x) AndAlso Not ignore.Contains(x)).ToList()

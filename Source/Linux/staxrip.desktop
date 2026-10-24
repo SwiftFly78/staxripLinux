@@ -1,6 +1,6 @@
 [Desktop Entry]
 Type=Application
-Name=StaxRip
+Name=StaxRipLinux
 GenericName=Video Encoder
 Comment=Video and audio encoding GUI for VapourSynth, AviSynth+ and command line encoders
 Exec=staxrip %F

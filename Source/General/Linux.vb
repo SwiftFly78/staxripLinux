@@ -467,7 +467,7 @@ Public Class PowerRequest
                 .RedirectStandardError = True, .RedirectStandardOutput = True}
 
             'cat ends when the input pipe closes, which also happens when StaxRip crashes or is killed
-            For Each arg In {"--what=sleep:idle", "--who=StaxRip", "--why=Encoding", "--mode=block", "cat"}
+            For Each arg In {"--what=sleep:idle", "--who=" + AppInfo.ProductName, "--why=Encoding", "--mode=block", "cat"}
                 psi.ArgumentList.Add(arg)
             Next
 
@@ -542,7 +542,7 @@ End Enum
 Public Class AppInfo
     Shared ReadOnly Property ProductName As String
         Get
-            Return "StaxRip"
+            Return "StaxRipLinux"
         End Get
     End Property
 

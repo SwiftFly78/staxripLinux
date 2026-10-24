@@ -1,9 +1,9 @@
 ﻿Imports System.Reflection
 Imports System.Runtime.InteropServices
 
-<Assembly: AssemblyTitle("StaxRip")>
+<Assembly: AssemblyTitle("StaxRipLinux")>
 <Assembly: AssemblyCompany("StaxRip Authors")>
-<Assembly: AssemblyProduct("StaxRip")>
+<Assembly: AssemblyProduct("StaxRipLinux")>
 <Assembly: AssemblyCopyright("Copyright (C) 2002-2026 StaxRip Authors")>
 <Assembly: ComVisible(False)> 
 <Assembly: Guid("54d5dc0f-6ba7-42f0-a82f-9c71d561cb8b")>
