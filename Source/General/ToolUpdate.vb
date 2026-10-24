@@ -20,8 +20,9 @@ Public Class ToolUpdate
         Package = pack
         TargetDir = pack.Directory
 
+        'tools that aren't found are installed where StaxRip looks for them
         If TargetDir = "" Then
-            TargetDir = Path.Combine(Folder.Apps, "Tools", pack.Name)
+            TargetDir = Path.Combine(Folder.Apps, If(pack.Location <> "", pack.Location, Path.Combine("Tools", pack.Name)))
         End If
         Me.UpdateUI = updateUI
     End Sub
@@ -166,6 +167,11 @@ Public Class ToolUpdate
     End Sub
 
     Sub DeleteOldFiles()
+        If Not Directory.Exists(TargetDir) Then
+            CopyFiles()
+            Exit Sub
+        End If
+
         Dim entries = Directory.GetFileSystemEntries(TargetDir)
         entries = entries.Where(Function(item) Not item.FileName.EqualsAny(Package.Keep)).ToArray
         Dim names = entries.Select(Function(item) item.FileName)
@@ -209,6 +215,8 @@ Public Class ToolUpdate
             "Copy new files from:" + BR2 + ExtractDir + BR2 + "to:" + BR2 +
             TargetDir + BR2 + list) = DialogResult.OK Then
 
+            Directory.CreateDirectory(TargetDir)
+
             For Each file In Directory.GetFiles(ExtractDir)
                 FileHelp.Copy(file, Path.Combine(TargetDir, file.FileName))
             Next
@@ -216,6 +224,11 @@ Public Class ToolUpdate
             For Each folder In Directory.GetDirectories(ExtractDir)
                 FolderHelp.Copy(folder, Path.Combine(TargetDir, folder.FileName))
             Next
+
+            'the folder of a tool without location isn't searched
+            If Package.Path = "" Then
+                Package.SetStoredPath(Path.Combine(TargetDir, Package.Filename))
+            End If
         Else
             UpdatePackageDialog()
             MsgInfo("Update was canceled.")
