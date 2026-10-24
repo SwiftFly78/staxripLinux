@@ -674,13 +674,14 @@ Module StringExtensions
         Return If(value = "" OrElse maxLength < 1 OrElse value.Length <= maxLength, value, value.Substring(0, maxLength))
     End Function
 
+    'Linux allows characters like : in file names, which file names of sources often have
     <Extension()>
     Function IsValidFileSystemName(instance As String) As Boolean
         If instance = "" Then
             Return False
         End If
 
-        Dim chars = """*/:<>?\|^".ToCharArray
+        Dim chars = Path.GetInvalidFileNameChars()
 
         For Each i In instance.ToCharArray
             If chars.Contains(i) Then
@@ -718,8 +719,9 @@ Module StringExtensions
     Function EscapeIllegalFileSysChars(value As String) As String
         If value = "" Then Return ""
 
+        'the characters Windows doesn't allow, so the names of demuxed files stay the same
         For Each i In value
-            If Not IsValidFileSystemName(i) Then
+            If """*/:<>?\|^".Contains(i) OrElse Convert.ToInt32(i) < 32 Then
                 value = value.Replace(i, "__" + Uri.EscapeDataString(i).TrimStart("%"c) + "__")
             End If
         Next
