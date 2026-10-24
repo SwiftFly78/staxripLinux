@@ -86,11 +86,7 @@ Public Class ToolUpdate
             Exit Sub
         End If
 
-        Dim base = DownloadFile.Base
-
-        If base.ToLowerInvariant.EndsWith(".tar") Then
-            base = base.Substring(0, base.Length - 4)
-        End If
+        Dim base = GetArchiveName()
 
         'a new folder doesn't mix with existing files, like the ones of a folder named like the archive
         Dim extractRoot = Path.Combine(Folder.Temp, "StaxRip " + Guid.NewGuid.ToString)
@@ -249,11 +245,22 @@ Public Class ToolUpdate
         EditVersion()
     End Sub
 
+    'the file name without the extensions, like .tar.gz
+    Function GetArchiveName() As String
+        Dim ret = DownloadFile.Base
+
+        If ret.ToLowerInvariant.EndsWith(".tar") Then
+            ret = ret.Substring(0, ret.Length - 4)
+        End If
+
+        Return ret
+    End Function
+
     Sub EditVersion()
         Dim msg = "What's the name of the new version?" + BR2 + DownloadFile.FileName
 
         UpdatePackageDialog()
-        Dim input = InputBox.Show(msg, DownloadFile.Base)
+        Dim input = InputBox.Show(msg, GetArchiveName())
 
         If input <> "" Then
             Package.SetVersion(input.Replace(";", "_").Trim)
