@@ -92,9 +92,19 @@ Public Class ToolUpdate
             base = base.Substring(0, base.Length - 4)
         End If
 
-        ExtractDir = Path.Combine(DownloadFile.Dir, base)
+        'a new folder doesn't mix with existing files, like the ones of a folder named like the archive
+        Dim extractRoot = Path.Combine(Folder.Temp, "StaxRip " + Guid.NewGuid.ToString)
+        ExtractDir = Path.Combine(extractRoot, base)
         Directory.CreateDirectory(ExtractDir)
 
+        Try
+            ExtractArchive(isTar)
+        Finally
+            FolderHelp.Delete(extractRoot)
+        End Try
+    End Sub
+
+    Private Sub ExtractArchive(isTar As Boolean)
         Using pr As New Process
             If isTar Then
                 pr.StartInfo.FileName = "tar"
@@ -236,7 +246,6 @@ Public Class ToolUpdate
             Exit Sub
         End If
 
-        FolderHelp.Delete(ExtractDir, RecycleOption.SendToRecycleBin)
         EditVersion()
     End Sub
 
