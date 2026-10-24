@@ -167,7 +167,8 @@ Public Class ToolUpdate
     End Sub
 
     Sub DeleteOldFiles()
-        If Not Directory.Exists(TargetDir) Then
+        'only the apps folder has a folder for every tool, a custom path can be in a folder like ~/.local/bin
+        If Not Directory.Exists(TargetDir) OrElse Not TargetDir.StartsWith(Folder.Apps + Path.DirectorySeparatorChar) Then
             CopyFiles()
             Exit Sub
         End If
