@@ -9,7 +9,7 @@
 - Macro system to be used in scripts and command lines, this enables a design that allows
   to change any setting at any time which is much more flexible and powerful than a design
   that requires to perform one step after another.
-- The job list can be processed with multiple StaxRip instances in parallel for maximum performance using modern CPUs.
+- The job list can be processed with multiple StaxRipLinux instances in parallel for maximum performance using modern CPUs.
 - Video and multiple audio tracks can be processed in parallel for maximum performance with modern hardware.
 - Support for an unlimited amount of audio and subtitle tracks.
 - Automatic and manual update check.
@@ -79,7 +79,7 @@
   and everything like QTGMC just works out of the box effortlessly.
 - Large amount of included AviSynth+ and VapourSynth plugins, overall around 200 tools included.
 - Code editor to enable full control over AviSynth+ and VapourSynth,
-  everything that is possible with AviSynth+ and VapourSynth is also possible with StaxRip.
+  everything that is possible with AviSynth+ and VapourSynth is also possible with StaxRipLinux.
 - Code preview to preview the code generated for AviSynth+ and VapourSynth.
 - Built-in hardware accelerated video preview and preview via mpv.net.
 - Built-in script info to show script parameters like frame rate and

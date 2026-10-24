@@ -1,7 +1,7 @@
 ﻿# [Documentation](../README.md) / Introduction
 
 - [Overview](Overview.md)
-    - [About StaxRip](Overview.md#about-staxrip)
+    - [About StaxRipLinux](Overview.md#about-staxriplinux)
     - [Target Group](Overview.md#target-group)
     - [License](Overview.md#license)
 - [Features](Features.md)

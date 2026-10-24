@@ -6,8 +6,8 @@ persisted settings or the packaging.
 
 ## Building
 
-StaxRip is built with the .NET 10 SDK, see [Building](../Introduction/Linux.md#building). A successful build doesn't
-mean that every workflow runs: the encoders, frame servers, plugins and other tools come from the system, see
+StaxRipLinux is built with the .NET 10 SDK, see [Building](../Introduction/Linux.md#building). A successful build
+doesn't mean that every workflow runs: the encoders, frame servers, plugins and other tools come from the system, see
 [Requirements](../Introduction/Linux.md#requirements). The C++ frame server in `Source/FrameServer`, AutoCrop in
 `Source/Tools/AutoCrop` and the PowerShell build scripts in `Source` belong to the Windows version and aren't used.
 
@@ -25,8 +25,8 @@ Before opening a pull request:
 
 1. Rebase the branch on the current `master` branch of this repository.
 2. Keep the branch limited to one change or a closely related set of changes.
-3. Build StaxRip, test the changed workflows and state in the description what was tested and what wasn't, for example
-   tools, frame servers or hardware encoders that weren't available.
+3. Build StaxRipLinux, test the changed workflows and state in the description what was tested and what wasn't, for
+   example tools, frame servers or hardware encoders that weren't available.
 4. Don't include build outputs, personal settings, projects, media files or logs.
 5. Explain changes to command lines, persisted settings, the selection of tools, cleanup, concurrency or native
    interfaces in the description.

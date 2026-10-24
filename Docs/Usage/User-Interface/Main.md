@@ -11,7 +11,7 @@
 
 -----
 
-When you start StaxRip, you will see the main window - on your very [first start](../First-Start.md) there
+When you start StaxRipLinux, you will see the main window - on your very [first start](../First-Start.md) there
 will appear some dialogs beforehand, but you will also end up on the main window:
 
 <img width=600 src="../../../Images/Screenshots/MainWindow.png">  
@@ -53,9 +53,9 @@ Let's look at each section and see, what we can find there:
 	to quickly re-load such a project.  
 	The number of listed projects can be adjusted in [Settings](Settings.md#user-interface).
 - #### Launch New Instance
-	Simply starts a new StaxRip instance.
+	Simply starts a new StaxRipLinux instance.
 - #### Exit
-	It feels weird to explain this, but it closes StaxRip. :astonished:
+	It feels weird to explain this, but it closes StaxRipLinux. :astonished:
 	In case the project has not been saved and projects are not [saved automatically](Settings.md#general),
 	a dialog will appear to ask you, if you want to save the changes/project - or abort.    
 
@@ -94,7 +94,7 @@ to feed the video encoder. It is also used to cut the video.
 	This opens the [Jobs](Jobs.md), where your planned jobs are listed. From there you can have a look, move the jobs,
 	deactivate them and most important: You can also **start** the encodings.
 - #### Folders
-	Lists StaxRip related folders like the `Settings` folder, that you can open from there.
+	Lists StaxRipLinux related folders like the `Settings` folder, that you can open from there.
 - #### Scripts
 	At the top there are all the PowerShell scripts in your `Settings\Scripts` folder, that you can execute from there.
 	At the bottom you can click on `Open Script Folder` to open that folder.
@@ -114,7 +114,7 @@ to feed the video encoder. It is also used to cut the video.
 - #### Edit Menu
 	Opens the [Menu Editor](Menu-Editor.md), which you can use to customize the Main Menu.
 - #### Settings
-	Opens the [Settings](Settings.md), which contains all global options for StaxRip.
+	Opens the [Settings](Settings.md), which contains all global options for StaxRipLinux.
 
 ### Apps
 The first part of the menu lists categorized apps, that are mostly included and ready to be used.  
@@ -161,7 +161,7 @@ that are almost identical to those from the [Source](Main.md#source) section.
 
 ## Filter
 
-The filter section is one of the most important parts of StaxRip. At the top you can see which type of filters is used,
+The filter section is one of the most important parts of StaxRipLinux. At the top you can see which type of filters is used,
 so either `AVS Filters` or `VS Filters`, indicating the usage of `AviSynth+` or `VapourSynth`.  
 For more details on that check out [Frame Servers](../Frame-Servers.md).
 

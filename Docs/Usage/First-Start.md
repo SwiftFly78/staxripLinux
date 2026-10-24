@@ -1,7 +1,7 @@
 ﻿# [Documentation](../README.md) / [Usage](README.md) / First Start
 
 ## Installation
-StaxRip is written so it can run completely on its own. Nevertheless, some conditions must be met.
+StaxRipLinux is written so it can run completely on its own. Nevertheless, some conditions must be met.
 Please make sure, that you have followed all steps mentioned in [Installation](../Introduction/Installation.md).
 
 ## Settings Directory
@@ -34,7 +34,7 @@ first, followed by the notes of the StaxRip release the port is based on. It app
 <img width=400 src="../../Images/Screenshots/WhatsNew.png">
 
 ## Let's go
-Finally you will see the main window, that you should see directly next time you launch StaxRip
+Finally you will see the main window, that you should see directly next time you launch StaxRipLinux
 as all decisions have been made and stored:
 
 <img width=600 src="../../Images/Screenshots/MainWindow.png">

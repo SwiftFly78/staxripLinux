@@ -1,6 +1,6 @@
 ﻿# [Documentation](../README.md) / [Usage](README.md) / Macros
 
-Macros can be used almost everywhere in StaxRip and give you the ability to to set dynamic values where needed or wanted,
+Macros can be used almost everywhere in StaxRipLinux and give you the ability to to set dynamic values where needed or wanted,
 for example in scripts or settings. Most of them are also used for [events](Events.md) as criteria.
 
 - [Global Macros](Macros.md#global-macros)
@@ -207,7 +207,7 @@ This makes it possible to return different strings depending on the expression, 
 - `<lower(<input>)>`
   - **\<input\>** is any text you want to have in lower case
   - Examples:
-    - `<lower(StaxRip is COOL)>` => `staxrip is cool`
+    - `<lower(StaxRipLinux is COOL)>` => `staxriplinux is cool`
 - `<replace(<input>;<oldText>;<newText>)>`
   - **\<input\>** is any text you want to replace parts of
   - **\<oldText\>** is the text or macro that shall be replaced
@@ -220,15 +220,15 @@ This makes it possible to return different strings depending on the expression, 
 - `<title(<input>)>`
   - **\<input\>** is any text you want to have in title case
   - Examples:
-    - `<title(StaxRip is COOL)>` => `Staxrip Is Cool`
+    - `<title(StaxRipLinux is COOL)>` => `Staxriplinux Is Cool`
 - `<trim(<input>)>`
   - **\<input\>** is any text you want to have all leading and trailing white-space characters removed
   - Examples:
-    - `<trim(  StaxRip is cool )>` => `Staxrip is cool`
+    - `<trim(  StaxRipLinux is cool )>` => `StaxRipLinux is cool`
 - `<upper(<input>)>`
   - **\<input\>** is any text you want to have in upper case
   - Examples:
-    - `<upper(StaxRip is COOL)>` => `STAXRIP IS COOL`
+    - `<upper(StaxRipLinux is COOL)>` => `STAXRIPLINUX IS COOL`
 
 
 ## Appendix

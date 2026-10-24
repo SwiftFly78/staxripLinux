@@ -10,8 +10,8 @@ There you will find everything, that is globally relevant, means not bound to a 
 
 - **Save projects automatically**  
     Whenever a project is modified and an action is performed, that will close the current project, 
-    StaxRip will ask you, if you want to save the latest changes so they don't get lost.
-    With this option enabled StaxRip will automatically save the project and don't bother you.  
+    StaxRipLinux will ask you, if you want to save the latest changes so they don't get lost.
+    With this option enabled StaxRipLinux will automatically save the project and don't bother you.  
     :warning: ***They will always overwrite the last configuration, even if you just want to test something out. So be careful!***
 - **In addition save video encoder profiles separately**  
     Save video encoder profiles in a separate file called `VideoEncoderProfiles.dat` in the `Settings` folder,

@@ -11,13 +11,13 @@
 
 # About
 
-StaxRip is a powerful video/audio encoding GUI for Windows.  
+StaxRipLinux is a powerful video/audio encoding GUI for Linux, a port of [StaxRip](https://github.com/staxrip/staxrip) for Windows.  
 It executes and controls console apps such as x265, mkvmerge, ffmpeg, etc. and uses scripting based frame servers, AviSynth+ and VapourSynth, for video processing.
 Each project can also be extended by various events and settings.
 
-***StaxRip is no One-Click Encoder!***  
-StaxRip is capable of performing a wide variety of jobs for video/audio processing. To unleash its full power, users are required to know what they want to achieve and how to set up StaxRip to meet their needs.
-If you are a first-time user, it is especially strongly recommended that you learn the basics referring to the documents and do some tests to understand how StaxRip works and what you can achieve with it. However, StaxRip also provides an 'Assistant' feature that will guide you through your jobs step by step so that you can start more easily and prevent mistakes.
+***StaxRipLinux is no One-Click Encoder!***  
+StaxRipLinux is capable of performing a wide variety of jobs for video/audio processing. To unleash its full power, users are required to know what they want to achieve and how to set up StaxRipLinux to meet their needs.
+If you are a first-time user, it is especially strongly recommended that you learn the basics referring to the documents and do some tests to understand how StaxRipLinux works and what you can achieve with it. However, StaxRipLinux also provides an 'Assistant' feature that will guide you through your jobs step by step so that you can start more easily and prevent mistakes.
 
 There are a lot of resources in StaxRip-related communities. Users are strongly encouraged to visit those communities for help and more information.
 
@@ -31,7 +31,7 @@ There are a lot of resources in StaxRip-related communities. Users are strongly 
 - For the current changelog click here: [Changelog](https://github.com/staxrip/staxrip/blob/master/CHANGELOG.md) - it's worth taking a look at it.
     - Supporters please use the [Changelog for Supporters](https://github.com/staxrip/staxrip/blob/master/CHANGELOG-SUPPORTER.md).
 - To download StaxRip browse through all [Releases](https://github.com/staxrip/staxrip/releases) or jump directly to the [Latest Release](https://github.com/staxrip/staxrip/releases/latest). 
-- How to build and install the Linux version is described here: [Linux](Docs/Introduction/Linux.md)
+- How to build and install StaxRipLinux is described here: [Linux](Docs/Introduction/Linux.md)
 
 # Contribution / Support
 

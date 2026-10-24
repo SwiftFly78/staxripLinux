@@ -10,7 +10,7 @@
 
 ## [Introduction](Introduction/README.md)
 - [Overview](Introduction/Overview.md)
-    - [About StaxRip](Introduction/Overview.md#about-staxrip)
+    - [About StaxRipLinux](Introduction/Overview.md#about-staxriplinux)
     - [Target Group](Introduction/Overview.md#target-group)
     - [License](Introduction/Overview.md#license)
 - [Features](Introduction/Features.md)

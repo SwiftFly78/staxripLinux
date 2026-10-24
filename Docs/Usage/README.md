@@ -2,7 +2,7 @@
 
 Here you get information about different controls, features and such. I try to explain what they do, what they might trigger
 and cause, so basically the technical part, which gives you the knowledge to understand everything
-so you can use StaxRip and its settings correctly.
+so you can use StaxRipLinux and its settings correctly.
 
 - [First Start](First-Start.md)
 - [User Interface](User-Interface/README.md)

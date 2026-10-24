@@ -167,7 +167,7 @@ Executes a command line. If Shell Execute is disabled then macros are passed in 
 | --- | --- |
 | Command Line \<string\> | The command line to be executed. Macros are solved. |
 | Wait For Exit \<boolean\> | Halt until the command line returns. |
-| Show Process Window \<boolean\> | Redirects the output of console apps to StaxRips process window. Disables Shell Execute. |
+| Show Process Window \<boolean\> | Redirects the output of console apps to the process window of StaxRipLinux. Disables Shell Execute. |
 | Use Shell Execute \<boolean\> | Executes the command line using the shell. Available when the Show Process Window option is disabled. |
 | Working Directory \<string\> | Working directory the process will use. |
 
@@ -178,7 +178,7 @@ Executes PowerShell code.
 | Parameter | Description |
 | --- | --- |
 | Script Code \<string\> | PowerShell script code to be executed. Macros are expanded. |
-| Use External Shell \<boolean\> | Execute in StaxRip to automate StaxRip or use external shell. |
+| Use External Shell \<boolean\> | Execute in StaxRipLinux to automate StaxRipLinux or use external shell. |
 
 ### ExecutePowerShellFile
 
@@ -191,11 +191,11 @@ Executes a PowerShell script file.
 
 ### Exit
 
-Exits StaxRip.
+Exits StaxRipLinux.
 
 ### ExitWithoutSaving
 
-Exits StaxRip without saving an unsaved project.
+Exits StaxRipLinux without saving an unsaved project.
 
 ### ExtractHdrMetadata
 
@@ -297,7 +297,7 @@ Loads a template that you can choose from via dialog.
 
 ### NoFocus
 
-Opens StaxRip without taking focus
+Opens StaxRipLinux without taking focus
 
 ### OpenHelpTopic
 
@@ -488,7 +488,7 @@ Shows the crop dialog to crop borders.
 
 ### ShowDemuxTool
 
-Allows to use StaxRip's demuxing GUIs independently.
+Allows to use StaxRipLinux's demuxing GUIs independently.
 
 ### ShowEncoderProfilesDialog
 
@@ -662,7 +662,7 @@ Runs all active jobs of the job list.
 
 ### StartNewInstance
 
-Launches a new instance of StaxRip.
+Launches a new instance of StaxRipLinux.
 
 ### StartSmartCrop
 
