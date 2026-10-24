@@ -246,7 +246,8 @@ Public Class ToolUpdate
         Dim lower = value.ToLowerInvariant
         Dim x86 = {"_win32", "/x86", "-x86", "32-bit", "-win32", "i686", "i386"}
 
-        If Environment.Is64BitProcess AndAlso lower.ContainsAny(x86) Then
+        'x86_64 and x86-64 are the names of 64-bit Linux builds
+        If Environment.Is64BitProcess AndAlso lower.Replace("x86_64", "").Replace("x86-64", "").ContainsAny(x86) Then
             Return True
         End If
 
