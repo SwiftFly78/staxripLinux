@@ -216,7 +216,7 @@ Public Class FileHelp
 
             File.WriteAllText(IO.Path.Combine(infoDir, IO.Path.GetFileName(target) + ".trashinfo"),
                 "[Trash Info]" + vbLf + "Path=" + Uri.EscapeDataString(IO.Path.GetFullPath(path)).Replace("%2F", "/") + vbLf +
-                "DeletionDate=" + Date.Now.ToString("yyyy-MM-ddTHH:mm:ss") + vbLf)
+                "DeletionDate=" + Date.Now.ToString("yyyy-MM-ddTHH:mm:ss", CultureInfo.InvariantCulture) + vbLf)
 
             If Directory.Exists(path) Then
                 Directory.Move(path, target)
