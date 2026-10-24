@@ -1495,7 +1495,7 @@ Public Class SvtAv1EncParams
                 End If
             ElseIf ConstantQuantizationParameter.Visible Then
                 If Not IsCustom(pass, "--cqp") AndAlso Not ConstantQuantizationParameter.IsDefaultValue Then
-                    sb.Append(" --cqp " + ConstantQuantizationParameter.Value.ToString("0.##"))
+                    sb.Append(" --cqp " + ConstantQuantizationParameter.Value.ToString("0.##", CultureInfo.InvariantCulture))
                 End If
             ElseIf QuantizationParameter.Visible Then
                 If Not IsCustom(pass, "--qp") AndAlso Not QuantizationParameter.IsDefaultValue Then
