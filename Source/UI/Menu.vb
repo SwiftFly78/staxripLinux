@@ -794,8 +794,19 @@ Namespace UI
             End Set
         End Property
 
+        'Eto places menus of GTK widgets without own window, like group boxes, relative to their container,
+        'so the position is translated to the window
         Overloads Sub Show(control As Control, x As Integer, y As Integer)
-            MyBase.Show(control, New PointF(x, y))
+            Dim window = control.ParentWindow
+            Dim widget = TryCast(control.ControlObject, Global.Gtk.Widget)
+            Dim gtkWindow = TryCast(window?.ControlObject, Global.Gtk.Widget)
+            Dim windowX, windowY As Integer
+
+            If widget IsNot Nothing AndAlso gtkWindow IsNot Nothing AndAlso widget.TranslateCoordinates(gtkWindow, x, y, windowX, windowY) Then
+                MyBase.Show(window, New PointF(windowX, windowY))
+            Else
+                MyBase.Show(control, New PointF(x, y))
+            End If
         End Sub
 
         Function Add(path As String) As MenuItemEx
