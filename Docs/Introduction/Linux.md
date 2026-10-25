@@ -48,7 +48,7 @@
 ## Requirements
 
 - 64-bit Linux (x86-64)
-- [.NET 10 runtime](https://learn.microsoft.com/dotnet/core/install/linux)
+- [.NET 10 runtime](https://learn.microsoft.com/dotnet/core/install/linux), the [AppImage](#appimage) includes it
 - GTK 3
 - MediaInfo library (`libmediainfo`)
 - MKVToolNix command line tools
@@ -156,6 +156,23 @@ edited and are supported by more containers and players, MP4 for example doesn't
 - OCR makes mistakes, check the text. Italic text loses its formatting, and the text must be brighter than its outline,
   like in most subtitles.
 
+## AppImage
+
+The [releases](https://github.com/SwiftFly78/staxripLinux/releases) contain StaxRipLinux as AppImage, a single file
+that runs without installation. It includes the .NET runtime, the other [requirements](#requirements) are still needed.
+Make the file executable and start it:
+
+```sh
+chmod +x StaxRipLinux-*-x86_64.AppImage
+./StaxRipLinux-*-x86_64.AppImage
+```
+
+- AppImages need FUSE, which the package `fuse3` provides. Without FUSE, start the AppImage with
+  `--appimage-extract-and-run`.
+- The settings are stored in `~/.config/StaxRip`. A folder next to the AppImage with its name and `.config` appended,
+  like `StaxRipLinux-1.15.0-x86_64.AppImage.config`, keeps them next to the AppImage instead.
+- Tools like Gear Lever or AppImageLauncher add AppImages to the application menu.
+
 ## Building
 
 Install the [.NET 10 SDK](https://learn.microsoft.com/dotnet/core/install/linux), clone this repository and run in
@@ -166,6 +183,10 @@ dotnet publish StaxRip.vbproj -c Release -r linux-x64 --self-contained false -o 
 ```
 
 StaxRipLinux can be started from the output folder with `../publish/StaxRip`.
+
+`./build-appimage.sh [<output folder>]` builds an AppImage like the ones of the releases. It needs
+[appimagetool](https://github.com/AppImage/appimagetool) in `PATH`, or its path in the environment variable
+`APPIMAGETOOL`.
 
 ## Installation
 
@@ -228,3 +249,17 @@ push the tags. `Source/version.sh -n` only shows the versions, `Source/version.s
 Fetch the tags of other contributors first (`git fetch --tags`), so that no version is used twice. The script needs
 [node-semver](https://github.com/npm/node-semver), the package `semver` on Arch Linux and `node-semver` on Debian and
 Ubuntu, otherwise it runs node-semver with `npx` (Node.js).
+
+### Releases
+
+When a push brings new version tags to `master`, the workflow [Release](../../.github/workflows/release.yml) builds an
+AppImage of the newest version and publishes it as GitHub release. The release notes list the versions since the
+previous release with the subjects of their commits. The tags can be pushed before, with or after the branch, but
+GitHub starts no workflow for the tags of a push with more than three tags, so push them together with the branch:
+
+```sh
+git push origin HEAD:master v1.15.0 v1.15.1
+```
+
+Versions that have a release already are skipped. *Run workflow* on the page of the workflow in the *Actions* tab of
+the repository releases the newest version if it has no release yet, for example after a failed run.
