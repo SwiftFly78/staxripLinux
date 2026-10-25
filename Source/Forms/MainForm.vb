@@ -772,6 +772,7 @@ Partial Public Class MainForm
     Function OpenSaveTemplateDialog() As Boolean
         If p.SourceFile = "" Then
             Using dialog As New SaveFileDialog
+                dialog.Title = "Save Template"
                 dialog.SetInitDir(p.TemplatePath.Dir, Folder.Template)
                 dialog.FileName = If(p.TemplateName <> "", p.TemplateName, "Untitled")
                 dialog.Filter = $"StaxRipLinux Template Files (*.srip)|*.srip"

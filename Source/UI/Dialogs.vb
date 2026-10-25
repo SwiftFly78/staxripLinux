@@ -85,10 +85,7 @@ Public Class OpenFileDialog
         Return UIInvoke(Function()
                             Using dialog As New Eto.Forms.OpenFileDialog
                                 dialog.MultiSelect = Multiselect
-
-                                If Title <> "" Then
-                                    dialog.Title = Title
-                                End If
+                                dialog.Title = If(Title <> "", Title, "Open File")
 
                                 For Each i In FileDialogHelp.ParseFilter(Filter, True)
                                     dialog.Filters.Add(i)
@@ -145,9 +142,7 @@ Public Class SaveFileDialog
     Function ShowDialog(Optional owner As Control = Nothing) As DialogResult
         Return UIInvoke(Function()
                             Using dialog As New Eto.Forms.SaveFileDialog
-                                If Title <> "" Then
-                                    dialog.Title = Title
-                                End If
+                                dialog.Title = If(Title <> "", Title, "Save File")
 
                                 For Each i In FileDialogHelp.ParseFilter(Filter)
                                     dialog.Filters.Add(i)
