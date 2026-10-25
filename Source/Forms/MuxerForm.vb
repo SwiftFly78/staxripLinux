@@ -407,14 +407,6 @@ Public Class MuxerForm
             End If
 
             If File.Exists(i.Path) Then
-                Dim sizeText = ""
-
-                If i.Size > 0 Then
-                    sizeText = If(i.Size > PrefixedSize(2).Factor,
-                        $"{i.Size / PrefixedSize(2).Factor:f1} {PrefixedSize(2).Unit}",
-                        $"{i.Size / PrefixedSize(1).Factor:f1} {PrefixedSize(1).Unit}")
-                End If
-
                 Dim _option As String = ""
 
                 If i.Default Then _option &= ", default"
@@ -436,7 +428,7 @@ Public Class MuxerForm
                     .Hearingimpaired = i.Hearingimpaired,
                     .ID = id,
                     .TypeName = i.TypeName,
-                    .Size = sizeText,
+                    .Size = GetSizeText(i.Size),
                     .Filename = i.Path.FileName,
                     .Subtitle = i
                 }
@@ -445,6 +437,16 @@ Public Class MuxerForm
             End If
         Next
     End Sub
+
+    Shared Function GetSizeText(size As Long) As String
+        If size <= 0 Then
+            Return ""
+        End If
+
+        Return If(size > PrefixedSize(2).Factor,
+            $"{size / PrefixedSize(2).Factor:f1} {PrefixedSize(2).Unit}",
+            $"{size / PrefixedSize(1).Factor:f1} {PrefixedSize(1).Unit}")
+    End Function
 
     Sub bnSubtitlePlay_Click(sender As Object, e As EventArgs) Handles bnSubtitlePlay.Click
         Package.mpvnet.VerifyOK(True)
