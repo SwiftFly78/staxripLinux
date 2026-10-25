@@ -460,6 +460,19 @@ Public Class Package
         .DownloadURL = "https://github.com/amichaeltm/BDSup2SubPlusPlus/releases",
         .Description = "GUI app that converts Blu-ray subtitles to other formats like VobSub."})
 
+    Shared Property Tesseract As Package = Add(New Package With {
+        .RequiredFunc = Function() p.ConvertBitmapSubtitles,
+        .Name = "Tesseract",
+        .Filename = "tesseract.exe",
+        .Location = IO.Path.Combine("Subtitles", "Tesseract"),
+        .SupportsAutoUpdate = False,
+        .VersionAllowAny = True,
+        .WebURL = "https://github.com/tesseract-ocr/tesseract",
+        .HelpURL = "https://tesseract-ocr.github.io/tessdoc",
+        .DownloadURL = "https://tesseract-ocr.github.io/tessdoc/Installation.html",
+        .HelpSwitch = "--help",
+        .Description = "OCR engine that converts bitmap subtitles (PGS, VobSub) to SRT."})
+
     Shared Property SubtitleEdit As Package = Add(New Package With {
         .RequiredFunc = Function() False,
         .Name = "Subtitle Edit",

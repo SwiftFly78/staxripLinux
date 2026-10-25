@@ -20,7 +20,7 @@ Public Class MuxerForm
     Public WithEvents dgvAudio, dgvTags, dgvSubtitles As DataGridViewEx
     Public WithEvents bnAttachmentAdd, bnAttachmentRemove As ButtonEx
     Public WithEvents lbAttachments As ListBoxEx
-    Public WithEvents bnSubtitleAdd, bnSubtitleRemove, bnSubtitleUp, bnSubtitleDown, bnSubtitleSetNames, bnSubtitlePlay, bnSubtitleBDSup2SubPP, bnSubtitleEdit As ButtonEx
+    Public WithEvents bnSubtitleAdd, bnSubtitleRemove, bnSubtitleUp, bnSubtitleDown, bnSubtitleSetNames, bnSubtitlePlay, bnSubtitleBDSup2SubPP, bnSubtitleEdit, bnSubtitleOcr As ButtonEx
 
     Private Sub InitializeComponent()
         TipProvider = New TipProvider
@@ -49,6 +49,7 @@ Public Class MuxerForm
         bnSubtitlePlay = New ButtonEx("Play")
         bnSubtitleBDSup2SubPP = New ButtonEx("BDSup2Sub++")
         bnSubtitleEdit = New ButtonEx("Subtitle Edit")
+        bnSubtitleOcr = New ButtonEx("OCR to SRT...")
         dgvSubtitles = New DataGridViewEx With {.AllowDrop = True}
 
         bnAttachmentAdd = New ButtonEx("Add...")
@@ -66,7 +67,7 @@ Public Class MuxerForm
         tpAudio = New TabPage With {.Text = "Audio", .Padding = DefaultPadding,
             .Content = New TableLayout(ScaledRow(Scaled(dgvAudio), buttonColumn({bnAudioAdd, bnAudioRemove, bnAudioUp, bnAudioDown, bnAudioPlay, bnAudioEdit}))) With {.Spacing = DefaultSpacing}}
         tpSubtitles = New TabPage With {.Text = "Subtitles", .Padding = DefaultPadding,
-            .Content = New TableLayout(ScaledRow(Scaled(dgvSubtitles), buttonColumn({bnSubtitleAdd, bnSubtitleRemove, bnSubtitleUp, bnSubtitleDown, bnSubtitleSetNames, bnSubtitlePlay, bnSubtitleBDSup2SubPP, bnSubtitleEdit}))) With {.Spacing = DefaultSpacing}}
+            .Content = New TableLayout(ScaledRow(Scaled(dgvSubtitles), buttonColumn({bnSubtitleAdd, bnSubtitleRemove, bnSubtitleUp, bnSubtitleDown, bnSubtitleSetNames, bnSubtitlePlay, bnSubtitleBDSup2SubPP, bnSubtitleEdit, bnSubtitleOcr}))) With {.Spacing = DefaultSpacing}}
         tpAttachments = New TabPage With {.Text = "Attachments", .Padding = DefaultPadding,
             .Content = New TableLayout(ScaledRow(Scaled(lbAttachments), buttonColumn({bnAttachmentAdd, bnAttachmentRemove}))) With {.Spacing = DefaultSpacing}}
         tpTags = New TabPage With {.Text = "Tags", .Padding = DefaultPadding, .Content = dgvTags}
@@ -142,6 +143,7 @@ Public Class MuxerForm
         dgvSubtitles.DataStore = SubtitleItems
 
         TipProvider.SetTip("Additional command line switches that may contain macros.", tpCommandLine)
+        TipProvider.SetTip("Converts the selected bitmap subtitle (PGS, VobSub) to a text subtitle (SRT) using OCR.", bnSubtitleOcr)
     End Sub
 
     Public Class AttachmentContainer
@@ -335,6 +337,7 @@ Public Class MuxerForm
         Dim selectedSubtitles = dgvSubtitles.HasSelection
         Dim subtitlePath = If(selectedSubtitles, SubtitleItems(dgvSubtitles.SelectedIndex).Subtitle.Path, "")
         bnSubtitleBDSup2SubPP.Enabled = selectedSubtitles AndAlso {"idx", "sup"}.Contains(subtitlePath.Ext)
+        bnSubtitleOcr.Enabled = selectedSubtitles AndAlso {"idx", "sup"}.Contains(subtitlePath.Ext)
         bnSubtitleEdit.Enabled = selectedSubtitles
         bnSubtitlePlay.Enabled = p.SourceFile <> "" AndAlso selectedSubtitles
         bnSubtitleUp.Enabled = dgvSubtitles.CanMoveUp
@@ -693,6 +696,45 @@ Public Class MuxerForm
         End Try
     End Sub
 
+    'the SRT file replaces the bitmap subtitle, the settings of the subtitle are kept
+    Sub bnSubtitleOcr_Click(sender As Object, e As EventArgs) Handles bnSubtitleOcr.Click
+        Package.Tesseract.VerifyOK(True)
+
+        Dim item = SubtitleItems(dgvSubtitles.SelectedIndex)
+        Dim language = SubtitleOcr.SelectLanguage(item.Language, item.Subtitle.Path.FileName)
+
+        If language Is Nothing Then
+            Exit Sub
+        End If
+
+        Dim outputPath = SubtitleOcr.GetTextPath(item.Subtitle)
+        Dim count As Integer
+
+        Try
+            count = SubtitleOcr.Convert(item.Subtitle, language, outputPath)
+        Catch ex As AbortException
+            Exit Sub
+        Catch ex As Exception
+            g.ShowException(ex)
+            Exit Sub
+        Finally
+            'the main window is shown again after processing and must not cover the dialog
+            ProcController.Finished()
+            UIBeginInvoke(AddressOf BringToFront)
+        End Try
+
+        If count = 0 Then
+            MsgWarn("No text was recognized.", item.Subtitle.Path.FileName)
+            Exit Sub
+        End If
+
+        item.Subtitle = New Subtitle(item.Language) With {.Path = outputPath, .Size = New FileInfo(outputPath).Length}
+        item.TypeName = item.Subtitle.TypeName
+        item.Size = GetSizeText(item.Subtitle.Size)
+        item.Filename = outputPath.FileName
+        dgvSubtitles.RefreshData()
+        UpdateControls()
+    End Sub
 
     Sub dgvSubtitles_SelectionChanged(sender As Object, e As EventArgs) Handles dgvSubtitles.SelectionChanged
         UpdateControls()

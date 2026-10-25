@@ -198,6 +198,10 @@ Public MustInherit Class Muxer
                 If TypeOf Me Is MP4Muxer AndAlso Not {"idx", "srt", "sub", "vtt"}.Contains(fp.Ext) Then Continue For
 
                 For Each iSubtitle In Subtitle.Create(fp)
+                    If p.ConvertBitmapSubtitles AndAlso SubtitleOcr.IsBitmap(iSubtitle) AndAlso File.Exists(SubtitleOcr.GetTextPath(iSubtitle)) Then
+                        Continue For
+                    End If
+
                     If p.PreferredSubtitles <> "" AndAlso IsSupported(iSubtitle) Then
                         If fp.ToLowerEx.ContainsAny("_forced", ".forced.") Then
                             iSubtitle.Forced = True

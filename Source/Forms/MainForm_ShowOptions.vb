@@ -497,6 +497,16 @@ Partial Public Class MainForm
             b.Field = NameOf(p.ConvertSup2Sub)
 
             b = ui.AddBool(subPage)
+            b.Text = "Convert bitmap subtitles (PGS, VobSub) to SRT using OCR"
+            b.Help = "Works only with demuxed subtitles. The OCR uses the language of the subtitle, " +
+                "languages that aren't installed can be downloaded." + BR2 + "Requires Tesseract."
+            b.Field = NameOf(p.ConvertBitmapSubtitles)
+
+            Dim ocrLanguages = ui.AddButton(subPage)
+            ocrLanguages.Button.Text = "OCR Languages..."
+            ocrLanguages.Button.ClickAction = AddressOf SubtitleOcr.ShowLanguages
+
+            b = ui.AddBool(subPage)
             b.Text = "Extract forced subtitles from IDX files (Sub/VobSub/DVD)"
             b.Help = "Works only with demuxed subtitles."
             b.Field = NameOf(p.ExtractForcedSubSubtitles)

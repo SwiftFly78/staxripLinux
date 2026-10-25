@@ -49,6 +49,7 @@ Public Class Project
     Public CompCheckPercentage As Double = 5.0
     Public CompCheckTestblockSeconds As Double = 2.0
     Public Compressibility As Double
+    Public ConvertBitmapSubtitles As Boolean
     Public ConvertChromaSubsampling As Boolean = True
     Public ConvertSup2Sub As Boolean
     Public ConvertToBits As ConvertTo420BitDepth = ConvertTo420BitDepth.None

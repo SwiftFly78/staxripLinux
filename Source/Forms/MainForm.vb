@@ -1910,6 +1910,7 @@ Partial Public Class MainForm
             DemuxVobSubSubtitles()
             ConvertBluRaySubtitles()
             ExtractForcedVobSubSubtitles()
+            ConvertBitmapSubtitles()
             p.VideoEncoder.UpdateTargetFile(True)
             g.RaiseAppEvent(ApplicationEvent.BeforeMuxingWhenSourceOpening)
             p.VideoEncoder.Muxer.Init()
@@ -2279,6 +2280,15 @@ Partial Public Class MainForm
                 End Using
             End If
         Next
+    End Sub
+
+    Sub ConvertBitmapSubtitles()
+        If Not p.ConvertBitmapSubtitles Then Exit Sub
+
+        SubtitleOcr.Convert(g.GetFilesInTempDirAndParent.
+            Where(Function(i) i.Ext.EqualsAny("sup", "idx") AndAlso g.IsSourceSameOrSimilar(i)).
+            SelectMany(Function(i) Subtitle.Create(i)).
+            Where(Function(i) i.Enabled))
     End Sub
 
     Sub ExtractForcedVobSubSubtitles()

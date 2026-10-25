@@ -33,6 +33,9 @@ Public Class Proc
     'the command line executed with /bin/sh -c, used for pipes
     Property ShellCommandLine As String
 
+    'returns the progress text of output lines that report the progress, otherwise Nothing
+    Property ProgressFunc As Func(Of String, String)
+
     Private LogItems As List(Of String)
 
     Event ProcDisposed()
@@ -488,6 +491,14 @@ Public Class Proc
 
         If TrimChars IsNot Nothing Then
             value = value.Trim(TrimChars)
+        End If
+
+        If ProgressFunc IsNot Nothing Then
+            Dim progress = ProgressFunc(value)
+
+            If progress IsNot Nothing Then
+                Return (progress, True)
+            End If
         End If
 
         If Not String.IsNullOrWhiteSpace(SkipString) AndAlso value.Contains(SkipString) Then
