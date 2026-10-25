@@ -3,5 +3,5 @@
 :x: :x: :x: 
 
 
-<img width=600 src="../../../Images/Screenshots/MainWindowFilterProfiles.png">  
+<img width=600 src="../../../Images/Screenshots/FilterProfiles.png">  
 

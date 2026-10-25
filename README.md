@@ -106,12 +106,12 @@ Whenever this is possible an `UPDATE` archive is also released so you can just d
 
 # Screenshots
 
-![Main Window](https://github.com/staxrip/staxrip/blob/master/Images/Screenshots/MainWindow2.png)
+![Main Window](Images/Screenshots/MainWindow2.png)
 
-![Code Editor](https://github.com/staxrip/staxrip/blob/master/Images/Screenshots/FilterProfiles.png)
+![Filter Profiles](Images/Screenshots/FilterProfiles.png)
 
-![Event Command Editor](https://github.com/staxrip/staxrip/blob/master/Images/Screenshots/EventCommands.png)
+![Event Commands](Images/Screenshots/EventCommands.png)
 
-![x265 Options](https://github.com/staxrip/staxrip/blob/master/Images/Screenshots/AppsManager.png)
+![Apps](Images/Screenshots/AppsManager.png)
 
-![Processing](https://github.com/staxrip/staxrip/blob/master/Images/Screenshots/SettingsGeneral.png)
+![Settings](Images/Screenshots/SettingsGeneral.png)

@@ -3,5 +3,5 @@
 :x: :x: :x: 
 
 
-<img width=600 src="../../../Images/Screenshots/MainWindowTemplateSelection.png">  
+<img width=600 src="../../../Images/Screenshots/TemplateSelection.png">  
 
