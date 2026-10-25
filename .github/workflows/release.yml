@@ -1,0 +1,104 @@
+name: Release
+
+# Releases an AppImage of the newest version on master if it has no release yet. Tags can be pushed
+# before, with or after the branch, so pushes of both run it.
+on:
+  push:
+    branches: [master]
+    tags: ['v[0-9]+.[0-9]+.[0-9]+']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  release:
+    # not for deleted tags
+    if: ${{ !github.event.deleted }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      DOTNET_CLI_TELEMETRY_OPTOUT: 1
+      DOTNET_NOLOGO: 1
+
+    steps:
+      - name: Check out master
+        uses: actions/checkout@v7
+        with:
+          ref: master
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Find the newest version
+        id: version
+        run: |
+          # the versions of the port are the tags that contain its first commit, see Source/version.sh
+          tag=$(git for-each-ref --count=1 --sort=-version:refname --contains v1.0.0 --merged HEAD \
+            --format='%(refname:short)' 'refs/tags/v*')
+
+          if [ -z "$tag" ]; then
+            echo "::error::master has no version tag"
+            exit 1
+          elif gh release view "$tag" > /dev/null 2>&1; then
+            echo "$tag is released already"
+          else
+            echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install .NET
+        if: steps.version.outputs.tag
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Build the AppImage
+        if: steps.version.outputs.tag
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+          APPIMAGETOOL: ${{ runner.temp }}/appimagetool
+          APPIMAGE_RUNTIME: ${{ runner.temp }}/runtime-x86_64
+          APPIMAGE_EXTRACT_AND_RUN: 1
+        run: |
+          # update the checksums together with the versions
+          curl -fsSL -o "$APPIMAGETOOL" \
+            https://github.com/AppImage/appimagetool/releases/download/1.9.1/appimagetool-x86_64.AppImage
+          curl -fsSL -o "$APPIMAGE_RUNTIME" \
+            https://github.com/AppImage/type2-runtime/releases/download/20251108/runtime-x86_64
+          sha256sum -c << EOF
+          ed4ce84f0d9caff66f50bcca6ff6f35aae54ce8135408b3fa33abfc3cb384eb0  $APPIMAGETOOL
+          2fca8b443c92510f1483a883f60061ad09b46b978b2631c807cd873a47ec260d  $APPIMAGE_RUNTIME
+          EOF
+          chmod +x "$APPIMAGETOOL"
+
+          git checkout --detach "$TAG"
+          Source/build-appimage.sh "$RUNNER_TEMP/appimage"
+
+      - name: Publish the release
+        if: steps.version.outputs.tag
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          previous=$(gh release list --exclude-drafts --limit 1 --json tagName --jq '.[0].tagName // empty')
+
+          {
+            echo "StaxRipLinux $TAG as AppImage for x86-64 Linux. It contains the .NET runtime, the other requirements are listed in [Linux](https://github.com/$GITHUB_REPOSITORY/blob/$TAG/Docs/Introduction/Linux.md#appimage)."
+            echo
+            echo "## Changes${previous:+ since $previous}"
+            echo
+            git for-each-ref --sort=-version:refname --contains v1.0.0 --merged "$TAG" ${previous:+--no-merged "$previous"} \
+              --format='- %(refname:short) %(if)%(*subject)%(then)%(*subject)%(else)%(subject)%(end)' 'refs/tags/v*'
+          } > "$RUNNER_TEMP/notes.md"
+
+          gh release create "$TAG" "$RUNNER_TEMP"/appimage/*.AppImage --verify-tag --title "StaxRipLinux $TAG" \
+            --notes-file "$RUNNER_TEMP/notes.md"
