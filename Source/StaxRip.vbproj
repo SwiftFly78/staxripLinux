@@ -73,7 +73,7 @@
 
   <!-- the version and the changes of the port come from its git tags -->
   <Target Name="GenerateBuildInfo" BeforeTargets="BeforeBuild">
-    <Exec Command="sh &quot;$(MSBuildProjectDirectory)/build-info.sh&quot; &quot;$(MSBuildProjectDirectory)/$(IntermediateOutputPath)&quot;" />
+    <Exec Command="sh &quot;$(MSBuildProjectDirectory)/build-info.sh&quot; &quot;$([MSBuild]::NormalizeDirectory($(MSBuildProjectDirectory), $(IntermediateOutputPath)))&quot;" />
 
     <ItemGroup>
       <Compile Include="$(IntermediateOutputPath)BuildInfo.vb" />
