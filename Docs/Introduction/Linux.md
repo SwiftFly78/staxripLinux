@@ -59,8 +59,9 @@
   NVEncC (`nvencc`), QSVEncC (`qsvencc`) or VCEEncC (`vceencc`). vvenc installs vvencFFapp only when it's built
   with `-DVVENC_INSTALL_FULLFEATURE_APP=ON`. VCEEncC and the AMF encoders of FFmpeg require AMD's AMF runtime
   (`libamfrt64.so.1`, `amf-amdgpu-pro` in the AUR).
-- Optional: mpv, opusenc, fdkaac, dovi_tool, hdr10plus_tool, D2V Witch, avs2yuv, eac3to (with Wine), the subtitle
-  plugins SubText and AssRender and the d2v source filters d2vsource and D2VSource
+- Optional: mpv, opusenc, fdkaac, dovi_tool, hdr10plus_tool, D2V Witch, avs2yuv, eac3to (with Wine),
+  Tesseract (subtitle OCR), the subtitle plugins SubText and AssRender and the d2v source filters d2vsource and
+  D2VSource
 
 Package names differ between distributions, some examples:
 
@@ -71,8 +72,8 @@ sudo pacman -S dotnet-runtime gtk3 libmediainfo mkvtoolnix-cli ffmpeg vapoursynt
     vapoursynth-plugin-bestsource x264 x265 svt-av1 aom rav1e opus-tools mpv
 ```
 
-`fdkaac`, `avisynthplus`, `dovi-tool` and `hdr10plus-tool` (Dolby Vision and HDR10+ metadata) are in the official
-repositories as well. The AUR has packages for the other tools and plugins that replace the Windows tools:
+`fdkaac`, `avisynthplus`, `dovi-tool`, `hdr10plus-tool` (Dolby Vision and HDR10+ metadata) and `tesseract` are in the
+official repositories as well. The AUR has packages for the other tools and plugins that replace the Windows tools:
 `d2vwitch-git`, `vapoursynth-plugin-d2vsource`, `vapoursynth-plugin-subtext-git` and, for AviSynth+,
 `avs2yuv-git`, `avisynth-plugin-assrender-git` and `avisynth-plugin-mpeg2decplus-git` (D2VSource).
 
@@ -96,6 +97,10 @@ VapourSynth libraries in the folder of the Python module:
 ```sh
 pipx install vapoursynth
 ```
+
+Tesseract is packaged as `tesseract` (Arch Linux, Fedora) or `tesseract-ocr` (Debian, Ubuntu), its languages as
+`tesseract-data-eng`, `tesseract-langpack-eng` or `tesseract-ocr-eng`. StaxRipLinux can also download languages,
+see [Subtitle OCR](#subtitle-ocr).
 
 ### How StaxRipLinux finds tools and plugins
 
@@ -129,6 +134,27 @@ pipx install vapoursynth
   Xfce Terminal, Alacritty, kitty, foot, WezTerm and xterm.
 - While encoding, standby is prevented with `systemd-inhibit` or `elogind-inhibit`. Shutdown and standby after
   the jobs use `systemctl` or `loginctl`.
+
+## Subtitle OCR
+
+StaxRipLinux converts bitmap subtitles, PGS (`.sup`) of Blu-ray discs and VobSub (`.idx`/`.sub`) of DVDs, to SRT text
+subtitles with the OCR engine [Tesseract](https://github.com/tesseract-ocr/tesseract). Text subtitles are small, can be
+edited and are supported by more containers and players, MP4 for example doesn't support PGS.
+
+- *OCR to SRT...* on the *Subtitles* tab of the container options (*Container Options* in the main window) converts the
+  selected bitmap subtitle. The SRT file replaces the subtitle in the list, its language, name and flags are kept.
+- *Convert bitmap subtitles (PGS, VobSub) to SRT using OCR* in the subtitle options (`Project > Options > Subtitles`)
+  converts the demuxed bitmap subtitles when a source is opened.
+- The OCR uses the language of the subtitle. Subtitles with an undetermined language use English, or another installed
+  language if English isn't installed.
+- Tesseract finds the languages installed with the package manager. Missing languages can be downloaded from the
+  [tessdata_fast](https://github.com/tesseract-ocr/tessdata_fast) repository of Tesseract, StaxRipLinux asks before it
+  downloads a language and saves it in the `tessdata` folder of the settings. *OCR Languages...* in the subtitle options
+  downloads more languages. Job processing doesn't download languages, subtitles whose language isn't installed stay
+  bitmap subtitles.
+- The SRT files are named like the bitmap subtitles and saved in the temp folder of the project.
+- OCR makes mistakes, check the text. Italic text loses its formatting, and the text must be brighter than its outline,
+  like in most subtitles.
 
 ## Building
 

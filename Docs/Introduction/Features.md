@@ -23,6 +23,7 @@
 - Full access and control to underlying tools with full support for
   command line and script editing to leverage the full potential of the tools.
 - Container and hard-coded subtitles.
+- OCR of bitmap subtitles (PGS, VobSub) to SRT with Tesseract.
 - Clean and easy to read log file and dedicated log file viewer to easily navigate the processing steps.
 - Video comparison tool to compare video frames in a tab view.
 - The processing window can be minimized to the system tray.
