@@ -1396,17 +1396,59 @@ Namespace UI
         End Sub
     End Class
 
-    'shows the language of the track, it's changed in the audio options
-    Public Class AudioLanguageLabel
-        Inherits LabelEx
+    'language of the track, the menu lists the common languages first and the others by initial,
+    'it's created on the first click because there are hundreds of languages
+    Public Class AudioLanguageButton
+        Inherits ButtonEx
+
+        Private ReadOnly LanguageMenu As New ContextMenuStripEx
+        Private TrackLanguageValue As Language
+
+        Property LanguageChanged As Action(Of Language)
 
         Sub New()
             MyBase.New()
-            Me.AddStyleClass("dim-label")
+            ShowMenuSymbol = True
+            MinimumSize = Size.Empty
         End Sub
 
         Sub New(row As Integer)
             Me.New()
+        End Sub
+
+        Property TrackLanguage As Language
+            Get
+                Return TrackLanguageValue
+            End Get
+            Set(value As Language)
+                TrackLanguageValue = value
+                Text = If(value?.EnglishName, "")
+            End Set
+        End Property
+
+        Protected Overrides Sub OnClick(e As EventArgs)
+            If LanguageMenu.Items.Count = 0 Then
+                For Each lng In Language.Languages.OrderBy(Function(x) x.EnglishName)
+                    Dim path = If(lng.IsCommon, g.GetExtendedLanguageName(lng),
+                        $"More | {lng.ToString().Substring(0, 1).ToUpperInvariant()}... | {g.GetExtendedLanguageName(lng)}")
+
+                    MenuItemEx.Add(Of Language)(LanguageMenu.Items, path, Sub(l As Language)
+                                                                              TrackLanguage = l
+                                                                              LanguageChanged?.Invoke(l)
+                                                                          End Sub, lng)
+                Next
+            End If
+
+            Dim selectedPath = LanguageMenu.GetItems().OfType(Of MenuItemEx)().
+                Where(Function(x) TypeOf x.Tag Is Language AndAlso DirectCast(x.Tag, Language).Name = TrackLanguage?.Name).
+                OrderBy(Function(x) If(x.Path, "").Length).FirstOrDefault()?.Path
+
+            For Each item In LanguageMenu.GetItems().OfType(Of MenuItemEx)()
+                item.Marked = selectedPath <> "" AndAlso (item.Path = selectedPath OrElse selectedPath.StartsWith(item.Path + " | "))
+            Next
+
+            LanguageMenu.Show(Me, New PointF(0, Height))
+            MyBase.OnClick(e)
         End Sub
     End Class
 

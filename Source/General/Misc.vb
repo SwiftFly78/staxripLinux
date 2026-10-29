@@ -1079,7 +1079,7 @@ Public Class AudioTrack
     <NonSerialized>
     Private ReadOnly _index As Integer
     <NonSerialized>
-    Private _languageLabel As AudioLanguageLabel
+    Private _languageButton As AudioLanguageButton
     <NonSerialized>
     Private _nameLabel As AudioNameButtonLabel
     <NonSerialized>
@@ -1119,14 +1119,18 @@ Public Class AudioTrack
         End Get
     End Property
 
-    Public Property LanguageLabel As AudioLanguageLabel
+    Public Property LanguageButton As AudioLanguageButton
         Get
-            Dim ret = If(_languageLabel, New AudioLanguageLabel())
-            ret.Text = If(_audioProfile IsNot Nothing, _audioProfile.Language.Name, ret.Text)
+            Dim ret = If(_languageButton, New AudioLanguageButton())
+
+            If _audioProfile IsNot Nothing Then
+                ret.TrackLanguage = _audioProfile.Language
+            End If
+
             Return ret
         End Get
         Set
-            _languageLabel = Value
+            _languageButton = Value
         End Set
     End Property
 

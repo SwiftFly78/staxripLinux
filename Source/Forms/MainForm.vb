@@ -1071,8 +1071,14 @@ Partial Public Class MainForm
                 Dim audioProfile As AudioProfile = If(index < proj.AudioTracks.Count AndAlso proj.AudioTracks(index)?.AudioProfile IsNot Nothing, proj.AudioTracks(index)?.AudioProfile, New MuxAudioProfile())
                 If audioProfile.Streams Is Nothing OrElse Not audioProfile.Streams.Any() Then audioProfile.Streams = streams
                 Dim textEdit = New AudioTextEdit(index)
-                Dim languageLabel = New AudioLanguageLabel(index) With {
-                    .Text = audioProfile.Language.Name
+                Dim languageButton = New AudioLanguageButton(index) With {
+                    .TrackLanguage = audioProfile.Language,
+                    .LanguageChanged = Sub(lng)
+                                           audioTrack.AudioProfile.Language = lng
+                                           UpdateAudioMenus()
+                                           UpdateSizeOrBitrate()
+                                           Assistant()
+                                       End Sub
                 }
                 Dim nameLabel = New AudioNameButtonLabel(index) With {.ContextMenuStripEx = New ContextMenuStripEx}
                 Dim editLabel = New AudioEditButtonLabel(index) With {
@@ -1081,7 +1087,7 @@ Partial Public Class MainForm
                                        UpdateAudioMenus()
                                        UpdateSizeOrBitrate()
                                        nameLabel.Text = g.ConvertPath(audioTrack.AudioProfile.Name)
-                                       languageLabel.Text = audioTrack.AudioProfile.Language.Name
+                                       languageButton.TrackLanguage = audioTrack.AudioProfile.Language
                                        ShowAudioTip(audioTrack.AudioProfile)
                                    End Sub
                 }
@@ -1109,7 +1115,7 @@ Partial Public Class MainForm
                                                  textEditContextMenuStripEx.Show(menuButton, 0, menuButton.Height)
                                              End Sub
 
-                TipProvider.SetTip("Language of the track, Edit changes it", languageLabel)
+                TipProvider.SetTip("Language of the track", languageButton)
                 TipProvider.SetTip("Audio profile of the track", nameLabel)
                 TipProvider.SetTip("Options of the track for the current project or template", editLabel)
                 TipProvider.SetTip("Source streams, files and actions of the track", menuButton)
@@ -1119,11 +1125,11 @@ Partial Public Class MainForm
                 AddHandler textEdit.MouseDown, textEditMouseDown
 
                 If proj.AudioTracks.ElementAtOrDefault(index) Is Nothing Then
-                    audioTrack = New AudioTrack(index) With {.AudioProfile = audioProfile, .EditLabel = editLabel, .LanguageLabel = languageLabel, .NameLabel = nameLabel, .TextEdit = textEdit,
+                    audioTrack = New AudioTrack(index) With {.AudioProfile = audioProfile, .EditLabel = editLabel, .LanguageButton = languageButton, .NameLabel = nameLabel, .TextEdit = textEdit,
                         .RowLabel = New AudioRowLabel(index), .MenuButton = menuButton}
                     proj.AudioTracks.Add(audioTrack)
                 Else
-                    audioTrack = New AudioTrack(index) With {.AudioProfile = proj.AudioTracks(index).AudioProfile, .EditLabel = editLabel, .LanguageLabel = languageLabel, .NameLabel = nameLabel, .TextEdit = textEdit,
+                    audioTrack = New AudioTrack(index) With {.AudioProfile = proj.AudioTracks(index).AudioProfile, .EditLabel = editLabel, .LanguageButton = languageButton, .NameLabel = nameLabel, .TextEdit = textEdit,
                         .RowLabel = New AudioRowLabel(index), .MenuButton = menuButton}
                     proj.AudioTracks(index) = audioTrack
                 End If
@@ -1139,7 +1145,7 @@ Partial Public Class MainForm
                     New TableCell(track.RowLabel),
                     New TableCell(track.TextEdit, True),
                     New TableCell(track.MenuButton),
-                    New TableCell(track.LanguageLabel),
+                    New TableCell(track.LanguageButton),
                     New TableCell(track.NameLabel),
                     New TableCell(track.EditLabel)))
             Next
@@ -1177,7 +1183,7 @@ Partial Public Class MainForm
 
             Dim shown = IsAudioTrackShown(track)
 
-            For Each control In New Control() {track.RowLabel, track.TextEdit, track.MenuButton, track.LanguageLabel, track.NameLabel, track.EditLabel}
+            For Each control In New Control() {track.RowLabel, track.TextEdit, track.MenuButton, track.LanguageButton, track.NameLabel, track.EditLabel}
                 control.Visible = shown
             Next
 
@@ -1323,7 +1329,7 @@ Partial Public Class MainForm
                            End If
 
                            dest.AudioProfile.Language = source.Language
-                           dest.LanguageLabel.Invalidate()
+                           dest.LanguageButton.Invalidate()
                        End Sub
 
         For index = 0 To audioTracks.Count - 1
@@ -1397,7 +1403,7 @@ Partial Public Class MainForm
             UpdateSizeOrBitrate()
         End If
 
-        audioTrack.LanguageLabel?.Invalidate()
+        audioTrack.LanguageButton?.Invalidate()
         audioTrack.NameLabel.Text = g.ConvertPath(audioTrack.AudioProfile.Name)
     End Sub
 
@@ -5051,7 +5057,7 @@ Partial Public Class MainForm
                                      te.Text = temp.Name + " (" + ap.File.Ext + ")"
                                      ap.Stream = temp
 
-                                     audioTrack.LanguageLabel.Invalidate()
+                                     audioTrack.LanguageButton.Invalidate()
                                      UpdateSizeOrBitrate()
                                  End Sub
 
