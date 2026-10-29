@@ -7,10 +7,6 @@ Partial Public Class MainForm
 
     Private Const OpenSourceTip = "Drop video files on the window, or open them with Open in the toolbar."
 
-    Shared Function JoinFacts(ParamArray values As String()) As String
-        Return values.Where(Function(i) i <> "").Join("  ·  ")
-    End Function
-
     Function Assistant(Optional refreshScript As Boolean = True) As Boolean
         If SkipAssistant Then Return False
 
@@ -61,7 +57,6 @@ Partial Public Class MainForm
             End If
 
             lAspectRatioError.Text = Calc.GetAspectRatioError.ToInvariantString("f2") + "%"
-            lCrop.Text = If(isCropped, $"{cropw}/{croph}", "disabled")
             lCrop2.Text = If(isCropped, $"{p.CropLeft}, {p.CropRight} / {p.CropTop}, {p.CropBottom}", "-")
 
             Dim widthZoom = p.TargetWidth / cropw * 100
@@ -82,9 +77,7 @@ Partial Public Class MainForm
             lPAR.Text = If(Calc.IsARSignalingRequired OrElse (par.X = 1 AndAlso par.Y = 1), par.X & ":" & par.Y, "n/a")
             lDAR.Text = Calc.GetTargetDAR.ToInvariantString.Shorten(8)
             lSAR.Text = (p.TargetWidth / p.TargetHeight).ToInvariantString.Shorten(8)
-            lSourceDar.Text = Calc.GetSourceDAR.ToInvariantString.Shorten(8)
-            par = Calc.GetSimpleSourcePAR
-            lSourcePAR.Text = par.X & ":" & par.Y
+            Dim sourcePar = Calc.GetSimpleSourcePAR
 
             If p.SourceSeconds > 0 Then
                 Dim size = If(p.SourceVideoSize > 0, p.SourceVideoSize, p.SourceSize)
@@ -94,48 +87,48 @@ Partial Public Class MainForm
                     sizeText = $"[{sizeText}]"
                 End If
 
-                lSource1.Text = JoinFacts(
-                    g.GetTimeString(p.SourceSeconds),
-                    sizeText,
-                    If(p.SourceBitrate > 0, (p.SourceBitrate / 1000).ToInvariantString("f1") + " Mb/s", ""),
-                    p.SourceFrameRate.ToInvariantString.Shorten(9) + " fps",
-                    p.SourceFrameRateMode)
+                lSource1.SetFacts(
+                    (g.GetTimeString(p.SourceSeconds), True),
+                    (sizeText, False),
+                    (If(p.SourceBitrate > 0, (p.SourceBitrate / 1000).ToInvariantString("f1") + " Mb/s", ""), False),
+                    (p.SourceFrameRate.ToInvariantString.Shorten(9) + " fps", True),
+                    (p.SourceFrameRateMode, False))
 
-                lSource2.Text = JoinFacts(
-                    p.SourceWidth & "×" & p.SourceHeight, p.SourceColorSpace,
-                    p.SourceChromaSubsampling, If(p.SourceVideoBitDepth <> 0, p.SourceVideoBitDepth & "-bit", ""),
-                    p.SourceVideoHdrFormat,
-                    p.SourceScanType, If(p.SourceScanType.EqualsAny("Interlaced", "MBAFF"), p.SourceScanOrder, ""),
-                    p.SourceVideoFormat, p.SourceVideoFormatProfile)
+                lSource2.SetFacts(
+                    (p.SourceWidth & "×" & p.SourceHeight, True),
+                    (p.SourceColorSpace, False),
+                    (p.SourceChromaSubsampling, False),
+                    (If(p.SourceVideoBitDepth <> 0, p.SourceVideoBitDepth & "-bit", ""), False),
+                    (p.SourceVideoHdrFormat, True),
+                    (p.SourceScanType, False),
+                    (If(p.SourceScanType.EqualsAny("Interlaced", "MBAFF"), p.SourceScanOrder, ""), False),
+                    (p.SourceVideoFormat, True),
+                    (p.SourceVideoFormatProfile, False),
+                    ("PAR " & sourcePar.X & ":" & sourcePar.Y, False),
+                    ("DAR " & Calc.GetSourceDAR.ToInvariantString.Shorten(8), False))
 
-                lTarget1.Text = JoinFacts(g.GetTimeString(p.TargetSeconds),
-                    p.TargetFrameRate.ToInvariantString.Shorten(9) + " fps", p.Script.Info.Width & "×" & p.Script.Info.Height,
-                    "Audio " & CInt(Calc.GetAudioBitrate) & " kb/s")
+                lTarget1.SetFacts(
+                    (g.GetTimeString(p.TargetSeconds), True),
+                    (p.TargetFrameRate.ToInvariantString.Shorten(9) + " fps", False),
+                    (p.Script.Info.Width & "×" & p.Script.Info.Height, True),
+                    ("Audio " & CInt(Calc.GetAudioBitrate) & " kb/s", False))
 
                 If p.VideoEncoder.IsCompCheckEnabled Then
-                    laTarget2.Text = JoinFacts(
-                        "Quality " & CInt(Calc.GetPercent).ToInvariantString() + " %",
-                        "Compressibility " + p.Compressibility.ToInvariantString("f2"))
+                    laTarget2.SetFacts(
+                        ("Quality " & CInt(Calc.GetPercent).ToInvariantString() + " %", False),
+                        ("Compressibility " + p.Compressibility.ToInvariantString("f2"), False))
                 Else
                     Dim subtitles = p.VideoEncoder.Muxer.Subtitles.Where(Function(i) i.Enabled).ToList
                     Dim types = subtitles.Select(Function(i) i.TypeName).Distinct.Join("/")
 
-                    laTarget2.Text = If(subtitles.Count = 0, "No subtitles",
-                        subtitles.Count & If(subtitles.Count = 1, " subtitle (", " subtitles (") & types & ")")
+                    laTarget2.SetFacts( (If(subtitles.Count = 0, "No subtitles",
+                        subtitles.Count & If(subtitles.Count = 1, " subtitle (", " subtitles (") & types & ")"), False))
                 End If
             Else
-                lTarget1.Text = ""
-                lSource1.Text = ""
-                laTarget2.Text = ""
-                lSource2.Text = ""
+                For Each label In {lSource1, lSource2, lTarget1, laTarget2}
+                    label.SetFacts()
+                Next
             End If
-
-            'without source the facts are empty
-            For Each label In {lSource1, lSource2, lTarget1, laTarget2}
-                label.Visible = label.Text <> ""
-            Next
-
-            SourceCropRow.Visible = p.SourceSeconds > 0
 
             AssistantClickAction = Nothing
             CanIgnoreTip = True

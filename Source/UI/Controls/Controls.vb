@@ -350,9 +350,16 @@ Namespace UI
             Set(value As String)
                 If value <> InnerControl.Text Then
                     InnerControl.Text = If(value, "")
+
+                    If ShowEndOfText AndAlso SingleLineBox IsNot Nothing AndAlso Not SingleLineBox.HasFocus Then
+                        SingleLineBox.CaretIndex = SingleLineBox.Text.Length
+                    End If
                 End If
             End Set
         End Property
+
+        'paths show their file name when they don't fit
+        Property ShowEndOfText As Boolean
 
         Sub SetTextWithoutTextChangedEvent(text As String)
             BlockTextChanged = True
@@ -1027,6 +1034,90 @@ Namespace UI
                 ContentPanel.Content = value
             End Set
         End Property
+    End Class
+
+    'facts separated by dots, secondary facts are dimmed like the dim-label style of GTK, so the key
+    'values stand out, the lines break between facts and the dots only separate facts of a line
+    Public Class FactsLabel
+        Inherits LabelEx
+
+        Private Const Separator = "  ·  "
+        Private Facts As New List(Of (Text As String, IsKey As Boolean))
+        Private LayoutWidth As Integer = -1
+        Private LastMarkup As String
+
+        Sub New()
+            Wrap = WrapMode.Word
+            Dim label = NativeLabel
+
+            If label IsNot Nothing Then
+                AddHandler label.SizeAllocated, Sub(sender, e)
+                                                    If e.Allocation.Width <> LayoutWidth Then
+                                                        LayoutWidth = e.Allocation.Width
+                                                        Application.Instance.AsyncInvoke(AddressOf UpdateMarkup)
+                                                    End If
+                                                End Sub
+            End If
+        End Sub
+
+        ReadOnly Property NativeLabel As Global.Gtk.Label
+            Get
+                Return TryCast(ControlObject, Global.Gtk.Label)
+            End Get
+        End Property
+
+        'facts are only wrapped as a whole
+        Sub SetFacts(ParamArray facts As (Text As String, IsKey As Boolean)())
+            Me.Facts = facts.Where(Function(i) i.Text <> "").Select(Function(i) (i.Text.Replace(" "c, Convert.ToChar(&HA0)), i.IsKey)).ToList
+            Visible = Me.Facts.Count > 0
+            UpdateMarkup()
+        End Sub
+
+        Private Sub UpdateMarkup()
+            Dim label = NativeLabel
+
+            If label Is Nothing Then
+                Me.Text = Facts.Select(Function(i) i.Text).Join(Separator)
+                Exit Sub
+            End If
+
+            Dim measure = Function(text As String)
+                              Dim width, height As Integer
+
+                              Using layout = label.CreatePangoLayout(text)
+                                  layout.GetPixelSize(width, height)
+                              End Using
+
+                              Return width
+                          End Function
+
+            Dim dimmed = Function(text As String) $"<span alpha=""55%"">{GLib.Markup.EscapeText(text)}</span>"
+            Dim available = label.Allocation.Width - 2
+            Dim separatorWidth = measure(Separator)
+            Dim lines As New List(Of List(Of String))
+            Dim lineWidth = 0
+
+            For Each fact In Facts
+                Dim width = measure(fact.Text)
+                Dim markup = If(fact.IsKey, GLib.Markup.EscapeText(fact.Text), dimmed(fact.Text))
+
+                'without allocation all facts are in one line, it's wrapped when necessary
+                If lines.Count = 0 OrElse (available > 2 AndAlso lineWidth + separatorWidth + width > available) Then
+                    lines.Add(New List(Of String) From {markup})
+                    lineWidth = width
+                Else
+                    lines.Last.Add(markup)
+                    lineWidth += separatorWidth + width
+                End If
+            Next
+
+            Dim value = lines.Select(Function(line) line.Join(dimmed(Separator))).Join(Environment.NewLine)
+
+            If value <> LastMarkup Then
+                LastMarkup = value
+                label.Markup = value
+            End If
+        End Sub
     End Class
 
     'button with an action and an arrow button that shows a menu, linked like the split buttons of GTK apps

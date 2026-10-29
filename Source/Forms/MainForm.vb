@@ -28,8 +28,8 @@ Partial Public Class MainForm
     Public WithEvents tbTargetSize As TextEdit
     Public WithEvents laBitrate As LabelEx
     Public WithEvents tbBitrate As TextEdit
-    Public WithEvents lTarget1 As LabelEx
-    Public WithEvents lSource1 As LabelEx
+    Public WithEvents lTarget1 As FactsLabel
+    Public WithEvents lSource1 As FactsLabel
     Public WithEvents lPixel As LabelEx
     Public WithEvents lPixelText As LabelEx
     Public WithEvents tbResize As TrackBarEx
@@ -41,10 +41,9 @@ Partial Public Class MainForm
     Public WithEvents lTargetWidth As LabelEx
     Public WithEvents lDAR As LabelEx
     Public WithEvents blTargetDarText As ButtonEx
-    Public WithEvents lCrop As LabelEx
     Public WithEvents lCropText As LabelEx
-    Public WithEvents lSource2 As LabelEx
-    Public WithEvents laTarget2 As LabelEx
+    Public WithEvents lSource2 As FactsLabel
+    Public WithEvents laTarget2 As FactsLabel
     Public WithEvents MenuStrip As MenuBar
     Public WithEvents pnEncoder As Panel
     Public WithEvents FiltersListView As FiltersListView
@@ -63,13 +62,8 @@ Partial Public Class MainForm
     Public WithEvents lAspectRatioErrorText As LabelEx
     Public WithEvents blCropText As ButtonEx
     Public WithEvents lCrop2 As LabelEx
-    Public WithEvents blSourceParText As ButtonEx
-    Public WithEvents lSourcePAR As LabelEx
-    Public WithEvents lSourceDar As LabelEx
     Public WithEvents lSAR As LabelEx
     Public WithEvents lSarText As LabelEx
-    Public WithEvents blSourceDarText As ButtonEx
-    Public SourceCropRow As StackLayout
     Public TargetSizeRow As TableLayout
     Public cardSource As Card
     Public cardTarget As Card
@@ -116,25 +110,19 @@ Partial Public Class MainForm
         bnAddAudio = New ButtonEx With {.Text = "Add Track", .IconName = Styling.GetIconName("list-add-symbolic"), .MinimumSize = Size.Empty}
         MenuStrip = New MenuBar With {.IncludeSystemItems = MenuBarSystemItems.None}
 
-        tbSourceFile = New TextEdit
-        lSource1 = New LabelEx With {.Wrap = WrapMode.Word}
-        lSource2 = New LabelEx With {.Wrap = WrapMode.Word}
-        lCropText = dimLabel("Crop")
-        lCrop = label("disabled")
-        blSourceParText = flatButton("PAR", True)
-        lSourcePAR = label("-")
-        blSourceDarText = flatButton("DAR", True)
-        lSourceDar = label("-")
+        tbSourceFile = New TextEdit With {.ShowEndOfText = True}
+        lSource1 = New FactsLabel
+        lSource2 = New FactsLabel
         bnSourceMenu = New ButtonEx With {.IconName = menuIcon, .MinimumSize = Size.Empty}
         bnSourceMenu.AddStyleClass("flat")
 
-        tbTargetFile = New TextEdit
+        tbTargetFile = New TextEdit With {.ShowEndOfText = True}
         blFilesize = flatButton("Size", True)
         tbTargetSize = New TextEdit With {.TextAlign = HorizontalAlignment.Center}
         laBitrate = dimLabel("Video Bitrate")
         tbBitrate = New TextEdit With {.TextAlign = HorizontalAlignment.Center}
-        lTarget1 = New LabelEx With {.Wrap = WrapMode.Word}
-        laTarget2 = New LabelEx With {.Wrap = WrapMode.Word}
+        lTarget1 = New FactsLabel
+        laTarget2 = New FactsLabel
         bnMuxer = New ButtonEx With {.ShowMenuSymbol = True, .MinimumSize = Size.Empty}
         bnMuxerOptions = New ButtonEx With {.Text = "Options...", .MinimumSize = Size.Empty}
         bnTargetMenu = New ButtonEx With {.IconName = menuIcon, .MinimumSize = Size.Empty}
@@ -173,9 +161,8 @@ Partial Public Class MainForm
 
         Dim rowSpacing = New Size(FH(0.5), FH(0.35))
 
-        SourceCropRow = HRow(lCropText, lCrop, blSourceParText, lSourcePAR, blSourceDarText, lSourceDar)
         cardSource = New Card("Source") With {.HeaderRight = bnSourceMenu}
-        cardSource.Content = New TableLayout(Row(tbSourceFile), Row(lSource1), Row(lSource2), Row(SourceCropRow), New TableRow With {.ScaleHeight = True}) With {.Spacing = rowSpacing}
+        cardSource.Content = New TableLayout(Row(tbSourceFile), Row(lSource1), Row(lSource2), New TableRow With {.ScaleHeight = True}) With {.Spacing = rowSpacing}
 
         TargetSizeRow = New TableLayout(Row(blFilesize, Scaled(tbTargetSize), laBitrate, Scaled(tbBitrate))) With {.Spacing = rowSpacing}
         cardTarget = New Card("Target") With {.HeaderRight = HRow(bnMuxer, bnMuxerOptions, bnTargetMenu)}
@@ -4793,8 +4780,6 @@ Partial Public Class MainForm
 
     'the buttons only show the menus, menu holders keep them from opening the menus by themselves
     Private ReadOnly ResizeMenuHolder As New MenuHolder
-    Private ReadOnly SourceParMenuHolder As New MenuHolder
-    Private ReadOnly SourceDarMenuHolder As New MenuHolder
     Private ReadOnly TargetParMenuHolder As New MenuHolder
     Private ReadOnly TargetDarMenuHolder As New MenuHolder
 
@@ -4804,20 +4789,6 @@ Partial Public Class MainForm
         cms.Add("Image Options...", Sub() ShowOptionsDialog("Image"))
         cms.Add("Edit Menu...", Sub() s.TargetImageSizeMenu = TextCustomMenu.EditMenu(s.TargetImageSizeMenu, ApplicationSettings.GetDefaultTargetImageSizeMenu, Me))
         cms.Show(bnResize, 0, bnResize.Height)
-    End Sub
-
-    Sub blSourceParText_Click(sender As Object, e As EventArgs) Handles blSourceParText.Click
-        Dim menu = TextCustomMenu.GetMenu(s.ParMenu, SourceParMenuHolder, AddressOf SourceParMenuClick)
-        menu.Add("-")
-        menu.Items.Add(New MenuItemEx("Edit Menu...", Sub() s.ParMenu = TextCustomMenu.EditMenu(s.ParMenu, ApplicationSettings.GetParMenu, Me)))
-        menu.Show(blSourceParText, 0, blSourceParText.Height)
-    End Sub
-
-    Sub blSourceDarText_Click(sender As Object, e As EventArgs) Handles blSourceDarText.Click
-        Dim menu = TextCustomMenu.GetMenu(s.DarMenu, SourceDarMenuHolder, AddressOf SourceDarMenuClick)
-        menu.Add("-")
-        menu.Items.Add(New MenuItemEx("Edit Menu...", Sub() s.DarMenu = TextCustomMenu.EditMenu(s.DarMenu, ApplicationSettings.GetDarMenu, Me)))
-        menu.Show(blSourceDarText, 0, blSourceDarText.Height)
     End Sub
 
     Sub blTargetDarText_Click(sender As Object, e As EventArgs) Handles blTargetDarText.Click
@@ -4944,10 +4915,7 @@ Partial Public Class MainForm
             .SetTip("Zoom factor between source and target image size", lZoom, lZoomText)
             .SetTip("Press Ctrl while using the slider to resize anamorphic.", tbResize)
             .SetTip("Aspect Ratio Error", lAspectRatioError, lAspectRatioErrorText)
-            .SetTip("Cropped image size", lCrop, lCropText)
             .SetTip("Cropped sides in format: Left, Right / Top, Bottom", blCropText, lCrop2)
-            .SetTip("Source Display Aspect Ratio", lSourceDar, blSourceDarText)
-            .SetTip("Source Pixel Aspect Ratio", lSourcePAR, blSourceParText)
             .SetTip("Target Video Bitrate in Kbps (Up/Down key)", tbBitrate, laBitrate)
             .SetTip("Target Image Width in pixel (Up/Down key)", tbTargetWidth, lTargetWidth)
             .SetTip("Target Image Height in pixel (Up/Down key)", tbTargetHeight, lTargetHeight)
@@ -5192,6 +5160,11 @@ Partial Public Class MainForm
         SourceFileMenu.Items.Add(New SeparatorMenuItem)
         SourceFileMenu.Add("Copy", Sub() tbSourceFile.Copy(), tbSourceFile.Text <> "", "Copies the selected text to the clipboard.").SetImage(Symbol.Copy)
         SourceFileMenu.Add("Paste", Sub() tbSourceFile.Paste(), Clipboard.GetText.Trim <> "", "Copies the full source file path to the clipboard.").SetImage(Symbol.Paste)
+        SourceFileMenu.Items.Add(New SeparatorMenuItem)
+        TextCustomMenu.AddSubmenu(SourceFileMenu.Items, "Source PAR", s.ParMenu, AddressOf SourceParMenuClick,
+                                  Sub() s.ParMenu = TextCustomMenu.EditMenu(s.ParMenu, ApplicationSettings.GetParMenu, Me))
+        TextCustomMenu.AddSubmenu(SourceFileMenu.Items, "Source DAR", s.DarMenu, AddressOf SourceDarMenuClick,
+                                  Sub() s.DarMenu = TextCustomMenu.EditMenu(s.DarMenu, ApplicationSettings.GetDarMenu, Me))
     End Sub
 
     Sub MainForm_FilesDropped(files As String()) Handles Me.FilesDropped

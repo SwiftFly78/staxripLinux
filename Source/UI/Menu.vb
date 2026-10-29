@@ -765,6 +765,24 @@ Namespace UI
 
             Return ret
         End Function
+
+        'the menu of a definition as submenu, the last item edits the definition
+        Shared Sub AddSubmenu(items As MenuItemCollection, name As String, definition As String, action As Action(Of String), editAction As Action)
+            If Not String.IsNullOrWhiteSpace(definition) Then
+                For Each i In definition.FixBreak.TrimEnd(BR.ToCharArray).SplitKeepEmpty(BR)
+                    If i.Contains("=") Then
+                        MenuItemEx.Add(items, name + " | " + i.Left("=").Trim, action, i.Right("=").Trim, Nothing)
+                    ElseIf i.EndsWith("-") Then
+                        MenuItemEx.Add(items, name + " | " + i)
+                    ElseIf i = "" Then
+                        MenuItemEx.Add(items, name + " | -")
+                    End If
+                Next
+            End If
+
+            MenuItemEx.Add(items, name + " | -")
+            MenuItemEx.Add(items, name + " | Edit Menu...", editAction)
+        End Sub
     End Class
 
     'implemented by controls that expose a WinForms like ContextMenuStrip property
