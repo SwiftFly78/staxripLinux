@@ -368,14 +368,6 @@ Public Class NVEnc
         ImportCommandLine(cl)
     End Sub
 
-    Overrides Function GetMenu() As MenuList
-        Dim ret As New MenuList From {
-            {"Encoder Options", AddressOf ShowConfigDialog},
-            {"Container Configuration", AddressOf OpenMuxerConfigDialog}
-        }
-        Return ret
-    End Function
-
     Overrides Function CreateEditControl() As Control
         Return New NVEncControl(Me)
     End Function

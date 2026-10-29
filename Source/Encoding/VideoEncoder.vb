@@ -103,9 +103,6 @@ Public MustInherit Class VideoEncoder
     Overridable Function GetCommandLine(includePaths As Boolean, includeExecutable As Boolean) As String
     End Function
 
-    Overridable Function GetMenu() As MenuList
-    End Function
-
     Overridable Function CanChunkEncode() As Boolean
         Return False
     End Function
@@ -139,21 +136,41 @@ Public MustInherit Class VideoEncoder
     Overridable Sub SetMetaData(sourceFile As String)
     End Sub
 
+    'encoders without quick settings show their command line, the options of the encoder and the container
+    'are opened with the buttons in the heading of the video card
     Overrides Function CreateEditControl() As Control
+        Dim commandLine = ""
+
+        Try
+            commandLine = If(GetCommandLine(False, False), "").Trim
+        Catch
+        End Try
+
+        Dim label As New LabelEx With {.Wrap = WrapMode.Word, .VerticalAlignment = VerticalAlignment.Top}
+
+        If TypeOf Me Is NullEncoder Then
+            label.Text = "The video stream is copied without encoding."
+        Else
+            label.Text = commandLine
+            label.Font = FontManager.GetCodeFont()
+        End If
+
+        label.AddStyleClass("dim-label")
+
         Dim ret As New StackLayout With {
             .Orientation = Orientation.Vertical,
             .HorizontalContentAlignment = HorizontalAlignment.Stretch,
-            .Spacing = FH(0.2),
-            .Padding = New Padding(FH(0.2))}
+            .Spacing = FH(0.5)}
 
-        For Each pair In GetMenu()
-            Dim bn As New ButtonEx(pair.Key)
-            Dim tmp = pair
-            AddHandler bn.Click, Sub() tmp.Value.Invoke()
-            ret.Items.Add(New StackLayoutItem(bn))
-        Next
+        ret.Items.Add(New StackLayoutItem(label))
 
-        Return New Scrollable With {.Content = ret, .Border = BorderType.None}
+        If IsCompCheckEnabled Then
+            Dim bn As New ButtonEx("Run Compressibility Check") With {.MinimumSize = Size.Empty}
+            AddHandler bn.Click, Sub() RunCompCheck()
+            ret.Items.Add(New StackLayoutItem(bn, HorizontalAlignment.Left))
+        End If
+
+        Return ret
     End Function
 
     Overridable ReadOnly Property IsCompCheckEnabled() As Boolean
@@ -466,14 +483,6 @@ Public MustInherit Class VideoEncoder
         ShowConfigDialog()
         Return DialogResult.OK
     End Function
-
-    Public Class MenuList
-        Inherits List(Of KeyValuePair(Of String, Action))
-
-        Overloads Sub Add(text As String, action As Action)
-            Add(New KeyValuePair(Of String, Action)(text, action))
-        End Sub
-    End Class
 End Class
 
 <Serializable()>
@@ -657,20 +666,6 @@ Public Class BatchEncoder
         Return CommandLines
     End Function
 
-    Overrides Function GetMenu() As MenuList
-        Dim ret As New MenuList
-
-        ret.Add("Codec Configuration", AddressOf ShowConfigDialog)
-
-        If IsCompCheckEnabled Then
-            ret.Add("Run Compressibility Check", AddressOf RunCompCheck)
-        End If
-
-        ret.Add("Container Configuration", AddressOf OpenMuxerConfigDialog)
-
-        Return ret
-    End Function
-
     Overrides Sub Encode()
         p.Script.Synchronize()
 
@@ -836,12 +831,6 @@ Public Class NullEncoder
             End Select
         End If
     End Sub
-
-    Overrides Function GetMenu() As MenuList
-        Dim ret As New MenuList
-        ret.Add("Container Configuration", AddressOf OpenMuxerConfigDialog)
-        Return ret
-    End Function
 
     Overrides Sub ShowConfigDialog(Optional param As CommandLineParam = Nothing)
     End Sub

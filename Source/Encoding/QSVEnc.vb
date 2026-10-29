@@ -377,13 +377,6 @@ Public Class QSVEnc
         ImportCommandLine(cl)
     End Sub
 
-    Overrides Function GetMenu() As MenuList
-        Dim ret As New MenuList
-        ret.Add("Encoder Options", AddressOf ShowConfigDialog)
-        ret.Add("Container Configuration", AddressOf OpenMuxerConfigDialog)
-        Return ret
-    End Function
-
     Overrides Property QualityMode() As Boolean
         Get
             Return Params.Mode.ValueText.EqualsAny("cqp", "icq", "la-icq", "vcm")

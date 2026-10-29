@@ -363,14 +363,6 @@ Public Class VCEEnc
         ImportCommandLine(cl)
     End Sub
 
-    Overrides Function GetMenu() As MenuList
-        Dim ret As New MenuList From {
-            {"Encoder Options", AddressOf ShowConfigDialog},
-            {"Container Configuration", AddressOf OpenMuxerConfigDialog}
-        }
-        Return ret
-    End Function
-
     Overrides Property QualityMode() As Boolean
         Get
             Return Params.Mode.Value = 0

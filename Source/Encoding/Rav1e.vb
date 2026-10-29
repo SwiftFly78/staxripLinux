@@ -87,13 +87,6 @@ Public Class Rav1e
         Return Params.GetArgs(pass, script, OutputPath.DirAndBase + OutputExtFull, includePaths, True)
     End Function
 
-    Overrides Function GetMenu() As MenuList
-        Dim ret As New MenuList
-        ret.Add("Encoder Options", AddressOf ShowConfigDialog)
-        ret.Add("Container Configuration", AddressOf OpenMuxerConfigDialog)
-        Return ret
-    End Function
-
     Overrides Sub ShowConfigDialog(Optional param As CommandLineParam = Nothing)
         Dim newParams As New Rav1eParams
         Dim store = ObjectHelp.GetCopy(ParamsStore)

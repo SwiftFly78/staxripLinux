@@ -158,13 +158,6 @@ Public Class AOMEnc
         Return Params.GetArgs(pass, startFrame, endFrame, chunkName, script, OutputPath.DirAndBase + OutputExtFull, includePaths, True)
     End Function
 
-    Overrides Function GetMenu() As MenuList
-        Return New MenuList From {
-            {"Encoder Options", AddressOf ShowConfigDialog},
-            {"Container Configuration", AddressOf OpenMuxerConfigDialog}
-        }
-    End Function
-
     Overrides Sub ShowConfigDialog(Optional param As CommandLineParam = Nothing)
         Dim newParams As New AV1Params
         Dim store = ObjectHelp.GetCopy(ParamsStore)
