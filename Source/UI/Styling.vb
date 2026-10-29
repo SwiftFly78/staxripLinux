@@ -156,18 +156,28 @@ label.staxrip-attention {
             Return ret
         End Function
 
+        'an icon of the theme in the given size as Eto control
+        Function CreateIconControl(iconName As String, size As Integer) As Control
+            Dim image = Global.Gtk.Image.NewFromIconName(iconName, Global.Gtk.IconSize.Dialog)
+            image.PixelSize = size
+            image.Show()
+            Return New NativeControlHost(image)
+        End Function
+
         'shows an icon left of the button text and a menu arrow right of it, fill aligns the text left and the arrow
         'right like in a combo box, Eto replaces the child of the button when the text changes, so this runs after
         'each change
         Sub SetButtonContent(button As Button, iconName As String, showMenuArrow As Boolean, Optional fill As Boolean = False)
+            SetButtonContent(button, iconName, If(showMenuArrow, GetIconName("pan-down-symbolic"), Nothing), fill)
+        End Sub
+
+        Sub SetButtonContent(button As Button, iconName As String, arrowName As String, fill As Boolean)
             Dim gtkButton = TryCast(button.ControlObject, Global.Gtk.Button)
             Dim label = TryCast(gtkButton?.Child, Global.Gtk.Label)
 
-            If gtkButton Is Nothing OrElse (iconName = "" AndAlso Not showMenuArrow) Then
+            If gtkButton Is Nothing OrElse (iconName = "" AndAlso arrowName = "") Then
                 Exit Sub
             End If
-
-            Dim arrowName = If(showMenuArrow, GetIconName("pan-down-symbolic"), Nothing)
 
             If label Is Nothing OrElse label.Text = "" Then
                 If iconName <> "" OrElse arrowName <> "" Then

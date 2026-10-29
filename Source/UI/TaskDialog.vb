@@ -115,6 +115,19 @@ Public Class TaskDialog(Of T)
         End Select
     End Function
 
+    Shared Function GetIconName(icon As TaskIcon) As String
+        Select Case icon
+            Case TaskIcon.Warning
+                Return Styling.GetIconName("dialog-warning", "dialog-warning-symbolic")
+            Case TaskIcon.Error
+                Return Styling.GetIconName("dialog-error", "dialog-error-symbolic")
+            Case TaskIcon.Question
+                Return Styling.GetIconName("dialog-question", "dialog-question-symbolic")
+            Case Else
+                Return Styling.GetIconName("dialog-information", "dialog-information-symbolic")
+        End Select
+    End Function
+
     Function GetText() As String
         Dim ret = Title
 
@@ -178,7 +191,7 @@ Public Class TaskDialog(Of T)
         }
 
         If Icon <> TaskIcon.None Then
-            Dim iconControl As New TaskDialogIcon(Icon) With {.Size = New Size(CInt(fh * 2.2), CInt(fh * 2.2))}
+            Dim iconControl = Styling.CreateIconControl(GetIconName(Icon), CInt(fh * 2.4))
             layout.AddRow(New TableLayout(New TableRow(New TableCell(iconControl), New TableCell(titleLabel, True))) With {.Spacing = New Size(fh, 0)})
         Else
             layout.AddRow(titleLabel)
@@ -238,6 +251,7 @@ Public Class TaskDialog(Of T)
         For Each command In CommandDefinitions
             Dim cmd = command
             Dim button As New Button With {.Text = cmd.Text, .Font = FontManager.GetDefaultFont(1)}
+            Styling.SetButtonContent(button, Nothing, Styling.GetIconName("go-next-symbolic"), True)
 
             Dim family = TryCast(CObj(cmd.Value), FontFamily)
 
@@ -258,7 +272,9 @@ Public Class TaskDialog(Of T)
             If cmd.Description <> "" Then
                 Dim stack As New StackLayout With {.Orientation = Orientation.Vertical, .HorizontalContentAlignment = HorizontalAlignment.Stretch, .Spacing = 2}
                 stack.Items.Add(button)
-                stack.Items.Add(New Label With {.Text = cmd.Description, .Wrap = WrapMode.Word, .Width = maxTextWidth, .TextColor = SystemColors.DisabledText})
+                Dim description As New Label With {.Text = cmd.Description, .Wrap = WrapMode.Word, .Width = maxTextWidth}
+                description.AddStyleClass("dim-label")
+                stack.Items.Add(description)
                 layout.AddRow(stack)
             Else
                 layout.AddRow(button)
@@ -274,12 +290,10 @@ Public Class TaskDialog(Of T)
         End If
 
         If ShowCopyButton Then
-            Dim copyLink As New LinkButton With {.Text = "Copy Message"}
-            AddHandler copyLink.Click, Sub()
-                                           Clipboard.Instance.Text = GetText()
-                                           copyLink.Text = "Copied"
-                                       End Sub
-            bottomRow.Items.Add(copyLink)
+            Dim copyButton As New ButtonEx With {.Text = "Copy Message", .IconName = Styling.GetIconName("edit-copy-symbolic"), .MinimumSize = Size.Empty}
+            copyButton.AddStyleClass("flat")
+            AddHandler copyButton.Click, Sub() Clipboard.Instance.Text = GetText()
+            bottomRow.Items.Add(copyButton)
         End If
 
         bottomRow.Items.Add(New StackLayoutItem(Nothing, True))
@@ -305,6 +319,7 @@ Public Class TaskDialog(Of T)
 
             If Dialog.DefaultButton Is Nothing AndAlso (def.Text = "OK" OrElse def.Text = "Yes") Then
                 Dialog.DefaultButton = button
+                button.AddStyleClass("suggested-action")
             End If
 
             If def.Value IsNot Nothing AndAlso def.Value.Equals(DialogResult.Cancel) Then
@@ -421,64 +436,6 @@ Public Class TaskDialogForm
         Minimizable = False
         Maximizable = False
         Icon = g.Icon
-    End Sub
-End Class
-
-Public Class TaskDialogIcon
-    Inherits Drawable
-
-    Private ReadOnly TaskIcon As TaskIcon
-
-    Sub New(icon As TaskIcon)
-        TaskIcon = icon
-    End Sub
-
-    Protected Overrides Sub OnPaint(e As PaintEventArgs)
-        MyBase.OnPaint(e)
-
-        Dim g = e.Graphics
-        g.AntiAlias = True
-        Dim size = Math.Min(Width, Height) - 2
-        Dim rect As New RectangleF(1, 1, size, size)
-        Dim color As Color
-        Dim glyph As String
-
-        Select Case TaskIcon
-            Case TaskIcon.Warning
-                color = Color.FromArgb(230, 160, 0)
-                glyph = "!"
-            Case TaskIcon.Error
-                color = Color.FromArgb(210, 40, 40)
-                glyph = "×"
-            Case TaskIcon.Question
-                color = Color.FromArgb(40, 110, 210)
-                glyph = "?"
-            Case TaskIcon.Shield
-                color = Color.FromArgb(40, 150, 80)
-                glyph = "✓"
-            Case Else
-                color = Color.FromArgb(40, 110, 210)
-                glyph = "i"
-        End Select
-
-        If TaskIcon = TaskIcon.Warning Then
-            g.FillPolygon(color, {New PointF(rect.Left + rect.Width / 2, rect.Top),
-                                  New PointF(rect.Right, rect.Bottom),
-                                  New PointF(rect.Left, rect.Bottom)})
-        Else
-            g.FillEllipse(color, rect)
-        End If
-
-        Using font = New Font(SystemFont.Bold, size * 0.45F)
-            Dim textSize = g.MeasureString(font, glyph)
-            Dim y = rect.Top + (rect.Height - textSize.Height) / 2
-
-            If TaskIcon = TaskIcon.Warning Then
-                y += rect.Height * 0.12F
-            End If
-
-            g.DrawText(font, Colors.White, rect.Left + (rect.Width - textSize.Width) / 2, y, glyph)
-        End Using
     End Sub
 End Class
 
