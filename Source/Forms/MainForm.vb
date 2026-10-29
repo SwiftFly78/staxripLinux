@@ -102,7 +102,7 @@ Partial Public Class MainForm
 
         bnOpen = New SplitButton("Open", Styling.GetIconName("document-open-symbolic"))
         bnPreview = toolButton("Preview", Styling.GetIconName("view-preview-symbolic", "video-display-symbolic"))
-        bnCrop = toolButton("Crop", Styling.GetIconName("transform-crop-symbolic", "image-crop-symbolic", "transform-crop"))
+        bnCrop = toolButton("Crop", Styling.GetIconName("transform-crop-symbolic", "image-crop-symbolic", "staxrip-crop-symbolic"))
         bnJobs = toolButton("Jobs", Styling.GetIconName("view-media-playlist-symbolic", "view-list-symbolic"))
         bnAddJob = New SplitButton("Add to Jobs", Styling.GetIconName("list-add-symbolic"), True)
         NextStep = New NextStepBar

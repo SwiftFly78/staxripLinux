@@ -91,6 +91,10 @@ button.staxrip-inline {
 }
 "
 
+        'symbolic icons for themes without them, like Adwaita without a crop icon
+        Private ReadOnly FallbackIcons As New Dictionary(Of String, String) From {
+            {"staxrip-crop-symbolic", "<svg xmlns=""http://www.w3.org/2000/svg"" width=""16"" height=""16""><path d=""M4 0h2v10h10v2H4zM0 4h12v12h-2V6H0z""/></svg>"}}
+
         'card headers share their height, so the headings of a row have the same baseline
         Private HeaderSizeGroup As Global.Gtk.SizeGroup
 
@@ -98,6 +102,26 @@ button.staxrip-inline {
             Dim provider As New Global.Gtk.CssProvider
             provider.LoadFromData(StyleSheet)
             Global.Gtk.StyleContext.AddProviderForScreen(Global.Gdk.Screen.Default, provider, 600)
+            AddFallbackIcons()
+        End Sub
+
+        Private Sub AddFallbackIcons()
+            Try
+                Dim dir = Path.Combine(Folder.XdgCacheHome, "StaxRip", "icons")
+                Directory.CreateDirectory(dir)
+
+                For Each pair In FallbackIcons
+                    Dim file = Path.Combine(dir, pair.Key + ".svg")
+
+                    If Not IO.File.Exists(file) OrElse IO.File.ReadAllText(file) <> pair.Value Then
+                        IO.File.WriteAllText(file, pair.Value)
+                    End If
+                Next
+
+                Global.Gtk.IconTheme.Default.AppendSearchPath(dir)
+            Catch ex As Exception
+                Debug.WriteLine(ex)
+            End Try
         End Sub
 
         Sub AddToHeaderSizeGroup(control As Control)
@@ -136,7 +160,10 @@ button.staxrip-inline {
             Dim theme = Global.Gtk.IconTheme.Default
 
             For Each name In names
-                If theme.HasIcon(name) Then
+                'HasIcon misses the icons of search paths outside of themes like the fallback icons
+                If theme.HasIcon(name) OrElse
+                    (name.StartsWith("staxrip-") AndAlso theme.LookupIcon(name, 16, CType(0, Global.Gtk.IconLookupFlags)) IsNot Nothing) Then
+
                     Return name
                 End If
             Next
