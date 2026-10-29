@@ -40,6 +40,32 @@ Namespace UI
             Next
         End Sub
 
+        'the keys of a string made by GetKeyString, like Ctrl+Shift+S
+        Shared Function ParseKeyString(text As String) As Keys
+            If String.IsNullOrWhiteSpace(text) Then
+                Return Keys.None
+            End If
+
+            Dim ret = Keys.None
+            Dim rest = text.Trim
+
+            For Each modifier In {("Ctrl+", Keys.Control), ("Alt+", Keys.Alt), ("Shift+", Keys.Shift)}
+                If rest.StartsWith(modifier.Item1) AndAlso rest.Length > modifier.Item1.Length Then
+                    ret = ret Or modifier.Item2
+                    rest = rest.Substring(modifier.Item1.Length)
+                End If
+            Next
+
+            Dim key = KeysTexts.FirstOrDefault(Function(i) i.Value = rest).Key
+            Dim parsed As Keys
+
+            If key = Keys.None AndAlso Not [Enum].TryParse(rest, parsed) Then
+                Return Keys.None
+            End If
+
+            Return ret Or If(key <> Keys.None, key, parsed)
+        End Function
+
         Shared Function GetKeyString(key As Keys) As String
             If key = Keys.None Then
                 Return ""

@@ -461,18 +461,31 @@ Namespace UI
             End Set
         End Property
 
+        'the shortcut is shown right aligned like native accelerators without installing one,
+        'the marked item shows a check icon in the icon column, so the texts stay aligned
         Sub UpdateText()
-            Dim value = TextValue.Replace("&", "&&")
+            MyBase.Text = TextValue.Replace("&", "&&")
 
-            If MarkedValue Then
-                value = "✓ " + value
+            Dim item = TryCast(ControlObject, Global.Gtk.ImageMenuItem)
+            Dim label = TryCast(item?.Child, Global.Gtk.AccelLabel)
+
+            If label IsNot Nothing Then
+                Dim keys = KeysHelp.ParseKeyString(ShortcutKeyDisplayStringValue)
+
+                If keys = Keys.None Then
+                    label.SetAccel(0, Global.Gdk.ModifierType.None)
+                Else
+                    label.SetAccel(CUInt(Eto.GtkSharp.KeyMap.ToGdkKey(keys)), Eto.GtkSharp.KeyMap.ToGdkModifier(keys))
+                End If
             End If
 
-            If ShortcutKeyDisplayStringValue.Trim <> "" Then
-                value += "    " + ShortcutKeyDisplayStringValue.Trim
+            If item IsNot Nothing Then
+                Dim iconName = If(MarkedValue, Styling.GetIconName("object-select-symbolic"), Nothing)
+#Disable Warning BC40008 'Eto creates deprecated image menu items
+                item.Image = If(iconName <> "", Global.Gtk.Image.NewFromIconName(iconName, Global.Gtk.IconSize.Menu), Nothing)
+                item.AlwaysShowImage = iconName <> ""
+#Enable Warning BC40008
             End If
-
-            MyBase.Text = value
         End Sub
 
         Property Form As Window
