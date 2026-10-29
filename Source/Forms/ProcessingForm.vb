@@ -43,11 +43,12 @@ Public Class ProcessingForm
         pnStatusHost = New Panel
         flpNav = New StackLayout With {.Orientation = Orientation.Horizontal, .Spacing = FH(0.3)}
 
-        Content = PaddedTable(
+        bnAbort.AddStyleClass("destructive-action")
+
+        Content = DialogContent(ButtonRow(laWhenfinisheddo, mbShutdown, bnAbort, bnJobs, bnLog, bnMenu),
             Row(New Scrollable With {.Content = flpNav, .Border = BorderType.None, .ExpandContentHeight = False}),
             ScaledRow(pnLogHost),
-            Row(pnStatusHost),
-            Row(ButtonRow(laWhenfinisheddo, mbShutdown, bnAbort, bnJobs, bnLog, bnMenu)))
+            Row(pnStatusHost))
 
         Text = $"Processing... - {g.DefaultCommands.GetApplicationDetails()}"
         mbShutdown.AddRange(System.Enum.GetValues(GetType(ShutdownMode)).Cast(Of Object))

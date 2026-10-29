@@ -25,13 +25,18 @@ Public Class AppsForm
         SearchTextBox = New SearchTextBox
         flp = New StackLayout With {.Orientation = Orientation.Vertical, .Spacing = FH(0.15)}
 
-        Dim toolButton = Function(text As String, tip As String) New ButtonEx With {.Text = text, .ToolTip = tip}
-        tsbLaunch = toolButton("Launch", "Launches the app (Ctrl+L)")
-        tsbExplore = toolButton("Explore", "Opens the apps folder in the file manager (Ctrl+E)")
-        tsbWebsite = toolButton("Web", "Opens the apps website (Ctrl+W)")
-        tsbDownload = toolButton("Download", "Opens the apps download web page (Ctrl+D)")
-        tsbVersion = toolButton("Version", "Edits the apps version (F12)")
-        tsbHelp = toolButton("Help", "Opens the apps help (F1)")
+        Dim toolButton = Function(text As String, tip As String, iconName As String)
+                             Dim ret As New ButtonEx With {.Text = text, .ToolTip = tip, .IconName = iconName, .MinimumSize = Size.Empty}
+                             ret.AddStyleClass("flat")
+                             Return ret
+                         End Function
+
+        tsbLaunch = toolButton("Launch", "Launches the app (Ctrl+L)", Styling.GetIconName("system-run-symbolic"))
+        tsbExplore = toolButton("Explore", "Opens the apps folder in the file manager (Ctrl+E)", Styling.GetIconName("folder-open-symbolic"))
+        tsbWebsite = toolButton("Web", "Opens the apps website (Ctrl+W)", Styling.GetIconName("web-browser-symbolic", "internet-web-browser-symbolic", "internet-web-browser"))
+        tsbDownload = toolButton("Download", "Opens the apps download web page (Ctrl+D)", Styling.GetIconName("folder-download-symbolic"))
+        tsbVersion = toolButton("Version", "Edits the apps version (F12)", Styling.GetIconName("document-properties-symbolic"))
+        tsbHelp = toolButton("Help", "Opens the apps help (F1)", Styling.GetIconName("help-browser-symbolic"))
 
         Dim menuItem = Function(text As String, key As Keys, tip As String) As MenuItemEx
                            Dim ret = New MenuItemEx(text) With {.Help = tip}
@@ -70,7 +75,8 @@ Public Class AppsForm
             cmsTools.Items.Add(i)
         Next
 
-        ddbTools = New ButtonEx With {.Text = "Tools", .ShowMenuSymbol = True, .ContextMenuStrip = cmsTools}
+        ddbTools = New ButtonEx With {.Text = "Tools", .ShowMenuSymbol = True, .ContextMenuStrip = cmsTools, .MinimumSize = Size.Empty}
+        ddbTools.AddStyleClass("flat")
         ToolBarRow = HRow(tsbLaunch, tsbExplore, tsbWebsite, tsbDownload, tsbVersion, ddbTools, tsbHelp)
 
         Dim left As New TableLayout(Row(SearchTextBox), ScaledRow(tv)) With {.Spacing = DefaultSpacing}
