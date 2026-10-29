@@ -30,12 +30,12 @@ Public Class x265Control
         Encoder = enc
         Params = Encoder.Params
 
-        tblOverrideName.LeftClickAction = Sub(value)
+        cbOverrideName.LeftClickAction = Sub(value)
                                               Params.OverrideTargetFileName.Value = value
                                               If value Then Encoder.UpdateTargetFile()
                                               UpdateControls()
                                           End Sub
-        tblOverrideName.RightClickAction = Sub(value)
+        cbOverrideName.RightClickAction = Sub(value)
                                               Encoder.ShowConfigDialog(Params.OverrideTargetFileName)
                                           End Sub
 
@@ -53,7 +53,7 @@ Public Class x265Control
 
     Sub ParamsValueChanged(item As CommandLineParam)
         If item Is Params.OverrideTargetFileName Then
-            tblOverrideName.State = DirectCast(item, BoolParam).Value
+            cbOverrideName.State = DirectCast(item, BoolParam).Value
         End If
     End Sub
 
@@ -199,18 +199,10 @@ Public Class x265Control
         lv.Items.Add(New ListViewItem({"DV Profile", Params.DolbyVisionProfile.OptionText}))
         lv.Items.Add(New ListViewItem({"Range", Params.Range.OptionText}))
 
-        tblOverrideName.State = Encoder.OverridesTargetFileName
+        cbOverrideName.State = Encoder.OverridesTargetFileName
         blCompCheck.Visible = Params.Mode.Value = x265RateMode.TwoPass Or Params.Mode.Value = x265RateMode.ThreePass
 
         g.MainForm.UpdateEncoderStateRelatedControls()
-    End Sub
-
-    Sub llConfigCodec_Click(sender As Object, e As EventArgs) Handles blConfigCodec.Click
-        Encoder.ShowConfigDialog()
-    End Sub
-
-    Sub llConfigContainer_Click(sender As Object, e As EventArgs) Handles blConfigContainer.Click
-        Encoder.OpenMuxerConfigDialog()
     End Sub
 
     Sub llCompCheck_Click(sender As Object, e As EventArgs) Handles blCompCheck.Click

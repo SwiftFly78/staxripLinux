@@ -1,8 +1,91 @@
 
+Imports System.Runtime.CompilerServices
 
 Namespace UI
-    'icons of the GTK theme, symbolic icons take the text color, so they follow light and dark themes
+    'styles and icons of the GTK theme, the style sheet only uses the named colors of the theme,
+    'so the controls follow light and dark themes like Breeze and Adwaita
     Public Module Styling
+        Private Const StyleSheet As String = "
+.staxrip-card {
+    background-color: @theme_base_color;
+    border: 1px solid @borders;
+    border-radius: 8px;
+}
+
+.staxrip-heading {
+    font-weight: bold;
+}
+
+.staxrip-toolbar {
+    border-bottom: 1px solid @borders;
+}
+
+.staxrip-next-step {
+    border-top: 1px solid @borders;
+}
+
+.staxrip-next-step-ready .staxrip-next-step-icon {
+    color: @success_color;
+}
+
+.staxrip-next-step-hint .staxrip-next-step-icon {
+    color: @theme_selected_bg_color;
+}
+
+.staxrip-next-step-warning {
+    background-color: mix(@theme_bg_color, @warning_color, 0.1);
+}
+
+.staxrip-next-step-warning .staxrip-next-step-icon {
+    color: @warning_color;
+}
+
+.staxrip-next-step-error {
+    background-color: mix(@theme_bg_color, @error_color, 0.1);
+}
+
+.staxrip-next-step-error .staxrip-next-step-icon {
+    color: @error_color;
+}
+
+entry.staxrip-attention,
+button.staxrip-attention {
+    border-color: @warning_color;
+}
+
+label.staxrip-attention {
+    color: @warning_color;
+}
+"
+
+        Sub Install()
+            Dim provider As New Global.Gtk.CssProvider
+            provider.LoadFromData(StyleSheet)
+            Global.Gtk.StyleContext.AddProviderForScreen(Global.Gdk.Screen.Default, provider, 600)
+        End Sub
+
+        <Extension>
+        Sub AddStyleClass(control As Control, ParamArray names As String())
+            Dim widget = TryCast(control?.ControlObject, Global.Gtk.Widget)
+
+            If widget IsNot Nothing Then
+                For Each name In names
+                    widget.StyleContext.AddClass(name)
+                Next
+            End If
+        End Sub
+
+        <Extension>
+        Sub RemoveStyleClass(control As Control, ParamArray names As String())
+            Dim widget = TryCast(control?.ControlObject, Global.Gtk.Widget)
+
+            If widget IsNot Nothing Then
+                For Each name In names
+                    widget.StyleContext.RemoveClass(name)
+                Next
+            End If
+        End Sub
+
         'the first icon of the theme, icon names differ between themes like Breeze and Adwaita
         Function GetIconName(ParamArray names As String()) As String
             Dim theme = Global.Gtk.IconTheme.Default

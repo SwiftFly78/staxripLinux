@@ -17,17 +17,19 @@ Partial Public Class MainForm
     Inherits FormBase
 
 #Region " Designer "
-    Public WithEvents bnNext As ButtonEx
+    Public bnOpen As SplitButton
+    Public WithEvents bnPreview As ButtonEx
+    Public WithEvents bnCrop As ButtonEx
+    Public WithEvents bnJobs As ButtonEx
+    Public bnAddJob As SplitButton
+    Public NextStep As NextStepBar
     Public WithEvents tbSourceFile As TextEdit
     Public WithEvents tbTargetFile As TextEdit
-    Public WithEvents gbAssistant As GroupBoxEx
-    Public WithEvents lgbFilters As LinkGroupBox
     Public WithEvents tbTargetSize As TextEdit
     Public WithEvents laBitrate As LabelEx
     Public WithEvents tbBitrate As TextEdit
     Public WithEvents lTarget1 As LabelEx
     Public WithEvents lSource1 As LabelEx
-    Public WithEvents lgbResize As LinkGroupBox
     Public WithEvents lPixel As LabelEx
     Public WithEvents lPixelText As LabelEx
     Public WithEvents tbResize As TrackBarEx
@@ -38,130 +40,183 @@ Partial Public Class MainForm
     Public WithEvents lTargetHeight As LabelEx
     Public WithEvents lTargetWidth As LabelEx
     Public WithEvents lDAR As LabelEx
-    Public WithEvents blTargetDarText As ButtonLabel
+    Public WithEvents blTargetDarText As ButtonEx
     Public WithEvents lCrop As LabelEx
     Public WithEvents lCropText As LabelEx
-    Public WithEvents lgbSource As LinkGroupBox
     Public WithEvents lSource2 As LabelEx
-    Public WithEvents lgbTarget As LinkGroupBox
-    Public WithEvents laTip As LabelEx
-    Public WithEvents lgbEncoder As LinkGroupBox
     Public WithEvents laTarget2 As LabelEx
     Public WithEvents MenuStrip As MenuBar
     Public WithEvents pnEncoder As Panel
     Public WithEvents FiltersListView As FiltersListView
-    Public WithEvents blFilesize As ButtonLabel
-    Public WithEvents llMuxer As ButtonLabel
+    Public WithEvents blFilesize As ButtonEx
+    Public WithEvents bnMuxer As ButtonEx
+    Public WithEvents bnMuxerOptions As ButtonEx
+    Public WithEvents bnEncoder As ButtonEx
+    Public WithEvents bnEncoderOptions As ButtonEx
+    Public WithEvents bnFilters As ButtonEx
+    Public WithEvents bnResize As ButtonEx
+    Public WithEvents bnSourceMenu As ButtonEx
+    Public WithEvents bnTargetMenu As ButtonEx
     Public WithEvents lPAR As LabelEx
-    Public WithEvents blTargetParText As ButtonLabel
+    Public WithEvents blTargetParText As ButtonEx
     Public WithEvents lAspectRatioError As LabelEx
     Public WithEvents lAspectRatioErrorText As LabelEx
-    Public WithEvents blCropText As ButtonLabel
+    Public WithEvents blCropText As ButtonEx
     Public WithEvents lCrop2 As LabelEx
-    Public WithEvents gbAudio As GroupBoxEx
-    Public WithEvents blSourceParText As ButtonLabel
+    Public WithEvents blSourceParText As ButtonEx
     Public WithEvents lSourcePAR As LabelEx
     Public WithEvents lSourceDar As LabelEx
     Public WithEvents lSAR As LabelEx
     Public WithEvents lSarText As LabelEx
-    Public WithEvents blSourceDarText As ButtonLabel
+    Public WithEvents blSourceDarText As ButtonEx
+    Public SourceCropRow As StackLayout
+    Public TargetSizeRow As TableLayout
+    Public cardSource As Card
+    Public cardTarget As Card
+    Public cardFilters As Card
+    Public cardResize As Card
+    Public cardEncoder As Card
+    Public cardAudio As Card
+    Public WithEvents bnAddAudio As ButtonEx
+    Public laNoAudio As LabelEx
     Public pnAudio As Panel
     Public TipProvider As TipProvider
 
     Private Sub InitializeComponent()
         Dim label = Function(text As String) New LabelEx With {.Text = text}
-        Dim link = Function(text As String) New ButtonLabel With {.Text = text}
 
-        bnNext = New ButtonEx With {.Text = "Next", .MinimumSize = New Size(FH(7), FH(2.6))}
-        laTip = New LabelEx With {.Wrap = WrapMode.Word}
-        gbAssistant = New GroupBoxEx With {.Text = "Assistant"}
-        gbAudio = New GroupBoxEx With {.Text = "Audio"}
+        Dim dimLabel = Function(text As String)
+                           Dim ret As New LabelEx With {.Text = text}
+                           ret.AddStyleClass("dim-label")
+                           Return ret
+                       End Function
+
+        Dim flatButton = Function(text As String, showMenu As Boolean)
+                             Dim ret As New ButtonEx With {.Text = text, .ShowMenuSymbol = showMenu, .MinimumSize = Size.Empty}
+                             ret.AddStyleClass("flat")
+                             Return ret
+                         End Function
+
+        Dim toolButton = Function(text As String, iconName As String)
+                             Dim ret As New ButtonEx With {.Text = text, .IconName = iconName, .MinimumSize = Size.Empty}
+                             ret.AddStyleClass("flat")
+                             Return ret
+                         End Function
+
+        Dim menuIcon = Styling.GetIconName("view-more-symbolic", "open-menu-symbolic")
+
+        bnOpen = New SplitButton("Open", Styling.GetIconName("document-open-symbolic"))
+        bnPreview = toolButton("Preview", Styling.GetIconName("view-preview-symbolic", "video-display-symbolic"))
+        bnCrop = toolButton("Crop", Styling.GetIconName("transform-crop-symbolic", "image-crop-symbolic", "transform-crop"))
+        bnJobs = toolButton("Jobs", Styling.GetIconName("view-media-playlist-symbolic", "view-list-symbolic"))
+        bnAddJob = New SplitButton("Add to Jobs", Styling.GetIconName("list-add-symbolic"), True)
+        NextStep = New NextStepBar
         pnAudio = New Panel
+        laNoAudio = dimLabel("No audio tracks, Add Track adds a stream of the source or a file.")
+        bnAddAudio = New ButtonEx With {.Text = "Add Track", .IconName = Styling.GetIconName("list-add-symbolic"), .MinimumSize = Size.Empty}
         MenuStrip = New MenuBar With {.IncludeSystemItems = MenuBarSystemItems.None}
 
         tbSourceFile = New TextEdit
-        lSource1 = label("")
-        lSource2 = label("")
-        lCropText = label("Crop:")
+        lSource1 = New LabelEx With {.Wrap = WrapMode.Word}
+        lSource2 = New LabelEx With {.Wrap = WrapMode.Word}
+        lCropText = dimLabel("Crop")
         lCrop = label("disabled")
-        blSourceParText = link("PAR:")
+        blSourceParText = flatButton("PAR", True)
         lSourcePAR = label("-")
-        blSourceDarText = link("DAR:")
+        blSourceDarText = flatButton("DAR", True)
         lSourceDar = label("-")
-        lgbSource = New LinkGroupBox With {.Text = "Source"}
+        bnSourceMenu = New ButtonEx With {.IconName = menuIcon, .MinimumSize = Size.Empty}
+        bnSourceMenu.AddStyleClass("flat")
 
         tbTargetFile = New TextEdit
-        blFilesize = link("Size:")
+        blFilesize = flatButton("Size", True)
         tbTargetSize = New TextEdit With {.TextAlign = HorizontalAlignment.Center}
-        laBitrate = label("Video Bitrate:")
+        laBitrate = dimLabel("Video Bitrate")
         tbBitrate = New TextEdit With {.TextAlign = HorizontalAlignment.Center}
-        lTarget1 = label("")
-        laTarget2 = label("")
-        lgbTarget = New LinkGroupBox With {.Text = "Target"}
+        lTarget1 = New LabelEx With {.Wrap = WrapMode.Word}
+        laTarget2 = New LabelEx With {.Wrap = WrapMode.Word}
+        bnMuxer = New ButtonEx With {.ShowMenuSymbol = True, .MinimumSize = Size.Empty}
+        bnMuxerOptions = New ButtonEx With {.Text = "Options...", .MinimumSize = Size.Empty}
+        bnTargetMenu = New ButtonEx With {.IconName = menuIcon, .MinimumSize = Size.Empty}
+        bnTargetMenu.AddStyleClass("flat")
 
-        lTargetWidth = label("Width:")
+        lTargetWidth = dimLabel("Width")
         tbTargetWidth = New TextEdit With {.TextAlign = HorizontalAlignment.Center, .Width = FH(4.5)}
-        lTargetHeight = label("Height:")
+        lTargetHeight = dimLabel("Height")
         tbTargetHeight = New TextEdit With {.TextAlign = HorizontalAlignment.Center, .Width = FH(4.5)}
         tbResize = New TrackBarEx With {.Minimum = 0, .TickFrequency = TrackBarTicks}
-        blCropText = link("Crop:")
+        blCropText = flatButton("Crop...", False)
         blCropText.ClickAction = AddressOf ShowCropDialog
         lCrop2 = label("-")
-        blTargetDarText = link("DAR:")
+        blTargetDarText = flatButton("DAR", True)
         lDAR = label("-")
-        lPixelText = label("Pixel:")
+        lPixelText = dimLabel("Pixel")
         lPixel = label("-")
-        lSarText = label("SAR:")
+        lSarText = dimLabel("SAR")
         lSAR = label("-")
-        lZoomText = label("Zoom:")
+        lZoomText = dimLabel("Zoom")
         lZoom = label("-")
-        blTargetParText = link("PAR:")
+        blTargetParText = flatButton("PAR", True)
         lPAR = label("-")
-        lAspectRatioErrorText = label("Error:")
+        lAspectRatioErrorText = dimLabel("Error")
         lAspectRatioError = label("-")
-        lgbResize = New LinkGroupBox With {.Text = "Resize"}
+        bnResize = New ButtonEx With {.Text = "Presets", .ShowMenuSymbol = True, .MinimumSize = Size.Empty}
 
-        FiltersListView = New FiltersListView With {.AutoCheckMode = AutoCheckMode.None}
-        lgbFilters = New LinkGroupBox
+        FiltersListView = New FiltersListView With {.AutoCheckMode = AutoCheckMode.None, .Border = BorderType.None}
+        bnFilters = New ButtonEx With {.ShowMenuSymbol = True, .MinimumSize = Size.Empty}
 
-        llMuxer = link("Muxer")
         pnEncoder = New Panel
-        lgbEncoder = New LinkGroupBox
+        bnEncoder = New ButtonEx With {.ShowMenuSymbol = True, .MinimumSize = Size.Empty}
+        bnEncoderOptions = New ButtonEx With {.Text = "Options...", .MinimumSize = Size.Empty}
 
         TipProvider = New TipProvider
 
-        Dim sourceValues = HRow(lCropText, lCrop, blSourceParText, lSourcePAR, blSourceDarText, lSourceDar)
-        lgbSource.Content = New TableLayout(Row(tbSourceFile), Row(lSource1), Row(lSource2), Row(sourceValues)) With {.Spacing = DefaultSpacing}
+        Dim rowSpacing = New Size(FH(0.5), FH(0.35))
 
-        Dim targetValues As New TableLayout(Row(blFilesize, Scaled(tbTargetSize), laBitrate, Scaled(tbBitrate))) With {.Spacing = DefaultSpacing}
-        lgbTarget.Content = New TableLayout(Row(tbTargetFile), Row(targetValues), Row(lTarget1), Row(laTarget2)) With {.Spacing = DefaultSpacing}
+        SourceCropRow = HRow(lCropText, lCrop, blSourceParText, lSourcePAR, blSourceDarText, lSourceDar)
+        cardSource = New Card("Source") With {.HeaderRight = bnSourceMenu}
+        cardSource.Content = New TableLayout(Row(tbSourceFile), Row(lSource1), Row(lSource2), Row(SourceCropRow), New TableRow With {.ScaleHeight = True}) With {.Spacing = rowSpacing}
 
-        Dim resizeSize As New TableLayout(Row(lTargetWidth, tbTargetWidth, Nothing, lTargetHeight, tbTargetHeight)) With {.Spacing = DefaultSpacing}
+        TargetSizeRow = New TableLayout(Row(blFilesize, Scaled(tbTargetSize), laBitrate, Scaled(tbBitrate))) With {.Spacing = rowSpacing}
+        cardTarget = New Card("Target") With {.HeaderRight = HRow(bnMuxer, bnMuxerOptions, bnTargetMenu)}
+        cardTarget.Content = New TableLayout(Row(tbTargetFile), Row(TargetSizeRow), Row(lTarget1), Row(laTarget2), New TableRow With {.ScaleHeight = True}) With {.Spacing = rowSpacing}
+
+        Dim resizeSize As New TableLayout(Row(lTargetWidth, tbTargetWidth, Nothing, lTargetHeight, tbTargetHeight)) With {.Spacing = rowSpacing}
         Dim resizeValues As New TableLayout(
-            Row(blCropText, lCrop2, Nothing, Nothing),
-            Row(blTargetDarText, Scaled(lDAR), lPixelText, Scaled(lPixel)),
-            Row(lSarText, Scaled(lSAR), lZoomText, Scaled(lZoom)),
-            Row(blTargetParText, Scaled(lPAR), lAspectRatioErrorText, Scaled(lAspectRatioError))) With {.Spacing = New Size(FH(0.4), FH(0.15))}
+            Row(blCropText, Scaled(lCrop2), lPixelText, Scaled(lPixel)),
+            Row(blTargetDarText, Scaled(lDAR), lZoomText, Scaled(lZoom)),
+            Row(lSarText, Scaled(lSAR), lAspectRatioErrorText, Scaled(lAspectRatioError)),
+            Row(blTargetParText, Scaled(lPAR), Nothing, Nothing)) With {.Spacing = New Size(FH(0.5), FH(0.15))}
 
-        lgbResize.Content = New TableLayout(Row(resizeSize), Row(tbResize), Row(resizeValues), New TableRow With {.ScaleHeight = True}) With {.Spacing = DefaultSpacing}
-        lgbResize.Width = FH(19)
+        cardResize = New Card("Crop and Resize") With {.HeaderRight = bnResize, .Width = FH(19)}
+        cardResize.Content = New TableLayout(Row(resizeSize), Row(tbResize), Row(resizeValues), New TableRow With {.ScaleHeight = True}) With {.Spacing = rowSpacing}
 
-        lgbFilters.Content = FiltersListView
-        lgbEncoder.HeaderRight = llMuxer
-        lgbEncoder.Content = pnEncoder
+        cardFilters = New Card("Filters") With {.HeaderRight = bnFilters, .Content = FiltersListView}
+        cardEncoder = New Card("Video") With {.HeaderRight = HRow(bnEncoder, bnEncoderOptions), .Content = pnEncoder}
+        cardAudio = New Card("Audio") With {.HeaderRight = bnAddAudio, .Content = pnAudio}
 
-        gbAudio.Content = pnAudio
-        gbAssistant.Content = New TableLayout(Row(Scaled(laTip), bnNext)) With {.Spacing = DefaultSpacing}
+        'the target card is as wide as the video card, so the cards form columns
+        AddHandler cardEncoder.SizeChanged, Sub()
+                                                If cardEncoder.Width > 0 AndAlso cardTarget.Width <> cardEncoder.Width Then
+                                                    cardTarget.Width = cardEncoder.Width
+                                                End If
+                                            End Sub
 
-        Dim top As New TableLayout(Row(Scaled(lgbSource), Scaled(lgbTarget))) With {.Spacing = DefaultSpacing}
-        Dim middle As New TableLayout(ScaledRow(Scaled(lgbFilters), lgbResize, Scaled(lgbEncoder))) With {.Spacing = DefaultSpacing}
+        Dim toolbar As New TableLayout(Row(bnOpen, bnPreview, bnCrop, bnJobs, Scaled(Nothing), bnAddJob)) With {
+            .Spacing = New Size(FH(0.35), 0), .Padding = New Padding(FH(0.5), FH(0.35))}
+
+        Dim toolbarPanel As New Panel With {.Content = toolbar}
+        toolbarPanel.AddStyleClass("staxrip-toolbar")
+
+        Dim gap = New Size(FH(0.7), FH(0.7))
+
+        Dim cards As New TableLayout(
+            Row(New TableLayout(Row(Scaled(cardSource), cardTarget)) With {.Spacing = gap}),
+            ScaledRow(New TableLayout(ScaledRow(Scaled(cardFilters), cardResize, Scaled(cardEncoder))) With {.Spacing = gap}),
+            Row(cardAudio)) With {.Spacing = gap, .Padding = New Padding(FH(0.7))}
 
         Menu = MenuStrip
-        Content = New TableLayout(
-            Row(top),
-            ScaledRow(middle),
-            Row(gbAudio),
-            Row(gbAssistant)) With {.Spacing = DefaultSpacing, .Padding = New Padding(FH(0.4))}
+        Content = New TableLayout(Row(toolbarPanel), ScaledRow(cards), Row(NextStep))
 
         Text = g.DefaultCommands.GetApplicationDetails()
         FileDrop = True
@@ -227,15 +282,15 @@ Partial Public Class MainForm
         Icon = g.Icon
 
         InitializeComponent()
-        RestoreClientSize(60, 36)
+        RestoreClientSize(62, 42)
         SetTip()
 
         TargetAspectRatioMenu = New ContextMenuStripEx
         SizeContextMenuStrip = New ContextMenuStripEx
         EncoderMenu = New ContextMenuStripEx
-        AddHandler EncoderMenu.Opening, Sub(sender As Object, e As EventArgs) MenuOpening(sender, lgbEncoder.Tag)
+        AddHandler EncoderMenu.Opening, Sub(sender As Object, e As EventArgs) MenuOpening(sender, bnEncoder.Tag)
         ContainerMenu = New ContextMenuStripEx
-        AddHandler ContainerMenu.Opening, Sub(sender As Object, e As EventArgs) MenuOpening(sender, llMuxer.Tag)
+        AddHandler ContainerMenu.Opening, Sub(sender As Object, e As EventArgs) MenuOpening(sender, bnMuxer.Tag)
         SourceAspectRatioMenu = New ContextMenuStripEx
         TargetFileMenu = New ContextMenuStripEx
         SourceFileMenu = New ContextMenuStripEx
@@ -244,9 +299,26 @@ Partial Public Class MainForm
         tbTargetFile.ContextMenuStrip = TargetFileMenu
         tbSourceFile.ContextMenuStrip = SourceFileMenu
 
-        Dim rc = "right-click"
-        tbSourceFile.SendMessageCue(rc, False)
-        tbTargetFile.SendMessageCue(rc, False)
+        tbSourceFile.SendMessageCue("Drop video files on the window or use Open")
+        tbTargetFile.SendMessageCue("Chosen after opening a source")
+
+        Dim openMenu As New ContextMenuStripEx
+        openMenu.Add("Single File...", AddressOf ShowOpenSourceSingleFileDialog)
+        openMenu.Add("Multiple Files...", AddressOf ShowOpenSourceMultipleFilesDialog)
+        openMenu.Add("Merge Files...", AddressOf ShowOpenSourceMergeFilesDialog)
+        openMenu.Add("File Batch...", AddressOf ShowOpenSourceBatchFilesDialog)
+        openMenu.Add("-")
+        openMenu.Add("Blu-ray Folder...", AddressOf ShowOpenSourceBlurayFolderDialog)
+        openMenu.Add("Blu-ray Image File...", AddressOf ShowOpenSourceBlurayImageDialog)
+
+        bnOpen.Menu = openMenu
+        bnOpen.ClickAction = AddressOf ShowOpenSourceSingleFileDialog
+        bnOpen.ToolTipText = "Open a single source file"
+        bnAddJob.Menu = NextContextMenuStrip
+        bnAddJob.ClickAction = AddressOf AddJobFromButton
+
+        AddHandler NextStep.ActionButton.Click, Sub() NextStepAction()
+        AddHandler NextStep.ContinueButton.Click, Sub() SkipAssistantTip()
 
         CommandManager.AddCommandsFromObject(Me)
         CommandManager.AddCommandsFromObject(g.DefaultCommands)
@@ -288,17 +360,9 @@ Partial Public Class MainForm
         ApplyTheme(ThemeManager.CurrentTheme)
     End Sub
 
-    'native controls use the GTK theme, only the assistant tip and highlighted controls are colored
+    'native controls use the GTK theme, the style sheet colors the next-step bar and highlighted controls
     Sub ApplyTheme(theme As Theme)
         ResetHighlighting()
-
-        If CanIgnoreTip Then
-            laTip.BackColor = Colors.Transparent
-            laTip.ForeColor = SystemColors.ControlText
-        Else
-            laTip.BackColor = theme.MainForm.laTipBackHighlightColor.ToColor
-            laTip.ForeColor = theme.MainForm.laTipForeHighlightColor.ToColor
-        End If
     End Sub
 
     Sub MenuOpening(sender As Object, tag As Object)
@@ -987,6 +1051,7 @@ Partial Public Class MainForm
         Dim streams = If(sourceFile.FileExists(), MediaInfo.GetAudioStreams(sourceFile), New List(Of AudioStream))
         Try
             pnAudio.Content = Nothing
+            ShownAudioTracks.Clear()
 
             If proj.AudioTracks.Count > availableAudioTracks Then
                 For index = proj.AudioTracks.Count - 1 To availableAudioTracks Step -1
@@ -1005,12 +1070,7 @@ Partial Public Class MainForm
                 Dim languageLabel = New AudioLanguageLabel(index) With {
                     .Text = audioProfile.Language.Name
                 }
-                Dim nameLabel = New AudioNameButtonLabel(index) With {
-                    .ContextMenuStripEx = New ContextMenuStripEx,
-                    .ClickAction = Sub()
-                                       .ContextMenuStripEx.Show(audioTrack.NameLabel, 0, 16)
-                                   End Sub
-                }
+                Dim nameLabel = New AudioNameButtonLabel(index) With {.ContextMenuStripEx = New ContextMenuStripEx}
                 Dim editLabel = New AudioEditButtonLabel(index) With {
                     .ClickAction = Sub()
                                        audioTrack.AudioProfile.EditProject()
@@ -1024,12 +1084,9 @@ Partial Public Class MainForm
 
                 textEdit.ContextMenuStrip = textEditContextMenuStripEx
 
-                TipProvider.SetTip("Shows the assigned language", languageLabel)
-                TipProvider.SetTip("Shows audio profiles", nameLabel)
-                TipProvider.SetTip("Opens audio settings for the current project/template", editLabel)
-
                 Dim textEditTextChanged = Sub(sender As Object, e As EventArgs)
                                               AudioTextEditChanged(audioTrack)
+                                              UpdateAudioRowVisibility(proj)
                                           End Sub
                 Dim textEditDoubleClick = Sub(sender As Object, e As EventArgs)
                                               AudioTextEditDoubleClick(audioTrack)
@@ -1040,15 +1097,30 @@ Partial Public Class MainForm
                                             End If
                                         End Sub
 
+                Dim menuButton As New ButtonEx With {.IconName = Styling.GetIconName("view-more-symbolic", "open-menu-symbolic"), .MinimumSize = Size.Empty}
+                menuButton.AddStyleClass("flat")
+
+                AddHandler menuButton.Click, Sub()
+                                                 UpdateAudioFileMenu(audioTrack, index, Sub() textEditDoubleClick(Nothing, Nothing))
+                                                 textEditContextMenuStripEx.Show(menuButton, 0, menuButton.Height)
+                                             End Sub
+
+                TipProvider.SetTip("Language of the track, Edit changes it", languageLabel)
+                TipProvider.SetTip("Audio profile of the track", nameLabel)
+                TipProvider.SetTip("Options of the track for the current project or template", editLabel)
+                TipProvider.SetTip("Source streams, files and actions of the track", menuButton)
+
                 AddHandler textEdit.TextChanged, textEditTextChanged
                 AddHandler textEdit.DoubleClick, textEditDoubleClick
                 AddHandler textEdit.MouseDown, textEditMouseDown
 
                 If proj.AudioTracks.ElementAtOrDefault(index) Is Nothing Then
-                    audioTrack = New AudioTrack(index) With {.AudioProfile = audioProfile, .EditLabel = editLabel, .LanguageLabel = languageLabel, .NameLabel = nameLabel, .TextEdit = textEdit}
+                    audioTrack = New AudioTrack(index) With {.AudioProfile = audioProfile, .EditLabel = editLabel, .LanguageLabel = languageLabel, .NameLabel = nameLabel, .TextEdit = textEdit,
+                        .RowLabel = New AudioRowLabel(index), .MenuButton = menuButton}
                     proj.AudioTracks.Add(audioTrack)
                 Else
-                    audioTrack = New AudioTrack(index) With {.AudioProfile = proj.AudioTracks(index).AudioProfile, .EditLabel = editLabel, .LanguageLabel = languageLabel, .NameLabel = nameLabel, .TextEdit = textEdit}
+                    audioTrack = New AudioTrack(index) With {.AudioProfile = proj.AudioTracks(index).AudioProfile, .EditLabel = editLabel, .LanguageLabel = languageLabel, .NameLabel = nameLabel, .TextEdit = textEdit,
+                        .RowLabel = New AudioRowLabel(index), .MenuButton = menuButton}
                     proj.AudioTracks(index) = audioTrack
                 End If
             Next
@@ -1057,23 +1129,72 @@ Partial Public Class MainForm
 
             For index = 0 To proj.AudioTracks.Count - 1
                 Dim track = proj.AudioTracks(index)
-                track.TextEdit.SendMessageCue("right-click", False)
+                track.TextEdit.SendMessageCue("Audio file or source stream")
 
                 rows.Add(New TableRow(
                     New TableCell(track.RowLabel),
                     New TableCell(track.TextEdit, True),
+                    New TableCell(track.MenuButton),
                     New TableCell(track.LanguageLabel),
                     New TableCell(track.NameLabel),
                     New TableCell(track.EditLabel)))
             Next
 
-            pnAudio.Content = New TableLayout(rows) With {.Spacing = New Size(FH(0.5), FH(0.2))}
+            pnAudio.Content = New TableLayout(
+                New TableRow(laNoAudio),
+                New TableRow(New TableLayout(rows) With {.Spacing = New Size(FH(0.5), FH(0.35))})) With {.Spacing = New Size(0, 0)}
+
+            UpdateAudioRowVisibility(proj)
         Catch ex As Exception
             g.ShowException(ex)
         Finally
             UpdateAudioMenus()
             PopulateProfileMenu(DynamicMenuItemID.AudioProfiles)
         End Try
+    End Sub
+
+    Private ReadOnly ShownAudioTracks As New HashSet(Of Integer)
+
+    'tracks without file and with the default profile are hidden until Add Track shows them,
+    'tracks configured in a template stay visible without file
+    Function IsAudioTrackShown(track As AudioTrack) As Boolean
+        Return track.TextEdit.Text <> "" OrElse ShownAudioTracks.Contains(track.Index) OrElse
+            TypeOf track.AudioProfile IsNot MuxAudioProfile OrElse track.AudioProfile.Language.IsDetermined
+    End Function
+
+    Sub UpdateAudioRowVisibility(proj As Project)
+        If proj?.AudioTracks Is Nothing Then Exit Sub
+
+        Dim anyShown = False
+        Dim anyHidden = False
+
+        For Each track In proj.AudioTracks
+            If track.MenuButton Is Nothing Then Continue For
+
+            Dim shown = IsAudioTrackShown(track)
+
+            For Each control In New Control() {track.RowLabel, track.TextEdit, track.MenuButton, track.LanguageLabel, track.NameLabel, track.EditLabel}
+                control.Visible = shown
+            Next
+
+            anyShown = anyShown OrElse shown
+            anyHidden = anyHidden OrElse Not shown
+        Next
+
+        laNoAudio.Visible = Not anyShown
+        bnAddAudio.Enabled = anyHidden
+    End Sub
+
+    Sub bnAddAudio_Click() Handles bnAddAudio.Click
+        Dim track = p.AudioTracks.FirstOrDefault(Function(x) x.MenuButton IsNot Nothing AndAlso Not IsAudioTrackShown(x))
+
+        If track IsNot Nothing Then
+            ShownAudioTracks.Add(track.Index)
+            UpdateAudioRowVisibility(p)
+
+            'the menu opens when the shown row has its position
+            UIBeginInvoke(Sub() track.MenuButton.PerformClick())
+        End If
     End Sub
 
     Sub AddAudioTracks()
@@ -2388,7 +2509,10 @@ Partial Public Class MainForm
         End If
     End Sub
 
-    Function ProcessTip(message As String) As Boolean
+    Private TipMessage As String
+
+    'the message identifies a skipped tip, the optional text is shown instead of it
+    Function ProcessTip(message As String, Optional text As String = Nothing) As Boolean
         If message.Contains(BR2) Then
             message = message.Replace(BR2, BR)
         End If
@@ -2400,15 +2524,7 @@ Partial Public Class MainForm
         CurrentAssistantTipKey = message.MD5Hash
 
         If Not p.SkippedAssistantTips.Contains(CurrentAssistantTipKey) Then
-            If message <> "" Then
-                If message.Length > 130 Then
-                    laTip.SetFontSize(8)
-                Else
-                    laTip.SetFontSize(9)
-                End If
-            End If
-
-            laTip.Text = message
+            TipMessage = If(text, message)
             Return True
         End If
     End Function
@@ -2425,91 +2541,64 @@ Partial Public Class MainForm
         Return p.SkippedAssistantTips.Remove(message.MD5Hash)
     End Function
 
-    Function Warn(msg As String, ParamArray controls As Control()) As Boolean
-        Warn(msg, Nothing, controls)
+    'a reminder like checking the crop, it can be skipped
+    Function Hint(title As String, clickAction As Action, actionText As String, ParamArray controls As Control()) As Boolean
+        ShowTip(NextStepKind.Hint, title, clickAction, actionText, controls)
+        Return False
     End Function
 
-    Function Warn(msg As String, clickAction As Action, ParamArray controls As Control()) As Boolean
-        AssistantClickAction = clickAction
-        bnNext.Enabled = True
-
-        If msg <> gbAssistant.Text Then
-            gbAssistant.Text = msg
-        End If
-
-        Highlight(True, controls)
-        UpdateNextButton()
+    Function Warn(title As String, ParamArray controls As Control()) As Boolean
+        Return Warn(title, Nothing, Nothing, controls)
     End Function
 
-    Function Block(msg As String, ParamArray controls As Control()) As Boolean
-        Block(msg, Nothing, controls)
+    Function Warn(title As String, clickAction As Action, actionText As String, ParamArray controls As Control()) As Boolean
+        ShowTip(NextStepKind.Warning, title, clickAction, actionText, controls)
+        Return False
     End Function
 
-    Function Block(msg As String, clickAction As Action, ParamArray controls As Control()) As Boolean
-        AssistantClickAction = clickAction
-        gbAssistant.Text = msg
-        bnNext.Enabled = False
+    Function Block(title As String, ParamArray controls As Control()) As Boolean
+        Return Block(title, Nothing, Nothing, controls)
+    End Function
+
+    Function Block(title As String, clickAction As Action, actionText As String, ParamArray controls As Control()) As Boolean
         CanIgnoreTip = False
-        ThemeRefresh = True
-        Highlight(True, controls)
-        UpdateNextButton()
+        ShowTip(NextStepKind.Error, title, clickAction, actionText, controls)
+        Return False
     End Function
 
-    Sub Highlight(ParamArray controls As Control())
-        Highlight(False, controls)
+    Sub ShowTip(kind As NextStepKind, title As String, clickAction As Action, actionText As String, controls As Control())
+        AssistantClickAction = clickAction
+        NextStep.Kind = kind
+        NextStep.SetMessage(title, TipMessage)
+        NextStep.SetAction(If(clickAction Is Nothing, Nothing, actionText))
+        NextStep.ContinueButton.Visible = CanIgnoreTip
+        Highlight(controls)
+        UpdateNextButton()
     End Sub
 
-    Private ReadOnly HighlightedControls As New Dictionary(Of Control, Color)
+    Private ReadOnly HighlightedControls As New List(Of Control)
 
-    Sub Highlight(highlight As Boolean, ParamArray controls As Control())
-        Dim theme = ThemeManager.CurrentTheme
-
-        If highlight Then
-            laTip.BackColor = theme.MainForm.laTipBackHighlightColor.ToColor
-            laTip.ForeColor = theme.MainForm.laTipForeHighlightColor.ToColor
-        Else
-            laTip.BackColor = Colors.Transparent
-            laTip.ForeColor = SystemColors.ControlText
-        End If
-
+    'outlines the controls a tip refers to, text edits by their entry
+    Sub Highlight(ParamArray controls As Control())
         If controls.NothingOrEmpty Then Return
         ThemeRefresh = True
 
-        Dim controlColors = theme.General.Controls
-
         For Each control In controls
-            If control Is Nothing OrElse HighlightedControls.ContainsKey(control) Then
-                Continue For
-            End If
+            Dim target = If(TypeOf control Is TextEdit, DirectCast(control, TextEdit).InnerControl, control)
 
-            If TypeOf control Is TextEdit Then
-                Dim te = DirectCast(control, TextEdit)
-                HighlightedControls(control) = te.BackColor
-                te.BackColor = controlColors.TextEdit.BackHighlightColor.ToColor
-            ElseIf TypeOf control Is LinkButton Then
-                Dim lb = DirectCast(control, LinkButton)
-                HighlightedControls(control) = lb.TextColor
-                lb.TextColor = controlColors.ButtonLabel.ForeHighlightColor.ToColor
-            Else
-                HighlightedControls(control) = control.BackgroundColor
-                control.BackgroundColor = controlColors.Label.BackHighlightColor.ToColor
+            If target IsNot Nothing AndAlso Not HighlightedControls.Contains(target) Then
+                target.AddStyleClass("staxrip-attention")
+                HighlightedControls.Add(target)
             End If
         Next
     End Sub
 
     Sub ResetHighlighting()
-        For Each pair In HighlightedControls
+        For Each control In HighlightedControls
             'controls like those of the encoder panel are replaced while they are highlighted,
             'GTK destroys their widgets when they leave the window
-            If pair.Key.IsDisposed OrElse pair.Key.ParentWindow Is Nothing Then Continue For
-
-            If TypeOf pair.Key Is TextEdit Then
-                DirectCast(pair.Key, TextEdit).ResetBackColor()
-            ElseIf TypeOf pair.Key Is LinkButton Then
-                DirectCast(pair.Key, LinkButton).TextColor = pair.Value
-            Else
-                pair.Key.BackgroundColor = pair.Value
-            End If
+            If control.IsDisposed OrElse control.ParentWindow Is Nothing Then Continue For
+            control.RemoveStyleClass("staxrip-attention")
         Next
 
         HighlightedControls.Clear()
@@ -3353,7 +3442,7 @@ Partial Public Class MainForm
             If showJobsDialog Then
                 Me.ShowJobsDialog()
             Else
-                bnNext.ShowBold()
+                bnAddJob.ShowConfirmation("Job Added")
             End If
         Else
             Assistant()
@@ -4156,11 +4245,19 @@ Partial Public Class MainForm
         End If
     End Sub
 
+    Sub UpdateEncoderButtons(encoder As VideoEncoder)
+        bnEncoder.Tag = encoder.Name
+        bnEncoder.Text = g.ConvertPath(encoder.Name, 45).Shorten(40)
+        bnEncoderOptions.Visible = TypeOf encoder IsNot NullEncoder
+
+        Dim ext = encoder.Muxer.OutputExt.ToUpperInvariant()
+        bnMuxer.Tag = encoder.Muxer.Name
+        bnMuxer.Text = If(String.IsNullOrWhiteSpace(ext), "[ ? ]", ext)
+        bnMuxerOptions.Visible = encoder.Muxer.CanEdit
+    End Sub
+
     Sub UpdateEncoderStateRelatedControls()
-        blFilesize.Visible = Not p.VideoEncoder.QualityMode
-        tbTargetSize.Visible = Not p.VideoEncoder.QualityMode
-        laBitrate.Visible = Not p.VideoEncoder.QualityMode
-        tbBitrate.Visible = Not p.VideoEncoder.QualityMode
+        TargetSizeRow.Visible = Not p.VideoEncoder.QualityMode
     End Sub
 
     <Command("Dialog to open a single file source.")>
@@ -4541,13 +4638,6 @@ Partial Public Class MainForm
         End If
     End Function
 
-    Sub lTip_Click() Handles laTip.Click
-        If AssistantClickAction IsNot Nothing Then
-            AssistantClickAction.Invoke()
-            Assistant()
-        End If
-    End Sub
-
     Sub UpdateTargetParameters(proj As Project)
         If proj Is Nothing Then Exit Sub
         If proj.Script Is Nothing Then Exit Sub
@@ -4649,58 +4739,85 @@ Partial Public Class MainForm
         FiltersListView.ShowCodeEditor()
     End Sub
 
-    Sub gbFilters_MenuClick() Handles lgbFilters.LinkClick
-        FiltersListView.ContextMenuStrip.Show(lgbFilters, 0, 16)
+    Sub bnFilters_Click() Handles bnFilters.Click
+        FiltersListView.ContextMenuStrip.Show(bnFilters, 0, bnFilters.Height)
     End Sub
 
-    Sub gbEncoder_LinkClick() Handles lgbEncoder.LinkClick
+    Sub bnEncoder_Click() Handles bnEncoder.Click
         EncoderMenu.Items.ClearAndDisplose
         g.PopulateProfileMenu(EncoderMenu.Items, s.VideoEncoderProfiles, AddressOf ShowEncoderProfilesDialog, AddressOf g.LoadVideoEncoder)
-        EncoderMenu.Show(lgbEncoder, 0, 16)
+        EncoderMenu.Show(bnEncoder, 0, bnEncoder.Height)
+    End Sub
+
+    Sub bnEncoderOptions_Click() Handles bnEncoderOptions.Click
+        p.VideoEncoder.ShowConfigDialog()
     End Sub
 
     Sub llSize_Click() Handles blFilesize.Click
         UpdateSizeMenu()
-        SizeContextMenuStrip.Show(blFilesize, 0, 16)
+        SizeContextMenuStrip.Show(blFilesize, 0, blFilesize.Height)
     End Sub
 
-    Sub llContainer_Click() Handles llMuxer.Click
+    Sub bnMuxer_Click() Handles bnMuxer.Click
         ContainerMenu.Items.ClearAndDisplose
         g.PopulateProfileMenu(ContainerMenu.Items, s.MuxerProfiles, AddressOf ShowMuxerProfilesDialog, AddressOf p.VideoEncoder.LoadMuxer)
-        ContainerMenu.Show(llMuxer, 0, 16)
+        ContainerMenu.Show(bnMuxer, 0, bnMuxer.Height)
     End Sub
 
-    Sub gbResize_LinkClick() Handles lgbResize.LinkClick
-        Dim cms = TextCustomMenu.GetMenu(s.TargetImageSizeMenu, lgbResize.Label, AddressOf TargetImageMenuClick)
+    Sub bnMuxerOptions_Click() Handles bnMuxerOptions.Click
+        p.VideoEncoder.OpenMuxerConfigDialog()
+    End Sub
+
+    Sub bnPreview_Click() Handles bnPreview.Click
+        ShowPreview()
+    End Sub
+
+    Sub bnCrop_Click() Handles bnCrop.Click
+        ShowCropDialog()
+    End Sub
+
+    Sub bnJobs_Click() Handles bnJobs.Click
+        ShowJobsDialog()
+    End Sub
+
+    'the buttons only show the menus, menu holders keep them from opening the menus by themselves
+    Private ReadOnly ResizeMenuHolder As New MenuHolder
+    Private ReadOnly SourceParMenuHolder As New MenuHolder
+    Private ReadOnly SourceDarMenuHolder As New MenuHolder
+    Private ReadOnly TargetParMenuHolder As New MenuHolder
+    Private ReadOnly TargetDarMenuHolder As New MenuHolder
+
+    Sub bnResize_Click() Handles bnResize.Click
+        Dim cms = TextCustomMenu.GetMenu(s.TargetImageSizeMenu, ResizeMenuHolder, AddressOf TargetImageMenuClick)
         cms.Add("-")
         cms.Add("Image Options...", Sub() ShowOptionsDialog("Image"))
         cms.Add("Edit Menu...", Sub() s.TargetImageSizeMenu = TextCustomMenu.EditMenu(s.TargetImageSizeMenu, ApplicationSettings.GetDefaultTargetImageSizeMenu, Me))
-        cms.Show(lgbResize, 0, lgbResize.Label.Height)
+        cms.Show(bnResize, 0, bnResize.Height)
     End Sub
 
     Sub blSourceParText_Click(sender As Object, e As EventArgs) Handles blSourceParText.Click
-        Dim menu = TextCustomMenu.GetMenu(s.ParMenu, blSourceParText, AddressOf SourceParMenuClick)
+        Dim menu = TextCustomMenu.GetMenu(s.ParMenu, SourceParMenuHolder, AddressOf SourceParMenuClick)
         menu.Add("-")
         menu.Items.Add(New MenuItemEx("Edit Menu...", Sub() s.ParMenu = TextCustomMenu.EditMenu(s.ParMenu, ApplicationSettings.GetParMenu, Me)))
         menu.Show(blSourceParText, 0, blSourceParText.Height)
     End Sub
 
     Sub blSourceDarText_Click(sender As Object, e As EventArgs) Handles blSourceDarText.Click
-        Dim menu = TextCustomMenu.GetMenu(s.DarMenu, blSourceDarText, AddressOf SourceDarMenuClick)
+        Dim menu = TextCustomMenu.GetMenu(s.DarMenu, SourceDarMenuHolder, AddressOf SourceDarMenuClick)
         menu.Add("-")
         menu.Items.Add(New MenuItemEx("Edit Menu...", Sub() s.DarMenu = TextCustomMenu.EditMenu(s.DarMenu, ApplicationSettings.GetDarMenu, Me)))
         menu.Show(blSourceDarText, 0, blSourceDarText.Height)
     End Sub
 
     Sub blTargetDarText_Click(sender As Object, e As EventArgs) Handles blTargetDarText.Click
-        Dim menu = TextCustomMenu.GetMenu(s.DarMenu, blTargetDarText, AddressOf TargetDarMenuClick)
+        Dim menu = TextCustomMenu.GetMenu(s.DarMenu, TargetDarMenuHolder, AddressOf TargetDarMenuClick)
         menu.Add("-")
         menu.Items.Add(New MenuItemEx("Edit Menu...", Sub() s.DarMenu = TextCustomMenu.EditMenu(s.DarMenu, ApplicationSettings.GetDarMenu, Me)))
         menu.Show(blTargetDarText, 0, blTargetDarText.Height)
     End Sub
 
     Sub blTargetParText_Click(sender As Object, e As EventArgs) Handles blTargetParText.Click
-        Dim menu = TextCustomMenu.GetMenu(s.ParMenu, blTargetParText, AddressOf TargetParMenuClick)
+        Dim menu = TextCustomMenu.GetMenu(s.ParMenu, TargetParMenuHolder, AddressOf TargetParMenuClick)
         menu.Add("-")
         menu.Items.Add(New MenuItemEx("Edit Menu...", Sub() s.ParMenu = TextCustomMenu.EditMenu(s.ParMenu, ApplicationSettings.GetParMenu, Me)))
         menu.Show(blTargetParText, 0, blTargetParText.Height)
@@ -4826,9 +4943,17 @@ Partial Public Class MainForm
             .SetTip("Target File Size (Up/Down key)", tbTargetSize)
             .SetTip("Source file", tbSourceFile)
             .SetTip("Target file", tbTargetFile)
-            .SetTip("Shows a menu with Container/Muxer profiles", llMuxer)
-            .SetTip("Shows a menu with video encoder profiles", lgbEncoder.Label)
-            .SetTip("Shows a menu with AviSynth filter options", lgbFilters.Label)
+            .SetTip("Container profile", bnMuxer)
+            .SetTip("Container options like subtitles, chapters and attachments", bnMuxerOptions)
+            .SetTip("Video encoder profile", bnEncoder)
+            .SetTip("Options of the video encoder", bnEncoderOptions)
+            .SetTip("Filter setup and filter options", bnFilters)
+            .SetTip("Image size presets", bnResize)
+            .SetTip("Source file options", bnSourceMenu)
+            .SetTip("Target file options", bnTargetMenu)
+            .SetTip("Shows the preview to check filters and to cut (F4)", bnPreview)
+            .SetTip("Shows the crop dialog (F3)", bnCrop)
+            .SetTip("Shows the job list (F6)", bnJobs)
         End With
     End Sub
 
@@ -4857,19 +4982,14 @@ Partial Public Class MainForm
         End If
     End Sub
 
-    Sub gbTarget_LinkClick() Handles lgbTarget.LinkClick
+    Sub bnTargetMenu_Click() Handles bnTargetMenu.Click
         UpdateTargetFileMenu()
-        TargetFileMenu.Show(lgbTarget, 0, lgbTarget.Label.Height)
+        TargetFileMenu.Show(bnTargetMenu, 0, bnTargetMenu.Height)
     End Sub
 
-    Sub gbSource_MenuClick() Handles lgbSource.LinkClick
+    Sub bnSourceMenu_Click() Handles bnSourceMenu.Click
         UpdateSourceFileMenu()
-
-        If File.Exists(p.SourceFile) Then
-            SourceFileMenu.Show(lgbSource, 0, lgbSource.Label.Height)
-        Else
-            ShowOpenSourceDialog()
-        End If
+        SourceFileMenu.Show(bnSourceMenu, 0, bnSourceMenu.Height)
     End Sub
 
     Sub tbTargetFile_DoubleClick() Handles tbTargetFile.DoubleClick
@@ -5178,40 +5298,54 @@ Partial Public Class MainForm
     End Function
 
     Sub UpdateTargetSizeLabel()
-        Me.blFilesize.Text = $"Size in {PrefixedSize(2).Unit}:"
+        Me.blFilesize.Text = $"Size ({PrefixedSize(2).Unit})"
     End Sub
 
     Sub UpdateNextButton()
-        If AssistantPassed AndAlso CanIgnoreTip Then
-            Dim toTop = Keyboard.Modifiers.HasFlag(Keys.Shift)
-            toTop = If(s.InvertShiftKeyOnNextButton, Not toTop, toTop)
-            Dim hideList = Keyboard.Modifiers.HasFlag(Keys.Control)
-            hideList = If(s.InvertCtrlKeyOnNextButton, Not hideList, hideList)
+        Dim ready = AssistantPassed AndAlso CanIgnoreTip
+        bnAddJob.Enabled = ready
 
-            Dim txt = "Add job"
-            txt += If(toTop, " to top", "")
-            txt += If(hideList, $"{BR}w/o showing list", "")
-
-            bnNext.Text = txt
+        If ready Then
+            Dim toTop = Keyboard.Modifiers.HasFlag(Keys.Shift) <> s.InvertShiftKeyOnNextButton
+            Dim hideList = Keyboard.Modifiers.HasFlag(Keys.Control) <> s.InvertCtrlKeyOnNextButton
+            bnAddJob.Text = If(toTop, "Add to Top of Jobs", "Add to Jobs") + If(hideList, " Without Opening Them", "")
         Else
-            bnNext.Text = "Accept / Next"
+            bnAddJob.Text = "Add to Jobs"
         End If
     End Sub
 
-    Sub bnNext_Click(sender As Object, e As EventArgs) Handles bnNext.Click
-        Dim toTop = Keyboard.Modifiers.HasFlag(Keys.Shift)
-        toTop = If(s.InvertShiftKeyOnNextButton, Not toTop, toTop)
-        Dim hideList = Keyboard.Modifiers.HasFlag(Keys.Control)
-        hideList = If(s.InvertCtrlKeyOnNextButton, Not hideList, hideList)
-
+    'the modifier keys change where the job is added and whether the job list opens
+    Sub AddJobFromButton()
+        Dim toTop = Keyboard.Modifiers.HasFlag(Keys.Shift) <> s.InvertShiftKeyOnNextButton
+        Dim hideList = Keyboard.Modifiers.HasFlag(Keys.Control) <> s.InvertCtrlKeyOnNextButton
         AddJob(Not hideList, If(toTop, 0, -1))
     End Sub
 
-    Sub bnNext_MouseDown(sender As Object, e As MouseEventArgs) Handles bnNext.MouseDown
-        If e.Buttons = MouseButtons.Alternate AndAlso AssistantPassed AndAlso CanIgnoreTip Then
-            e.Handled = True
-            NextContextMenuStrip.Show(bnNext, 0, bnNext.Height)
+    Sub ShowReadyStep()
+        Dim top = s.InvertShiftKeyOnNextButton
+        Dim hide = s.InvertCtrlKeyOnNextButton
+
+        NextStep.Kind = NextStepKind.Ready
+        NextStep.SetMessage("Ready to add the job",
+            $"Add to Jobs adds it to the {If(top, "top", "bottom")} of the job list and {If(hide, "keeps the list closed", "opens the list")}. " +
+            $"Hold Shift to add it to the {If(top, "bottom", "top")}, or Ctrl to {If(hide, "open the list", "keep the list closed")}.")
+        NextStep.SetAction(Nothing)
+        NextStep.ContinueButton.Visible = False
+    End Sub
+
+    Sub NextStepAction()
+        If AssistantClickAction IsNot Nothing Then
+            AssistantClickAction.Invoke()
+            Assistant()
         End If
+    End Sub
+
+    Sub SkipAssistantTip()
+        If CanIgnoreTip AndAlso Not p.SkippedAssistantTips.Contains(CurrentAssistantTipKey) Then
+            p.SkippedAssistantTips.Add(CurrentAssistantTipKey)
+        End If
+
+        Assistant()
     End Sub
 
     <Command("Shows the changes of all versions of the port.")>

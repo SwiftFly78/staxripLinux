@@ -6,10 +6,8 @@ Public Class EncoderControlBase
     Inherits Panel
 
     Public WithEvents lv As ListViewEx
-    Public WithEvents blConfigCodec As ButtonLabel
-    Public WithEvents blConfigContainer As ButtonLabel
-    Public WithEvents blCompCheck As ButtonLabel
-    Public tblOverrideName As ToggleButtonLabel
+    Public WithEvents blCompCheck As ButtonEx
+    Public cbOverrideName As ToggleCheckBox
     Public cms As ContextMenuStripEx
 
     Sub New()
@@ -18,28 +16,24 @@ Public Class EncoderControlBase
             .HeaderStyle = ColumnHeaderStyle.None,
             .FullRowSelect = True,
             .MultiSelect = False,
-            .ShowContextMenuOnLeftClick = True}
+            .ShowContextMenuOnLeftClick = True,
+            .Border = BorderType.None}
 
         lv.Columns.AddRange({New ColumnHeader, New ColumnHeader})
         cms = New ContextMenuStripEx
         lv.ContextMenuStrip = cms
 
-        blConfigCodec = New ButtonLabel With {.Text = "Options"}
-        blConfigContainer = New ButtonLabel With {.Text = "Container Options"}
-        blCompCheck = New ButtonLabel With {.Text = "Run Compressibility Check"}
-        tblOverrideName = New ToggleButtonLabel With {.Text = "Target Name Override"}
+        blCompCheck = New ButtonEx With {.Text = "Run Compressibility Check", .MinimumSize = Size.Empty}
+        cbOverrideName = New ToggleCheckBox With {.Text = "Override target name"}
 
         Dim bottom As New TableLayout(New TableRow(
-            New TableCell(blConfigCodec),
+            New TableCell(cbOverrideName),
             New TableCell(Nothing, True),
-            New TableCell(tblOverrideName),
-            New TableCell(Nothing, True),
-            New TableCell(blConfigContainer))) With {.Spacing = New Size(FH(0.3), 0)}
+            New TableCell(blCompCheck))) With {.Spacing = New Size(FH(0.5), 0)}
 
         Content = New TableLayout(
             New TableRow(lv) With {.ScaleHeight = True},
-            New TableRow(blCompCheck),
-            New TableRow(bottom)) With {.Spacing = New Size(0, FH(0.15))}
+            New TableRow(bottom)) With {.Spacing = New Size(0, FH(0.35))}
     End Sub
 
     Protected Overrides Sub OnSizeChanged(e As EventArgs)

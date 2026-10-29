@@ -5,6 +5,12 @@ Imports StaxRip.UI
 Partial Public Class MainForm
     Inherits FormBase
 
+    Private Const OpenSourceTip = "Drop video files on the window, or open them with Open in the toolbar."
+
+    Shared Function JoinFacts(ParamArray values As String()) As String
+        Return values.Where(Function(i) i <> "").Join("  ·  ")
+    End Function
+
     Function Assistant(Optional refreshScript As Boolean = True) As Boolean
         If SkipAssistant Then Return False
 
@@ -82,37 +88,40 @@ Partial Public Class MainForm
 
             If p.SourceSeconds > 0 Then
                 Dim size = If(p.SourceVideoSize > 0, p.SourceVideoSize, p.SourceSize)
-                Dim sizeText = If(size / PrefixedSize(2).Factor < SizePrefix.Base, CInt(size / PrefixedSize(2).Factor).ToString + PrefixedSize(2).Unit, (size / PrefixedSize(3).Factor).ToString("f1") + PrefixedSize(3).Unit)
+                Dim sizeText = If(size / PrefixedSize(2).Factor < SizePrefix.Base, CInt(size / PrefixedSize(2).Factor).ToString + " " + PrefixedSize(2).Unit, (size / PrefixedSize(3).Factor).ToString("f1") + " " + PrefixedSize(3).Unit)
 
                 If size <> p.SourceVideoSize Then
                     sizeText = $"[{sizeText}]"
                 End If
 
-                lSource1.Text = lSource1.GetMaxTextSpace(
+                lSource1.Text = JoinFacts(
                     g.GetTimeString(p.SourceSeconds),
                     sizeText,
-                    If(p.SourceBitrate > 0, (p.SourceBitrate / 1000).ToInvariantString("f1") + "Mb/s", ""),
-                    p.SourceFrameRate.ToInvariantString.Shorten(9) + "fps",
+                    If(p.SourceBitrate > 0, (p.SourceBitrate / 1000).ToInvariantString("f1") + " Mb/s", ""),
+                    p.SourceFrameRate.ToInvariantString.Shorten(9) + " fps",
                     p.SourceFrameRateMode)
 
-                lSource2.Text = lSource1.GetMaxTextSpace(
-                    p.SourceWidth.ToString + "x" + p.SourceHeight.ToString, p.SourceColorSpace,
-                    p.SourceChromaSubsampling, If(p.SourceVideoBitDepth <> 0, p.SourceVideoBitDepth & "Bits", ""),
+                lSource2.Text = JoinFacts(
+                    p.SourceWidth & "×" & p.SourceHeight, p.SourceColorSpace,
+                    p.SourceChromaSubsampling, If(p.SourceVideoBitDepth <> 0, p.SourceVideoBitDepth & "-bit", ""),
                     p.SourceVideoHdrFormat,
                     p.SourceScanType, If(p.SourceScanType.EqualsAny("Interlaced", "MBAFF"), p.SourceScanOrder, ""),
                     p.SourceVideoFormat, p.SourceVideoFormatProfile)
 
-                lTarget1.Text = lSource1.GetMaxTextSpace(g.GetTimeString(p.TargetSeconds),
-                    p.TargetFrameRate.ToInvariantString.Shorten(9) + "fps", p.Script.Info.Width & "x" & p.Script.Info.Height,
-                    "Audio Bitrate: " & CInt(Calc.GetAudioBitrate))
+                lTarget1.Text = JoinFacts(g.GetTimeString(p.TargetSeconds),
+                    p.TargetFrameRate.ToInvariantString.Shorten(9) + " fps", p.Script.Info.Width & "×" & p.Script.Info.Height,
+                    "Audio " & CInt(Calc.GetAudioBitrate) & " kb/s")
 
                 If p.VideoEncoder.IsCompCheckEnabled Then
-                    laTarget2.Text = lSource1.GetMaxTextSpace(
-                        "Quality: " & CInt(Calc.GetPercent).ToInvariantString() + " %",
-                        "Compressibility: " + p.Compressibility.ToInvariantString("f2"))
+                    laTarget2.Text = JoinFacts(
+                        "Quality " & CInt(Calc.GetPercent).ToInvariantString() + " %",
+                        "Compressibility " + p.Compressibility.ToInvariantString("f2"))
                 Else
-                    Dim subtitles = p.VideoEncoder.Muxer.Subtitles.Where(Function(i) i.Enabled)
-                    laTarget2.Text = "Subtitles: " & subtitles.Count & " " + subtitles.Select(Function(i) i.TypeName).Distinct.Join("/")
+                    Dim subtitles = p.VideoEncoder.Muxer.Subtitles.Where(Function(i) i.Enabled).ToList
+                    Dim types = subtitles.Select(Function(i) i.TypeName).Distinct.Join("/")
+
+                    laTarget2.Text = If(subtitles.Count = 0, "No subtitles",
+                        subtitles.Count & If(subtitles.Count = 1, " subtitle (", " subtitles (") & types & ")")
                 End If
             Else
                 lTarget1.Text = ""
@@ -120,6 +129,13 @@ Partial Public Class MainForm
                 laTarget2.Text = ""
                 lSource2.Text = ""
             End If
+
+            'without source the facts are empty
+            For Each label In {lSource1, lSource2, lTarget1, laTarget2}
+                label.Visible = label.Text <> ""
+            Next
+
+            SourceCropRow.Visible = p.SourceSeconds > 0
 
             AssistantClickAction = Nothing
             CanIgnoreTip = True
@@ -138,7 +154,7 @@ Partial Public Class MainForm
                     Not p.VideoEncoder.Muxer.CoverFile.Ext.EqualsAny("jpg", "png") Then
 
                     If ProcessTip("The cover file name must be cover, small_cover, cover_land or small_cover_land, the file type must be jpg or png.") Then
-                        Return Block("Invalid Cover File Name")
+                        Return Block("Invalid cover file name")
                     End If
                 End If
             End If
@@ -149,7 +165,7 @@ Partial Public Class MainForm
 
                 If param IsNot Nothing AndAlso param.Value > 0 AndAlso Not p.Script.IsFilterActive("Resize", "Hardware Encoder") Then
                     If ProcessTip("In order to use a resize filter of the hardware encoder select 'Hardware Encoder' as resize filter from the filters menu.") Then
-                        Return Block("Invalid Filter Setting")
+                        Return Block("Invalid filter setting")
                     End If
                 End If
             End If
@@ -157,36 +173,36 @@ Partial Public Class MainForm
             If Not p.BatchMode Then
                 If p.SourceFile <> "" AndAlso p.Script.IsAviSynth AndAlso Not TextEncoding.ArePathsSupportedByProcessEncoding AndAlso
                     ProcessTip("AviSynth Unicode support requires at least Windows 10 1903.") Then
-                    Return Block("Text Encoding Limitation", lgbEncoder.Label)
+                    Return Block("Text encoding limitation", bnEncoder)
                 End If
 
                 If p.Script.Filters.Count = 0 OrElse Not p.Script.Filters(0).Active OrElse
                     p.Script.Filters(0).Category <> "Source" Then
 
                     If ProcessTip("The first filter must have the category Source.") Then
-                        Return Block("Invalid Filter Setup")
+                        Return Block("Invalid filter setup")
                     End If
                 End If
 
-                If p.SourceSeconds = 0 AndAlso ProcessTip("Click here to open a source file.") Then
+                If p.SourceSeconds = 0 AndAlso ProcessTip("Click here to open a source file.", OpenSourceTip) Then
                     CanIgnoreTip = False
-                    Return Warn("Assistant", AddressOf ShowOpenSourceDialog)
+                    Return Hint("Open a source", AddressOf ShowOpenSourceSingleFileDialog, "Open...")
                 End If
 
                 If p.SourceFile = p.TargetFile AndAlso ProcessTip("The source and target filepath is identical.") Then
-                    Return Block("Invalid Target Path", tbSourceFile, tbTargetFile)
+                    Return Block("Invalid target path", tbSourceFile, tbTargetFile)
                 End If
 
                 If p.RemindToCrop AndAlso TypeOf p.VideoEncoder IsNot NullEncoder AndAlso
-                    ProcessTip("Click here to open the crop dialog. When done continue with Next.") Then
+                    ProcessTip("Click here to open the crop dialog. When done continue with Next.", "Check the crop of the video, then continue.") Then
 
-                    Return Warn("Crop", AddressOf ShowCropDialog)
+                    Return Hint("Crop", AddressOf ShowCropDialog, "Crop...")
                 End If
 
                 If p.WarnNoAudio Then
                     If Not p.AudioTracks.Any(Function(track) track.IsRelevant) Then
                         If ProcessTip("There will be no audio in the output file.") Then
-                            Return Warn("No audio", p.AudioTracks.Select(Function(x) x.TextEdit).ToArray())
+                            Return Warn("No audio", bnAddAudio)
                         End If
                     End If
                 End If
@@ -195,21 +211,21 @@ Partial Public Class MainForm
                     Dim fileGroups = p.AudioTracks.Where(Function(x) x.TextEdit.Text <> "" AndAlso x.AudioProfile.Stream Is Nothing).GroupBy(Function(g) g.AudioProfile.File).Where(Function(x) x.Count() > 1).ToList()
                     If fileGroups.Any() Then
                         If ProcessTip($"Some audio source files are identical.") Then
-                            Return Warn("Suspicious Audio Settings", fileGroups.SelectMany(Function(x) x.AsEnumerable().Select(Function(s) s.TextEdit)).ToArray())
+                            Return Warn("Suspicious audio settings", fileGroups.SelectMany(Function(x) x.AsEnumerable().Select(Function(s) s.TextEdit)).ToArray())
                         End If
                     End If
 
                     Dim streamGroups = p.AudioTracks.Where(Function(x) x.AudioProfile.Stream IsNot Nothing).GroupBy(Function(g) (g.AudioProfile.File, g.AudioProfile.Stream.Index)).Where(Function(x) x.Count() > 1).ToList()
                     If streamGroups.Any() Then
                         If ProcessTip($"Some audio source streams are identical.") Then
-                            Return Warn("Suspicious Audio Settings", streamGroups.SelectMany(Function(x) x.AsEnumerable().Select(Function(s) s.TextEdit)).ToArray())
+                            Return Warn("Suspicious audio settings", streamGroups.SelectMany(Function(x) x.AsEnumerable().Select(Function(s) s.TextEdit)).ToArray())
                         End If
                     End If
                 End If
 
                 If Not p.VideoEncoder.Muxer.IsSupported(p.VideoEncoder.OutputExt) Then
                     If ProcessTip("The encoder outputs '" + p.VideoEncoder.OutputExt + "' but the container '" + p.VideoEncoder.Muxer.Name + "' supports only " + p.VideoEncoder.Muxer.SupportedInputTypes.Join(", ") + ".") Then
-                        Return Block("Encoder conflicts with container", lgbEncoder.Label, llMuxer)
+                        Return Block("Encoder conflicts with container", bnEncoder, bnMuxer)
                     End If
                 End If
 
@@ -223,7 +239,7 @@ Partial Public Class MainForm
                             (gap.Channels = 7 OrElse gap.Channels = 8) AndAlso gap.GetEncoder = GuiAudioEncoder.ffmpeg Then
 
                             If ProcessTip("AC3/EAC3 6.1/7.1 is not supported by ffmpeg.") Then
-                                Return Block("Invalid Audio Channel Count", GetAudioTextBox(ap))
+                                Return Block("Invalid audio channel count", GetAudioTextBox(ap))
                             End If
                         End If
                     End If
@@ -232,16 +248,16 @@ Partial Public Class MainForm
                         Not {32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320, 384, 448, 512, 576, 640}.Contains(CInt(ap.Bitrate)) Then
 
                         If ProcessTip($"The AC3 bitrate {CInt(ap.Bitrate)} is not specification compliant.") Then
-                            Return Warn("Invalid Audio Bitrate", GetAudioTextBox(ap))
+                            Return Warn("Invalid audio bitrate", GetAudioTextBox(ap))
                         End If
                     End If
 
                     If ap.File = p.TargetFile AndAlso ProcessTip("The audio source and target filepath is identical.") Then
-                        Return Block("Invalid Target Path", GetAudioTextBox(ap), tbTargetFile)
+                        Return Block("Invalid target path", GetAudioTextBox(ap), tbTargetFile)
                     End If
 
                     If Math.Abs(ap.Delay) > 2000 AndAlso ProcessTip("The audio delay is unusual high indicating a sync problem.") Then
-                        Return Warn("High Audio Delay", GetAudioTextBox(ap))
+                        Return Warn("High audio delay", GetAudioTextBox(ap))
                     End If
 
                     If Not p.VideoEncoder.Muxer.IsSupported(ap.OutputFileType) AndAlso Not ap.OutputFileType = "ignore" Then
@@ -250,20 +266,20 @@ Partial Public Class MainForm
                             p.VideoEncoder.Muxer.SupportedInputTypes.Join(", ") +
                             ". Select another audio profile or another container.") Then
 
-                            Return Block("Audio format not compatible with container", GetAudioTextBox(ap), llMuxer)
+                            Return Block("Audio format not compatible with container", GetAudioTextBox(ap), bnMuxer)
                         End If
                     End If
                 Next
 
                 If p.VideoEncoder.Muxer.OutputExtFull <> p.TargetFile.ExtFull Then
                     If ProcessTip("The container requires " + p.VideoEncoder.Muxer.OutputExt.ToUpperInvariant + " as target file type.") Then
-                        Return Block("Invalid File Type", tbTargetFile)
+                        Return Block("Invalid file type", tbTargetFile)
                     End If
                 End If
 
                 If p.VideoEncoder.GetError IsNot Nothing Then
                     If ProcessTip(p.VideoEncoder.GetError) Then
-                        Return Block("Encoder Error")
+                        Return Block("Encoder error", AddressOf p.VideoEncoder.ShowConfigDialog, "Options...", bnEncoderOptions)
                     End If
                 End If
 
@@ -272,56 +288,59 @@ Partial Public Class MainForm
                 If Not isValidAnamorphicSize AndAlso (ae > p.MaxAspectRatioError OrElse ae < -p.MaxAspectRatioError) AndAlso
                     isResized AndAlso p.WarnArError AndAlso p.CustomTargetPAR <> "1:1" Then
 
-                    If ProcessTip("Use the resize slider to correct the aspect ratio error or click Next to encode anamorphic.") Then
-                        Return Warn("Aspect Ratio Error", lAspectRatioError)
+                    If ProcessTip("Use the resize slider to correct the aspect ratio error or click Next to encode anamorphic.",
+                                  "Use the resize slider to correct the aspect ratio error, or continue to encode anamorphic.") Then
+                        Return Warn("Aspect ratio error", lAspectRatioError)
                     End If
                 End If
 
-                If p.RemindToSetFilters AndAlso ProcessTip("Verify the filter setup, when done continue with Next.") Then
-                    Return Warn("Filter Setup")
+                If p.RemindToSetFilters AndAlso ProcessTip("Verify the filter setup, when done continue with Next.", "Verify the filter setup, then continue.") Then
+                    Return Hint("Filters", AddressOf FiltersListView.ShowCodeEditor, "Edit Filters...")
                 End If
 
                 If p.Ranges.Count = 0 Then
                     If p.RemindToCut AndAlso TypeOf p.VideoEncoder IsNot NullEncoder AndAlso
-                        ProcessTip("Click here to open the preview for cutting if necessary. When done continue with Next.") Then
+                        ProcessTip("Click here to open the preview for cutting if necessary. When done continue with Next.",
+                                   "Cut the video in the preview if necessary, then continue.") Then
 
-                        Return Warn("Cutting", AddressOf ShowPreview)
+                        Return Hint("Cutting", AddressOf ShowPreview, "Preview...")
                     End If
                 Else
                     If p.CutFrameRate <> p.Script.Info.FrameRate Then
                         If ProcessTip("The frame rate was changed after cutting was performed, please ensure that this change is happening after the Cutting filter section in the AviSynth script.") Then
-                            Return Warn("Frame Rate Change")
+                            Return Warn("Frame rate change")
                         End If
                     End If
 
                     If Not p.Script.IsFilterActive("Cutting") AndAlso g.ActiveForm Is Me Then
                         If ProcessTip("The cutting filter settings don't match with the cutting settings used in the preview." + BR +
                                       "This can usually be fixed by opening and closing the preview.") Then
-                            Return Block("Invalid Cutting Settings")
+                            Return Block("Invalid cutting settings", AddressOf ShowPreview, "Preview...")
                         End If
                     End If
                 End If
 
                 If p.RemindToDoCompCheck AndAlso p.VideoEncoder.IsCompCheckEnabled AndAlso p.Compressibility = 0 Then
-                    If ProcessTip("Click here to start the compressibility check. The compressibility check helps to finds the ideal bitrate or image size.") Then
-                        Return Warn("Compressibility Check", AddressOf p.VideoEncoder.RunCompCheck, laTarget2)
+                    If ProcessTip("Click here to start the compressibility check. The compressibility check helps to finds the ideal bitrate or image size.",
+                                  "The compressibility check helps to find the ideal bitrate or image size.") Then
+                        Return Hint("Compressibility check", AddressOf p.VideoEncoder.RunCompCheck, "Run Check", laTarget2)
                     End If
                 End If
 
                 If Not p.TargetFile.IsValidPath() Then
                     If ProcessTip("The target file path is invalid." + BR + p.TargetFile) Then
-                        Return Warn("Invalid Target File", tbTargetFile)
+                        Return Warn("Invalid target file", AddressOf tbTargetFile_DoubleClick, "Change Target...", tbTargetFile)
                     End If
                 End If
 
                 If File.Exists(p.TargetFile) Then
                     If FileTypes.VideoText.Contains(p.SourceFile.Ext) AndAlso p.SourceFile.ReadAllText.Contains(p.TargetFile) Then
                         If ProcessTip("Source and target name are identical, please select another target name.") Then
-                            Return Block("Invalid Target File", tbTargetFile)
+                            Return Block("Invalid target file", AddressOf tbTargetFile_DoubleClick, "Change Target...", tbTargetFile)
                         End If
                     Else
                         If ProcessTip("The target file already exists." + BR + p.TargetFile) Then
-                            Return Warn("Target File", tbTargetFile)
+                            Return Warn("Target file exists", AddressOf tbTargetFile_DoubleClick, "Change Target...", tbTargetFile)
                         End If
                     End If
                 End If
@@ -331,7 +350,7 @@ Partial Public Class MainForm
                     Dim tfc = p.Script.GetFrameCount()
                     If sfc <> tfc Then
                         If ProcessTip("The duration changed and doesn't fit the original timestamps, which can cause unwanted results. You can delete/change the timestamps file selection under Container Options > Options.") Then
-                            Return Warn("Changed Length", lSource1, lTarget1)
+                            Return Warn("Changed length", AddressOf p.VideoEncoder.OpenMuxerConfigDialog, "Container Options...", lSource1, lTarget1)
                         End If
                     End If
 
@@ -339,7 +358,7 @@ Partial Public Class MainForm
                     Dim tfr = p.Script.GetFramerate()
                     If sfr <> tfr Then
                         If ProcessTip("The frame rate changed and could not fit the original timestamps anymore, which can cause unwanted results. You can delete/change the timestamps file selection under Container Options > Options.") Then
-                            Return Warn("Changed Frame Rate", lSource1, lTarget1)
+                            Return Warn("Changed frame rate", AddressOf p.VideoEncoder.OpenMuxerConfigDialog, "Container Options...", lSource1, lTarget1)
                         End If
                     End If
                 End If
@@ -347,7 +366,7 @@ Partial Public Class MainForm
                 If p.Script.IsFilterActive("Crop") AndAlso p.VideoEncoder?.IsDolbyVisionSet Then
                     If p.HdrDolbyVisionMetadataFile Is Nothing Then
                         If ProcessTip($"You have set a Dolby Vision metadata file, that is unknown to StaxRipLinux, while cropping the video. Please make sure it is extracted with the source file.") Then
-                            Return Block("Unknown RPU File", AddressOf p.VideoEncoder.ShowConfigDialog)
+                            Return Block("Unknown RPU file", AddressOf p.VideoEncoder.ShowConfigDialog, "Options...")
                         End If
                     End If
                 End If
@@ -369,16 +388,15 @@ Partial Public Class MainForm
                     Dim rpuParam = x265.Params.DolbyVisionRpu
                     Dim bufsizeParam = x265.Params.VbvBufSize
                     Dim maxrateParam = x265.Params.VbvMaxRate
-                    Dim optionsLabel = DirectCast(pnEncoder.Content, x265Control).blConfigCodec
-
+                    
                     If Not String.IsNullOrWhiteSpace(rpuParam.Value) Then
                         If bufsizeParam?.Value < 1 Then
                             If ProcessTip("Dolby Vision requires VBV settings to enable HRD.") Then
-                                Return Block("Missing VBV settings", Sub() x265.ShowConfigDialog(bufsizeParam), optionsLabel)
+                                Return Block("Missing VBV settings", Sub() x265.ShowConfigDialog(bufsizeParam), "Options...", bnEncoderOptions)
                             End If
                         ElseIf maxrateParam?.Value < 1 Then
                             If ProcessTip("Dolby Vision requires VBV settings to enable HRD.") Then
-                                Return Block("Missing VBV settings", Sub() x265.ShowConfigDialog(maxrateParam), optionsLabel)
+                                Return Block("Missing VBV settings", Sub() x265.ShowConfigDialog(maxrateParam), "Options...", bnEncoderOptions)
                             End If
                         End If
                     End If
@@ -396,7 +414,7 @@ Partial Public Class MainForm
                     If ProcessTip("x264 AviSynth input supports only YUV420P8, YUV422P8, YUV444P8 and BGR32 " +
                                  $"as input colorspace.{BR}Consider to use a pipe tool: " +
                                   "x264 Options > Input/Output > Pipe > avs2yuv y4m") Then
-                        Return Block("Incompatible colorspace")
+                        Return Block("Incompatible color space", AddressOf p.VideoEncoder.ShowConfigDialog, "Options...", bnEncoderOptions)
                     End If
                 End If
 
@@ -405,7 +423,7 @@ Partial Public Class MainForm
                     If Not p.ForcedOutputModIgnorable Then RemoveTip(tip)
                     If ProcessTip(tip) Then
                         CanIgnoreTip = p.ForcedOutputModIgnorable
-                        Return Warn("Invalid Target Width", tbTargetWidth, lSAR)
+                        Return Warn("Invalid target width", tbTargetWidth, lSAR)
                     End If
                 End If
 
@@ -414,7 +432,7 @@ Partial Public Class MainForm
                     If Not p.ForcedOutputModIgnorable Then RemoveTip(tip)
                     If ProcessTip(tip) Then
                         CanIgnoreTip = p.ForcedOutputModIgnorable
-                        Return Warn("Invalid Target Height", tbTargetHeight, lSAR)
+                        Return Warn("Invalid target height", tbTargetHeight, lSAR)
                     End If
                 End If
 
@@ -434,7 +452,7 @@ Partial Public Class MainForm
                     For Each i In p.VideoEncoder.Muxer.Subtitles
                         If i.Enabled AndAlso Not i.Path.Ext.EqualsAny("idx", "srt", "sub", "vtt") Then
                             If ProcessTip("MP4 supports only SUB, SRT, VTT and IDX subtitles.") Then
-                                Return Block("Invalid subtitle format")
+                                Return Block("Invalid subtitle format", AddressOf p.VideoEncoder.OpenMuxerConfigDialog, "Container Options...", bnMuxerOptions)
                             End If
                         End If
                     Next
@@ -444,40 +462,28 @@ Partial Public Class MainForm
                     Dim err = p.Script.Error
 
                     If err <> "" AndAlso ProcessTip(err) Then
-                        Return Block("Click on the error message", Sub() MsgError("Script Error", err))
+                        Return Block("Script error", AddressOf FiltersListView.ShowCodeEditor, "Edit Filters...")
                     End If
                 End If
 
                 If TypeOf p.VideoEncoder Is SvtAv1EssentialEnc Then
                     If p.Script.Info.BitDepth <> 10 Then
                         If ProcessTip("This encoder requires 10-bit sources. Add a filter that converts it to 10-bit.") Then
-                            Return Block("Invalid bit-depth")
+                            Return Block("Invalid bit depth", AddressOf FiltersListView.ShowCodeEditor, "Edit Filters...")
                         End If
                     End If
                 End If
             Else
                 If p.SourceFiles.Count = 0 Then
-                    If ProcessTip("Click here to open a source file.") Then
+                    If ProcessTip("Click here to open a source file.", OpenSourceTip) Then
                         CanIgnoreTip = False
-                        Return Warn("Assistant", AddressOf ShowOpenSourceDialog)
+                        Return Hint("Open a source", AddressOf ShowOpenSourceSingleFileDialog, "Open...")
                     End If
                 End If
             End If
 
-            'flicker issue
-            If gbAssistant.Text <> "Add Job" Then
-                gbAssistant.Text = "Add Job"
-            End If
-
-            If laTip.Font.Size <> 9 Then
-                laTip.SetFontSize(9)
-            End If
-
-            laTip.Text = "Click on the button to the right to add a job to the job list."
             AssistantPassed = True
-            bnNext.Enabled = True
-            laTip.BackColor = ThemeManager.CurrentTheme.MainForm.laTipBackColor
-            laTip.ForeColor = ThemeManager.CurrentTheme.MainForm.laTipForeColor
+            ShowReadyStep()
             UpdateNextButton()
 
         Catch ex As Exception

@@ -29,7 +29,7 @@ Public Class FiltersListView
     End Sub
 
     Shadows Sub Load()
-        g.MainForm.lgbFilters.Text = If(p.Script.IsAviSynth, "AVS Filters", "VS Filters")
+        g.MainForm.bnFilters.Text = If(p.Script.IsAviSynth, "AviSynth", "VapourSynth")
 
         BlockItemCheck = True
         Items.Clear()

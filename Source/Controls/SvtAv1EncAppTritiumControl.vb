@@ -32,12 +32,12 @@ Public Class SvtAv1EncAppTritiumControl
         Encoder = enc
         Params = Encoder.Params
 
-        tblOverrideName.LeftClickAction = Sub(value)
+        cbOverrideName.LeftClickAction = Sub(value)
                                               Params.OverrideTargetFileName.Value = value
                                               If value Then Encoder.UpdateTargetFile()
                                               UpdateControls()
                                           End Sub
-        tblOverrideName.RightClickAction = Sub(value)
+        cbOverrideName.RightClickAction = Sub(value)
                                                Encoder.ShowConfigDialog(Params.OverrideTargetFileName)
                                            End Sub
 
@@ -55,7 +55,7 @@ Public Class SvtAv1EncAppTritiumControl
 
     Sub ParamsValueChanged(item As CommandLineParam)
         If item Is Params.OverrideTargetFileName Then
-            tblOverrideName.State = DirectCast(item, BoolParam).Value
+            cbOverrideName.State = DirectCast(item, BoolParam).Value
         End If
     End Sub
 
@@ -212,18 +212,10 @@ Public Class SvtAv1EncAppTritiumControl
         lv.Items.Add(New ListViewItem({"Lookahead", Params.Lookahead.Value.ToInvariantString() + If(Params.Lookahead.Value = Params.Lookahead.InitialValue, " (default)", "")}))
         lv.Items.Add(New ListViewItem({"Film Grain", Params.FilmGrain.Value.ToInvariantString() + If(Params.FilmGrain.Value = Params.FilmGrain.InitialValue, " (default)", "")}))
 
-        tblOverrideName.State = Encoder.OverridesTargetFileName
+        cbOverrideName.State = Encoder.OverridesTargetFileName
         blCompCheck.Visible = Params.RateControlMode.Value <> SvtAv1EncAppRateMode.Quality
 
         g.MainForm.UpdateEncoderStateRelatedControls()
-    End Sub
-
-    Sub llConfigCodec_Click(sender As Object, e As EventArgs) Handles blConfigCodec.Click
-        Encoder.ShowConfigDialog()
-    End Sub
-
-    Sub llConfigContainer_Click(sender As Object, e As EventArgs) Handles blConfigContainer.Click
-        Encoder.OpenMuxerConfigDialog()
     End Sub
 
     Sub llCompCheck_Click(sender As Object, e As EventArgs) Handles blCompCheck.Click

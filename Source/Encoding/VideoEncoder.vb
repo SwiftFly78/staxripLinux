@@ -321,12 +321,7 @@ Public MustInherit Class VideoEncoder
     Sub OnStateChange()
         g.MainForm.UpdateEncoderStateRelatedControls()
         g.MainForm.SetEncoderControl(CreateEditControl)
-        g.MainForm.lgbEncoder.Tag = Name
-        g.MainForm.lgbEncoder.Text = g.ConvertPath(Name, 45).Shorten(40)
-
-        Dim text = Muxer.OutputExt.ToUpperInvariant()
-        g.MainForm.llMuxer.Tag = Muxer.Name
-        g.MainForm.llMuxer.Text = If(String.IsNullOrWhiteSpace(text), "[ ? ]", text)
+        g.MainForm.UpdateEncoderButtons(Me)
 
         If Not QualityMode Then
             If Bitrate = 0 Then
@@ -350,8 +345,7 @@ Public MustInherit Class VideoEncoder
 
         If muxer.CanEdit AndAlso muxer.Edit() = DialogResult.OK Then
             Me.Muxer = muxer
-            g.MainForm.llMuxer.Tag = Me.Muxer.Name
-            g.MainForm.llMuxer.Text = Me.Muxer.OutputExt.ToUpperInvariant
+            g.MainForm.UpdateEncoderButtons(Me)
             g.MainForm.Refresh()
             g.MainForm.UpdateSizeOrBitrate()
             g.MainForm.Assistant()
@@ -369,11 +363,7 @@ Public MustInherit Class VideoEncoder
     Sub LoadMuxer(profile As Profile)
         Muxer = DirectCast(ObjectHelp.GetCopy(profile), Muxer)
         Muxer.Init()
-
-        Dim text = Muxer.OutputExt.ToUpperInvariant()
-        g.MainForm.llMuxer.Tag = Muxer.Name
-        g.MainForm.llMuxer.Text = If(String.IsNullOrWhiteSpace(text), "[ ? ]", text)
-
+        g.MainForm.UpdateEncoderButtons(Me)
         UpdateTargetFile()
         g.MainForm.RecalcBitrate()
         g.MainForm.Assistant()

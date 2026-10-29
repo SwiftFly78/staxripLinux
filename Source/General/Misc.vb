@@ -1086,6 +1086,8 @@ Public Class AudioTrack
     Private _rowLabel As AudioRowLabel
     <NonSerialized>
     Private _textEdit As AudioTextEdit
+    <NonSerialized>
+    Private _menuButton As ButtonEx
 
     Public Property AudioProfile As AudioProfile
         Get
@@ -1098,9 +1100,7 @@ Public Class AudioTrack
 
     Public Property EditLabel As AudioEditButtonLabel
         Get
-            Dim ret = If(_editLabel, New AudioEditButtonLabel())
-            ret.Text = "Edit"
-            Return ret
+            Return If(_editLabel, New AudioEditButtonLabel())
         End Get
         Set
             _editLabel = Value
@@ -1138,6 +1138,16 @@ Public Class AudioTrack
         End Get
         Set
             _nameLabel = Value
+        End Set
+    End Property
+
+    'shows the menu of the text edit with the streams and files of the track
+    Public Property MenuButton As ButtonEx
+        Get
+            Return _menuButton
+        End Get
+        Set
+            _menuButton = Value
         End Set
     End Property
 
@@ -1342,6 +1352,7 @@ Public Class Startup
 
         'GTK opens the menu bar with F10, which StaxRip uses for the settings
         Global.Gtk.Settings.Default.MenuBarAccel = ""
+        Styling.Install()
         AddHandler app.UnhandledException, Sub(sender, e) g.OnException(TryCast(e.ExceptionObject, Exception))
 
         Dim loadSettings = g.SettingsFile.FileExists()

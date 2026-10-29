@@ -13,6 +13,7 @@ Namespace UI
         Private ShowMenuSymbolValue As Boolean
         Private SymbolValue As Symbol
         Private SymbolButtonValue As ButtonSymbol
+        Private IconNameValue As String
 
         Property ClickAction As Action
         Property ContextMenuStrip As ContextMenuStripEx Implements IContextMenuOwner.ContextMenuStrip
@@ -69,9 +70,20 @@ Namespace UI
             End Set
         End Property
 
+        'icon of the icon theme shown left of the text
+        Property IconName As String
+            Get
+                Return IconNameValue
+            End Get
+            Set(value As String)
+                IconNameValue = value
+                UpdateText()
+            End Set
+        End Property
+
         Sub UpdateText()
             Dim value = TextValue.Trim
-            Dim iconName = If(value = "", GetSymbolIconName(), Nothing)
+            Dim iconName = If(IconNameValue <> "", IconNameValue, If(value = "", GetSymbolIconName(), Nothing))
 
             If value = "" AndAlso iconName = "" Then
                 value = GetSymbolText()
@@ -878,53 +890,41 @@ Namespace UI
         Property LinkHoverColor As Color
     End Class
 
-    Public Class ToggleButtonLabel
-        Inherits LinkButton
+    'check box whose actions only run for changes made by the user, the right click action
+    'opens the setting in its dialog
+    Public Class ToggleCheckBox
+        Inherits CheckBox
 
-        Private StateValue As Boolean
+        Private BlockAction As Boolean
 
-        Property StateChangeOnRightClick As Boolean
         Property LeftClickAction As Action(Of Boolean)
         Property RightClickAction As Action(Of Boolean)
 
-        Sub New()
-            MyBase.New()
-            UpdateColor()
-        End Sub
-
-        Sub New(state As Boolean)
-            Me.New()
-            StateValue = state
-            UpdateColor()
-        End Sub
-
         Property State As Boolean
             Get
-                Return StateValue
+                Return Checked.GetValueOrDefault
             End Get
             Set(value As Boolean)
-                StateValue = value
-                UpdateColor()
+                BlockAction = True
+                Checked = value
+                BlockAction = False
             End Set
         End Property
 
-        Sub UpdateColor()
-            TextColor = If(StateValue, Color.FromArgb(40, 160, 70), SystemColors.DisabledText)
-        End Sub
+        Protected Overrides Sub OnCheckedChanged(e As EventArgs)
+            MyBase.OnCheckedChanged(e)
 
-        Protected Overrides Sub OnClick(e As EventArgs)
-            MyBase.OnClick(e)
-            State = Not State
-            LeftClickAction?.Invoke(State)
+            If Not BlockAction Then
+                LeftClickAction?.Invoke(State)
+            End If
         End Sub
 
         Protected Overrides Sub OnMouseDown(e As MouseEventArgs)
             MyBase.OnMouseDown(e)
 
-            If e.Buttons = MouseButtons.Alternate Then
+            If e.Buttons = MouseButtons.Alternate AndAlso RightClickAction IsNot Nothing Then
                 e.Handled = True
-                If StateChangeOnRightClick Then State = Not State
-                RightClickAction?.Invoke(State)
+                RightClickAction.Invoke(State)
             End If
         End Sub
     End Class
@@ -973,22 +973,28 @@ Namespace UI
         Inherits GroupBox
     End Class
 
-    'group box with a clickable caption that shows a menu, an optional control is shown right of the caption
-    Public Class LinkGroupBox
-        Inherits GroupBox
+    'section of a window drawn as card, with a heading, controls right of the heading and the content below
+    Public Class Card
+        Inherits Panel
 
-        Public WithEvents Label As New ButtonLabel
-        Event LinkClick()
+        ReadOnly Property Heading As New LabelEx
 
         Private ReadOnly HeaderRightPanel As New Panel
         Private ReadOnly ContentPanel As New Panel
 
-        Sub New()
-            Dim header As New TableLayout(New TableRow(New TableCell(Label), New TableCell(Nothing, True), New TableCell(HeaderRightPanel)))
+        Sub New(text As String)
+            Heading.Text = text
+            Heading.AddStyleClass("staxrip-heading")
+            Padding = New Padding(FH(0.7))
+
+            Dim header As New TableLayout(New TableRow(New TableCell(Heading, True), New TableCell(HeaderRightPanel))) With {
+                .Spacing = New Size(FH(0.35), 0)}
 
             MyBase.Content = New TableLayout(
                 New TableRow(header),
-                New TableRow(ContentPanel) With {.ScaleHeight = True}) With {.Spacing = New Size(0, FH(0.15))}
+                New TableRow(ContentPanel) With {.ScaleHeight = True}) With {.Spacing = New Size(0, FH(0.5))}
+
+            Me.AddStyleClass("staxrip-card")
         End Sub
 
         Property HeaderRight As Control
@@ -1008,26 +1014,151 @@ Namespace UI
                 ContentPanel.Content = value
             End Set
         End Property
+    End Class
 
-        Shadows Property Text As String
+    'button with an action and an arrow button that shows a menu, linked like the split buttons of GTK apps
+    Public Class SplitButton
+        Inherits Panel
+
+        Private ReadOnly MainButton As New Global.Gtk.Button
+        Private ReadOnly ArrowButton As New Global.Gtk.Button
+        Private ReadOnly Label As New Global.Gtk.Label
+
+        Property ClickAction As Action
+        Property Menu As ContextMenuStripEx
+
+        Sub New(text As String, iconName As String, Optional suggested As Boolean = False)
+            Dim box As New Global.Gtk.Box(Global.Gtk.Orientation.Horizontal, 0)
+            box.StyleContext.AddClass("linked")
+
+            Dim buttonContent As New Global.Gtk.Box(Global.Gtk.Orientation.Horizontal, 6) With {.Halign = Global.Gtk.Align.Center}
+
+            If iconName <> "" Then
+                buttonContent.PackStart(Styling.CreateIcon(iconName), False, False, 0)
+            End If
+
+            Label.Text = text
+            buttonContent.PackStart(Label, False, False, 0)
+            MainButton.Child = buttonContent
+            ArrowButton.Child = Styling.CreateIcon(Styling.GetIconName("pan-down-symbolic"))
+            ArrowButton.TooltipText = "More options"
+
+            If suggested Then
+                MainButton.StyleContext.AddClass("suggested-action")
+                ArrowButton.StyleContext.AddClass("suggested-action")
+            End If
+
+            box.PackStart(MainButton, False, False, 0)
+            box.PackStart(ArrowButton, False, False, 0)
+            box.ShowAll()
+
+            AddHandler MainButton.Clicked, Sub() ClickAction?.Invoke()
+            AddHandler ArrowButton.Clicked, Sub() ShowMenu()
+
+            Content = New NativeControlHost(box)
+        End Sub
+
+        Property Text As String
             Get
                 Return Label.Text
             End Get
             Set(value As String)
-                Label.Text = value.TrimEx
+                Label.Text = value
             End Set
         End Property
 
-        Sub Label_Click(sender As Object, e As EventArgs) Handles Label.Click
-            If LinkClickEvent IsNot Nothing Then
-                RaiseEvent LinkClick()
-            Else
-                ShowContext()
+        Property ToolTipText As String
+            Get
+                Return MainButton.TooltipText
+            End Get
+            Set(value As String)
+                MainButton.TooltipText = value
+            End Set
+        End Property
+
+        'shows a confirmation instead of the text for a moment
+        Async Sub ShowConfirmation(text As String)
+            Dim previous = Label.Text
+            Label.Text = text
+            Await Task.Delay(1500)
+
+            If Label.Text = text Then
+                Label.Text = previous
             End If
         End Sub
 
-        Sub ShowContext()
-            Label.ContextMenuStrip?.Show(Label, New PointF(0, Label.Height))
+        Sub ShowMenu()
+            Dim x, y As Integer
+
+            If Menu IsNot Nothing AndAlso ArrowButton.TranslateCoordinates(TryCast(ControlObject, Global.Gtk.Widget), 0, ArrowButton.AllocatedHeight, x, y) Then
+                Menu.Show(Me, x, y)
+            End If
+        End Sub
+    End Class
+
+    Public Enum NextStepKind
+        Ready
+        Hint
+        Warning
+        [Error]
+    End Enum
+
+    'the bar of the main window that says what needs attention next and offers the action that resolves it
+    Public Class NextStepBar
+        Inherits Panel
+
+        Private ReadOnly Icon As New Global.Gtk.Image
+        Private KindValue As NextStepKind = NextStepKind.Hint
+
+        ReadOnly Property TitleLabel As New LabelEx
+        ReadOnly Property MessageLabel As New LabelEx With {.Wrap = WrapMode.Word}
+        ReadOnly Property ActionButton As New ButtonEx With {.Visible = False}
+        ReadOnly Property ContinueButton As New ButtonEx("Continue") With {.Visible = False}
+
+        Sub New()
+            TitleLabel.AddStyleClass("staxrip-heading")
+            Icon.Show()
+            Icon.StyleContext.AddClass("staxrip-next-step-icon")
+            Padding = New Padding(FH(0.7), FH(0.5))
+
+            Dim text As New TableLayout(New TableRow(TitleLabel), New TableRow(MessageLabel)) With {.Spacing = New Size(0, FH(0.1))}
+
+            Content = New TableLayout(New TableRow(
+                New TableCell(New NativeControlHost(Icon)),
+                New TableCell(text, True),
+                New TableCell(HRow(ActionButton, ContinueButton)))) With {.Spacing = New Size(FH(0.7), 0)}
+
+            Me.AddStyleClass("staxrip-next-step")
+            Kind = NextStepKind.Hint
+        End Sub
+
+        Property Kind As NextStepKind
+            Get
+                Return KindValue
+            End Get
+            Set(value As NextStepKind)
+                Me.RemoveStyleClass("staxrip-next-step-" + KindValue.ToString.ToLowerInvariant)
+                KindValue = value
+                Me.AddStyleClass("staxrip-next-step-" + value.ToString.ToLowerInvariant)
+
+                Dim iconName = Styling.GetIconName(
+                    If(value = NextStepKind.Ready, "object-select-symbolic",
+                    If(value = NextStepKind.Warning, "dialog-warning-symbolic",
+                    If(value = NextStepKind.Error, "dialog-error-symbolic", "dialog-information-symbolic"))))
+
+                Icon.SetFromIconName(iconName, Global.Gtk.IconSize.LargeToolbar)
+            End Set
+        End Property
+
+        Sub SetMessage(title As String, message As String)
+            TitleLabel.Text = title
+            MessageLabel.Text = If(message, "").Trim
+            MessageLabel.Visible = MessageLabel.Text <> ""
+        End Sub
+
+        Sub SetAction(text As String)
+            ActionButton.Text = text
+            ActionButton.Visible = text <> ""
         End Sub
     End Class
 
@@ -1243,44 +1374,31 @@ Namespace UI
     End Class
 
     Public Class AudioRowLabel
-        Inherits Label
+        Inherits LabelEx
 
         Sub New(row As Integer)
             MyBase.New()
-            Text = (row + 1) & "."
-            VerticalAlignment = VerticalAlignment.Center
+            Text = (row + 1).ToString
+            Me.AddStyleClass("dim-label")
         End Sub
     End Class
 
+    'shows the language of the track, it's changed in the audio options
     Public Class AudioLanguageLabel
-        Inherits ButtonLabel
-
-        Property ContextMenuStripEx As ContextMenuStripEx
-            Get
-                Return ContextMenuStrip
-            End Get
-            Set(value As ContextMenuStripEx)
-                ContextMenuStrip = value
-            End Set
-        End Property
+        Inherits LabelEx
 
         Sub New()
             MyBase.New()
-            Text = "Audio Language"
+            Me.AddStyleClass("dim-label")
         End Sub
 
         Sub New(row As Integer)
             Me.New()
         End Sub
-
-        Protected Overrides Sub OnClick(e As EventArgs)
-            MyBase.OnClick(e)
-            ShowContext()
-        End Sub
     End Class
 
     Public Class AudioNameButtonLabel
-        Inherits ButtonLabel
+        Inherits ButtonEx
 
         Property ContextMenuStripEx As ContextMenuStripEx
             Get
@@ -1294,6 +1412,8 @@ Namespace UI
         Sub New()
             MyBase.New()
             Text = "Audio Profile"
+            ShowMenuSymbol = True
+            MinimumSize = Size.Empty
         End Sub
 
         Sub New(row As Integer)
@@ -1302,11 +1422,12 @@ Namespace UI
     End Class
 
     Public Class AudioEditButtonLabel
-        Inherits AudioNameButtonLabel
+        Inherits ButtonEx
 
         Sub New()
             MyBase.New()
-            Text = "Edit"
+            Text = "Edit..."
+            MinimumSize = Size.Empty
         End Sub
 
         Sub New(row As Integer)
