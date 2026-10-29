@@ -16,8 +16,26 @@ Namespace UI
     font-weight: bold;
 }
 
+.staxrip-title {
+    font-weight: bold;
+    font-size: 1.25em;
+}
+
 .staxrip-toolbar {
     border-bottom: 1px solid @borders;
+}
+
+.staxrip-sidebar {
+    background-color: @theme_base_color;
+    border-right: 1px solid @borders;
+}
+
+.staxrip-sidebar treeview {
+    -GtkTreeView-vertical-separator: 10;
+}
+
+.staxrip-action-area {
+    border-top: 1px solid @borders;
 }
 
 .staxrip-next-step {

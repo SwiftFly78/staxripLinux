@@ -209,17 +209,20 @@ Public Class SimpleUI
 
     Property FormSizeScaleFactor As SizeF
 
-    Private Layout As TableLayout
-    Private TreeCell As TableCell
+    Private ReadOnly Sidebar As New Panel
+    Private ReadOnly PageTitle As New LabelEx
+    Private ReadOnly PageArea As TableLayout
 
     Sub New()
         Tree.AutoCollaps = True
         Tree.ExpandMode = TreeNodeExpandMode.InclusiveChilds
+        Tree.Border = BorderType.None
+        Sidebar.Content = Tree
+        Sidebar.AddStyleClass("staxrip-sidebar")
+        PageTitle.AddStyleClass("staxrip-title")
 
-        TreeCell = New TableCell(Tree)
-        Layout = New TableLayout With {.Spacing = New Size(FontHeight \ 2, 0)}
-        Layout.Rows.Add(New TableRow(TreeCell, New TableCell(Host, True)) With {.ScaleHeight = True})
-        Content = Layout
+        PageArea = New TableLayout(New TableRow(PageTitle), New TableRow(Host) With {.ScaleHeight = True}) With {.Spacing = New Size(0, FH(0.7))}
+        Content = New TableLayout(New TableRow(New TableCell(Sidebar), New TableCell(PageArea, True)) With {.ScaleHeight = True})
     End Sub
 
     Protected Overrides Sub OnPreLoad(e As EventArgs)
@@ -227,13 +230,20 @@ Public Class SimpleUI
         UpdateTree()
     End Sub
 
+    'with several pages the tree is a sidebar and the pages have a title, a single page has
+    'no padding because the dialogs that embed it have their own
     Sub UpdateTree()
         Dim nodes = Tree.GetNodes()
-        Tree.Visible = nodes.Count > 1
+        Dim multiplePages = nodes.Count > 1
 
-        If nodes.Count > 1 Then
+        Tree.Visible = multiplePages
+        Sidebar.Visible = multiplePages
+        PageTitle.Visible = multiplePages
+        PageArea.Padding = If(multiplePages, New Padding(FH(1)), Padding.Empty)
+
+        If multiplePages Then
             Dim maxWidth = nodes.Max(Function(n) MeasureTextWidth(n.Text) + n.Level * FontHeight)
-            Tree.Width = maxWidth + FontHeight * 3
+            Sidebar.Width = maxWidth + FontHeight * 3
         End If
     End Sub
 
@@ -258,6 +268,7 @@ Public Class SimpleUI
 
     Private Sub ShowPageControl(page As IPage)
         ActivePage = page
+        PageTitle.Text = If(page.Path, "").Split("|"c).Last.Trim
         Dim flow = TryCast(page, FlowPage)
         flow?.AlignLabels()
         Host.Content = DirectCast(page, Control)

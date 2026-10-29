@@ -7,7 +7,6 @@ Public Class SimpleSettingsForm
     Public WithEvents bnOK As ButtonEx
     Public WithEvents bnCancel As ButtonEx
     Public WithEvents SimpleUI As SimpleUI
-    Public LineControl As LineControl
 
     Private HelpParagraphs As String()
 
@@ -15,15 +14,11 @@ Public Class SimpleSettingsForm
         bnOK = CreateButton("OK", DialogResult.OK)
         bnCancel = CreateButton("Cancel", DialogResult.Cancel)
         SimpleUI = New SimpleUI
-        LineControl = New LineControl
 
         DefaultButton = bnOK
         AbortButton = bnCancel
 
-        Content = PaddedTable(
-            ScaledRow(SimpleUI),
-            Row(LineControl),
-            Row(ButtonRow(bnOK, bnCancel)))
+        Content = New TableLayout(ScaledRow(SimpleUI), Row(CreateActionArea(ButtonRow(bnOK, bnCancel))))
 
         SetMinimumSize(33, 25)
         ScaleClientSize(40, 32.75)

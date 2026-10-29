@@ -66,10 +66,7 @@ Public Class CommandLineAudioEncoderForm
             New TableRow(Scaled(smallValues), Scaled(lStreamName), Scaled(laProfileName)),
             New TableRow(Scaled(smallEdits), Scaled(tbStreamName), Scaled(tbProfileName))) With {.Spacing = DefaultSpacing}
 
-        Content = PaddedTable(
-            Row(top),
-            ScaledRow(EditControl),
-            Row(SplitRow({cbDefault, cbForced, cbCommentary}, {bnMenu, bnOK, bnCancel})))
+        Content = DialogContent(SplitRow({cbDefault, cbForced, cbCommentary}, {bnMenu, bnOK, bnCancel}), Row(top), ScaledRow(EditControl))
 
         AbortButton = bnCancel
         Text = $"Audio Command Lines - {g.DefaultCommands.GetApplicationDetails()}"

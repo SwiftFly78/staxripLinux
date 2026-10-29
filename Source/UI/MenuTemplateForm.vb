@@ -19,9 +19,7 @@ Namespace UI
             AbortButton = bnCancel
             Text = $"Default Menu - {g.DefaultCommands.GetApplicationDetails()}"
 
-            Content = PaddedTable(
-                ScaledRow(tv),
-                Row(ButtonRow(bnOK, bnCancel)))
+            Content = DialogContent(ButtonRow(bnOK, bnCancel), ScaledRow(tv))
 
             ScaleClientSize(28, 32)
             PopulateTreeView(item, Nothing)

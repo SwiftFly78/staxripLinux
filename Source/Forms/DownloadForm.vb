@@ -23,7 +23,7 @@ Public Class DownloadForm
         ProgressBar = New ProgressBar With {.MaxValue = 1000}
         bnCancel = CreateButton("Cancel")
         AbortButton = bnCancel
-        Content = PaddedTable(Row(Scaled(ProgressBar)), Row(ButtonRow(bnCancel)))
+        Content = DialogContent(ButtonRow(bnCancel), Row(Scaled(ProgressBar)))
         ClientSize = New Size(FH(30), FH(5))
     End Sub
 

@@ -27,10 +27,12 @@ Public Class CommandLineForm
         cmsCommandLine = New ContextMenuStripEx
         rtbCommandLine = New CommandLineRichTextBox With {.ReadOnly = True, .Font = FontManager.GetCodeFont()}
 
-        Content = PaddedTable(
+        cbGoTo.PlaceholderText = "Search options"
+
+        Content = New TableLayout(
             ScaledRow(SimpleUI),
-            Row(rtbCommandLine),
-            Row(New TableLayout(Row(Scaled(cbGoTo), bnMenu, bnOK, bnCancel)) With {.Spacing = DefaultSpacing}))
+            Row(New Panel With {.Content = rtbCommandLine, .Padding = New Padding(FH(0.7), 0, FH(0.7), FH(0.7))}),
+            Row(CreateActionArea(New TableLayout(Row(Scaled(cbGoTo), bnMenu, bnOK, bnCancel)) With {.Spacing = DefaultSpacing})))
 
         AbortButton = bnCancel
     End Sub

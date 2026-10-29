@@ -32,10 +32,9 @@ Public Class CommandLineVideoEncoderForm
         AbortButton = bnCancel
         TipProvider = New TipProvider
 
-        Content = PaddedTable(
+        Content = DialogContent(ButtonRow(bnOK, bnCancel),
             Row(HRow(laType, tbType, cbQualityMode, laPercent, numPercent)),
-            ScaledRow(EditorPanel),
-            Row(ButtonRow(bnOK, bnCancel)))
+            ScaledRow(EditorPanel))
 
         Text = $"Command Line Video Encoder - {g.DefaultCommands.GetApplicationDetails()}"
         TipProvider.SetTipText(cbQualityMode, "In Quality Mode bitrate related features are disabled.")

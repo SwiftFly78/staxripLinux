@@ -83,10 +83,9 @@ Public Class AudioForm
             .Text = "Advanced",
             .Content = New TableLayout(ScaledRow(SimpleUI), Row(HRow(bnAdvanced))) With {.Spacing = DefaultSpacing}}
 
-        Content = PaddedTable(
+        Content = DialogContent(ButtonRow(bnMenu, bnOK, bnCancel),
             ScaledRow(New TableLayout(ScaledRow(Scaled(gbBasic), Scaled(gbAdvanced))) With {.Spacing = DefaultSpacing}),
-            Row(rtbCommandLine),
-            Row(ButtonRow(bnMenu, bnOK, bnCancel)))
+            Row(rtbCommandLine))
 
         AbortButton = bnCancel
         Text = $"Audio Settings - {g.DefaultCommands.GetApplicationDetails()}"

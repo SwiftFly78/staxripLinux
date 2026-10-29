@@ -101,6 +101,20 @@ Namespace UI
             Return New TableLayout(rows) With {.Spacing = DefaultSpacing, .Padding = DefaultPadding}
         End Function
 
+        'the bottom row of a dialog with its buttons, separated from the content by a line
+        Function CreateActionArea(content As Control) As Panel
+            Dim ret As New Panel With {.Content = content, .Padding = New Padding(FH(0.7))}
+            ret.AddStyleClass("staxrip-action-area")
+            Return ret
+        End Function
+
+        'the padded content of a dialog above the action area with its buttons
+        Function DialogContent(actions As Control, ParamArray rows As TableRow()) As TableLayout
+            Return New TableLayout(
+                New TableRow(PaddedTable(rows)) With {.ScaleHeight = True},
+                New TableRow(CreateActionArea(actions)))
+        End Function
+
         Function CreateButton(text As String, Optional result As DialogResult = DialogResult.None) As ButtonEx
             Return New ButtonEx With {.Text = text, .DialogResult = result, .MinimumSize = New Size(FH(6), 0)}
         End Function

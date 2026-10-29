@@ -19,9 +19,8 @@ Public Class CodeEditor
             .HorizontalContentAlignment = HorizontalAlignment.Stretch,
             .Spacing = FH(0.4)}
 
-        Content = PaddedTable(
-            ScaledRow(New Scrollable With {.Content = MainFlowLayoutPanel, .Border = BorderType.None, .ExpandContentWidth = True}),
-            Row(ButtonRow(bnOK, bnCancel)))
+        Content = DialogContent(ButtonRow(bnOK, bnCancel),
+            ScaledRow(New Scrollable With {.Content = MainFlowLayoutPanel, .Border = BorderType.None, .ExpandContentWidth = True}))
 
         AbortButton = bnCancel
         Text = $"Code Editor - {g.DefaultCommands.GetApplicationDetails()}"

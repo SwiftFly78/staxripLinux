@@ -750,6 +750,17 @@ Namespace UI
             End Set
         End Property
 
+        'the hint in the entry of an editable combo box
+        WriteOnly Property PlaceholderText As String
+            Set(value As String)
+                Dim entry = TryCast(TryCast(ControlObject, Global.Gtk.ComboBox)?.Child, Global.Gtk.Entry)
+
+                If entry IsNot Nothing Then
+                    entry.PlaceholderText = value
+                End If
+            End Set
+        End Property
+
         'in drop down list mode setting the text selects the item with this text
         Shadows Property Text As String
             Get
@@ -955,7 +966,7 @@ Namespace UI
             Dim gx = e.Graphics
             Dim textOffset As Single = 0
             Dim lineY = CSng(Math.Floor(Height / 2) + 0.5)
-            Dim font = FontManager.GetDefaultFont()
+            Dim font = FontManager.GetDefaultFont(0, FontStyle.Bold)
             Dim fore = If(Enabled, SystemColors.ControlText, SystemColors.DisabledText)
 
             If TextValue <> "" Then

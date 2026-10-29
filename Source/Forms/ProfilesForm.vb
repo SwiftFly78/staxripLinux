@@ -35,9 +35,7 @@ Public Class ProfilesForm
             Row(bnAdd), Row(bnRemove), Row(bnEdit), Row(bnRename), Row(arrows), Row(bnClone), Row(bnLoad), Row(bnRestore),
             New TableRow With {.ScaleHeight = True}) With {.Spacing = DefaultSpacing}
 
-        Content = PaddedTable(
-            ScaledRow(Scaled(lbMain), buttons),
-            Row(ButtonRow(bnOK, bnCancel), Nothing))
+        Content = DialogContent(ButtonRow(bnOK, bnCancel), ScaledRow(Scaled(lbMain), buttons))
 
         DefaultButton = bnOK
         AbortButton = bnCancel

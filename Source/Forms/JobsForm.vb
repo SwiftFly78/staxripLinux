@@ -26,10 +26,7 @@ Friend Class JobsForm
         stb = New SearchTextBox
         lv = New ListViewEx
 
-        Content = PaddedTable(
-            Row(stb),
-            ScaledRow(lv),
-            Row(SplitRow({bnStart, bnUp, bnDown}, {bnMenu, bnRemove, bnLoad})))
+        Content = DialogContent(SplitRow({bnStart, bnUp, bnDown}, {bnMenu, bnRemove, bnLoad}), Row(stb), ScaledRow(lv))
 
         Text = $"Jobs - {g.DefaultCommands.GetApplicationDetails()}"
         SetMinimumSize(20, 12)

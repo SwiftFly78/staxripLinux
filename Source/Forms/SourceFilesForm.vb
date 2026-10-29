@@ -30,9 +30,7 @@ Public Class SourceFilesForm
             Row(bnAddFiles), Row(bnAddFolder), Row(bnRemove), Row(bnUp), Row(bnDown),
             New TableRow With {.ScaleHeight = True}) With {.Spacing = DefaultSpacing}
 
-        Content = PaddedTable(
-            ScaledRow(Scaled(lb), buttons),
-            Row(ButtonRow(bnOK, bnCancel), Nothing))
+        Content = DialogContent(ButtonRow(bnOK, bnCancel), ScaledRow(Scaled(lb), buttons))
 
         DefaultButton = bnOK
         AbortButton = bnCancel

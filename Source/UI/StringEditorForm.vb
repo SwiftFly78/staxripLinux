@@ -17,9 +17,7 @@ Namespace UI
             AbortButton = bnCancel
             Text = $"String Editor - {g.DefaultCommands.GetApplicationDetails()}"
 
-            Content = PaddedTable(
-                ScaledRow(rtb),
-                Row(SplitRow({cbWrap}, {bnOK, bnCancel})))
+            Content = DialogContent(SplitRow({cbWrap}, {bnOK, bnCancel}), ScaledRow(rtb))
 
             cbWrap.Checked = True
             rtb.WordWrap = True

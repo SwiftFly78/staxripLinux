@@ -35,7 +35,7 @@ Public Class OcrLanguagesForm
 
         bnOK = CreateButton("Download", DialogResult.OK)
         bnCancel = CreateButton("Cancel", DialogResult.Cancel)
-        Content = PaddedTable(Row(laInstalled), ScaledRow(lvLanguages), Row(laSource), Row(ButtonRow(bnOK, bnCancel)))
+        Content = DialogContent(ButtonRow(bnOK, bnCancel), Row(laInstalled), ScaledRow(lvLanguages), Row(laSource))
         DefaultButton = bnOK
         AbortButton = bnCancel
         Text = $"OCR Languages - {g.DefaultCommands.GetApplicationDetails()}"

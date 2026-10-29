@@ -20,9 +20,7 @@ Public Class MacroEditorDialog
         AbortButton = bnCancel
         Resizable = True
 
-        Content = PaddedTable(
-            ScaledRow(MacroEditorControl),
-            Row(SplitRow({bnContext}, {bnOK, bnCancel})))
+        Content = DialogContent(SplitRow({bnContext}, {bnOK, bnCancel}), ScaledRow(MacroEditorControl))
 
         SetMacroDefaults()
     End Sub

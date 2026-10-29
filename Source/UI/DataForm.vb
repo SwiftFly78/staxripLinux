@@ -23,9 +23,7 @@ Public Class DataForm
         AbortButton = bnCancel
         Resizable = True
 
-        Content = PaddedTable(
-            ScaledRow(Grid),
-            Row(SplitRow({bnAdd, bnRemove}, {bnOK, bnCancel})))
+        Content = DialogContent(SplitRow({bnAdd, bnRemove}, {bnOK, bnCancel}), ScaledRow(Grid))
 
         ScaleClientSize(40, 22)
     End Sub

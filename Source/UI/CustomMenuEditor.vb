@@ -62,10 +62,9 @@ Namespace UI
                 Row(lParameters),
                 ScaledRow(pg)) With {.Spacing = DefaultSpacing}
 
-            Content = PaddedTable(
+            Content = DialogContent(ButtonRow(bnOK, bnCancel),
                 Row(toolbar),
-                ScaledRow(New TableLayout(ScaledRow(Scaled(tv), Scaled(right))) With {.Spacing = New Size(FH(0.8), 0)}),
-                Row(ButtonRow(bnOK, bnCancel)))
+                ScaledRow(New TableLayout(ScaledRow(Scaled(tv), Scaled(right))) With {.Spacing = New Size(FH(0.8), 0)}))
 
             Text = $"Menu Editor - {g.DefaultCommands.GetApplicationDetails()}"
         End Sub

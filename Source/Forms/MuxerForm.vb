@@ -81,9 +81,7 @@ Public Class MuxerForm
             tcMain.Pages.Add(page)
         Next
 
-        Content = PaddedTable(
-            ScaledRow(tcMain),
-            Row(SplitRow({bnCommandLinePreview}, {bnOK, bnCancel})))
+        Content = DialogContent(SplitRow({bnCommandLinePreview}, {bnOK, bnCancel}), ScaledRow(tcMain))
 
         AbortButton = bnCancel
     End Sub
