@@ -144,8 +144,9 @@ Partial Public Class MainForm
             If p.VideoEncoder.Muxer.TagFile <> "" AndAlso File.Exists(p.VideoEncoder.Muxer.TagFile) AndAlso
                 p.VideoEncoder.Muxer.Tags.Count > 0 Then
 
-                If ProcessTip("In the container options there is both a tag file and tags in the Tags tab defined. Only one can be used, the file will be ignored.") Then
-                    Return Warn("Tags are defined twice")
+                If ProcessTip("In the container options there is both a tag file and tags in the Tags tab defined. Only one can be used, the file will be ignored.",
+                              "The container options define a tag file and tags, the tag file is ignored. Remove one of them in the container options.") Then
+                    Return Warn("Tags are defined twice", AddressOf p.VideoEncoder.OpenMuxerConfigDialog, "Container Options...", bnMuxerOptions)
                 End If
             End If
 
@@ -153,8 +154,9 @@ Partial Public Class MainForm
                 If Not p.VideoEncoder.Muxer.CoverFile.Base.EqualsAny("cover", "small_cover", "cover_land", "small_cover_land") OrElse
                     Not p.VideoEncoder.Muxer.CoverFile.Ext.EqualsAny("jpg", "png") Then
 
-                    If ProcessTip("The cover file name must be cover, small_cover, cover_land or small_cover_land, the file type must be jpg or png.") Then
-                        Return Block("Invalid cover file name")
+                    If ProcessTip("The cover file name must be cover, small_cover, cover_land or small_cover_land, the file type must be jpg or png.",
+                                  "Name the cover file cover, small_cover, cover_land or small_cover_land with the type jpg or png, or choose another file in the container options.") Then
+                        Return Block("Invalid cover file name", AddressOf p.VideoEncoder.OpenMuxerConfigDialog, "Container Options...", bnMuxerOptions)
                     End If
                 End If
             End If
@@ -164,23 +166,26 @@ Partial Public Class MainForm
                 Dim param = enc.CommandLineParams.GetOptionParam("--vpp-resize")
 
                 If param IsNot Nothing AndAlso param.Value > 0 AndAlso Not p.Script.IsFilterActive("Resize", "Hardware Encoder") Then
-                    If ProcessTip("In order to use a resize filter of the hardware encoder select 'Hardware Encoder' as resize filter from the filters menu.") Then
-                        Return Block("Invalid filter setting")
+                    If ProcessTip("In order to use a resize filter of the hardware encoder select 'Hardware Encoder' as resize filter from the filters menu.",
+                                  "The encoder resizes with --vpp-resize, so the Resize filter must be Hardware Encoder. Replace the Resize filter, or turn off resizing in the encoder options.") Then
+                        Return Block("Invalid filter setting", AddressOf FiltersListView.ShowCodeEditor, "Edit Filters...")
                     End If
                 End If
             End If
 
             If Not p.BatchMode Then
                 If p.SourceFile <> "" AndAlso p.Script.IsAviSynth AndAlso Not TextEncoding.ArePathsSupportedByProcessEncoding AndAlso
-                    ProcessTip("AviSynth Unicode support requires at least Windows 10 1903.") Then
-                    Return Block("Text encoding limitation", bnEncoder)
+                    ProcessTip("AviSynth Unicode support requires at least Windows 10 1903.",
+                               "AviSynth can't open paths with these characters. Choose a VapourSynth filter setup, or rename the files.") Then
+                    Return Block("Text encoding limitation", Sub() bnFilters.PerformClick(), "Filter Setup...", bnFilters)
                 End If
 
                 If p.Script.Filters.Count = 0 OrElse Not p.Script.Filters(0).Active OrElse
                     p.Script.Filters(0).Category <> "Source" Then
 
-                    If ProcessTip("The first filter must have the category Source.") Then
-                        Return Block("Invalid filter setup")
+                    If ProcessTip("The first filter must have the category Source.",
+                                  "The first filter must be an active filter of the category Source. Activate the source filter or add one in the filter editor.") Then
+                        Return Block("Invalid filter setup", AddressOf FiltersListView.ShowCodeEditor, "Edit Filters...")
                     End If
                 End If
 
@@ -189,8 +194,9 @@ Partial Public Class MainForm
                     Return Hint("Open a source", AddressOf ShowOpenSourceSingleFileDialog, "Open...")
                 End If
 
-                If p.SourceFile = p.TargetFile AndAlso ProcessTip("The source and target filepath is identical.") Then
-                    Return Block("Invalid target path", tbSourceFile, tbTargetFile)
+                If p.SourceFile = p.TargetFile AndAlso ProcessTip("The source and target filepath is identical.",
+                                                                  "The target is the source file, the encoding would overwrite it. Choose another target file.") Then
+                    Return Block("Invalid target path", AddressOf tbTargetFile_DoubleClick, "Change Target...", tbSourceFile, tbTargetFile)
                 End If
 
                 If p.RemindToCrop AndAlso TypeOf p.VideoEncoder IsNot NullEncoder AndAlso
@@ -201,8 +207,9 @@ Partial Public Class MainForm
 
                 If p.WarnNoAudio Then
                     If Not p.AudioTracks.Any(Function(track) track.IsRelevant) Then
-                        If ProcessTip("There will be no audio in the output file.") Then
-                            Return Warn("No audio", bnAddAudio)
+                        If ProcessTip("There will be no audio in the output file.",
+                                      "The output file will have no audio. Add a track, or continue without audio.") Then
+                            Return Warn("No audio", AddressOf bnAddAudio_Click, "Add Track", bnAddAudio)
                         End If
                     End If
                 End If
@@ -210,27 +217,38 @@ Partial Public Class MainForm
                 If p.WarnIdenticalAudio Then
                     Dim fileGroups = p.AudioTracks.Where(Function(x) x.TextEdit.Text <> "" AndAlso x.AudioProfile.Stream Is Nothing).GroupBy(Function(g) g.AudioProfile.File).Where(Function(x) x.Count() > 1).ToList()
                     If fileGroups.Any() Then
-                        If ProcessTip($"Some audio source files are identical.") Then
-                            Return Warn("Suspicious audio settings", fileGroups.SelectMany(Function(x) x.AsEnumerable().Select(Function(s) s.TextEdit)).ToArray())
+                        If ProcessTip($"Some audio source files are identical.",
+                                      "Several audio tracks use the same file. Choose another file for one of them, or continue.") Then
+                            Dim duplicate = fileGroups(0).Last()
+                            Return Warn("Suspicious audio settings", Sub() duplicate.MenuButton?.PerformClick(), "Change Track...",
+                                        fileGroups.SelectMany(Function(x) x.AsEnumerable().Select(Function(s) s.TextEdit)).ToArray())
                         End If
                     End If
 
                     Dim streamGroups = p.AudioTracks.Where(Function(x) x.AudioProfile.Stream IsNot Nothing).GroupBy(Function(g) (g.AudioProfile.File, g.AudioProfile.Stream.Index)).Where(Function(x) x.Count() > 1).ToList()
                     If streamGroups.Any() Then
-                        If ProcessTip($"Some audio source streams are identical.") Then
-                            Return Warn("Suspicious audio settings", streamGroups.SelectMany(Function(x) x.AsEnumerable().Select(Function(s) s.TextEdit)).ToArray())
+                        If ProcessTip($"Some audio source streams are identical.",
+                                      "Several audio tracks use the same stream. Choose another stream for one of them, or continue.") Then
+                            Dim duplicate = streamGroups(0).Last()
+                            Return Warn("Suspicious audio settings", Sub() duplicate.MenuButton?.PerformClick(), "Change Track...",
+                                        streamGroups.SelectMany(Function(x) x.AsEnumerable().Select(Function(s) s.TextEdit)).ToArray())
                         End If
                     End If
                 End If
 
                 If Not p.VideoEncoder.Muxer.IsSupported(p.VideoEncoder.OutputExt) Then
-                    If ProcessTip("The encoder outputs '" + p.VideoEncoder.OutputExt + "' but the container '" + p.VideoEncoder.Muxer.Name + "' supports only " + p.VideoEncoder.Muxer.SupportedInputTypes.Join(", ") + ".") Then
-                        Return Block("Encoder conflicts with container", bnEncoder, bnMuxer)
+                    Dim message = "The encoder outputs '" + p.VideoEncoder.OutputExt + "' but the container '" + p.VideoEncoder.Muxer.Name + "' supports only " + p.VideoEncoder.Muxer.SupportedInputTypes.Join(", ") + "."
+
+                    If ProcessTip(message, message + " Choose another container or encoder.") Then
+                        Return Block("Encoder conflicts with container", Sub() bnMuxer.PerformClick(), "Change Container...", bnEncoder, bnMuxer)
                     End If
                 End If
 
                 For Each ap In AudioProfile.GetProfiles
                     If ap.File = "" Then Continue For
+
+                    Dim track = p.AudioTracks.FirstOrDefault(Function(x) x.AudioProfile Is ap)
+                    Dim editTrack = Sub() track?.EditLabel.PerformClick()
 
                     If TypeOf ap Is GUIAudioProfile Then
                         Dim gap = DirectCast(ap, GUIAudioProfile)
@@ -238,8 +256,9 @@ Partial Public Class MainForm
                         If (gap.AudioCodec = AudioCodec.AC3 OrElse gap.AudioCodec = AudioCodec.EAC3) AndAlso
                             (gap.Channels = 7 OrElse gap.Channels = 8) AndAlso gap.GetEncoder = GuiAudioEncoder.ffmpeg Then
 
-                            If ProcessTip("AC3/EAC3 6.1/7.1 is not supported by ffmpeg.") Then
-                                Return Block("Invalid audio channel count", GetAudioTextBox(ap))
+                            If ProcessTip("AC3/EAC3 6.1/7.1 is not supported by ffmpeg.",
+                                          "ffmpeg can't encode AC3 or E-AC3 with 6.1 or 7.1 channels. Choose another channel count or encoder in the track options.") Then
+                                Return Block("Invalid audio channel count", editTrack, "Edit Track...", GetAudioTextBox(ap))
                             End If
                         End If
                     End If
@@ -247,17 +266,20 @@ Partial Public Class MainForm
                     If ap.AudioCodec = AudioCodec.AC3 AndAlso
                         Not {32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320, 384, 448, 512, 576, 640}.Contains(CInt(ap.Bitrate)) Then
 
-                        If ProcessTip($"The AC3 bitrate {CInt(ap.Bitrate)} is not specification compliant.") Then
-                            Return Warn("Invalid audio bitrate", GetAudioTextBox(ap))
+                        If ProcessTip($"The AC3 bitrate {CInt(ap.Bitrate)} is not specification compliant.",
+                                      $"The AC3 bitrate {CInt(ap.Bitrate)} kb/s isn't specification compliant. Choose a standard bitrate in the track options.") Then
+                            Return Warn("Invalid audio bitrate", editTrack, "Edit Track...", GetAudioTextBox(ap))
                         End If
                     End If
 
-                    If ap.File = p.TargetFile AndAlso ProcessTip("The audio source and target filepath is identical.") Then
-                        Return Block("Invalid target path", GetAudioTextBox(ap), tbTargetFile)
+                    If ap.File = p.TargetFile AndAlso ProcessTip("The audio source and target filepath is identical.",
+                                                                 "The target is an audio source file, the muxing would overwrite it. Choose another target file.") Then
+                        Return Block("Invalid target path", AddressOf tbTargetFile_DoubleClick, "Change Target...", GetAudioTextBox(ap), tbTargetFile)
                     End If
 
-                    If Math.Abs(ap.Delay) > 2000 AndAlso ProcessTip("The audio delay is unusual high indicating a sync problem.") Then
-                        Return Warn("High audio delay", GetAudioTextBox(ap))
+                    If Math.Abs(ap.Delay) > 2000 AndAlso ProcessTip("The audio delay is unusual high indicating a sync problem.",
+                                                                    "The audio delay is over 2 seconds, which usually means a sync problem. Check the delay in the track options.") Then
+                        Return Warn("High audio delay", editTrack, "Edit Track...", GetAudioTextBox(ap))
                     End If
 
                     If Not p.VideoEncoder.Muxer.IsSupported(ap.OutputFileType) AndAlso Not ap.OutputFileType = "ignore" Then
@@ -266,14 +288,16 @@ Partial Public Class MainForm
                             p.VideoEncoder.Muxer.SupportedInputTypes.Join(", ") +
                             ". Select another audio profile or another container.") Then
 
-                            Return Block("Audio format not compatible with container", GetAudioTextBox(ap), bnMuxer)
+                            Return Block("Audio format not compatible with container", Sub() track?.NameLabel.PerformClick(), "Change Profile...", GetAudioTextBox(ap), bnMuxer)
                         End If
                     End If
                 Next
 
                 If p.VideoEncoder.Muxer.OutputExtFull <> p.TargetFile.ExtFull Then
-                    If ProcessTip("The container requires " + p.VideoEncoder.Muxer.OutputExt.ToUpperInvariant + " as target file type.") Then
-                        Return Block("Invalid file type", tbTargetFile)
+                    Dim ext = p.VideoEncoder.Muxer.OutputExt
+
+                    If ProcessTip("The container requires " + ext.ToUpperInvariant + " as target file type.") Then
+                        Return Block("Invalid file type", Sub() p.TargetFile = p.TargetFile.ChangeExt(ext), "Use " + ext.ToUpperInvariant, tbTargetFile)
                     End If
                 End If
 
@@ -290,7 +314,7 @@ Partial Public Class MainForm
 
                     If ProcessTip("Use the resize slider to correct the aspect ratio error or click Next to encode anamorphic.",
                                   "Use the resize slider to correct the aspect ratio error, or continue to encode anamorphic.") Then
-                        Return Warn("Aspect ratio error", lAspectRatioError)
+                        Return Warn("Aspect ratio error", Sub() tbResize.Focus(), "Adjust Size", lAspectRatioError)
                     End If
                 End If
 
@@ -307,8 +331,9 @@ Partial Public Class MainForm
                     End If
                 Else
                     If p.CutFrameRate <> p.Script.Info.FrameRate Then
-                        If ProcessTip("The frame rate was changed after cutting was performed, please ensure that this change is happening after the Cutting filter section in the AviSynth script.") Then
-                            Return Warn("Frame rate change")
+                        If ProcessTip("The frame rate was changed after cutting was performed, please ensure that this change is happening after the Cutting filter section in the AviSynth script.",
+                                      "The frame rate changed after cutting. Make sure the filter that changes it comes after the Cutting filter.") Then
+                            Return Warn("Frame rate change", AddressOf FiltersListView.ShowCodeEditor, "Edit Filters...")
                         End If
                     End If
 
@@ -378,7 +403,7 @@ Partial Public Class MainForm
 
                     If p.TargetHeight <> res Then
                         If ProcessTip("Resizing of that kind will interfere with the Dolby Vision metadata. Keep the original aspect ratio, disable the 'Resize' filter or remove the Dolby Vision RPU file.") Then
-                            Return Block("Wrong resizing", tbTargetWidth, tbTargetHeight, lSAR, lDAR, lZoom, lAspectRatioError)
+                            Return Block("Wrong resizing", Sub() tbTargetHeight.Text = res.ToString, "Use Height " & res, tbTargetWidth, tbTargetHeight, lSAR, lDAR, lZoom, lAspectRatioError)
                         End If
                     End If
                 End If
@@ -423,7 +448,13 @@ Partial Public Class MainForm
                     If Not p.ForcedOutputModIgnorable Then RemoveTip(tip)
                     If ProcessTip(tip) Then
                         CanIgnoreTip = p.ForcedOutputModIgnorable
-                        Return Warn("Invalid target width", tbTargetWidth, lSAR)
+
+                        If isResized Then
+                            Dim width = Math.Max(p.ForcedOutputMod, CInt(Math.Round(p.TargetWidth / p.ForcedOutputMod)) * p.ForcedOutputMod)
+                            Return Warn("Invalid target width", Sub() tbTargetWidth.Text = width.ToString, "Use Width " & width, tbTargetWidth, lSAR)
+                        End If
+
+                        Return Warn("Invalid target width", AddressOf ShowCropDialog, "Crop...", lSAR)
                     End If
                 End If
 
@@ -432,7 +463,13 @@ Partial Public Class MainForm
                     If Not p.ForcedOutputModIgnorable Then RemoveTip(tip)
                     If ProcessTip(tip) Then
                         CanIgnoreTip = p.ForcedOutputModIgnorable
-                        Return Warn("Invalid target height", tbTargetHeight, lSAR)
+
+                        If isResized Then
+                            Dim height = Math.Max(p.ForcedOutputMod, CInt(Math.Round(p.TargetHeight / p.ForcedOutputMod)) * p.ForcedOutputMod)
+                            Return Warn("Invalid target height", Sub() tbTargetHeight.Text = height.ToString, "Use Height " & height, tbTargetHeight, lSAR)
+                        End If
+
+                        Return Warn("Invalid target height", AddressOf ShowCropDialog, "Crop...", lSAR)
                     End If
                 End If
 
@@ -443,7 +480,7 @@ Partial Public Class MainForm
                         value > (p.VideoEncoder.AutoCompCheckValue + 20) Then
 
                         If ProcessTip("Aimed quality value is more than 20% off, change the image or file size to get something between 50% and 70% quality.") Then
-                            Return Warn("Quality", tbTargetSize, tbBitrate, tbTargetWidth, tbTargetHeight, laTarget2)
+                            Return Warn("Quality", Sub() tbTargetSize.Focus(), "Change File Size", tbTargetSize, tbBitrate, tbTargetWidth, tbTargetHeight, laTarget2)
                         End If
                     End If
                 End If
