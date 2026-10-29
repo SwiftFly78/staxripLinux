@@ -165,11 +165,11 @@ Partial Public Class MainForm
         Dim rowSpacing = New Size(FH(0.5), FH(0.35))
 
         cardSource = New Card("Source") With {.HeaderRight = bnSourceMenu}
-        cardSource.Content = New TableLayout(Row(tbSourceFile), Row(lSource1), Row(lSource2), New TableRow With {.ScaleHeight = True}) With {.Spacing = rowSpacing}
+        cardSource.Content = NaturalWidthBin.Create(New TableLayout(Row(tbSourceFile), Row(lSource1), Row(lSource2), New TableRow With {.ScaleHeight = True}) With {.Spacing = rowSpacing}, FH(20))
 
         TargetSizeRow = New TableLayout(Row(blFilesize, Scaled(tbTargetSize), laBitrate, Scaled(tbBitrate))) With {.Spacing = rowSpacing}
-        cardTarget = New Card("Target") With {.HeaderRight = HRow(bnMuxer, bnMuxerOptions, bnTargetMenu)}
-        cardTarget.Content = New TableLayout(Row(tbTargetFile), Row(TargetSizeRow), Row(lTarget1), Row(laTarget2), New TableRow With {.ScaleHeight = True}) With {.Spacing = rowSpacing}
+        cardTarget = New Card("Target") With {.HeaderRight = ButtonRow(bnMuxer, bnMuxerOptions, bnTargetMenu)}
+        cardTarget.Content = NaturalWidthBin.Create(New TableLayout(Row(tbTargetFile), Row(TargetSizeRow), Row(lTarget1), Row(laTarget2), New TableRow With {.ScaleHeight = True}) With {.Spacing = rowSpacing}, FH(24))
 
         Dim resizeSize As New TableLayout(Row(lTargetWidth, tbTargetWidth, Nothing, lTargetHeight, tbTargetHeight)) With {.Spacing = rowSpacing}
         Dim resizeValues As New TableLayout(
@@ -179,23 +179,14 @@ Partial Public Class MainForm
             Row(blTargetParText, Scaled(lPAR), Nothing, Nothing)) With {.Spacing = New Size(FH(0.5), FH(0.15))}
 
         Dim resizeSlider As New TableLayout(Row(lResizeText, Scaled(tbResize))) With {.Spacing = rowSpacing}
-        cardResize = New Card("Crop and Resize") With {.HeaderRight = ButtonRow(bnCropDialog, bnResize), .Width = FH(19)}
-        cardResize.Content = New TableLayout(Row(resizeSize), Row(resizeSlider), Row(resizeValues), New TableRow With {.ScaleHeight = True}) With {.Spacing = rowSpacing}
+        cardResize = New Card("Crop and Resize") With {.HeaderRight = ButtonRow(bnCropDialog, bnResize)}
+        cardResize.Content = NaturalWidthBin.Create(New TableLayout(Row(resizeSize), Row(resizeSlider), Row(resizeValues), New TableRow With {.ScaleHeight = True}) With {.Spacing = rowSpacing}, FH(17.5))
 
-        'fixed preferred widths keep the columns stable when the encoder panel changes
-        FiltersListView.Width = FH(15)
-        pnEncoder.Width = FH(24)
-
-        cardFilters = New Card("Filters") With {.HeaderRight = bnFilters, .Content = FiltersListView}
-        cardEncoder = New Card("Video") With {.HeaderRight = HRow(bnEncoder, bnEncoderOptions), .Content = pnEncoder}
+        'fixed natural widths keep the columns stable when the encoder panel changes,
+        'the content can still shrink, so the window can get narrower than that
+        cardFilters = New Card("Filters") With {.HeaderRight = bnFilters, .Content = NaturalWidthBin.Create(FiltersListView, FH(15))}
+        cardEncoder = New Card("Video") With {.HeaderRight = ButtonRow(bnEncoder, bnEncoderOptions), .Content = NaturalWidthBin.Create(pnEncoder, FH(24))}
         cardAudio = New Card("Audio") With {.HeaderRight = bnAddAudio, .Content = pnAudio}
-
-        'the target card is as wide as the video card, so the cards form columns
-        AddHandler cardEncoder.SizeChanged, Sub()
-                                                If cardEncoder.Width > 0 AndAlso cardTarget.Width <> cardEncoder.Width Then
-                                                    cardTarget.Width = cardEncoder.Width
-                                                End If
-                                            End Sub
 
         Dim toolbar As New TableLayout(Row(bnOpen, bnPreview, bnCrop, bnJobs, Scaled(Nothing), bnAddJob)) With {
             .Spacing = New Size(FH(0.35), 0), .Padding = New Padding(FH(0.5), FH(0.35))}
@@ -205,10 +196,12 @@ Partial Public Class MainForm
 
         Dim gap = New Size(FH(0.7), FH(0.7))
 
-        Dim cards As New TableLayout(
-            Row(New TableLayout(Row(Scaled(cardSource), cardTarget)) With {.Spacing = gap}),
-            ScaledRow(New TableLayout(ScaledRow(Scaled(cardFilters), cardResize, Scaled(cardEncoder))) With {.Spacing = gap}),
-            Row(cardAudio)) With {.Spacing = gap, .Padding = New Padding(FH(0.7))}
+        'one grid, so target and video share a column and source and target a row
+        Dim grid As New TableLayout(
+            Row(Scaled(cardSource), cardTarget),
+            ScaledRow(Scaled(New TableLayout(ScaledRow(Scaled(cardFilters), cardResize)) With {.Spacing = gap}), cardEncoder)) With {.Spacing = gap}
+
+        Dim cards As New TableLayout(ScaledRow(grid), Row(cardAudio)) With {.Spacing = gap, .Padding = New Padding(FH(0.7))}
 
         Menu = MenuStrip
         Content = New TableLayout(Row(toolbarPanel), ScaledRow(cards), Row(NextStep))

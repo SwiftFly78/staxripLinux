@@ -1133,6 +1133,30 @@ Namespace UI
         End Sub
     End Class
 
+    'requests a fixed natural width while the content can still shrink to its minimum width,
+    'so columns don't move when their content changes and the window can get narrower
+    Public Class NaturalWidthBin
+        Inherits Global.Gtk.Bin
+
+        Private ReadOnly NaturalWidth As Integer
+
+        Sub New(content As Control, naturalWidth As Integer)
+            Me.NaturalWidth = naturalWidth
+            HasWindow = False
+            Add(content.ToNative(True))
+            Show()
+        End Sub
+
+        Protected Overrides Sub OnGetPreferredWidth(ByRef minimum_width As Integer, ByRef natural_width As Integer)
+            MyBase.OnGetPreferredWidth(minimum_width, natural_width)
+            natural_width = Math.Max(minimum_width, NaturalWidth)
+        End Sub
+
+        Shared Function Create(content As Control, naturalWidth As Integer) As Control
+            Return New NativeControlHost(New NaturalWidthBin(content, naturalWidth))
+        End Function
+    End Class
+
     'button with an action and an arrow button that shows a menu, linked like the split buttons of GTK apps
     Public Class SplitButton
         Inherits Panel

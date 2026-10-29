@@ -17,6 +17,7 @@ Public Class EncoderControlBase
             .FullRowSelect = True,
             .MultiSelect = False,
             .ShowContextMenuOnLeftClick = True,
+            .EllipsizeLastColumn = True,
             .Border = BorderType.None}
 
         lv.Columns.AddRange({New ColumnHeader, New ColumnHeader})

@@ -386,6 +386,9 @@ Namespace UI
         'text of the items instead of their ToString
         Property ItemText As Func(Of Object, String)
 
+        'the last column shortens its texts with an ellipsis instead of widening the list
+        Property EllipsizeLastColumn As Boolean
+
         Event ItemsChanged(indices As Integer())
         Event ItemRemoved(item As ListViewItem)
         Event UpdateContextMenu()
@@ -563,6 +566,18 @@ Namespace UI
                     If header.Width > 0 Then
                         column.AutoSize = False
                         column.Width = header.Width
+                    End If
+
+                    'a small fixed width, the column expands into the space of the list
+                    If EllipsizeLastColumn AndAlso x = Columns.Count - 1 Then
+                        column.AutoSize = False
+                        column.Width = FontHeight * 3
+
+                        Dim renderer = TryCast(cell.ControlObject, Global.Gtk.CellRendererText)
+
+                        If renderer IsNot Nothing Then
+                            renderer.Ellipsize = Pango.EllipsizeMode.End
+                        End If
                     End If
 
                     header.GridColumn = column

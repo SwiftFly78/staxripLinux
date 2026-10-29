@@ -18,6 +18,7 @@ Public Class FiltersListView
         FullRowSelect = True
         MultiSelect = False
         HeaderStyle = ColumnHeaderStyle.None
+        EllipsizeLastColumn = True
         Columns.Add("Type")
         Columns.Add("Name")
         ContextMenuStrip = Menu
