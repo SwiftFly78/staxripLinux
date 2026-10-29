@@ -2576,22 +2576,23 @@ Partial Public Class MainForm
         NextStep.SetMessage(title, TipMessage)
         NextStep.SetAction(If(clickAction Is Nothing, Nothing, actionText))
         NextStep.ContinueButton.Visible = CanIgnoreTip
-        Highlight(controls)
+        Highlight(kind, controls)
         UpdateNextButton()
     End Sub
 
     Private ReadOnly HighlightedControls As New List(Of Control)
 
-    'outlines the controls a tip refers to, text edits by their entry
-    Sub Highlight(ParamArray controls As Control())
-        If controls.NothingOrEmpty Then Return
+    'outlines the controls of warnings and errors in the color of the severity, text edits by their entry
+    Sub Highlight(kind As NextStepKind, ParamArray controls As Control())
+        If controls.NothingOrEmpty OrElse (kind <> NextStepKind.Warning AndAlso kind <> NextStepKind.Error) Then Return
         ThemeRefresh = True
+        Dim styleClass = If(kind = NextStepKind.Error, "staxrip-attention-error", "staxrip-attention-warning")
 
         For Each control In controls
             Dim target = If(TypeOf control Is TextEdit, DirectCast(control, TextEdit).InnerControl, control)
 
             If target IsNot Nothing AndAlso Not HighlightedControls.Contains(target) Then
-                target.AddStyleClass("staxrip-attention")
+                target.AddStyleClass(styleClass)
                 HighlightedControls.Add(target)
             End If
         Next
@@ -2602,7 +2603,7 @@ Partial Public Class MainForm
             'controls like those of the encoder panel are replaced while they are highlighted,
             'GTK destroys their widgets when they leave the window
             If control.IsDisposed OrElse control.ParentWindow Is Nothing Then Continue For
-            control.RemoveStyleClass("staxrip-attention")
+            control.RemoveStyleClass("staxrip-attention-warning", "staxrip-attention-error")
         Next
 
         HighlightedControls.Clear()

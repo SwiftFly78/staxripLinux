@@ -67,13 +67,22 @@ Namespace UI
     color: @error_color;
 }
 
-entry.staxrip-attention,
-button.staxrip-attention {
+entry.staxrip-attention-warning,
+button.staxrip-attention-warning {
     border-color: @warning_color;
 }
 
-label.staxrip-attention {
+label.staxrip-attention-warning {
     color: @warning_color;
+}
+
+entry.staxrip-attention-error,
+button.staxrip-attention-error {
+    border-color: @error_color;
+}
+
+label.staxrip-attention-error {
+    color: @error_color;
 }
 "
 
