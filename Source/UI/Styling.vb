@@ -14,6 +14,7 @@ Namespace UI
 
 .staxrip-heading {
     font-weight: bold;
+    font-size: 1.1em;
 }
 
 .staxrip-title {
@@ -76,10 +77,22 @@ label.staxrip-attention {
 }
 "
 
+        'card headers share their height, so the headings of a row have the same baseline
+        Private HeaderSizeGroup As Global.Gtk.SizeGroup
+
         Sub Install()
             Dim provider As New Global.Gtk.CssProvider
             provider.LoadFromData(StyleSheet)
             Global.Gtk.StyleContext.AddProviderForScreen(Global.Gdk.Screen.Default, provider, 600)
+        End Sub
+
+        Sub AddToHeaderSizeGroup(control As Control)
+            Dim widget = TryCast(control?.ControlObject, Global.Gtk.Widget)
+
+            If widget IsNot Nothing Then
+                HeaderSizeGroup = If(HeaderSizeGroup, New Global.Gtk.SizeGroup(Global.Gtk.SizeGroupMode.Vertical))
+                HeaderSizeGroup.AddWidget(widget)
+            End If
         End Sub
 
         <Extension>

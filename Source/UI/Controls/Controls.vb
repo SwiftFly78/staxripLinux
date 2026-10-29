@@ -1001,6 +1001,8 @@ Namespace UI
             Dim header As New TableLayout(New TableRow(New TableCell(Heading, True), New TableCell(HeaderRightPanel))) With {
                 .Spacing = New Size(FH(0.35), 0)}
 
+            Styling.AddToHeaderSizeGroup(header)
+
             MyBase.Content = New TableLayout(
                 New TableRow(header),
                 New TableRow(ContentPanel) With {.ScaleHeight = True}) With {.Spacing = New Size(0, FH(0.5))}
