@@ -393,12 +393,12 @@ Partial Public Class MainForm
                            End Sub
 
             b = ui.AddBool()
-            b.Text = "Invert CTRL key behavior on 'Add Job' button"
+            b.Text = "Invert CTRL key behavior on 'Add to Jobs' button"
             b.Help = ""
             b.Field = NameOf(s.InvertCtrlKeyOnNextButton)
 
             b = ui.AddBool()
-            b.Text = "Invert SHIFT key behavior on 'Add Job' button"
+            b.Text = "Invert SHIFT key behavior on 'Add to Jobs' button"
             b.Help = ""
             b.Field = NameOf(s.InvertShiftKeyOnNextButton)
 
