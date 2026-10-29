@@ -81,6 +81,19 @@ Namespace UI
             End Set
         End Property
 
+        Private FillContentValue As Boolean
+
+        'the text starts at the left edge and the menu arrow sits at the right edge like in a combo box
+        Property FillContent As Boolean
+            Get
+                Return FillContentValue
+            End Get
+            Set(value As Boolean)
+                FillContentValue = value
+                UpdateText()
+            End Set
+        End Property
+
         Sub UpdateText()
             Dim value = TextValue.Trim
             Dim iconName = If(IconNameValue <> "", IconNameValue, If(value = "", GetSymbolIconName(), Nothing))
@@ -95,7 +108,7 @@ Namespace UI
             Dim label = TryCast(TryCast(ControlObject, Global.Gtk.Bin)?.Child, Global.Gtk.Label)
             If label IsNot Nothing Then label.Ellipsize = Pango.EllipsizeMode.None
 
-            Styling.SetButtonContent(Me, iconName, ShowMenuSymbol OrElse SymbolButton = ButtonSymbol.Menu, TypeOf Me Is MenuButton)
+            Styling.SetButtonContent(Me, iconName, ShowMenuSymbol OrElse SymbolButton = ButtonSymbol.Menu, FillContent OrElse TypeOf Me Is MenuButton)
         End Sub
 
         Function GetSymbolIconName() As String
@@ -1288,6 +1301,13 @@ Namespace UI
                                              RaiseEvent Scroll(Me, EventArgs.Empty)
                                          End If
                                      End Sub
+
+            'the position is no value of its own, the controls next to the slider show the size
+            Dim scale = If(TryCast(ControlObject, Global.Gtk.Scale), TryCast(TryCast(ControlObject, Global.Gtk.Bin)?.Child, Global.Gtk.Scale))
+
+            If scale IsNot Nothing Then
+                scale.DrawValue = False
+            End If
         End Sub
 
         Property Minimum As Integer

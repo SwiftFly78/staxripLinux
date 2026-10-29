@@ -84,6 +84,11 @@ button.staxrip-attention-error {
 label.staxrip-attention-error {
     color: @error_color;
 }
+
+button.staxrip-inline {
+    padding-left: 0;
+    padding-right: 4px;
+}
 "
 
         'card headers share their height, so the headings of a row have the same baseline

@@ -60,7 +60,8 @@ Partial Public Class MainForm
     Public WithEvents blTargetParText As ButtonEx
     Public WithEvents lAspectRatioError As LabelEx
     Public WithEvents lAspectRatioErrorText As LabelEx
-    Public WithEvents blCropText As ButtonEx
+    Public WithEvents bnCropDialog As ButtonEx
+    Public lResizeText As LabelEx
     Public WithEvents lCrop2 As LabelEx
     Public WithEvents lSAR As LabelEx
     Public WithEvents lSarText As LabelEx
@@ -86,8 +87,8 @@ Partial Public Class MainForm
                        End Function
 
         Dim flatButton = Function(text As String, showMenu As Boolean)
-                             Dim ret As New ButtonEx With {.Text = text, .ShowMenuSymbol = showMenu, .MinimumSize = Size.Empty}
-                             ret.AddStyleClass("flat")
+                             Dim ret As New ButtonEx With {.Text = text, .ShowMenuSymbol = showMenu, .MinimumSize = Size.Empty, .FillContent = True}
+                             ret.AddStyleClass("flat", "staxrip-inline")
                              Return ret
                          End Function
 
@@ -132,9 +133,11 @@ Partial Public Class MainForm
         tbTargetWidth = New TextEdit With {.TextAlign = HorizontalAlignment.Center, .Width = FH(4.5)}
         lTargetHeight = dimLabel("Height")
         tbTargetHeight = New TextEdit With {.TextAlign = HorizontalAlignment.Center, .Width = FH(4.5)}
+        lResizeText = dimLabel("Size")
         tbResize = New TrackBarEx With {.Minimum = 0, .TickFrequency = TrackBarTicks}
-        blCropText = flatButton("Crop...", False)
-        blCropText.ClickAction = AddressOf ShowCropDialog
+        bnCropDialog = New ButtonEx With {.Text = "Crop...", .MinimumSize = Size.Empty}
+        bnCropDialog.ClickAction = AddressOf ShowCropDialog
+        lCropText = dimLabel("Crop")
         lCrop2 = label("-")
         blTargetDarText = flatButton("DAR", True)
         lDAR = label("-")
@@ -170,13 +173,14 @@ Partial Public Class MainForm
 
         Dim resizeSize As New TableLayout(Row(lTargetWidth, tbTargetWidth, Nothing, lTargetHeight, tbTargetHeight)) With {.Spacing = rowSpacing}
         Dim resizeValues As New TableLayout(
-            Row(blCropText, Scaled(lCrop2), lPixelText, Scaled(lPixel)),
+            Row(lCropText, Scaled(lCrop2), lPixelText, Scaled(lPixel)),
             Row(blTargetDarText, Scaled(lDAR), lZoomText, Scaled(lZoom)),
             Row(lSarText, Scaled(lSAR), lAspectRatioErrorText, Scaled(lAspectRatioError)),
             Row(blTargetParText, Scaled(lPAR), Nothing, Nothing)) With {.Spacing = New Size(FH(0.5), FH(0.15))}
 
-        cardResize = New Card("Crop and Resize") With {.HeaderRight = bnResize, .Width = FH(19)}
-        cardResize.Content = New TableLayout(Row(resizeSize), Row(tbResize), Row(resizeValues), New TableRow With {.ScaleHeight = True}) With {.Spacing = rowSpacing}
+        Dim resizeSlider As New TableLayout(Row(lResizeText, Scaled(tbResize))) With {.Spacing = rowSpacing}
+        cardResize = New Card("Crop and Resize") With {.HeaderRight = ButtonRow(bnCropDialog, bnResize), .Width = FH(19)}
+        cardResize.Content = New TableLayout(Row(resizeSize), Row(resizeSlider), Row(resizeValues), New TableRow With {.ScaleHeight = True}) With {.Spacing = rowSpacing}
 
         'fixed preferred widths keep the columns stable when the encoder panel changes
         FiltersListView.Width = FH(15)
@@ -4913,9 +4917,10 @@ Partial Public Class MainForm
             .SetTip("Target Storage Aspect Ratio", lSAR, lSarText)
             .SetTip("Imagesize in pixel (width x height)", lPixel, lPixelText)
             .SetTip("Zoom factor between source and target image size", lZoom, lZoomText)
-            .SetTip("Press Ctrl while using the slider to resize anamorphic.", tbResize)
+            .SetTip("Press Ctrl while using the slider to resize anamorphic.", tbResize, lResizeText)
             .SetTip("Aspect Ratio Error", lAspectRatioError, lAspectRatioErrorText)
-            .SetTip("Cropped sides in format: Left, Right / Top, Bottom", blCropText, lCrop2)
+            .SetTip("Cropped sides in format: Left, Right / Top, Bottom", lCropText, lCrop2)
+            .SetTip("Shows the crop dialog (F3)", bnCropDialog)
             .SetTip("Target Video Bitrate in Kbps (Up/Down key)", tbBitrate, laBitrate)
             .SetTip("Target Image Width in pixel (Up/Down key)", tbTargetWidth, lTargetWidth)
             .SetTip("Target Image Height in pixel (Up/Down key)", tbTargetHeight, lTargetHeight)
