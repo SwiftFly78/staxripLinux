@@ -516,7 +516,7 @@ Module StringExtensions
     <Extension()>
     Function FormatColumn(value As String, delimiter As String) As String
         If value = "" Then Return ""
-        Dim lines = value.SplitKeepEmpty(BR)
+        Dim lines = value.FixBreak.SplitKeepEmpty(BR)
         Dim leftSides As New List(Of String)
 
         For Each i In lines
