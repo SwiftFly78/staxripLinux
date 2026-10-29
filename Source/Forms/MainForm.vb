@@ -191,6 +191,10 @@ Partial Public Class MainForm
         cardResize = New Card("Crop and Resize") With {.HeaderRight = bnResize, .Width = FH(19)}
         cardResize.Content = New TableLayout(Row(resizeSize), Row(tbResize), Row(resizeValues), New TableRow With {.ScaleHeight = True}) With {.Spacing = rowSpacing}
 
+        'fixed preferred widths keep the columns stable when the encoder panel changes
+        FiltersListView.Width = FH(15)
+        pnEncoder.Width = FH(24)
+
         cardFilters = New Card("Filters") With {.HeaderRight = bnFilters, .Content = FiltersListView}
         cardEncoder = New Card("Video") With {.HeaderRight = HRow(bnEncoder, bnEncoderOptions), .Content = pnEncoder}
         cardAudio = New Card("Audio") With {.HeaderRight = bnAddAudio, .Content = pnAudio}
