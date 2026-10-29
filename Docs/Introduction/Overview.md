@@ -19,8 +19,8 @@ If you are a first-time user, it is especially strongly recommended that you lea
 and do some tests to understand how StaxRipLinux works and what you can achieve with it.
 A good way to start is [First Start](../Usage/First-Start.md).
 
-However, StaxRipLinux also provides an [Assistant](../Usage/User-Interface/Main/Assistant.md) feature that
-will guide you through your jobs step by step so that you can start more easily and prevent mistakes.
+However, the [next step](../Usage/User-Interface/Main.md#next-step) at the bottom of the main window guides you
+through your jobs step by step so that you can start more easily and prevent mistakes.
 
 There are a lot of resources in StaxRip-related [communities](Community.md).
 Users are encouraged to visit those [communities](Community.md) for help and more information.

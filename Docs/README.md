@@ -26,13 +26,14 @@
 - [User Interface](Usage/User-Interface/README.md)
     - [Main Window](Usage/User-Interface/Main.md)
         - [Main Menu](Usage/User-Interface/Main.md#main-menu)
+        - [Toolbar](Usage/User-Interface/Main.md#toolbar)
         - [Source](Usage/User-Interface/Main.md#source)
         - [Target](Usage/User-Interface/Main.md#target)
-        - [Filter](Usage/User-Interface/Main.md#filter)
-        - [Resize](Usage/User-Interface/Main.md#resize)
-        - [Encoder/Container](Usage/User-Interface/Main.md#encodercontainer)
+        - [Filters](Usage/User-Interface/Main.md#filters)
+        - [Crop and Resize](Usage/User-Interface/Main.md#crop-and-resize)
+        - [Video](Usage/User-Interface/Main.md#video)
         - [Audio](Usage/User-Interface/Main.md#audio)
-        - [Assistant](Usage/User-Interface/Main.md#assistant)
+        - [Next Step](Usage/User-Interface/Main.md#next-step)
     - [Open Video Source File(s)](Usage/User-Interface/Opening.md) :x:
         - [eac3to Demuxing](Usage/User-Interface/Opening#eac3to-demuxing.md) :x:
     - [Template Selection](Usage/User-Interface/Template-Selection.md) :x:

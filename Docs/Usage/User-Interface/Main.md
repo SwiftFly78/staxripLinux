@@ -1,13 +1,14 @@
-﻿# [Documentation](../../README.md) / [Usage](../README.md) / [User Interface](README.md) / Main Window
+# [Documentation](../../README.md) / [Usage](../README.md) / [User Interface](README.md) / Main Window
 
 - [Main Menu](Main.md#main-menu)
+- [Toolbar](Main.md#toolbar)
 - [Source](Main.md#source)
 - [Target](Main.md#target)
-- [Filter](Main.md#filter)
-- [Resize](Main.md#resize)
-- [Encoder/Container](Main.md#encodercontainer)
+- [Filters](Main.md#filters)
+- [Crop and Resize](Main.md#crop-and-resize)
+- [Video](Main.md#video)
 - [Audio](Main.md#audio)
-- [Assistant](Main.md#assistant)
+- [Next Step](Main.md#next-step)
 
 -----
 
@@ -16,7 +17,9 @@ will appear some dialogs beforehand, but you will also end up on the main window
 
 <img width=600 src="../../../Images/Screenshots/MainWindow.png">  
 
-Let's look at each section and see, what we can find there:
+The main window shows the whole encode at once: the toolbar at the top, below it a card for each part of the encode
+and at the bottom the next step. Every card has its menus and options as buttons next to its heading.
+Let's look at each part and see, what we can find there:
 
 ## Main Menu
 
@@ -103,13 +106,10 @@ to feed the video encoder. It is also used to cut the video.
     	Opens the [Event Commands](Event-Commands.md) dialog, where you can alter the events.
 	- ##### Reset Settings
     	Opens a dialog allowing you to reset specific settings.
-	- ##### Command Prompt
-    	Opens a Command Prompt session window with additional and/or extended environment variables.
+	- ##### Terminal
+    	Opens a terminal in the working folder with additional and/or extended environment variables.
 	- ##### PowerShell Terminal
-    	Opens a PowerShell session window with additional and/or extended environment variables.
-	- ##### Windows Terminal
-		Opens a Windows Terminal session window with additional and/or extended environment variables.  
-		> :information_source: Only visible, if Windows Terminal was found on your system.
+    	Opens a PowerShell session in a terminal with additional and/or extended environment variables.
 
 - #### Edit Menu
 	Opens the [Menu Editor](Menu-Editor.md), which you can use to customize the Main Menu.
@@ -125,44 +125,83 @@ There you can check all used apps and plugins with all their information.
 Many help related entries, that might help you in some cases.
 
 
+## Toolbar
+
+<img width=600 src="../../../Images/Screenshots/MainWindowToolbar.png">  
+
+- #### Open
+    The button opens a single source file. Its arrow lists the other ways to open a source: multiple files,
+    merging files, a file batch, a Blu-ray folder or image. `Ctrl+O` and `File > Open Video Source File(s)` ask
+    for the way first, for more information check out [Open Video Source File(s)](Opening.md).
+- #### Preview
+    Opens the [Preview](Preview.md), where you can see the result of your filters and cut the video (`F4`).
+- #### Crop
+    Opens the [Crop](Crop.md) window (`F3`).
+- #### Jobs
+    Opens the [Jobs](Jobs.md) (`F6`).
+- #### Add to Jobs
+    Adds the current project as a job to the job list and opens it. It's enabled as soon as the
+    [next step](Main.md#next-step) says that the job is ready. Hold `Shift` to add the job at the top of the list
+    and `Ctrl` to keep the list closed, the button shows what it will do. The default behavior can be configured
+    via [Settings](Settings.md#user-interface). The arrow lists the four ways to add the job.
+
 ## Source
 
-The Source section is on the upper left side and it contains the path of the source file as well as some information about it,
-like its length, size, bitrate, framerate, resolution and so on.
+The Source card shows the path of the source file and its properties, like its duration, size, bitrate, frame rate,
+resolution, color format, HDR format and codec.
 
-With a right-click on the source file text field you can open a menu for some additional functions:
+Below them the crop size and the pixel aspect ratio (PAR) and display aspect ratio (DAR) of the source are shown.
+`PAR` and `DAR` are menus to override the aspect ratio of the source.
+
+The button with the three dots next to the heading opens the source file menu, which also opens with a right-click
+on the path:
 
 <img width=150 src="../../../Images/Screenshots/MainWindowSourceTargetContextMenu.png">  
 
 - #### Open
     Opens the [Open Video Source File(s)](Opening.md) dialog to select a source file.
 - #### Play
-    Plays the source file with `mpv.net`.
+    Plays the source file with `mpv`.
 - #### Media Info
-    Opens `MediaInfo.NET` to show you deeper information about the selected source file. This can be useful
+    Shows the MediaInfo of the source file.
 - #### Explore
-    Opens the folder, that contains the source file.
+    Opens the folder, that contains the source file, in the file manager.
 - #### Copy / Paste
-    What could it be...
+    Copies and pastes the path.
+
+Video files can also be opened by dropping them on the main window.
 
 
 ## Target
 
-The Target section is on the upper right side and it contains the path of the target file as well as some information about it,
-like its length, resolution, framerate and the bitrate of all audio tracks.
+The Target card shows the path of the target file and the properties of the encode, like its duration, frame rate,
+resolution, the bitrate of all audio tracks and the subtitles.
 These data is based on the outcome of the [Frame Servers](../Frame-Servers.md),
-so after the [filters](Main.md#filter) are applied.
+so after the [filters](Main.md#filters) are applied.
 
 > :warning: It's important to note, that these information show the state before the script data is passed to the encoder.  
 > So the final result can be different depending on the encoder settings.
 
-With a right-click on the target file text field you can open a menu for some additional functions,
-that are almost identical to those from the [Source](Main.md#source) section.
+Next to the heading there are:
 
-## Filter
+- #### Container
+    The button shows the container of the target file, `MKV` or `MP4` in most cases. It opens a menu with all
+    container profiles, `Edit Profiles...` opens a dialog to edit this list and the containers themselves.
+- #### Options
+    Opens the [Container Options](Container-Options.md) with the audio tracks, subtitles, attachments, tags and
+    chapters of the target file.
+- #### Target file menu
+    The button with the three dots opens a menu like the one of the source, with `Browse File...` to choose
+    another target file.
 
-The filter section is one of the most important parts of StaxRipLinux. At the top you can see which type of filters is used,
-so either `AVS Filters` or `VS Filters`, indicating the usage of `AviSynth+` or `VapourSynth`.  
+When the encoder encodes with a bitrate instead of a quality, the card also shows the size of the target file and the
+video bitrate. `Size` opens a menu with common sizes.
+
+
+## Filters
+
+The Filters card is one of the most important parts of StaxRipLinux. The button next to its heading shows the frame
+server, `VapourSynth` or `AviSynth`, and opens the menu of the filters.
 For more details on that check out [Frame Servers](../Frame-Servers.md).
 
 Below all filters, that are set up, are listed.
@@ -178,7 +217,7 @@ Next to the checkbox there is the name of the category and then the name of the 
 
 Filters can be moved via drag&drop easily, in case you have to change the order.  
 With a double-click on the list you can open the [Code Editor](Code-Editor.md) directly.  
-A right-click on a specific filter open an item related context menu:
+The button next to the heading and a right-click on a filter open the filter menu:
 
 <img width=300 src="../../../Images/Screenshots/MainWindowFilterContextMenu.png">  
 
@@ -204,7 +243,7 @@ A right-click on a specific filter open an item related context menu:
     Shows some basic information about the resulting video like resolution, framerate and duration.
     > :information_source: This is the same information you get on the [Preview](Preview.md).
 - #### Play
-    Plays the resulting script with `mpv.net`.
+    Plays the resulting script with `mpv`.
 - #### Profiles
     Opens the [Filter Profiles window](Filter-Profiles.md), where you can alter and reset the profiles,
     that then can be used to be added to the list of filters.  
@@ -225,30 +264,30 @@ A right-click on a specific filter open an item related context menu:
         > :information_source: Even though they can be useful in some cases,
 		you should consider creating a template instead.
 
-## Resize
+## Crop and Resize
 
-The resize section gives you the opportunity to resize the given video pretty easy. To do so you can choose between
-(custom) pre-defined resolutions as well as a slider.
+The Crop and Resize card gives you the opportunity to resize the given video pretty easy. To do so you can choose
+between (custom) pre-defined resolutions as well as a slider.
 
-A click on `Resize` at the upper left opens a menu with a bunch of pre-defined resolutions to choose from. Via `Edit Menu`
-you can open the Editor to customize those values.
+`Presets` next to the heading opens a menu with pre-defined resolutions to choose from, `Image Options...` opens the
+image page of the [Project Options](Project-Options.md) and `Edit Menu...` the editor to customize the resolutions.
 
 Below the actual resolution is shown, separated in `Width` and `Height`. In case the `Resize` filter is active,
 you can use the `up`/`down` keys or the mouse wheel to increment/decrement the values by the set `Output Mod` value
 in [Project Options](Project-Options.md), by default `2`.  
-Alternatively you can move the slider below to adjust the resolution.
+Alternatively you can move the slider below to adjust the resolution, with `Ctrl` it resizes anamorphic.
 
 Then you get some information about the target image/video:
 
 - #### Crop
-    The crop values, set by hand via [Crop](Crop.md) or by `Auto Crop`.  
+    The crop values, set by hand via [Crop](Crop.md) or by `Auto Crop`. `Crop...` opens the [Crop](Crop.md) window.  
     For more information check out [Cropping](../Cropping.md).
 - #### DAR
-    Display Acpect Ratio.
+    Display Aspect Ratio, `DAR` opens a menu to set it.
 - #### SAR
-    Storage Acpect Ratio.
+    Storage Aspect Ratio.
 - #### PAR
-    Pixel Acpect Ratio.
+    Pixel Aspect Ratio, `PAR` opens a menu to set it.
 - #### Pixel
     Calculated number of pixels.
 - #### Zoom
@@ -258,64 +297,65 @@ Then you get some information about the target image/video:
 
 <img width=300 src="../../../Images/Screenshots/MainWindowResize.png">  
 
-## Encoder/Container
+## Video
 
-This panel comes in 2 outfits: A more complex variant, that let's you see/check and set certain parameters (see left image),
-and a basic panel with two options to open the [Encoder Options](Encoder-Options.md) as well the [Container Options](Container-Options.md).  
-
-<img width=300 src="../../../Images/Screenshots/MainWindowEncoderContainer.png">  <img width=300 src="../../../Images/Screenshots/MainWindowEncoderContainer2.png">  
-
-What both have in common is a button on the upper left side, that shows the name of the current selected encoder.
-When you click on it, you get a context menu, where you can choose all encoder profiles from.  
-In the upper right corner there is another button, indicating the file extension of the target file.
-This is `MKV` or `MP4` in most cases, but can be something else, especially when `No Muxing` is selected.  
-By clicking on `Edit Profiles...` you can open a dialog,
-where you can edit these lists as well as the encoder/muxer themselves.
+The Video card shows the video encoder. The button next to the heading shows the name of the current encoder profile
+and opens a menu with all encoder profiles, `Edit Profiles...` opens a dialog to edit this list and the encoders
+themselves. `Options...` opens the [Encoder Options](Encoder-Options.md).
 
 <img width=300 src="../../../Images/Screenshots/MainWindowEncoderMenu.png">  
 
-So let's go back and concentrate on the more advanced variant (left image):  
-At the bottom left there is a button saying `Options`, where you can open the [Encoder Options](Encoder-Options.md) and
-at the bottom right there is one saying `Container Options`, where you open the [Container Options](Container-Options.md).  
-In between a button saying `Target Name Override` indicates whether the [Override Target File Name](Encoder-Options.md)
-feature is enabled or not. By clicking on it you can toggle its status.
+The card comes in 2 outfits:
+
+<img width=300 src="../../../Images/Screenshots/MainWindowEncoderContainer.png">  <img width=300 src="../../../Images/Screenshots/MainWindowEncoderContainer2.png">  
+
+Encoders like x264, x265, SVT-AV1, vvenc and NVEncC show their most important settings, like the quality and the preset.
+A click on a setting opens a menu with its values. `Override target name` enables the
+[Override Target File Name](Encoder-Options.md) feature, a right-click on it opens this option in the
+[Encoder Options](Encoder-Options.md). Encoders that encode with a bitrate offer the compressibility check.
+
+Other encoders show their command line, `Copy/Mux` copies the video stream without encoding it.
 
 ## Audio
 
-Each row represents one audio track. The text field contains the stream or file name of the source.
-Right next to it, a label is showing the name of the language, that is assigned to that audio track.  
-Next to the language name is a button with the name of the current set audio profile.
-When clicked on it a menu with all available audio profiles opens and by clicking on `Edit Profiles...` you can open a dialog,
-where you can edit this list as well as the audio profiles themselves.  
-At the very right an `Edit` button lets you open and edit the current audio profile.
+The Audio card has a row for each audio track. The text field contains the stream or file name of the source,
+next to it there are:
+
+- #### Track menu
+    The button with the three dots opens the menu of the track, which also opens with a right-click on the text field.
+    It lists the audio streams of the source and the audio files of the temp folder to choose from, `Open File` to
+    choose another file, and commands to play the track, show its MediaInfo, explore its folder, process it or
+    remove it from the track.
+- #### Language
+    The language of the track, which is set in its audio settings.
+- #### Profile
+    The button shows the audio profile of the track and opens a menu with all audio profiles, `Edit Profiles...` opens
+    a dialog to edit this list as well as the audio profiles themselves.
+- #### Edit
+    Opens the audio settings of the track for the current project or template.
+
+`Add Track` next to the heading adds a track and opens its menu, so you can choose a stream or file right away.
 
 > :information_source: The profile `No Audio` lets the audio track being ignored and not muxed to the final result.  
-> :information_source: The number of available audio tracks is optional and can be set in [Project Options](Project-Options.md).
-
-> [!NOTE]
-> TODO: How are the tracks filled? Menus?
+> :information_source: Tracks without a file and with the default profile are hidden, a template shows the tracks
+> it sets up. The maximum number of tracks can be set in [Project Options](Project-Options.md).
 
 <img width=600 src="../../../Images/Screenshots/MainWindowAudio.png">  
 
-> [!NOTE]
-> TODO: Right-Click-Menu
-
 <img width=300 src="../../../Images/Screenshots/MainWindowAudioMenu.png">  
 
-## Assistant
+## Next Step
 
-The Assistant is there to provide information about the current project status,
-including script errors, possible inconsistencies and warnings as well as configuration errors.
+The bar at the bottom says what needs attention next, so you can check the project before you add the job:
 
-In case of a warning or error, you can mostly click on the message to get more information or
-open the window, in which the configuration causes issues.
-In many cases buttons or labels in regard will be highlighted nayways.
+<img width=600 src="../../../Images/Screenshots/MainWindowNextStep.png">  
 
-At the very right there is a button to accept warnings in case there is one and
-to add the current project as a job to the queue. 
-With a right-click you can open a context menu that offers you the possibility to add the job at the bottom/top
-as well as with or without opening the [Jobs](Jobs.md).  
-For quick usage you can use the CTRL and SHIFT keys instead.
-The default behavior can be configured via [Settings](Settings.md#user-interface).
+- A **hint** reminds you of a step you may want to do, like checking the crop or cutting the video.
+- A **warning** points out a possible problem, like an existing target file or a high audio delay.
+- An **error** has to be resolved before the job can be added, like a container that doesn't support the encoder
+  output or a script error.
+- When everything is fine, the bar says that the job is **ready** and [Add to Jobs](Main.md#add-to-jobs) is enabled.
 
-<img width=600 src="../../../Images/Screenshots/MainWindowAssistant.png">  
+The button next to the message opens what resolves it, for example the crop window, the target file dialog or the
+encoder options. Hints and warnings can be skipped with `Continue`, the next one is shown then. The controls a
+message refers to are outlined.
