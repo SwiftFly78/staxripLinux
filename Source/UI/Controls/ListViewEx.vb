@@ -846,7 +846,7 @@ Namespace UI
                 names = names + BR + "... and more ..."
             End If
 
-            If MsgQuestion("Remove Selection?", names) <> DialogResult.OK Then
+            If Not MsgConfirm("Remove the selected items?", names, "Remove") Then
                 Exit Sub
             End If
 

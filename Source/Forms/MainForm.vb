@@ -3381,7 +3381,7 @@ Partial Public Class MainForm
             Dim jobs = JobManager.GetJobs()?.Where(Function(x) x.Active AndAlso x.Path = jobPath)
 
             If jobs.Any() Then
-                If MsgQuestion($"An active job for this project already exists.{BR}If you continue, it will be overwritten.", TaskButton.OkCancel) = DialogResult.Cancel Then
+                If Not MsgConfirm("An active job for this project already exists.", "Adding the job again overwrites it.", "Overwrite") Then
                     Exit Sub
                 End If
             End If

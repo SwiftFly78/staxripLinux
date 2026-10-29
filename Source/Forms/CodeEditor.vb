@@ -125,7 +125,7 @@ Public Class CodeEditor
     <Command("Removes a filter.")>
     Sub RemoveFilter()
         If Not ActiveTable Is Nothing Then
-            If MsgQuestion("Remove?") = DialogResult.OK Then
+            If MsgConfirm("Remove the filter?", Nothing, "Remove") Then
                 If Tables.Count > 1 Then
                     RemoveTable(ActiveTable)
                     ActiveTable = Nothing

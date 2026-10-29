@@ -80,6 +80,11 @@ Public Class TaskDialog(Of T)
         ButtonDefinitions.Add(New ButtonDefinition With {.Text = text, .Value = value, .TimeoutButton = timeoutButton})
     End Sub
 
+    'a button that deletes or overwrites something, it's not the default button
+    Sub AddDestructiveButton(text As String, value As T)
+        ButtonDefinitions.Add(New ButtonDefinition With {.Text = text, .Value = value, .Destructive = True})
+    End Sub
+
     Sub AddButtons(values As IEnumerable(Of T))
         For Each i In values
             AddButton(i)
@@ -317,13 +322,20 @@ Public Class TaskDialog(Of T)
                 timeoutButton = button
             End If
 
-            If Dialog.DefaultButton Is Nothing AndAlso (def.Text = "OK" OrElse def.Text = "Yes") Then
+            If def.Destructive Then
+                button.AddStyleClass("destructive-action")
+            ElseIf Dialog.DefaultButton Is Nothing AndAlso (def.Text = "OK" OrElse def.Text = "Yes") Then
                 Dialog.DefaultButton = button
                 button.AddStyleClass("suggested-action")
             End If
 
             If def.Value IsNot Nothing AndAlso def.Value.Equals(DialogResult.Cancel) Then
                 Dialog.AbortButton = button
+
+                'Enter cancels destructive actions instead of confirming them
+                If Dialog.DefaultButton Is Nothing AndAlso ButtonDefinitions.Any(Function(x) x.Destructive) Then
+                    Dialog.DefaultButton = button
+                End If
             End If
 
             bd.Button = button
@@ -423,6 +435,7 @@ Public Class TaskDialog(Of T)
         Property Text As String
         Property Value As T
         Property TimeoutButton As Boolean
+        Property Destructive As Boolean
         Property Button As Button
     End Class
 End Class

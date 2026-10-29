@@ -185,8 +185,8 @@ Public Class ToolUpdate
         Dim list = String.Join(BR, names)
         UpdatePackageDialog()
 
-        If MsgQuestion("Delete current files?",
-            "Delete current files in:" + BR2 + TargetDir + BR2 + list) = DialogResult.OK Then
+        If MsgConfirm("Delete current files?",
+            "Delete current files in:" + BR2 + TargetDir + BR2 + list, "Delete") Then
 
             For Each file In Directory.GetFiles(TargetDir)
                 If file.FileName.EqualsAny(Package.Keep) Then

@@ -1258,6 +1258,18 @@ Public Module MainModule
         Return Msg(title, content, TaskIcon.Question, buttons)
     End Function
 
+    'confirms an action that deletes or overwrites something, the button names the action
+    Function MsgConfirm(title As String, content As String, actionText As String) As Boolean
+        Using td As New TaskDialog(Of DialogResult)
+            td.Icon = TaskIcon.Question
+            td.Title = title
+            td.Content = content
+            td.AddDestructiveButton(actionText, DialogResult.OK)
+            td.AddButton("Cancel", DialogResult.Cancel)
+            Return td.Show() = DialogResult.OK
+        End Using
+    End Function
+
     Function Msg(title As String, content As String, icon As TaskIcon, buttons As TaskButton) As DialogResult
         Using td As New TaskDialog(Of DialogResult)
             td.Icon = icon

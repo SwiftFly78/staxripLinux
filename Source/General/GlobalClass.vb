@@ -119,7 +119,7 @@ Public Class GlobalClass
                     Case "Retry"
                         LoadSettings()
                     Case "Reset"
-                        If MsgQuestion("Are you sure you want to reset your settings? Your current settings will be lost!") = DialogResult.OK Then
+                        If MsgConfirm("Reset your settings?", "Your current settings will be lost.", "Reset") Then
                             s = New ApplicationSettings
                             s.Init()
                         Else
