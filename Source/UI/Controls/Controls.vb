@@ -71,13 +71,10 @@ Namespace UI
 
         Sub UpdateText()
             Dim value = TextValue.Trim
+            Dim iconName = If(value = "", GetSymbolIconName(), Nothing)
 
-            If value = "" Then
+            If value = "" AndAlso iconName = "" Then
                 value = GetSymbolText()
-            End If
-
-            If ShowMenuSymbol Then
-                value = If(value = "", "▾", value + "  ▾")
             End If
 
             MyBase.Text = value
@@ -85,7 +82,20 @@ Namespace UI
             'Eto ellipsizes button texts, so buttons in tight layouts get too narrow
             Dim label = TryCast(TryCast(ControlObject, Global.Gtk.Bin)?.Child, Global.Gtk.Label)
             If label IsNot Nothing Then label.Ellipsize = Pango.EllipsizeMode.None
+
+            Styling.SetButtonContent(Me, iconName, ShowMenuSymbol OrElse SymbolButton = ButtonSymbol.Menu, TypeOf Me Is MenuButton)
         End Sub
+
+        Function GetSymbolIconName() As String
+            Select Case SymbolButton
+                Case ButtonSymbol.None
+                    Return Styling.GetIconName(Symbol)
+                Case ButtonSymbol.Delete
+                    Return Styling.GetIconName("edit-delete-symbolic")
+            End Select
+
+            Return Nothing
+        End Function
 
         Function GetSymbolText() As String
             Select Case SymbolButton
@@ -98,7 +108,7 @@ Namespace UI
                 Case ButtonSymbol.Open : Return "["
                 Case ButtonSymbol.Close : Return "]"
                 Case ButtonSymbol.Delete : Return "×"
-                Case ButtonSymbol.Menu : Return "▾"
+                Case ButtonSymbol.Menu : Return ""
             End Select
 
             Return SymbolHelp.GetText(Symbol)
@@ -118,7 +128,7 @@ Namespace UI
             ClickAction?.Invoke()
 
             If ContextMenuStrip IsNot Nothing Then
-                ContextMenuStrip.Show(Me, New PointF(0, Height))
+                ContextMenuStrip.Show(Me, 0, Height)
             End If
 
             MyBase.OnClick(e)
