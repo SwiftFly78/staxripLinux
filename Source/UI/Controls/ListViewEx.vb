@@ -383,6 +383,9 @@ Namespace UI
         Property HideSelection As Boolean
         Property SortByColumnClick As Boolean
 
+        'the first column holds names like the dim labels of forms
+        Property DimFirstColumn As Boolean
+
         'text of the items instead of their ToString
         Property ItemText As Func(Of Object, String)
 
@@ -604,7 +607,32 @@ Namespace UI
             If item.Font IsNot Nothing Then
                 e.Font = item.Font
             End If
+
+            If DimFirstColumn AndAlso Columns.Count > 0 AndAlso e.Column Is Columns(0).GridColumn AndAlso
+                item.ForeColor.A = 0 AndAlso Not SelectedRows.Contains(e.Row) Then
+
+                Dim color = GetDimColor()
+
+                If color.HasValue Then
+                    e.ForegroundColor = color.Value
+                End If
+            End If
         End Sub
+
+        'the text color mixed with the background like the dim-label style of GTK themes
+        Function GetDimColor() As Color?
+            Dim widget = TryCast(ControlObject, Global.Gtk.Widget)
+            Dim tree = If(TryCast(TryCast(widget, Global.Gtk.Bin)?.Child, Global.Gtk.TreeView), TryCast(widget, Global.Gtk.TreeView))
+            Dim background As Global.Gdk.RGBA
+
+            If tree Is Nothing OrElse Not tree.StyleContext.LookupColor("theme_base_color", background) Then
+                Return Nothing
+            End If
+
+            Dim foreground = tree.StyleContext.GetColor(Global.Gtk.StateFlags.Normal)
+            Dim mix = Function(f As Double, b As Double) CSng(f * 0.55 + b * 0.45)
+            Return New Color(mix(foreground.Red, background.Red), mix(foreground.Green, background.Green), mix(foreground.Blue, background.Blue))
+        End Function
 
         Overloads Sub OnColumnHeaderClick(sender As Object, e As GridColumnEventArgs)
             If Not SortByColumnClick Then

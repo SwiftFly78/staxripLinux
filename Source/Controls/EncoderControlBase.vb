@@ -17,6 +17,7 @@ Public Class EncoderControlBase
             .FullRowSelect = True,
             .MultiSelect = False,
             .ShowContextMenuOnLeftClick = True,
+            .DimFirstColumn = True,
             .EllipsizeLastColumn = True,
             .Border = BorderType.None}
 
