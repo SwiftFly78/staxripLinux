@@ -18,12 +18,14 @@ Friend Class JobsForm
 
     Sub InitializeComponent()
         bnStart = New ButtonEx("Start")
+        bnStart.AddStyleClass("suggested-action")
         bnUp = New ButtonEx With {.Symbol = Symbol.Up, .Enabled = False}
         bnDown = New ButtonEx With {.Symbol = Symbol.Down, .Enabled = False}
-        bnMenu = New ButtonEx With {.ShowMenuSymbol = True}
+        bnMenu = New ButtonEx With {.Text = "Edit", .ShowMenuSymbol = True}
         bnRemove = New ButtonEx("Remove")
         bnLoad = New ButtonEx("Load")
         stb = New SearchTextBox
+        stb.SendMessageCue("Search jobs")
         lv = New ListViewEx
 
         Content = DialogContent(SplitRow({bnStart, bnUp, bnDown}, {bnMenu, bnRemove, bnLoad}), Row(stb), ScaledRow(lv))
@@ -71,6 +73,7 @@ Friend Class JobsForm
         lv.CheckBoxes = True
         lv.EnableListBoxMode()
         lv.ItemCheckProperty = NameOf(Job.Active)
+        lv.ItemText = Function(item) GetDisplayName(DirectCast(item, Job))
         lv.AddItems(AllJobs)
         lv.SelectFirst()
 
@@ -113,6 +116,18 @@ Friend Class JobsForm
         cms.Add("Load Selection", Sub() bnLoad.PerformClick(), Keys.Control Or Keys.L, Function() lv.SelectedItems.Count = 1)
 
     End Sub
+
+    'jobs are named by the path of their project file, the list shows its name,
+    'with the folder when several jobs have the same name
+    Function GetDisplayName(job As Job) As String
+        Dim name = If(job.Name.Contains(Path.DirectorySeparatorChar), job.Name.Base, job.Name)
+
+        If AllJobs.Where(Function(x) x.Name.Base = job.Name.Base).Count() > 1 AndAlso job.Name.Contains(Path.DirectorySeparatorChar) Then
+            name += $"  ({job.Name.Dir.TrimEnd(Path.DirectorySeparatorChar).FileName})"
+        End If
+
+        Return name
+    End Function
 
     Sub UncheckAll()
         BlockSave = True

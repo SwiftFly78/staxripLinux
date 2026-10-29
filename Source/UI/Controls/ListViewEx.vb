@@ -383,6 +383,9 @@ Namespace UI
         Property HideSelection As Boolean
         Property SortByColumnClick As Boolean
 
+        'text of the items instead of their ToString
+        Property ItemText As Func(Of Object, String)
+
         Event ItemsChanged(indices As Integer())
         Event ItemRemoved(item As ListViewItem)
         Event UpdateContextMenu()
@@ -701,7 +704,7 @@ Namespace UI
                 item.SetCheckedSilent(CBool(item.Tag.GetType.GetProperty(ItemCheckProperty).GetValue(item.Tag)))
             End If
 
-            item.Text = item.Tag.ToString
+            item.Text = If(ItemText IsNot Nothing, ItemText(item.Tag), item.Tag.ToString)
             ReloadData(index)
         End Sub
 
