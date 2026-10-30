@@ -148,10 +148,9 @@ Many help related entries, that might help you in some cases.
 ## Source
 
 The Source card shows the path of the source file and its properties, like its duration, size, bitrate, frame rate,
-resolution, color format, HDR format and codec.
-
-Below them the crop size and the pixel aspect ratio (PAR) and display aspect ratio (DAR) of the source are shown.
-`PAR` and `DAR` are menus to override the aspect ratio of the source.
+resolution, color format, HDR format, codec and its pixel aspect ratio (PAR) and display aspect ratio (DAR).
+The key values, like the duration, frame rate, resolution, HDR format and codec, are shown in the text color, the
+others dimmed. A path that doesn't fit shows its end with the file name.
 
 The button with the three dots next to the heading opens the source file menu, which also opens with a right-click
 on the path:
@@ -168,6 +167,9 @@ on the path:
     Opens the folder, that contains the source file, in the file manager.
 - #### Copy / Paste
     Copies and pastes the path.
+- #### Source PAR / Source DAR
+    Override the pixel or display aspect ratio of the source, for sources with a wrong aspect ratio.
+    `Edit Menu...` customizes the values of the menu.
 
 Video files can also be opened by dropping them on the main window.
 
@@ -269,18 +271,19 @@ The button next to the heading and a right-click on a filter open the filter men
 The Crop and Resize card gives you the opportunity to resize the given video pretty easy. To do so you can choose
 between (custom) pre-defined resolutions as well as a slider.
 
-`Presets` next to the heading opens a menu with pre-defined resolutions to choose from, `Image Options...` opens the
-image page of the [Project Options](Project-Options.md) and `Edit Menu...` the editor to customize the resolutions.
+`Crop...` next to the heading opens the [Crop](Crop.md) window (`F3`). `Presets` opens a menu with pre-defined
+resolutions to choose from, `Image Options...` opens the image page of the [Project Options](Project-Options.md) and
+`Edit Menu...` the editor to customize the resolutions.
 
 Below the actual resolution is shown, separated in `Width` and `Height`. In case the `Resize` filter is active,
 you can use the `up`/`down` keys or the mouse wheel to increment/decrement the values by the set `Output Mod` value
 in [Project Options](Project-Options.md), by default `2`.  
-Alternatively you can move the slider below to adjust the resolution, with `Ctrl` it resizes anamorphic.
+Alternatively you can move the `Size` slider below to adjust the resolution, with `Ctrl` it resizes anamorphic.
 
 Then you get some information about the target image/video:
 
 - #### Crop
-    The crop values, set by hand via [Crop](Crop.md) or by `Auto Crop`. `Crop...` opens the [Crop](Crop.md) window.  
+    The cropped sides (left, right / top, bottom), set by hand via [Crop](Crop.md) or by `Auto Crop`.  
     For more information check out [Cropping](../Cropping.md).
 - #### DAR
     Display Aspect Ratio, `DAR` opens a menu to set it.
@@ -327,7 +330,8 @@ next to it there are:
     choose another file, and commands to play the track, show its MediaInfo, explore its folder, process it or
     remove it from the track.
 - #### Language
-    The language of the track, which is set in its audio settings.
+    The button shows the language of the track and opens a menu with the common languages, all others are listed
+    under `More` by their initial.
 - #### Profile
     The button shows the audio profile of the track and opens a menu with all audio profiles, `Edit Profiles...` opens
     a dialog to edit this list as well as the audio profiles themselves.
@@ -356,6 +360,7 @@ The bar at the bottom says what needs attention next, so you can check the proje
   output or a script error.
 - When everything is fine, the bar says that the job is **ready** and [Add to Jobs](Main.md#add-to-jobs) is enabled.
 
-The button next to the message opens what resolves it, for example the crop window, the target file dialog or the
-encoder options. Hints and warnings can be skipped with `Continue`, the next one is shown then. The controls a
-message refers to are outlined.
+The button next to the message resolves it. It opens what fixes the problem, for example the crop window, the target
+file dialog or the options of an audio track, or it applies the fix, for example `Use MKV` for a target file with
+the wrong extension. Hints and warnings can be skipped with `Continue`, the next one is shown then. The controls a
+warning or error refers to are outlined in its color.
