@@ -856,11 +856,11 @@ clipname.set_output()" + BR
     End Function
 
     Shared Function GetAVSLoadCodeFromImports(code As String) As String
-        code = code.ToLowerInvariant
         Dim ret = ""
 
+        'the paths keep their case, file systems on Linux are case-sensitive
         For Each line In code.SplitLinesNoEmpty
-            If line.Contains("import") Then
+            If line.IndexOf("import", StringComparison.OrdinalIgnoreCase) >= 0 Then
                 Dim match = Regex.Match(line, "\bimport\s*\(\s*""\s*(.+\.avsi*)\s*""\s*\)", RegexOptions.IgnoreCase)
 
                 If match.Success AndAlso File.Exists(match.Groups(1).Value) Then

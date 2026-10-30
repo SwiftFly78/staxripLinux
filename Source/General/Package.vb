@@ -3631,13 +3631,15 @@ Public Class PluginPackage
         End If
 
         If p.Script.IsAviSynth AndAlso Not package.AvsFilterNames.NothingOrEmpty Then
-            Dim scriptLower = p.Script.GetScript().ToLowerInvariant
+            Dim script = p.Script.GetScript()
+            Dim scriptLower = script.ToLowerInvariant
 
             For Each filterName In package.AvsFilterNames
                 If scriptLower.Contains(filterName.ToLowerInvariant + "(") Then Return True
 
                 If scriptLower.Contains("import") Then
-                    Dim match = Regex.Match(scriptLower, "\bimport\s*\(\s*""\s*(.+\.avsi*)\s*""\s*\)", RegexOptions.IgnoreCase)
+                    'the path keeps its case, file systems on Linux are case-sensitive
+                    Dim match = Regex.Match(script, "\bimport\s*\(\s*""\s*(.+\.avsi*)\s*""\s*\)", RegexOptions.IgnoreCase)
 
                     If match.Success AndAlso File.Exists(match.Groups(1).Value) Then
                         If match.Groups(1).Value.ReadAllText.ToLowerInvariant.Contains(
