@@ -94,6 +94,20 @@ Namespace UI
             End Set
         End Property
 
+        Private EllipsizeTextValue As Boolean
+
+        'long texts like profile names are shortened when the button gets narrow,
+        'so its minimum width doesn't depend on the text
+        Property EllipsizeText As Boolean
+            Get
+                Return EllipsizeTextValue
+            End Get
+            Set(value As Boolean)
+                EllipsizeTextValue = value
+                UpdateText()
+            End Set
+        End Property
+
         Sub UpdateText()
             Dim value = TextValue.Trim
             Dim iconName = If(IconNameValue <> "", IconNameValue, If(value = "", GetSymbolIconName(), Nothing))
@@ -106,7 +120,7 @@ Namespace UI
 
             'Eto ellipsizes button texts, so buttons in tight layouts get too narrow
             Dim label = TryCast(TryCast(ControlObject, Global.Gtk.Bin)?.Child, Global.Gtk.Label)
-            If label IsNot Nothing Then label.Ellipsize = Pango.EllipsizeMode.None
+            If label IsNot Nothing Then label.Ellipsize = If(EllipsizeText, Pango.EllipsizeMode.End, Pango.EllipsizeMode.None)
 
             Styling.SetButtonContent(Me, iconName, ShowMenuSymbol OrElse SymbolButton = ButtonSymbol.Menu, FillContent OrElse TypeOf Me Is MenuButton)
         End Sub
@@ -1139,9 +1153,13 @@ Namespace UI
         Inherits Global.Gtk.Bin
 
         Private ReadOnly NaturalWidth As Integer
+        Private ReadOnly MinimumWidth As Integer
 
-        Sub New(content As Control, naturalWidth As Integer)
+        'the minimum width is at least minimumWidth, so contents with different minimum widths
+        'get the same share when the window is narrower than the natural width
+        Sub New(content As Control, naturalWidth As Integer, Optional minimumWidth As Integer = 0)
             Me.NaturalWidth = naturalWidth
+            Me.MinimumWidth = minimumWidth
             HasWindow = False
             Add(content.ToNative(True))
             Show()
@@ -1149,11 +1167,12 @@ Namespace UI
 
         Protected Overrides Sub OnGetPreferredWidth(ByRef minimum_width As Integer, ByRef natural_width As Integer)
             MyBase.OnGetPreferredWidth(minimum_width, natural_width)
+            minimum_width = Math.Max(minimum_width, MinimumWidth)
             natural_width = Math.Max(minimum_width, NaturalWidth)
         End Sub
 
-        Shared Function Create(content As Control, naturalWidth As Integer) As Control
-            Return New NativeControlHost(New NaturalWidthBin(content, naturalWidth))
+        Shared Function Create(content As Control, naturalWidth As Integer, Optional minimumWidth As Integer = 0) As Control
+            Return New NativeControlHost(New NaturalWidthBin(content, naturalWidth, minimumWidth))
         End Function
     End Class
 

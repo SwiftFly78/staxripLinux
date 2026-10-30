@@ -157,7 +157,7 @@ Partial Public Class MainForm
         bnFilters = New ButtonEx With {.ShowMenuSymbol = True, .MinimumSize = Size.Empty}
 
         pnEncoder = New Panel
-        bnEncoder = New ButtonEx With {.ShowMenuSymbol = True, .MinimumSize = Size.Empty}
+        bnEncoder = New ButtonEx With {.ShowMenuSymbol = True, .MinimumSize = Size.Empty, .EllipsizeText = True}
         bnEncoderOptions = New ButtonEx With {.Text = "Options...", .MinimumSize = Size.Empty}
 
         TipProvider = New TipProvider
@@ -185,7 +185,7 @@ Partial Public Class MainForm
         'fixed natural widths keep the columns stable when the encoder panel changes,
         'the content can still shrink, so the window can get narrower than that
         cardFilters = New Card("Filters") With {.HeaderRight = bnFilters, .Content = NaturalWidthBin.Create(FiltersListView, FH(15))}
-        cardEncoder = New Card("Video") With {.HeaderRight = ButtonRow(bnEncoder, bnEncoderOptions), .Content = NaturalWidthBin.Create(pnEncoder, FH(24))}
+        cardEncoder = New Card("Video") With {.HeaderRight = ButtonRow(bnEncoder, bnEncoderOptions), .Content = NaturalWidthBin.Create(pnEncoder, FH(24), FH(11))}
         cardAudio = New Card("Audio") With {.HeaderRight = bnAddAudio, .Content = pnAudio}
 
         Dim toolbar As New TableLayout(Row(bnOpen, bnPreview, bnCrop, bnJobs, Scaled(Nothing), bnAddJob)) With {
@@ -270,7 +270,7 @@ Partial Public Class MainForm
         Icon = g.Icon
 
         InitializeComponent()
-        RestoreClientSize(62, 42)
+        RestoreClientSize(64, 42)
         SetTip()
 
         TargetAspectRatioMenu = New ContextMenuStripEx
