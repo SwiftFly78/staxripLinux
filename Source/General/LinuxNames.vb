@@ -53,6 +53,7 @@ Public Class LinuxNames
         {"neo-f3kdb.dll", {"libneo-f3kdb.so", "libneo_f3kdb.so"}},
         {"neo-fft3d.dll", {"libneo-fft3d.so", "libneo_fft3d.so"}},
         {"neo-dfttest.dll", {"libneo-dfttest.so", "libneo_dfttest.so"}},
+        {"neo-fft.dll", {"neo-fft.so", "libneo-fft.so", "libneo_fft.so"}},
         {"RemoveGrainVS.dll", {"librgvs.so", "libremovegrain.so"}},
         {"libvs_placebo.dll", {"libvs_placebo.so", "libvsplacebo.so"}},
         {"avs_libplacebo.dll", {"libavs_libplacebo.so"}},

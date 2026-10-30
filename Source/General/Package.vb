@@ -600,9 +600,18 @@ Public Class Package
         .Filename = "neo-fft3d.dll",
         .WebURL = "https://github.com/HomeOfAviSynthPlusEvolution/neo_FFT3D",
         .DownloadURL = "https://github.com/HomeOfAviSynthPlusEvolution/neo_FFT3D/releases",
-        .Description = "Neo FFT3D is a 3D Frequency Domain filter - strong denoiser and moderate sharpener.",
+        .Description = "Neo FFT3D is a 3D Frequency Domain filter - strong denoiser and moderate sharpener. Its successor is neo-fft.",
         .AvsFilterNames = {"neo_fft3d"},
         .VsFilterNames = {"neo_fft3d.FFT3D"}})
+
+    Shared Property NeoFFT As Package = Add(New PluginPackage With {
+        .Name = "neo-fft",
+        .Filename = "neo-fft.dll",
+        .WebURL = "https://github.com/HomeOfAviSynthPlusEvolution/neo-fft",
+        .DownloadURL = "https://github.com/HomeOfAviSynthPlusEvolution/neo-fft/releases",
+        .Description = "Successor of FFT3D Neo and DFTTest Neo in one plugin with new function names, used by TemporalDegrain2 2.7.0 and newer.",
+        .AvsFilterNames = {"neo_fft_FFT3D", "neo_fft_DFTTest", "neo_fft_KernelInfo"},
+        .VsFilterNames = {"neo_fft.FFT3D", "neo_fft.DFTTest", "neo_fft.KernelInfo"}})
 
     Shared Property vinverse As Package = Add(New PluginPackage With {
         .Name = "vinverse",
@@ -1444,7 +1453,7 @@ Public Class Package
     Shared Property DFTTestNeo As Package = Add(New PluginPackage With {
         .Name = "DFTTest Neo",
         .Filename = "neo-dfttest.dll",
-        .Description = "2D/3D frequency domain denoiser using Discrete Fourier transform.",
+        .Description = "2D/3D frequency domain denoiser using Discrete Fourier transform. Its successor is neo-fft.",
         .WebURL = "https://github.com/HomeOfAviSynthPlusEvolution/neo_DFTTest",
         .DownloadURL = "https://github.com/HomeOfAviSynthPlusEvolution/neo_DFTTest/releases",
         .AvsFilterNames = {"neo_dfttest"},
