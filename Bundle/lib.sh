@@ -119,10 +119,14 @@ bundle_component() {
     done
 }
 
-# copies license files from the work folder into the prefix, bundle_component ships them
+# copies license files from the work folder into the prefix, bundle_component ships them,
+# <file>:<name> stores a file under another name
 stage_license() {
     mkdir -p $DESTDIR$PREFIX/share/licenses/$name
-    cp "$@" $DESTDIR$PREFIX/share/licenses/$name/
+    local f
+    for f in "$@"; do
+        cp "${f%%:*}" "$DESTDIR$PREFIX/share/licenses/$name/$(basename "${f#*:}")"
+    done
 }
 
 # copies files from the prefix to Apps/<location>
