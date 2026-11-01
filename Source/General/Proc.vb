@@ -468,6 +468,13 @@ Public Class Proc
             dic("AviSynthDLL") = Package.AviSynth.Path
         End If
 
+        'the custom path of VapourSynth can change while StaxRip runs
+        Dim vsscriptPath = Bundle.GetVSScriptPath()
+
+        If vsscriptPath <> "" Then
+            dic("VSSCRIPT_PATH") = vsscriptPath
+        End If
+
         For Each mac In Macro.GetMacros(True, False, False, True, False)
             Dim name = mac.Name.Trim("%"c)
 

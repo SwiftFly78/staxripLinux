@@ -1,5 +1,6 @@
 
 Imports System.Text
+Imports System.Text.RegularExpressions
 
 'tools the full AppImage ships in the Apps folder, see Bundle/README.md
 Public Class Bundle
@@ -58,7 +59,18 @@ Public Class Bundle
         End Get
     End Property
 
-    'VSScript reads the Python it loads from vapoursynth.toml, keyed by its own path,
+    Private Shared SystemVSScriptPath As String
+
+    'distributions set VSSCRIPT_PATH to their VSScript, which the bundled vspipe would load instead of its own
+    Shared Function GetVSScriptPath() As String
+        If Package.VapourSynth.IsBundled Then
+            Return NativeLibraries.GetRealPath(Path.Combine(VapourSynthDir, "libvsscript.so"))
+        End If
+
+        Return SystemVSScriptPath
+    End Function
+
+    'VSScript reads the Python it loads from vapoursynth.toml, keyed by its own real path,
     'which changes with every mount of the AppImage, like `vapoursynth config` the entry is written
     'and the entries of former mounts and extractions are removed
     Shared Sub ConfigureVapourSynth()
@@ -67,14 +79,23 @@ Public Class Bundle
                 Exit Sub
             End If
 
-            Dim exe = Directory.GetFiles(Path.Combine(PythonDir, "bin"), "python3.*").FirstOrDefault(Function(x) Not x.EndsWith("-config"))
+            SystemVSScriptPath = Environment.GetEnvironmentVariable("VSSCRIPT_PATH")
+            Dim vsscriptPath = GetVSScriptPath()
+
+            If vsscriptPath <> "" Then
+                NativeLibraries.SetNativeEnvironmentVariable("VSSCRIPT_PATH", vsscriptPath)
+            End If
+
+            Dim exe = Directory.GetFiles(Path.Combine(PythonDir, "bin")).FirstOrDefault(Function(x) Regex.IsMatch(x.FileName, "^python3\.\d+$"))
             Dim pythonLib = Directory.GetFiles(Path.Combine(PythonDir, "lib"), "libpython3.*.so.1.0").FirstOrDefault()
 
             If exe Is Nothing OrElse pythonLib Is Nothing Then
                 Exit Sub
             End If
 
-            Dim key = New FileInfo(Path.Combine(VapourSynthDir, "libvsscript.so")).FullName.Replace("/lib64/", "/lib/")
+            exe = NativeLibraries.GetRealPath(exe)
+            pythonLib = NativeLibraries.GetRealPath(pythonLib)
+            Dim key = NativeLibraries.GetRealPath(Path.Combine(VapourSynthDir, "libvsscript.so")).Replace("/lib64/", "/lib/")
             Dim mtime = New DateTimeOffset(File.GetLastWriteTimeUtc(exe)).ToUnixTimeSeconds()
             Dim configFile = Path.Combine(Folder.XdgConfigHome, "vapoursynth", "vapoursynth.toml")
             Dim lines = If(File.Exists(configFile), File.ReadAllLines(configFile).ToList, New List(Of String))

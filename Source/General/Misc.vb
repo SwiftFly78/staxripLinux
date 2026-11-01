@@ -1357,11 +1357,11 @@ Public Class Startup
         'GTK opens the menu bar with F10, which StaxRip uses for the settings
         Global.Gtk.Settings.Default.MenuBarAccel = ""
         Styling.Install()
-        Bundle.ConfigureVapourSynth()
         AddHandler app.UnhandledException, Sub(sender, e) g.OnException(TryCast(e.ExceptionObject, Exception))
 
         Dim loadSettings = g.SettingsFile.FileExists()
         If loadSettings Then g.LoadSettings()
+        Bundle.ConfigureVapourSynth()
         app.Run(New MainForm(Not loadSettings))
     End Sub
 End Class
