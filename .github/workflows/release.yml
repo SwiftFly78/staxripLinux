@@ -1,6 +1,6 @@
 name: Release
 
-# Releases an AppImage of the newest version on master if it has no release yet. Tags can be pushed
+# Releases the AppImages of the newest version on master if it has no release yet. Tags can be pushed
 # before, with or after the branch, so pushes of both run it.
 on:
   push:
@@ -23,7 +23,8 @@ jobs:
     # not for deleted tags
     if: ${{ !github.event.deleted }}
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # building the bundled tools without cache takes long
+    timeout-minutes: 180
     permissions:
       contents: write
     env:
@@ -56,13 +57,38 @@ jobs:
             echo "tag=$tag" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Check out the version
+        if: steps.version.outputs.tag
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+        run: git checkout --detach "$TAG"
+
+      - name: Restore the build cache of the bundled tools
+        if: steps.version.outputs.tag
+        uses: actions/cache@v6
+        with:
+          path: Bundle/.cache
+          key: bundle-${{ hashFiles('Bundle/**', '!Bundle/README.md') }}
+          restore-keys: bundle-
+
+      - name: Build the bundled tools
+        if: steps.version.outputs.tag
+        run: Bundle/build.sh
+
+      - name: Upload the build logs of the bundled tools
+        if: failure() && steps.version.outputs.tag
+        uses: actions/upload-artifact@v7
+        with:
+          name: bundle-logs
+          path: Bundle/.cache/logs
+
       - name: Install .NET
         if: steps.version.outputs.tag
         uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 10.0.x
 
-      - name: Build the AppImage
+      - name: Build the AppImages
         if: steps.version.outputs.tag
         env:
           TAG: ${{ steps.version.outputs.tag }}
@@ -81,8 +107,12 @@ jobs:
           EOF
           chmod +x "$APPIMAGETOOL"
 
-          git checkout --detach "$TAG"
+          APPS=Bundle/out/Apps Source/build-appimage.sh "$RUNNER_TEMP/appimage"
           Source/build-appimage.sh "$RUNNER_TEMP/appimage"
+
+          # the source code of the bundled tools and the scripts that build them
+          tar -cf "$RUNNER_TEMP/appimage/StaxRipLinux-${TAG#v}-tools-source.tar" --exclude=Bundle/.cache \
+            --exclude=Bundle/out Bundle -C Bundle/out sources
 
       - name: Publish the release
         if: steps.version.outputs.tag
@@ -92,7 +122,11 @@ jobs:
           previous=$(gh release list --exclude-drafts --limit 1 --json tagName --jq '.[0].tagName // empty')
 
           {
-            echo "StaxRipLinux $TAG as AppImage for x86-64 Linux. It contains the .NET runtime, the other requirements are listed in [Linux](https://github.com/$GITHUB_REPOSITORY/blob/$TAG/Docs/Introduction/Linux.md#appimage)."
+            echo "StaxRipLinux $TAG as AppImage for x86-64 Linux, both AppImages contain the .NET runtime, see [AppImage](https://github.com/$GITHUB_REPOSITORY/blob/$TAG/Docs/Introduction/Linux.md#appimage)."
+            echo
+            echo "- \`StaxRipLinux-${TAG#v}-x86_64.AppImage\` contains the tools StaxRipLinux uses."
+            echo "- \`StaxRipLinux-${TAG#v}-slim-x86_64.AppImage\` uses the tools installed on the system."
+            echo "- \`StaxRipLinux-${TAG#v}-tools-source.tar\` contains the source code of the tools of the first AppImage."
             echo
             echo "## Changes${previous:+ since $previous}"
             echo
@@ -100,5 +134,5 @@ jobs:
               --format='- %(refname:short) %(if)%(*subject)%(then)%(*subject)%(else)%(subject)%(end)' 'refs/tags/v*'
           } > "$RUNNER_TEMP/notes.md"
 
-          gh release create "$TAG" "$RUNNER_TEMP"/appimage/*.AppImage --verify-tag --title "StaxRipLinux $TAG" \
-            --notes-file "$RUNNER_TEMP/notes.md"
+          gh release create "$TAG" "$RUNNER_TEMP"/appimage/*.AppImage "$RUNNER_TEMP"/appimage/*.tar --verify-tag \
+            --title "StaxRipLinux $TAG" --notes-file "$RUNNER_TEMP/notes.md"

@@ -2,10 +2,23 @@
 # Builds StaxRipLinux as AppImage that includes the .NET runtime, see "AppImage" in Docs/Introduction/Linux.md.
 # usage: build-appimage.sh [<output folder>]
 # Needs the .NET 10 SDK and appimagetool. APPIMAGETOOL overrides the appimagetool command, APPIMAGE_RUNTIME
-# is the AppImage runtime file, without it appimagetool downloads the latest runtime.
+# is the AppImage runtime file, without it appimagetool downloads the latest runtime. APPS is the Apps folder
+# of the bundled tools (Bundle/out/Apps), without it the AppImage is the slim one that uses the system tools.
 set -eu
 
 out=$(mkdir -p "${1:-.}" && cd "${1:-.}" && pwd) || exit 1
+variant=-slim
+
+if [ -n "${APPS:-}" ]; then
+    if [ ! -f "$APPS/versions.txt" ]; then
+        echo "$APPS isn't an Apps folder of the bundled tools, Bundle/build.sh creates it" >&2
+        exit 1
+    fi
+
+    APPS=$(cd "$APPS" && pwd)
+    variant=
+fi
+
 cd "$(dirname "$0")"
 
 appimagetool=${APPIMAGETOOL:-appimagetool}
@@ -28,6 +41,10 @@ lib=$appdir/usr/lib/staxrip
 dotnet publish StaxRip.vbproj -c Release -r linux-x64 --self-contained -nologo \
     -p:OutputPath="$tmp/bin/" -p:BaseIntermediateOutputPath="$tmp/obj/" -o "$lib"
 
+if [ -n "${APPS:-}" ]; then
+    cp -a "$APPS" "$lib/Apps"
+fi
+
 # the AppImage has its own desktop integration instead of the install script
 mkdir -p "$appdir/usr/share/icons/hicolor/256x256/apps"
 cp "$lib/Linux/staxrip.desktop" "$lib/Linux/staxrip.png" "$appdir/"
@@ -41,7 +58,7 @@ exec "$(dirname "$(readlink -f "$0")")/usr/lib/staxrip/StaxRip" "$@"
 EOF
 chmod +x "$appdir/AppRun"
 
-file=$out/StaxRipLinux${version:+-$version}-x86_64.AppImage
+file=$out/StaxRipLinux${version:+-$version}$variant-x86_64.AppImage
 ARCH=x86_64 VERSION=${version:-unknown} "$appimagetool" ${APPIMAGE_RUNTIME:+--runtime-file "$APPIMAGE_RUNTIME"} \
     "$appdir" "$file"
 echo "$file"
