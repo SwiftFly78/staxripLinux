@@ -24,15 +24,25 @@ is_selected() {
 
 declare -A keys
 
-# the cache key covers what builds the component: its sources, the build functions of the recipe and
-# the helpers, the build image and the keys of the dependencies
+# the cache key covers what builds the component: its sources, the functions the build calls, the build
+# image and the keys of the dependencies, so a change of an unused helper doesn't rebuild it
 component_key() {
     local c=$1 deps d
     deps=$(recipe_var $c depends)
     {
         bash -c '. $B/lib.sh; . $B/components/$1.sh
-            unset -f bundle bundle_component apps_install apps_plugin recipe_var
-            echo "${version:-}|${depends:-}|${sources:-}"; declare -f' key $c
+            echo "${version:-}|${depends:-}|${sources:-}"
+            todo=build_component seen=" "
+            while [ -n "$todo" ]; do
+                set -- $todo; f=$1; shift; todo="$*"
+                case "$seen" in *" $f "*) continue ;; esac
+                seen="$seen$f "
+                body=$(declare -f "$f")
+                echo "$body"
+                for g in $(declare -F | cut -d" " -f3); do
+                    case "$body" in *"$g"*) todo="$todo $g" ;; esac
+                done
+            done' key $c
         echo "$IMAGE"
         for d in $deps; do echo "${keys[$d]}"; done
     } | sha256sum | cut -c1-16
