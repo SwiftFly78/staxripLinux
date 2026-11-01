@@ -281,6 +281,16 @@ Public Class Proc
 
             If Process.StartInfo.FileName = "" AndAlso Package IsNot Nothing Then
                 Process.StartInfo.FileName = Package.Path
+
+                'the apps dialog tells how to install a missing tool, or how to define its path
+                If Process.StartInfo.FileName = "" Then
+                    If IsUIThread Then
+                        Package.VerifyOK(True)
+                        Process.StartInfo.FileName = Package.Path
+                    Else
+                        Throw New ErrorAbortException(Package.Name + " is missing", Package.GetStatus(), Project)
+                    End If
+                End If
             Else
             End If
 
@@ -326,6 +336,8 @@ Public Class Proc
         Catch ex As AbortException
             Throw
         Catch ex As SkipException
+            Throw
+        Catch ex As ErrorAbortException
             Throw
         Catch ex As Exception
             Dim msg = ex.Message
