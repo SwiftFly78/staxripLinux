@@ -3,7 +3,8 @@
 > [!NOTE]
 > StaxRipLinux is a port of StaxRip with a GTK 3 user interface based on [Eto.Forms](https://github.com/picoe/Eto).
 > It was tested on Arch Linux with VapourSynth R80, Python 3.14, x264, x265, FFmpeg and MKVToolNix 102.
-> StaxRipLinux doesn't depend on a specific distribution, it uses the tools and libraries found on the system.
+> StaxRipLinux doesn't depend on a specific distribution, it uses the tools and libraries found on the system,
+> the full [AppImage](#appimage) brings the most important ones along.
 
 ## Differences to the Windows version
 
@@ -47,8 +48,11 @@
 
 ## Requirements
 
+The full [AppImage](#appimage) contains the .NET runtime and the tools listed there, the slim AppImage only the
+.NET runtime.
+
 - 64-bit Linux (x86-64)
-- [.NET 10 runtime](https://learn.microsoft.com/dotnet/core/install/linux), the [AppImage](#appimage) includes it
+- [.NET 10 runtime](https://learn.microsoft.com/dotnet/core/install/linux), the [AppImages](#appimage) include it
 - GTK 3
 - MediaInfo library (`libmediainfo`)
 - MKVToolNix command line tools
@@ -159,7 +163,15 @@ edited and are supported by more containers and players, MP4 for example doesn't
 ## AppImage
 
 The [releases](https://github.com/SwiftFly78/staxripLinux/releases) contain StaxRipLinux as AppImage, a single file
-that runs without installation. It includes the .NET runtime, the other [requirements](#requirements) are still needed.
+that runs without installation. Both AppImages contain the .NET runtime:
+
+- `StaxRipLinux-<version>-x86_64.AppImage` also contains VapourSynth with its own Python, ffms2, FFmpeg, x264,
+  x265, the MKVToolNix command line tools and the MediaInfo library. It runs on distributions with glibc 2.35 or
+  newer, like Ubuntu 22.04, Debian 12 and Fedora 36. Other tools of the [requirements](#requirements) are only
+  needed when they're used.
+- `StaxRipLinux-<version>-slim-x86_64.AppImage` uses the tools of the system, it needs the other
+  [requirements](#requirements).
+
 Make the file executable and start it:
 
 ```sh
@@ -172,6 +184,11 @@ chmod +x StaxRipLinux-*-x86_64.AppImage
 - The settings are stored in `~/.config/StaxRip`. A folder next to the AppImage with its name and `.config` appended,
   like `StaxRipLinux-1.15.0-x86_64.AppImage.config`, keeps them next to the AppImage instead.
 - Tools like Gear Lever or AppImageLauncher add AppImages to the application menu.
+- The full AppImage uses its own tools, not the ones of the system. Another version of a tool can be used with a
+  custom path, see [How StaxRipLinux finds tools and plugins](#how-staxriplinux-finds-tools-and-plugins). Python
+  modules installed for the Python of the system aren't available to the VapourSynth of the AppImage.
+- The licenses of the tools are in the folder `usr/lib/staxrip/Apps/Licenses` of the full AppImage, which
+  `--appimage-mount` shows, the releases contain the source code of the tools.
 
 ## Building
 
@@ -184,9 +201,15 @@ dotnet publish StaxRip.vbproj -c Release -r linux-x64 --self-contained false -o 
 
 StaxRipLinux can be started from the output folder with `../publish/StaxRip`.
 
-`./build-appimage.sh [<output folder>]` builds an AppImage like the ones of the releases. It needs
+`./build-appimage.sh [<output folder>]` builds the slim AppImage. It needs
 [appimagetool](https://github.com/AppImage/appimagetool) in `PATH`, or its path in the environment variable
-`APPIMAGETOOL`.
+`APPIMAGETOOL`. The full AppImage needs the tools it contains, they're built with Docker as described in
+[Bundle](../../Bundle/README.md):
+
+```sh
+../Bundle/build.sh
+APPS=../Bundle/out/Apps ./build-appimage.sh
+```
 
 ## Installation
 
@@ -252,10 +275,11 @@ Ubuntu, otherwise it runs node-semver with `npx` (Node.js).
 
 ### Releases
 
-When a push brings new version tags to `master`, the workflow [Release](../../.github/workflows/release.yml) builds an
-AppImage of the newest version and publishes it as GitHub release. The release notes list the versions since the
-previous release with the subjects of their commits. The tags can be pushed before, with or after the branch, but
-GitHub starts no workflow for the tags of a push with more than three tags, so push them together with the branch:
+When a push brings new version tags to `master`, the workflow [Release](../../.github/workflows/release.yml) builds the
+AppImages of the newest version and publishes them with the source code of the bundled tools as GitHub release. The
+release notes list the versions since the previous release with the subjects of their commits. The tags can be pushed
+before, with or after the branch, but GitHub starts no workflow for the tags of a push with more than three tags, so
+push them together with the branch:
 
 ```sh
 git push origin HEAD:master v1.15.0 v1.15.1
@@ -263,3 +287,6 @@ git push origin HEAD:master v1.15.0 v1.15.1
 
 Versions that have a release already are skipped. *Run workflow* on the page of the workflow in the *Actions* tab of
 the repository releases the newest version if it has no release yet, for example after a failed run.
+
+The workflow [Tools](../../.github/workflows/tools.yml) builds the bundled tools when a push changes `Bundle`. The
+release finds them in the cache of GitHub Actions and only builds the ones that changed since.
