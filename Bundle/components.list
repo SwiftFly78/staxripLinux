@@ -1,0 +1,11 @@
+# build order, a component comes after the components it depends on
+python
+vapoursynth
+x264
+x265
+ffmpeg
+ffms2
+zenlib
+mediainfo
+qtbase
+mkvtoolnix
