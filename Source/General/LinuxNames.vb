@@ -236,8 +236,35 @@ Public Class LinuxNames
             'newer VapourSynth versions autoload plugins from the plugins folder of the Python module
             ret.AddRange(VapourSynthInfo.GetAutoloadedPlugins().Select(Function(x) Path.GetDirectoryName(x)))
             ret.AddRange(VapourSynthInfo.GetPythonPaths().Select(Function(x) Path.Combine(x, "vapoursynth", "plugins")))
+            ret.AddRange(SystemVapourSynthPluginDirs)
 
             Return ret.Where(Function(x) x <> "" AndAlso Directory.Exists(x)).Distinct.ToArray
+        End Get
+    End Property
+
+    Private Shared SystemVapourSynthPluginDirsValue As String()
+
+    'the plugin folders of the VapourSynth modules of the system and of pip and pipx, their plugins
+    'also work with the VapourSynth of the full AppImage, which doesn't load them automatically
+    Shared ReadOnly Property SystemVapourSynthPluginDirs As String()
+        Get
+            If SystemVapourSynthPluginDirsValue Is Nothing Then
+                Dim libDirs = LibraryDirs.ToList
+                libDirs.Add(Path.Combine(Folder.Home, ".local", "lib"))
+                Dim pipxDir = Path.Combine(Folder.XdgDataHome, "pipx", "venvs")
+
+                If Directory.Exists(pipxDir) Then
+                    libDirs.AddRange(Directory.GetDirectories(pipxDir).Select(Function(x) Path.Combine(x, "lib")))
+                End If
+
+                SystemVapourSynthPluginDirsValue = libDirs.Where(Function(x) Directory.Exists(x)).
+                    SelectMany(Function(x) Directory.GetDirectories(x, "python3*")).
+                    SelectMany(Function(x) {Path.Combine(x, "site-packages", "vapoursynth", "plugins"),
+                                            Path.Combine(x, "dist-packages", "vapoursynth", "plugins")}).
+                    Where(Function(x) Directory.Exists(x)).Distinct.ToArray
+            End If
+
+            Return SystemVapourSynthPluginDirsValue
         End Get
     End Property
 
