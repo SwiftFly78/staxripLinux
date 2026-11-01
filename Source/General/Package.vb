@@ -33,7 +33,25 @@ Public Class Package
     Property StatusFunc As Func(Of String)
     Property SupportsAutoUpdate As Boolean = True
     Property TreePath As String
-    Property Version As String = ""
+    Private VersionValue As String = ""
+
+    Property Version As String
+        Get
+            If IsBundled() Then
+                Dim ret = Bundle.GetVersion(Me)
+
+                If ret <> "" Then
+                    Return ret
+                End If
+            End If
+
+            Return VersionValue
+        End Get
+        Set(value As String)
+            VersionValue = value
+        End Set
+    End Property
+
     Property VersionAllowAny As Boolean
     Property VersionAllowNew As Boolean
     Property VersionAllowOld As Boolean = True
@@ -642,6 +660,7 @@ Public Class Package
         .RequiredFunc = Function() p?.Script IsNot Nothing AndAlso p.Script.IsAviSynth AndAlso avs2yuv.Path <> "",
         .Name = "avs2yuv",
         .Filename = "avs2yuv.exe",
+        .Location = IO.Path.Combine("FrameServer", "AviSynth"),
         .WebURL = "https://github.com/DJATOM/avs2yuv",
         .HelpSwitch = "stderr",
         .Description = "Console app that pipes AviSynth+ scripts to encoders, shows their info and benchmarks them, " +
@@ -955,6 +974,7 @@ Public Class Package
     Shared Property ffmsindex As Package = Add(New Package With {
         .Name = "ffmsindex",
         .Filename = "ffmsindex.exe",
+        .Location = IO.Path.Combine("Plugins", "Dual", "ffms2"),
         .Description = "Indexing console app of ffms2.",
         .WebURL = "https://github.com/FFMS/ffms2",
         .HelpSwitch = "",
@@ -3196,6 +3216,11 @@ Public Class Package
         Return fp <> "" AndAlso Not fp.StartsWith(Folder.Apps) AndAlso GetStoredPath() = ""
     End Function
 
+    'tools of the Apps folder ship with the release, see Bundle/README.md
+    Function IsBundled() As Boolean
+        Return Path.PathStartsWith(Folder.Apps + IO.Path.DirectorySeparatorChar) AndAlso GetStoredPath() = ""
+    End Function
+
     'tools from a custom path or the Apps folder, their directory is added to PATH
     Function IsCustomOrBundled() As Boolean
         Dim fp = Path
@@ -3227,7 +3252,7 @@ Public Class Package
     End Function
 
     Overridable Function IsVersionValid() As Boolean
-        If VersionAllowAny OrElse IsSystemInstalled() Then Return True
+        If VersionAllowAny OrElse IsSystemInstalled() OrElse IsBundled() Then Return True
         If IsVersionNew() AndAlso VersionAllowNew Then Return True
 
         Return IsVersionCorrect()
@@ -3349,18 +3374,23 @@ Public Class Package
     End Function
 
     Function GetAviSynthHintDir() As String
+        If File.Exists(IO.Path.Combine(Bundle.AviSynthDir, Filename)) Then Return Bundle.AviSynthDir
         Return LinuxNames.FindLibrary(Filename).Dir
     End Function
 
     Function GetVapourSynthDllHintDir() As String
+        If Bundle.VapourSynthDir <> "" Then Return Bundle.VapourSynthDir
         Return LinuxNames.FindLibrary(Filename).Dir
     End Function
 
     Function GetVapourSynthPipeHintDir() As String
+        If Bundle.VapourSynthDir <> "" Then Return Bundle.VapourSynthDir
         Return ShellHelp.Which(Filename).Dir
     End Function
 
     Shared Function GetPythonHintDir() As String
+        Dim bundled = IO.Path.Combine(Bundle.PythonDir, "bin")
+        If File.Exists(IO.Path.Combine(bundled, "python3")) Then Return bundled
         Return ShellHelp.Which("python3").Dir
     End Function
 

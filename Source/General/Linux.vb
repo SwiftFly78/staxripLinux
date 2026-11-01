@@ -251,6 +251,7 @@ Public Class NativeLibraries
                     If Package.VapourSynth.Path.FileExists Then
                         ret.Add(Path.Combine(Package.VapourSynth.Directory, "libvapoursynth-script.so.0"))
                         ret.Add(Path.Combine(Package.VapourSynth.Directory, "libvapoursynth-script.so"))
+                        ret.Add(Path.Combine(Package.VapourSynth.Directory, "libvsscript.so"))
                     End If
                 Case "AviSynth.dll", "avisynth"
                     If Package.AviSynth.Path.FileExists Then ret.Add(Package.AviSynth.Path)

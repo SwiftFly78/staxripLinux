@@ -207,7 +207,7 @@ Public Class AppsForm
         miAutoUpdate.Enabled = tsbDownload.Enabled AndAlso CurrentPackage.SupportsAutoUpdate
         tsbWebsite.Enabled = CurrentPackage.URL <> ""
 
-        tsbVersion.Enabled = CurrentPackage.Path.FileExists AndAlso
+        tsbVersion.Enabled = CurrentPackage.Path.FileExists AndAlso Not CurrentPackage.IsBundled AndAlso
             Not (CurrentPackage.IsVersionOld() AndAlso Not CurrentPackage.VersionAllowOld)
 
         miEditPath.Enabled = CurrentPackage.IsCustomPathAllowed
@@ -227,6 +227,8 @@ Public Class AppsForm
         If File.Exists(CurrentPackage.Path) Then
             If CurrentPackage.IsSystemInstalled Then
                 SetText("Version", "System (" + File.GetLastWriteTimeUtc(CurrentPackage.Path).ToShortDateString() + ")")
+            ElseIf CurrentPackage.IsBundled Then
+                SetText("Version", If(CurrentPackage.Version = "", "Bundled", CurrentPackage.Version + " (bundled)"))
             Else
                 SetText("Version", If(correctVersion, CurrentPackage.Version, "Unknown") +
                     " (" + File.GetLastWriteTimeUtc(CurrentPackage.Path).ToShortDateString() + ")")
@@ -355,6 +357,11 @@ Public Class AppsForm
                         'the update replaces all files in the folder of the tool
                         If CurrentPackage.IsSystemInstalled Then
                             MsgInfo(CurrentPackage.Name + " is installed system wide, please update it with the package manager.", CurrentPackage.Path)
+                            Exit Sub
+                        End If
+
+                        If CurrentPackage.IsBundled Then
+                            MsgInfo(CurrentPackage.Name + " ships with StaxRipLinux and is updated with it.", CurrentPackage.Path)
                             Exit Sub
                         End If
 

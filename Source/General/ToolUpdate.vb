@@ -33,6 +33,11 @@ Public Class ToolUpdate
             Exit Sub
         End If
 
+        If Package.IsBundled Then
+            MsgInfo(Package.Name + " ships with StaxRipLinux and is updated with it.", Package.Path)
+            Exit Sub
+        End If
+
         'exceptions of an Async Sub are unhandled and terminate StaxRip
         Try
             Dim content = Await HttpClient.GetStringAsync(Package.DownloadURL)
