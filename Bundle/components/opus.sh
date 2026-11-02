@@ -7,6 +7,6 @@ https://downloads.xiph.org/releases/opus/opus-1.6.1.tar.gz 6ffcb593207be92584df1
 build() {
     unpack opus-1.6.1.tar.gz
     cd opus-1.6.1
-    configure_make --disable-shared --enable-static --with-pic --disable-doc --disable-extra-programs
+    configure_make --enable-shared --disable-static --disable-doc --disable-extra-programs
     stage_license COPYING
 }

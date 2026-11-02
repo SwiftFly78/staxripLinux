@@ -1,4 +1,4 @@
-# xvid_encraw is the example encoder of xvidcore
+# xvid_encraw, the example encoder of xvidcore, and the library of FFmpeg
 version=1.3.7
 packages=xvid_encraw
 sources="
@@ -10,6 +10,11 @@ build() {
     cd xvidcore/build/generic
     ./configure --prefix=$PREFIX
     make -j$JOBS
+    # the makefile ignores DESTDIR and doesn't create the link libxvidcore.so, the static library could be
+    # linked into FFmpeg instead of the shared one
+    make install libdir=$DESTDIR$PREFIX/lib includedir=$DESTDIR$PREFIX/include
+    rm $DESTDIR$PREFIX/lib/libxvidcore.a
+    ln -sf libxvidcore.so.4 $DESTDIR$PREFIX/lib/libxvidcore.so
     cd ../../examples
     make xvid_encraw
     install -D xvid_encraw $DESTDIR$PREFIX/bin/xvid_encraw

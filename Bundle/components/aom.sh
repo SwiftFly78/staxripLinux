@@ -1,3 +1,4 @@
+# aomenc and the AV1 library of FFmpeg
 version=3.15.3
 packages=AOMEnc
 sources="
@@ -7,7 +8,7 @@ https://storage.googleapis.com/aom-releases/libaom-3.15.3.tar.gz 12c01dc731ed7b5
 build() {
     unpack libaom-3.15.3.tar.gz
     cd libaom-3.15.3
-    cmake_build -DBUILD_SHARED_LIBS=OFF -DENABLE_DOCS=OFF -DENABLE_TESTS=OFF -DENABLE_TOOLS=OFF
+    cmake_build -DBUILD_SHARED_LIBS=ON -DENABLE_DOCS=OFF -DENABLE_TESTS=OFF -DENABLE_TOOLS=OFF
     stage_license LICENSE PATENTS
 }
 
