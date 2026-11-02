@@ -72,8 +72,11 @@ ffms2
 vs-subtext
 dual-lsmashsource
 dual-f3kdb
+rust
+libdovi
 libplacebo
 vs-placebo
+avs-libplacebo
 vs-addgrain
 vs-bm3d
 vs-bwdif

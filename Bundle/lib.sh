@@ -123,7 +123,7 @@ bundle_component() {
 
     local f
     for f in $(source_files); do
-        case " ${binary_sources:-} " in
+        case " $(echo ${binary_sources:-}) " in
             *" $f "*) ;;
             *) cp "$C/downloads/$f" $O/sources/ ;;
         esac
@@ -303,6 +303,12 @@ std_format_shim() {
     printf '#pragma once\n#define FMT_HEADER_ONLY\n#include <fmt/format.h>\nnamespace std { using fmt::format; }\n' \
         > $PWD/std_format.h
     echo "-I$PREFIX/share/fmt/include -include $PWD/std_format.h"
+}
+
+# builds the C library of a Rust crate with cargo-c and installs it
+cargo_c_install() {
+    PATH=$PREFIX/rust/bin:$PATH CARGO_HOME=$PWD/.cargo cargo cinstall --release --locked --library-type=cdylib \
+        --prefix=$PREFIX --libdir=$PREFIX/lib --destdir=$DESTDIR
 }
 
 # gives the source folder a git repository with a tag, for builds that take their version from git describe

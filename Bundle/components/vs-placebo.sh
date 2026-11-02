@@ -1,9 +1,8 @@
-# without Dolby Vision, libdovi is only available as Rust crate
 version=3.3.1
 packages="
 libvs_placebo vs
 "
-depends="vapoursynth libplacebo"
+depends="vapoursynth libplacebo libdovi"
 sources="
 git https://github.com/sgt0/vs-placebo.git b6ca788bec16646456a88addd18b1f7c7fa07511
 "
