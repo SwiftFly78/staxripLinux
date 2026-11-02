@@ -19,13 +19,23 @@ recipe_var() {
     )
 }
 
+# runs a download up to three times, servers sometimes drop connections of CI runners for a moment
+retry() {
+    local i
+    for i in 1 2 3; do
+        "$@" && return 0
+        [ $i = 3 ] || sleep 10
+    done
+    return 1
+}
+
 # archives a commit of a git repository with its submodules, the commit hash verifies the content, the
 # submodules are pinned by the commit
 git_fetch() {
     local url=$1 commit=$2 file=$3 tmp
     tmp=$(mktemp -d)
     git -C "$tmp" init -q
-    git -C "$tmp" fetch -q --depth 1 "$url" "$commit"
+    retry git -C "$tmp" fetch -q --depth 1 "$url" "$commit"
     if [ "$(git -C "$tmp" rev-parse FETCH_HEAD)" != "$commit" ]; then
         echo "commit mismatch: $url" >&2
         return 1
@@ -38,7 +48,7 @@ git_fetch() {
             skip+=(-c "submodule.$s.update=none")
         done
         # the Bitbucket repositories of sekrit-twc moved to GitHub
-        git -C "$tmp" -c url.https://github.com/sekrit-twc/.insteadOf=https://bitbucket.org/the-sekrit-twc/ \
+        retry git -C "$tmp" -c url.https://github.com/sekrit-twc/.insteadOf=https://bitbucket.org/the-sekrit-twc/ \
             ${skip[@]+"${skip[@]}"} submodule -q update --init --recursive --depth 1
         tar -C "$tmp" --exclude=.git --transform "s|^\.|${file%.tar}|" -cf "$C/downloads/$file.tmp" .
     else
@@ -65,7 +75,8 @@ fetch() {
         file=${file:-$(basename "${url%%\?*}")}
 
         if [ ! -f "$C/downloads/$file" ]; then
-            curl -fsSL --retry 3 -o "$C/downloads/$file.tmp" "$url"
+            # also TLS and connection errors, which curl doesn't retry by default
+            curl -fsSL --retry 5 --retry-all-errors --retry-delay 10 -o "$C/downloads/$file.tmp" "$url"
             mv "$C/downloads/$file.tmp" "$C/downloads/$file"
         fi
 
