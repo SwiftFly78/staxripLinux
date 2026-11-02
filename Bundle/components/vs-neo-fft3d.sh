@@ -10,6 +10,8 @@ git https://github.com/HomeOfAviSynthPlusEvolution/neo_FFT3D.git 9f0d6350b0fee78
 build() {
     unpack neo_FFT3D-9f0d6350b0fe.tar
     cd neo_FFT3D-9f0d6350b0fe
+    # FFTW's runtime packages and the bundle only have the versioned name
+    sed -i 's/"libfftw3f_threads.so"/"libfftw3f_threads.so.3"/' src/fftwlite.h
     # the version comes from git describe, no TBB for the parallel algorithms
     git_version_tag r14
     cmake_plugin -DENABLE_PAR=OFF
