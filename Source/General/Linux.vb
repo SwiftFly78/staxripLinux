@@ -153,6 +153,7 @@ Public Class NativeLibraries
         {"AviSynth.dll", {"libavisynth.so", "libavisynth.so.11", "libavisynth.so.10", "libavisynth.so.9"}},
         {"avisynth", {"libavisynth.so", "libavisynth.so.11", "libavisynth.so.10", "libavisynth.so.9"}},
         {"vulkan-1.dll", {"libvulkan.so.1", "libvulkan.so"}},
+        {"dovi", {"libdovi.so.3", "libdovi.so"}},
         {"libc", {"libc.so.6", "libc.musl-x86_64.so.1", "libc.musl-aarch64.so.1", "libc.so"}}
     }
 
@@ -255,6 +256,9 @@ Public Class NativeLibraries
                     End If
                 Case "AviSynth.dll", "avisynth"
                     If Package.AviSynth.Path.FileExists Then ret.Add(Package.AviSynth.Path)
+                Case "dovi"
+                    'the full AppImage bundles it for the encoders and plugins
+                    ret.Add(Path.Combine(Folder.Apps, "lib", "libdovi.so.3"))
             End Select
         Catch
         End Try

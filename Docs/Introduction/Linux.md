@@ -64,8 +64,8 @@ The full [AppImage](#appimage) contains the .NET runtime and the tools listed th
   with `-DVVENC_INSTALL_FULLFEATURE_APP=ON`. VCEEncC and the AMF encoders of FFmpeg require AMD's AMF runtime
   (`libamfrt64.so.1`, `amf-amdgpu-pro` in the AUR).
 - Optional: mpv, opusenc, fdkaac, dovi_tool, hdr10plus_tool, D2V Witch, avs2yuv, eac3to (with Wine),
-  Tesseract (subtitle OCR), the subtitle plugins SubText and AssRender and the d2v source filters d2vsource and
-  D2VSource
+  Tesseract (subtitle OCR), the subtitle plugins SubText and AssRender, the d2v source filters d2vsource and
+  D2VSource, and libdovi (`libdovi.so.3`) for the Dolby Vision metadata of AV1 sources
 
 Package names differ between distributions, some examples:
 

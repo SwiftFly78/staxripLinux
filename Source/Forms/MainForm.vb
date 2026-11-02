@@ -2743,10 +2743,11 @@ Partial Public Class MainForm
             End If
 
             Dim format = MediaInfo.GetVideoFormat(sourcePath)
-            If format <> "HEVC" Then Continue For
+            Dim isAv1 = format = "AV1"
+            If format <> "HEVC" AndAlso Not isAv1 Then Continue For
 
             Dim fileHdrFormat = MediaInfo.GetVideo(sourcePath, "HDR_Format/String")
-            If isEL OrElse (Regex.IsMatch(fileHdrFormat, "Dolby Vision.*Profile|HDR10+ Profile B")) Then
+            If isEL OrElse Regex.IsMatch(fileHdrFormat, If(isAv1, "Dolby Vision.*Profile", "Dolby Vision.*Profile|HDR10+ Profile B")) Then
                 Dim rpuPath = sourcePath.ChangeExt("rpu")
                 Dim doviFile = proj.HdrDolbyVisionMetadataFile
 
@@ -2754,12 +2755,25 @@ Partial Public Class MainForm
                     rpuPath = If(sourcePath.Contains(proj.TempDir), rpuPath, If(proj.TempDir.DirExists(), $"{Path.Combine({proj.TempDir, "HDRDVmetadata.rpu"})}", rpuPath))
                 End If
 
-                If Not rpuPath.FileExists() AndAlso Package.DoViTool.Path = "" Then
+                If Not rpuPath.FileExists() AndAlso Not isAv1 AndAlso Package.DoViTool.Path = "" Then
                     MsgWarn("Dolby Vision metadata not extracted", "dovi_tool was not found, install it to keep the Dolby Vision metadata.")
                     Continue For
                 End If
 
+                If Not rpuPath.FileExists() AndAlso isAv1 AndAlso Not DolbyVisionAv1.IsAvailable() Then
+                    MsgWarn("Dolby Vision metadata not extracted", "libdovi was not found, install it to keep the Dolby Vision metadata of AV1 sources.")
+                    Continue For
+                End If
+
                 Try
+                    If Not rpuPath.FileExists() AndAlso isAv1 Then
+                        ExtractAv1DolbyVisionMetadata(If(proj, p), sourcePath, rpuPath)
+
+                        If rpuPath.FileExists() AndAlso New FileInfo(rpuPath).Length > 100 Then
+                            doviFile = New DolbyVisionMetadataFile(rpuPath)
+                        End If
+                    End If
+
                     If Not rpuPath.FileExists() Then
                         Dim commandLine = $"{Package.ffmpeg.Path.Escape} -hide_banner -probesize 50M -i {sourcePath.Escape} -an -sn -dn -c:v copy -bsf:v hevc_mp4toannexb -f hevc - | {Package.DoViTool.Path.Escape} extract-rpu - -o {rpuPath.Escape}"
                         Dim throwError As (Title As String, Content As String)
@@ -2824,6 +2838,31 @@ Partial Public Class MainForm
                 Exit For
             End If
         Next
+    End Sub
+
+    'dovi_tool only reads HEVC, ffmpeg writes the AV1 stream in the low overhead OBU format and libdovi converts the
+    'metadata OBUs of the RPUs
+    Sub ExtractAv1DolbyVisionMetadata(proj As Project, sourcePath As String, rpuPath As String)
+        Dim obuPath = rpuPath.ChangeExt("obu")
+
+        Using proc As New Proc
+            proc.Priority = s.ToolProcessPriority
+            proc.Package = Package.ffmpeg
+            proc.Project = proj
+            proc.Header = "Extract Dolby Vision metadata"
+            proc.Encoding = Encoding.UTF8
+            proc.Arguments = $"-hide_banner -y -i {sourcePath.Escape} -map 0:v:0 -c:v copy -f obu {obuPath.Escape}"
+            proc.SkipStrings = {"frame=", "size="}
+            proc.OutputFiles = {obuPath}
+            proc.Start()
+        End Using
+
+        Try
+            Dim count = DolbyVisionAv1.ConvertObuStream(obuPath, rpuPath)
+            Log.WriteLine($"RPUs of {count} frames written to {rpuPath}" + BR)
+        Finally
+            FileHelp.Delete(obuPath)
+        End Try
     End Sub
 
     Async Function FindHdrMetadataAsync(proj As Project) As Task(Of (jsonFile As String, rpuFile As String))
