@@ -151,11 +151,179 @@ apps_install() {
     done
 }
 
+# copies the plugins installed with plugin_install to their Apps folders
+plugin_bundle() {
+    local folder
+    for folder in "$@"; do
+        mkdir -p "$O/Apps/$folder"
+        cp -L "$PREFIX/plugins/$folder"/* "$O/Apps/$folder/"
+    done
+}
+
 # copies plugin files from the prefix to Apps/Plugins/<VS|AVS|Dual>/<package name>
 apps_plugin() {
     local host=$1 package=$2
     shift 2
     apps_install "Plugins/$host/$package" "$@"
+}
+
+# stages the license files of the current folder, like LICENSE and COPYING
+stage_license_files() {
+    local f
+    for f in LICENSE* LICENCE* COPYING* License* license* gpl*.txt GPL*; do
+        if [ -f "$f" ]; then
+            stage_license "$f"
+        fi
+    done
+}
+
+# exports the AviSynth+ entry point of plugins that mark it with __declspec(dllexport), the AviSynth+ headers
+# define it as nothing outside Windows, so builds with hidden symbols don't export the entry point
+avs_export() {
+    sed -i 's/__declspec *(dllexport)/__attribute__((visibility("default")))/' "$@"
+}
+
+# builds a plugin with CMake without installing it, with the AviSynth+ headers of the prefix
+cmake_plugin() {
+    cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$PREFIX \
+        -DCMAKE_C_FLAGS="$CFLAGS -I$PREFIX/include/avisynth" -DCMAKE_CXX_FLAGS="$CXXFLAGS -I$PREFIX/include/avisynth" "$@"
+    cmake --build build
+}
+
+# builds a plugin with Meson without installing it, VapourSynth plugins find the headers with the Python
+# that has the VapourSynth module
+meson_plugin() {
+    printf "[binaries]\npython = '%s'\npython3 = '%s'\n" $PREFIX/python/bin/python3 $PREFIX/python/bin/python3 \
+        > python.ini
+    PATH=$PREFIX/python/bin:$PATH meson setup build --native-file python.ini --buildtype=release --prefix=$PREFIX \
+        --libdir=lib "$@"
+    PATH=$PREFIX/python/bin:$PATH ninja -C build
+}
+
+# builds a plugin with autotools without installing it
+autotools_plugin() {
+    if [ ! -f configure ]; then
+        autoreconf -fi
+    fi
+
+    PATH=$PREFIX/python/bin:$PATH ./configure --prefix=$PREFIX "$@"
+    make -j$JOBS
+}
+
+# builds an AviSynth+ plugin that only has Visual Studio projects into <file>: compiles its sources with the
+# SIMD flags their file names ask for, a file that fails gets another try with SSE4.1, and uses the headers of
+# AviSynth+ and stand-ins for the parts of the Windows API such plugins use, PORT_USING_STD_MINMAX and
+# PORT_MINMAX_MACROS in CXXFLAGS provide the min and max they expect
+port_plugin() {
+    local out=$1 shim=$PWD/port-shim f flags incs objs=() o
+    mkdir -p $shim
+    cat > $shim/compat.h << 'EOF'
+#pragma once
+#include <cstdlib>
+#include <cstring>
+#include <cstdint>
+#include <cstdio>
+#include <cmath>
+#include <climits>
+#include <algorithm>
+#define __forceinline inline __attribute__((always_inline))
+#define __declspec(x)
+#define __stdcall
+#define __cdecl
+#define __int64 long long
+static inline void* _aligned_malloc(size_t size, size_t alignment)
+{
+    void* p = nullptr;
+    return posix_memalign(&p, alignment < sizeof(void*) ? sizeof(void*) : alignment, size) ? nullptr : p;
+}
+static inline void _aligned_free(void* p) { free(p); }
+#if defined(PORT_USING_STD_MINMAX)
+using std::min;
+using std::max;
+#endif
+#if defined(PORT_MINMAX_MACROS)
+#define min(a, b) (((a) < (b)) ? (a) : (b))
+#define max(a, b) (((a) > (b)) ? (a) : (b))
+#endif
+EOF
+    cat > $shim/windows.h << 'EOF'
+#pragma once
+#include <cstdint>
+typedef uint8_t BYTE;
+typedef uint16_t WORD;
+typedef uint32_t DWORD;
+typedef int BOOL;
+typedef long LONG;
+typedef void* HANDLE;
+typedef void* HMODULE;
+#define WINAPI
+#define TRUE 1
+#define FALSE 0
+#define OutputDebugString(s) ((void)0)
+#define OutputDebugStringA(s) ((void)0)
+EOF
+    cp $shim/windows.h $shim/Windows.h
+    printf '#pragma once\n#include <x86intrin.h>\n' > $shim/intrin.h
+
+    find . \( -name '*.c*' -o -name '*.h*' \) -type f -exec sed -i '/#include/s|\\|/|g' {} +
+    find . -path ./port-shim -prune -o -iname avisynth.h -print | xargs -r rm
+    find . -type d -name avs -prune -exec rm -r {} +
+    incs=$(find . -path ./stage -prune -o -name '*.h' -printf '-I%h\n' | sort -u | tr '\n' ' ')
+
+    for f in $(find . -path ./stage -prune -o \( -name '*.cpp' -o -name '*.c' \) ! -iname 'test*' -print); do
+        flags="$CXXFLAGS -fPIC -fpermissive -std=c++17 -include $shim/compat.h"
+        [ "${f##*.}" = c ] && flags="$CFLAGS -fPIC"
+        flags="$flags $incs -I$PREFIX/include/avisynth -I$shim"
+
+        case "$(basename $f | tr A-Z a-z)" in
+            *avx512*) flags="$flags -mavx512f -mavx512bw -mavx512dq -mavx512vl -mavx2 -mfma" ;;
+            *avx2*) flags="$flags -mavx2 -mfma" ;;
+            *avx*) flags="$flags -mavx" ;;
+            *sse4*) flags="$flags -msse4.1" ;;
+            *ssse3*) flags="$flags -mssse3" ;;
+        esac
+
+        o=$f.o
+        g++ $flags -c $f -o $o || g++ $flags -msse4.1 -c $f -o $o
+        objs+=($o)
+    done
+
+    # AviSynth+ plugins define AVS_linkage, the old headers did it for them
+    if ! g++ -shared -Wl,--no-undefined -o $out "${objs[@]}" 2> port-link.log; then
+        grep -q 'undefined reference to .AVS_linkage' port-link.log || { cat port-link.log >&2; return 1; }
+        printf '#include <avisynth.h>\nconst AVS_Linkage* AVS_linkage = nullptr;\n' > port-linkage.cpp
+        g++ $CXXFLAGS -fPIC -I$PREFIX/include/avisynth -c port-linkage.cpp -o port-linkage.o
+        g++ -shared -Wl,--no-undefined -o $out "${objs[@]}" port-linkage.o
+    fi
+}
+
+# prints the compiler flag that makes std::format available, GCC 12 lacks <format>, the header-only {fmt}
+# of the fmt component has the same function
+std_format_shim() {
+    printf '#pragma once\n#define FMT_HEADER_ONLY\n#include <fmt/format.h>\nnamespace std { using fmt::format; }\n' \
+        > $PWD/std_format.h
+    echo "-I$PREFIX/share/fmt/include -include $PWD/std_format.h"
+}
+
+# gives the source folder a git repository with a tag, for builds that take their version from git describe
+git_version_tag() {
+    git init -q
+    git add -A
+    git -c user.name=bundle -c user.email=bundle@localhost commit -q -m "$1"
+    git tag "$1"
+}
+
+# installs the built library matching <pattern> as plugins/<Apps folder>/<file name StaxRip looks for>
+plugin_install() {
+    local f
+    f=$(find . -path ./stage -prune -o -type f -iname "$1" -print | head -1)
+
+    if [ -z "$f" ]; then
+        echo "no built library matches $1" >&2
+        return 1
+    fi
+
+    install -D "$f" "$DESTDIR$PREFIX/plugins/$2/$3"
 }
 
 configure_make() {

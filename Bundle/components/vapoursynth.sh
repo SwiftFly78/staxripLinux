@@ -16,9 +16,28 @@ build() {
     $PREFIX/python/bin/python3 -m pip install --no-deps --no-index --no-compile --root "$DESTDIR" \
         --no-warn-script-location "$C/downloads/vapoursynth-79-cp312-abi3-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl"
     local site=$DESTDIR$PREFIX/python/lib/python3.13/site-packages
-    # the scripts call the Python of the build, StaxRip starts vspipe of the module directly
-    rm -f $DESTDIR$PREFIX/python/bin/vspipe $DESTDIR$PREFIX/python/bin/vapoursynth
     # the core is part of the Python module, StaxRip finds the folder of VapourSynth by the name of the core
     ln -s vapoursynth.abi3.so $site/vapoursynth/libvapoursynth.so
     stage_license $site/vapoursynth-79.dist-info/licenses/COPYING.LESSER
+
+    # the headers of API 4 and 3 for the plugins, which don't link VapourSynth
+    unpack vapoursynth-79.tar.gz
+    mkdir -p $DESTDIR$PREFIX/include/vapoursynth $DESTDIR$PREFIX/lib/pkgconfig
+    cp vapoursynth-79/include/*.h $DESTDIR$PREFIX/include/vapoursynth/
+    cat > $DESTDIR$PREFIX/lib/pkgconfig/vapoursynth.pc << PC
+prefix=$PREFIX
+libdir=\${prefix}/lib
+includedir=\${prefix}/include
+
+Name: vapoursynth
+Description: A frameserver for the 21st century
+Version: 79
+Cflags: -I\${includedir}/vapoursynth
+Libs:
+PC
+}
+
+bundle() {
+    # the plugin builds use the scripts, they call the Python of the build, StaxRip starts vspipe of the module
+    rm $O/Apps/FrameServer/Python/bin/vspipe $O/Apps/FrameServer/Python/bin/vapoursynth
 }

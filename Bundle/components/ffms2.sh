@@ -4,7 +4,7 @@ packages="
 ffms2 dual
 ffmsindex
 "
-depends="ffmpeg"
+depends="ffmpeg avisynthplus"
 sources="
 git https://github.com/FFMS/ffms2.git 3af2ef2ae47bc30b64597c9e419e5b19c4bda7d8
 "
@@ -13,7 +13,7 @@ build() {
     unpack ffms2-3af2ef2ae47b.tar
     cd ffms2-3af2ef2ae47b
     NOCONFIGURE=1 ./autogen.sh
-    configure_make --enable-shared --disable-static
+    CPPFLAGS="-I$PREFIX/include/avisynth" configure_make --enable-shared --disable-static --enable-avisynth
     stage_license COPYING
 }
 
