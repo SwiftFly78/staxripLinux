@@ -165,10 +165,15 @@ edited and are supported by more containers and players, MP4 for example doesn't
 The [releases](https://github.com/SwiftFly78/staxripLinux/releases) contain StaxRipLinux as AppImage, a single file
 that runs without installation. Both AppImages contain the .NET runtime:
 
-- `StaxRipLinux-<version>-x86_64.AppImage` also contains VapourSynth with its own Python, ffms2, FFmpeg, x264,
-  x265, the MKVToolNix command line tools and the MediaInfo library. It runs on distributions with glibc 2.35 or
-  newer, like Ubuntu 22.04, Debian 12 and Fedora 36. Other tools of the [requirements](#requirements) are only
-  needed when they're used.
+- `StaxRipLinux-<version>-x86_64.AppImage` also contains the tools and plugins StaxRipLinux works with:
+  VapourSynth R79 with its own Python, AviSynth+ 3.7.6, FFmpeg with the common codecs and the hardware encoders of
+  NVIDIA, Intel and AMD, the encoders x264, x265, SVT-AV1 and its forks, aomenc, rav1e, vvencFFapp and
+  xvid_encraw, opusenc, fdkaac, the MKVToolNix command line tools, MP4Box, MediaInfo, dovi_tool, hdr10plus_tool,
+  truehdd, 7-Zip, Tesseract and the AviSynth and VapourSynth plugins and scripts of StaxRip's filters that exist
+  for Linux. It runs on distributions with glibc 2.35 or newer, like Ubuntu 22.04, Debian 12 and Fedora 36. The
+  hardware encoders and OpenCL plugins use the drivers of the system. Not included are tools that may not be
+  distributed or don't exist for Linux, like DEE, NeroAAC and eac3to, the apps dialog shows how to install
+  them.
 - `StaxRipLinux-<version>-slim-x86_64.AppImage` uses the tools of the system, it needs the other
   [requirements](#requirements).
 
