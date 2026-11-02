@@ -144,6 +144,15 @@ Public Class x265Enc
         End Using
     End Sub
 
+    'x265 rejects Dolby Vision without VBV, and reading a pipe it then hangs instead of exiting
+    Overrides Function GetError() As String
+        If IsDolbyVisionSet AndAlso (Params.VbvBufSize.Value = 0 OrElse Params.VbvMaxRate.Value = 0) Then
+            Return "Dolby Vision needs VBV, set VBV Bufsize and VBV Maxrate, or the level and the tier."
+        End If
+
+        Return Nothing
+    End Function
+
     Overrides Function BeforeEncoding() As Boolean
         Dim rpu = Params.DolbyVisionRpu.Value
         If Not String.IsNullOrWhiteSpace(rpu) AndAlso rpu = p.HdrDolbyVisionMetadataFile?.Path AndAlso rpu.FileExists() Then
