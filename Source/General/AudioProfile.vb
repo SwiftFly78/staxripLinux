@@ -995,14 +995,22 @@ Public Class GUIAudioProfile
             proc.Arguments = args
             proc.Start()
 
-            Dim match = Regex.Match(proc.Log.ToString, "max_volume: -(\d+\.\d+) dB")
-            If match.Success Then
-                Gain += match.Groups(1).Value.ToSingle()
+            'ffmpeg reconfigures the filters when the downmix metadata or the format of the stream changes, the
+            'filters then report every part, the first one can be a silent intro, so the loudest peak counts
+            Dim log = proc.Log.ToString
+            Dim peaks = Regex.Matches(log, "max_volume: (-?\d+(?:\.\d+)?) dB").Select(Function(m) m.Groups(1).Value.ToSingle()).ToArray()
+
+            If peaks.Length > 0 Then
+                Gain -= peaks.Max()
                 Params.Normalize = False
             End If
 
-            match = Regex.Match(proc.Log.ToString, "Input Integrated:\s*([-\.0-9]+)")
-            If match.Success Then Params.ffmpegLoudnormIntegratedMeasured = match.Groups(1).Value.ToDouble
+            'loudnorm can't be combined over parts, the last part is usually the longest
+            Dim measure = Function(name As String) Regex.Matches(log, name + ":\s*([-+\.0-9]+)").LastOrDefault()?.Groups(1).Value
+
+            'positive values have a plus sign, loudnorm takes no positive integrated loudness and threshold
+            Dim value = measure("Input Integrated")
+            If value IsNot Nothing Then Params.ffmpegLoudnormIntegratedMeasured = Math.Min(value.ToDouble, 0)
 
             match = Regex.Match(proc.Log.ToString, "Input True Peak:\s*([-\.0-9]+)")
             If match.Success Then Params.ffmpegLoudnormTruePeakMeasured = match.Groups(1).Value.ToDouble
