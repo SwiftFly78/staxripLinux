@@ -1,15 +1,16 @@
-version=r30
+# r31 is only on GitLab, the GitHub mirror stopped at r30
+version=r31
 packages="
 fmtconv dual
 "
 depends="avisynthplus vapoursynth"
 sources="
-git https://github.com/EleonoreMizo/fmtconv.git e1b75cf7c62078ea981042c415a381e81a6bcca3
+git https://gitlab.com/EleonoreMizo/fmtconv.git f841f5ff94fd701484041068bb7124f5f393f9e0
 "
 
 build() {
-    unpack fmtconv-e1b75cf7c620.tar
-    cd fmtconv-e1b75cf7c620/build/unix
+    unpack fmtconv-f841f5ff94fd.tar
+    cd fmtconv-f841f5ff94fd/build/unix
     autotools_plugin
     plugin_install '*fmtconv*.so*' Plugins/Dual/fmtconv libfmtconv.so
     stage_license_files
