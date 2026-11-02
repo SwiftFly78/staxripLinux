@@ -7,10 +7,11 @@ ENV DEBIAN_FRONTEND=noninteractive LANG=C.UTF-8
 RUN apt-get update && apt-get install -y --no-install-recommends \
         autoconf automake autopoint bzip2 ca-certificates curl file g++-12 gcc-12 gettext git libtool make \
         nasm patchelf pkg-config python3 python3-pip rake ruby unzip xz-utils yasm zstd \
-        glslang-dev libboost-chrono-dev libboost-dev libboost-filesystem-dev libboost-system-dev \
-        libboost-thread-dev libbz2-dev libdevil-dev libdrm-dev libfftw3-dev libflac-dev libfontconfig-dev \
-        libfreetype-dev libgmp-dev liblzma-dev libogg-dev libpng-dev libva-dev libvorbis-dev libvulkan-dev \
-        libxxhash-dev ocl-icd-opencl-dev opencl-headers zlib1g-dev \
+        glslang-dev libasound2-dev libboost-chrono-dev libboost-dev libboost-filesystem-dev libboost-system-dev \
+        libboost-thread-dev libbz2-dev libdevil-dev libdrm-dev libegl-dev libfftw3-dev libflac-dev \
+        libfontconfig-dev libfreetype-dev libgmp-dev libjpeg-dev liblcms2-dev libluajit-5.1-dev liblzma-dev \
+        libogg-dev libpng-dev libpulse-dev libva-dev libvorbis-dev libvulkan-dev libx11-dev libxext-dev \
+        libxpresent-dev libxrandr-dev libxss-dev libxxhash-dev ocl-icd-opencl-dev opencl-headers zlib1g-dev \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements-build.txt /tmp/

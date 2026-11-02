@@ -9,3 +9,7 @@ libva-wayland.so.2
 # loaders of the Vulkan and OpenCL drivers
 libvulkan.so.1
 libOpenCL.so.1
+# EGL and ALSA for mpv, they load the drivers of the GPU and the sound card
+libEGL.so.1
+libGLdispatch.so.0
+libasound.so.2

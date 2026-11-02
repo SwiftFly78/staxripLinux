@@ -82,6 +82,7 @@ vulkan-headers
 opencl-headers
 qsvenc
 vceenc
+mpv
 vs-addgrain
 vs-bm3d
 vs-bwdif
