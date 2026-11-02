@@ -29,6 +29,7 @@ amf-headers
 libvpl
 avisynthplus
 avs2yuv
+rubberband
 avs-assrender
 avs-avsresize
 avs-eedi3cl
