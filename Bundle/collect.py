@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 # Copies the shared libraries the ELF files of the Apps tree need into Apps/lib and points their RUNPATH
-# there, libraries of the excludelists come from the system. Libraries of Ubuntu packages are shipped with
-# the copyright file of the package, and with its source package if the license is a copyleft one.
-# usage: collect.py <Apps folder> <prefix> <sources folder> <download folder> <excludelist>...
+# there, libraries of the excludelists come from the system, libraries of the fallbacklist from the system
+# if it has them, otherwise from Apps/lib/fallback. Libraries of Ubuntu packages are shipped with the
+# copyright file of the package, and with its source package if the license is a copyleft one.
+# usage: collect.py <Apps folder> <prefix> <sources folder> <download folder> <fallbacklist> <excludelist>...
 import hashlib
 import os
 import re
@@ -14,15 +15,25 @@ import urllib.request
 
 apps, prefix, sources, downloads = sys.argv[1:5]
 libdir = os.path.join(apps, "lib")
+fallback_dir = os.path.join(libdir, "fallback")
 search = [libdir, f"{prefix}/lib", f"{prefix}/lib/x86_64-linux-gnu", "/lib/x86_64-linux-gnu",
           "/usr/lib/x86_64-linux-gnu", "/lib", "/usr/lib"]
+# the library folders of Debian and Ubuntu, Fedora and openSUSE, and Arch Linux, the RUNPATH lists them before
+# the fallback folder because it comes before the library cache of the system
+system_dirs = ["/usr/lib/x86_64-linux-gnu", "/usr/lib64", "/usr/lib"]
 
-excluded = set()
-for path in sys.argv[5:]:
+
+def read_list(path):
+    names = set()
     for line in open(path):
         line = line.split("#")[0].strip()
         if line:
-            excluded.add(line.split()[0])
+            names.add(line.split()[0])
+    return names
+
+
+fallback = read_list(sys.argv[5])
+excluded = set().union(*(read_list(path) for path in sys.argv[6:]))
 
 
 def is_elf(path):
@@ -135,8 +146,23 @@ while queue:
 
     own = runpath_dirs(path) + [os.path.dirname(path)]
     uses_lib = False
+    uses_fallback = False
 
     for soname in needed:
+        if soname in fallback:
+            target = os.path.join(fallback_dir, soname)
+            if not os.path.exists(target):
+                source = find(soname)
+                if source is None:
+                    missing.setdefault(soname, []).append(os.path.relpath(path, apps))
+                    continue
+                os.makedirs(fallback_dir, exist_ok=True)
+                shutil.copy2(os.path.realpath(source), target)
+                os.chmod(target, 0o755)
+                queue.append(target)
+                system_libs.append(soname)
+            uses_fallback = True
+            continue
         if soname in excluded:
             continue
         # a path instead of a name, like $ORIGIN/../lib/libpython3.13.so.1.0
@@ -162,12 +188,17 @@ while queue:
                 system_libs.append(soname)
         uses_lib = True
 
-    if uses_lib:
-        rel = os.path.relpath(libdir, os.path.dirname(path))
-        entry = "$ORIGIN" if rel == "." else f"$ORIGIN/{rel}"
-        current = [d for d in patchelf("--print-rpath", path).split(":") if d and not d.startswith("/")]
-        if entry not in current:
-            patchelf("--set-rpath", ":".join(current + [entry]), path)
+    if uses_lib or uses_fallback:
+        def origin(d):
+            rel = os.path.relpath(d, os.path.dirname(path))
+            return "$ORIGIN" if rel == "." else f"$ORIGIN/{rel}"
+
+        rpath = [d for d in patchelf("--print-rpath", path).split(":") if d and not d.startswith("/")]
+        if uses_lib and origin(libdir) not in rpath:
+            rpath.append(origin(libdir))
+        if uses_fallback:
+            rpath = [d for d in rpath if d != origin(fallback_dir)] + system_dirs + [origin(fallback_dir)]
+        patchelf("--set-rpath", ":".join(rpath), path)
 
 if missing:
     for soname, users in sorted(missing.items()):
@@ -177,4 +208,6 @@ if missing:
 for pkg in sorted({package_of(soname) for soname in system_libs}):
     ship_package(pkg)
 
-print(f"collected {len(os.listdir(libdir))} libraries")
+count = sum(1 for f in os.listdir(libdir) if os.path.isfile(os.path.join(libdir, f)))
+fallbacks = len(os.listdir(fallback_dir)) if os.path.isdir(fallback_dir) else 0
+print(f"collected {count} libraries and {fallbacks} fallbacks")

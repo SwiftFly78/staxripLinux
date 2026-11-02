@@ -1,0 +1,11 @@
+# Libraries that come from the system when it has them, otherwise from Apps/lib/fallback. They load the drivers
+# of the system, without them the tools that link them wouldn't even start on a system without the drivers.
+
+# VA-API
+libva.so.2
+libva-drm.so.2
+libva-x11.so.2
+libva-wayland.so.2
+# loaders of the Vulkan and OpenCL drivers
+libvulkan.so.1
+libOpenCL.so.1

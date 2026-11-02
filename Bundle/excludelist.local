@@ -1,14 +1,6 @@
 # Libraries that come from the system in addition to the excludelist of AppImage. They talk to drivers
 # or to the desktop session, bundled copies don't match the drivers and services of the system.
 
-# VA-API, the drivers of the system load them
-libva.so.2
-libva-drm.so.2
-libva-x11.so.2
-libva-wayland.so.2
-# loaders of the Vulkan and OpenCL drivers of the system
-libvulkan.so.1
-libOpenCL.so.1
 # NVIDIA driver
 libcuda.so.1
 libnvcuvid.so.1

@@ -141,7 +141,7 @@ for c in "${components[@]}"; do
 done
 
 mkdir -p $C/downloads/ubuntu
-python3 $B/collect.py $O/Apps $PREFIX $O/sources $C/downloads $B/excludelist $B/excludelist.local
+python3 $B/collect.py $O/Apps $PREFIX $O/sources $C/downloads $B/fallbacklist $B/excludelist $B/excludelist.local
 
 # the artifacts and downloads of former recipe versions, so the cache doesn't grow
 declare -A current
