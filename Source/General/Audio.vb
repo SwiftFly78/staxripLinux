@@ -311,19 +311,7 @@ Public Class Audio
             End Select
         End If
 
-        Dim matches = Regex.Matches(args, " -af ([^ ]+)")
-        If matches.Count > 1 Then
-            Dim concated = ""
-            For i = matches.Count - 1 To 0 Step -1
-                Dim match = matches(i)
-                concated = $"{match.Groups(1)},{concated}"
-                args = args.Remove(match.Index, match.Length)
-            Next
-            concated = " -af " + concated.Trim(","c)
-            args = args.Insert(matches(0).Index, concated)
-        End If
-
-        args = Regex.Replace(args, " -af ([^ ]+)", " -af ""$1""")
+        args = JoinAudioFilters(args)
         args += " " + outPath.Escape
 
         Using proc As New Proc
@@ -353,6 +341,26 @@ Public Class Audio
             Log.Write("Error", "no output found")
         End If
     End Sub
+
+    'ffmpeg only uses the last -af option of a stream, so the filters are joined into one, quoted because the pan
+    'filter contains | and the pipe command lines run in a shell
+    Shared Function JoinAudioFilters(args As String) As String
+        Dim matches = Regex.Matches(args, " -af ([^ ]+)")
+
+        If matches.Count > 1 Then
+            Dim concated = ""
+
+            For i = matches.Count - 1 To 0 Step -1
+                Dim match = matches(i)
+                concated = $"{match.Groups(1)},{concated}"
+                args = args.Remove(match.Index, match.Length)
+            Next
+
+            args = args.Insert(matches(0).Index, " -af " + concated.Trim(","c))
+        End If
+
+        Return Regex.Replace(args, " -af ([^ ]+)", " -af ""$1""")
+    End Function
 
     'loudnorm outputs 192 kHz when it can't normalize linearly, like when the source has a higher LRA than the target
     Shared Function GetLoudNormArgs(params As GUIAudioProfile.Parameters, sampleRate As Integer) As String

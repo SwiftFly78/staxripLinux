@@ -1012,14 +1012,14 @@ Public Class GUIAudioProfile
             Dim value = measure("Input Integrated")
             If value IsNot Nothing Then Params.ffmpegLoudnormIntegratedMeasured = Math.Min(value.ToDouble, 0)
 
-            match = Regex.Match(proc.Log.ToString, "Input True Peak:\s*([-\.0-9]+)")
-            If match.Success Then Params.ffmpegLoudnormTruePeakMeasured = match.Groups(1).Value.ToDouble
+            value = measure("Input True Peak")
+            If value IsNot Nothing Then Params.ffmpegLoudnormTruePeakMeasured = value.ToDouble
 
-            match = Regex.Match(proc.Log.ToString, "Input LRA:\s*([-\.0-9]+)")
-            If match.Success Then Params.ffmpegLoudnormLraMeasured = match.Groups(1).Value.ToDouble
+            value = measure("Input LRA")
+            If value IsNot Nothing Then Params.ffmpegLoudnormLraMeasured = value.ToDouble
 
-            match = Regex.Match(proc.Log.ToString, "Input Threshold:\s*([-\.0-9]+)")
-            If match.Success Then Params.ffmpegLoudnormThresholdMeasured = match.Groups(1).Value.ToDouble
+            value = measure("Input Threshold")
+            If value IsNot Nothing Then Params.ffmpegLoudnormThresholdMeasured = Math.Min(value.ToDouble, 0)
         End Using
 
         Return True
@@ -1477,11 +1477,13 @@ Public Class GUIAudioProfile
             End If
         End If
 
+        Dim ret = Audio.JoinAudioFilters(sb.ToString)
+
         If includePaths AndAlso File <> "" Then
-            sb.Append(" -loglevel fatal -hide_banner -f wav - | ")
+            ret += " -loglevel fatal -hide_banner -f wav - | "
         End If
 
-        Return sb.ToString
+        Return ret
     End Function
 
     Function GetffmpegCommandLine(includePaths As Boolean) As String
@@ -1686,22 +1688,7 @@ Public Class GUIAudioProfile
             sb.Append(" " + GetOutputFile.Escape)
         End If
 
-        Dim ret = sb.ToString
-        Dim matches = Regex.Matches(ret, " -af ([^ ]+)")
-        If matches.Count > 1 Then
-            Dim concated = ""
-            For i = matches.Count - 1 To 0 Step -1
-                Dim match = matches(i)
-                concated = $"{match.Groups(1)},{concated}"
-                ret = ret.Remove(match.Index, match.Length)
-            Next
-            concated = " -af " + concated.Trim(","c)
-            ret = ret.Insert(matches(0).Index, concated)
-        End If
-
-        ret = Regex.Replace(ret, " -af ([^ ]+)", " -af ""$1""")
-
-        Return ret
+        Return Audio.JoinAudioFilters(sb.ToString)
     End Function
 
     Function GetCenterOptimizedStereoFilter() As String
