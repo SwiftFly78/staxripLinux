@@ -110,8 +110,9 @@ jobs:
           APPS=Bundle/out/Apps Source/build-appimage.sh "$RUNNER_TEMP/appimage"
           Source/build-appimage.sh "$RUNNER_TEMP/appimage"
 
-          # the source code of the bundled tools and the scripts that build them
-          tar -cf "$RUNNER_TEMP/appimage/StaxRipLinux-${TAG#v}-tools-source.tar" --exclude=Bundle/.cache \
+          # the source code of the bundled tools and the scripts that build them, compressed, a release asset may
+          # have 2 GiB at most
+          tar --zstd -cf "$RUNNER_TEMP/appimage/StaxRipLinux-${TAG#v}-tools-source.tar.zst" --exclude=Bundle/.cache \
             --exclude=Bundle/out Bundle -C Bundle/out sources
 
       - name: Publish the release
@@ -126,7 +127,7 @@ jobs:
             echo
             echo "- \`StaxRipLinux-${TAG#v}-x86_64.AppImage\` contains the tools StaxRipLinux uses."
             echo "- \`StaxRipLinux-${TAG#v}-slim-x86_64.AppImage\` uses the tools installed on the system."
-            echo "- \`StaxRipLinux-${TAG#v}-tools-source.tar\` contains the source code of the tools of the first AppImage."
+            echo "- \`StaxRipLinux-${TAG#v}-tools-source.tar.zst\` contains the source code of the tools of the first AppImage."
             echo
             echo "## Changes${previous:+ since $previous}"
             echo
@@ -134,5 +135,5 @@ jobs:
               --format='- %(refname:short) %(if)%(*subject)%(then)%(*subject)%(else)%(subject)%(end)' 'refs/tags/v*'
           } > "$RUNNER_TEMP/notes.md"
 
-          gh release create "$TAG" "$RUNNER_TEMP"/appimage/*.AppImage "$RUNNER_TEMP"/appimage/*.tar --verify-tag \
+          gh release create "$TAG" "$RUNNER_TEMP"/appimage/*.AppImage "$RUNNER_TEMP"/appimage/*.tar.zst --verify-tag \
             --title "StaxRipLinux $TAG" --notes-file "$RUNNER_TEMP/notes.md"
