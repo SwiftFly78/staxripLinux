@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 # Copies the shared libraries the ELF files of the Apps tree need into Apps/lib and points their RUNPATH
 # there, libraries of the excludelists come from the system, libraries of the fallbacklist from the system
-# if it has them, otherwise from Apps/lib/fallback. Libraries of Ubuntu packages are shipped with the
-# copyright file of the package, and with its source package if the license is a copyleft one.
-# usage: collect.py <Apps folder> <prefix> <sources folder> <download folder> <fallbacklist> <excludelist>...
+# if it has them, otherwise from Apps/lib/fallback, and the libraries of the dlopenlist are copied too. Libraries
+# of Ubuntu packages are shipped with the copyright file of the package, and with its source package if the
+# license is a copyleft one.
+# usage: collect.py <Apps folder> <prefix> <sources folder> <download folder> <dlopenlist> <fallbacklist>
+#        <excludelist>...
 import hashlib
 import os
 import re
@@ -16,6 +18,7 @@ import urllib.request
 apps, prefix, sources, downloads = sys.argv[1:5]
 libdir = os.path.join(apps, "lib")
 fallback_dir = os.path.join(libdir, "fallback")
+plugins = os.path.join(apps, "Plugins") + os.sep
 search = [libdir, f"{prefix}/lib", f"{prefix}/lib/x86_64-linux-gnu", "/lib/x86_64-linux-gnu",
           "/usr/lib/x86_64-linux-gnu", "/lib", "/usr/lib"]
 # the library folders of Debian and Ubuntu, Fedora and openSUSE, and Arch Linux, the RUNPATH lists them before
@@ -32,8 +35,9 @@ def read_list(path):
     return names
 
 
-fallback = read_list(sys.argv[5])
-excluded = set().union(*(read_list(path) for path in sys.argv[6:]))
+dlopened = read_list(sys.argv[5])
+fallback = read_list(sys.argv[6])
+excluded = set().union(*(read_list(path) for path in sys.argv[7:]))
 
 
 def is_elf(path):
@@ -131,7 +135,30 @@ for root, dirs, files in os.walk(apps):
         if not os.path.islink(p) and is_elf(p):
             queue.append(p)
 
+
+
+# copies a library into folder unless it's there, False if it isn't found
+def copy_library(soname, folder):
+    target = os.path.join(folder, soname)
+    if os.path.exists(target):
+        return True
+    source = find(soname)
+    if source is None:
+        return False
+    os.makedirs(folder, exist_ok=True)
+    shutil.copy2(os.path.realpath(source), target)
+    os.chmod(target, 0o755)
+    queue.append(target)
+    if not source.startswith(prefix + "/"):
+        system_libs.append(soname)
+    return True
+
+
 missing = {}
+for soname in sorted(dlopened):
+    if not copy_library(soname, libdir):
+        missing.setdefault(soname, []).append("dlopenlist")
+
 done = set()
 while queue:
     path = queue.pop()
@@ -145,22 +172,15 @@ while queue:
         continue
 
     own = runpath_dirs(path) + [os.path.dirname(path)]
-    uses_lib = False
+    # plugins load libraries like FFTW with dlopen, which searches the RUNPATH of the plugin
+    uses_lib = path.startswith(plugins)
     uses_fallback = False
 
     for soname in needed:
         if soname in fallback:
-            target = os.path.join(fallback_dir, soname)
-            if not os.path.exists(target):
-                source = find(soname)
-                if source is None:
-                    missing.setdefault(soname, []).append(os.path.relpath(path, apps))
-                    continue
-                os.makedirs(fallback_dir, exist_ok=True)
-                shutil.copy2(os.path.realpath(source), target)
-                os.chmod(target, 0o755)
-                queue.append(target)
-                system_libs.append(soname)
+            if not copy_library(soname, fallback_dir):
+                missing.setdefault(soname, []).append(os.path.relpath(path, apps))
+                continue
             uses_fallback = True
             continue
         if soname in excluded:
@@ -175,17 +195,9 @@ while queue:
                for d in own if d.startswith(apps)):
             continue
 
-        target = os.path.join(libdir, soname)
-        if not os.path.exists(target):
-            source = find(soname)
-            if source is None:
-                missing.setdefault(soname, []).append(os.path.relpath(path, apps))
-                continue
-            shutil.copy2(os.path.realpath(source), target)
-            os.chmod(target, 0o755)
-            queue.append(target)
-            if not source.startswith(prefix + "/"):
-                system_libs.append(soname)
+        if not copy_library(soname, libdir):
+            missing.setdefault(soname, []).append(os.path.relpath(path, apps))
+            continue
         uses_lib = True
 
     if uses_lib or uses_fallback:

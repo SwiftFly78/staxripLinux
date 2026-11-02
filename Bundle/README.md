@@ -51,7 +51,9 @@ if the project publishes one. CPU specific code must be detected at runtime, nev
 glibc and the GPU drivers, come from the system: `excludelist` from
 [pkg2appimage](https://github.com/AppImageCommunity/pkg2appimage) and `excludelist.local`. The libraries of
 `fallbacklist` load the drivers of the system, like VA-API and the Vulkan loader, they come from the system when it
-has them, otherwise from `Apps/lib/fallback`, so the tools that link them also start on systems without them.
+has them, otherwise from `Apps/lib/fallback`, so the tools that link them also start on systems without them. The
+libraries of `dlopenlist`, like FFTW, are loaded by plugins with `dlopen`, every plugin finds `Apps/lib` by its
+`RUNPATH`.
 
 ## Licenses and source code
 

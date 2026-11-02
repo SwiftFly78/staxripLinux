@@ -1,0 +1,6 @@
+# Libraries plugins load with dlopen instead of linking them, they're copied into Apps/lib like the libraries the
+# tools link, the RUNPATH of every plugin contains Apps/lib.
+
+# FFTW for FFT3DFilter, DFTTest, MVTools and DePan of AviSynth+
+libfftw3f.so.3
+libfftw3f_threads.so.3
