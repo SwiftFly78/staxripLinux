@@ -1,6 +1,7 @@
 #!/bin/sh
 # Builds the bundled tools in the build container into Bundle/out, see Bundle/README.md.
-# usage: build.sh [<component>...]   without components all are built, cached components are reused
+# usage: build.sh [<component>...]   without components all are built, cached components are reused,
+# KEEP_GOING=1 builds the other components when one fails and lists the failed ones at the end
 set -eu
 cd "$(dirname "$0")"
 
@@ -13,6 +14,6 @@ if ! docker image inspect "$image" > /dev/null 2>&1; then
 fi
 
 mkdir -p .cache out
-docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp -e IMAGE="$image" \
+docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp -e IMAGE="$image" -e KEEP_GOING \
     -v "$PWD:/bundle:ro" -v "$PWD/.cache:/cache" -v "$PWD/out:/out" \
     "$image" /bundle/run.sh "$@"

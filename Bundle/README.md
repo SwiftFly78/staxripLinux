@@ -23,8 +23,8 @@ APPS=Bundle/out/Apps Source/build-appimage.sh
 A development build uses the bundled tools with a symbolic link from `Source/bin/Apps` to `Bundle/out/Apps`.
 
 Downloads, build logs (`.cache/logs`) and built components are cached in `Bundle/.cache`. A component is built
-again when its sources or build function change, when the helpers in `lib.sh` or the build image change, or when
-a component it depends on is built again.
+again when its sources change, its build function or a helper of `lib.sh` it calls, the build image or a component
+it depends on. With `KEEP_GOING=1` a failed component doesn't stop the build, the failed ones are listed at the end.
 
 ## Components
 

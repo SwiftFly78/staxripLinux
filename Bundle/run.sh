@@ -8,7 +8,8 @@ export PKG_CONFIG_PATH=$PREFIX/lib/pkgconfig:$PREFIX/lib/x86_64-linux-gnu/pkgcon
 export PATH=$PREFIX/bin:$PATH LD_LIBRARY_PATH=$PREFIX/lib:$PREFIX/lib/x86_64-linux-gnu
 export CFLAGS="-O2 -I$PREFIX/include" CXXFLAGS="-O2 -I$PREFIX/include" LDFLAGS="-L$PREFIX/lib"
 JOBS=$(nproc)
-export JOBS
+# Python would write the bytecode of the modules it imports into the prefix, outside of DESTDIR
+export JOBS PYTHONDONTWRITEBYTECODE=1
 . $B/lib.sh
 
 mkdir -p $C/downloads $C/components $C/logs
@@ -23,16 +24,23 @@ is_selected() {
 }
 
 declare -A keys
+failed=()
 
-# the cache key covers what builds the component: its sources, the functions the build calls, the build
-# image and the keys of the dependencies, so a change of an unused helper doesn't rebuild it
+has_failed() {
+    local i
+    for i in ${failed[@]+"${failed[@]}"}; do [ "$i" = "$1" ] && return 0; done
+    return 1
+}
+
+# the cache key covers what builds the component: its sources, the functions its build calls, the build
+# image and the keys of the dependencies, so a change of an unused helper or of the downloads doesn't rebuild it
 component_key() {
     local c=$1 deps d
     deps=$(recipe_var $c depends)
     {
         bash -c '. $B/lib.sh; . $B/components/$1.sh
             echo "${version:-}|${depends:-}|${sources:-}"
-            todo=build_component seen=" "
+            todo=build seen=" "
             while [ -n "$todo" ]; do
                 set -- $todo; f=$1; shift; todo="$*"
                 case "$seen" in *" $f "*) continue ;; esac
@@ -58,14 +66,46 @@ for c in "${components[@]}"; do
             exit 1
         fi
 
+        skip=
+        for d in $(recipe_var $c depends); do
+            has_failed $d && skip=1
+        done
+
+        if [ -n "$skip" ]; then
+            echo "== $c skipped, a dependency failed" >&2
+            failed+=($c)
+            continue
+        fi
+
         echo "== building $c"
         work=$C/work/$c
         rm -rf $work && mkdir -p $work/stage
 
         # a separate shell, errexit doesn't apply to commands whose status if tests
+        touch $work/started
         if ! bash -euo pipefail -c '. $B/lib.sh; cd "$1"; build_component "$2"' build $work $c > $C/logs/$c.log 2>&1; then
             tail -40 $C/logs/$c.log >&2
             echo "== $c failed, log: Bundle/.cache/logs/$c.log" >&2
+
+            # KEEP_GOING builds the other components and lists the failed ones at the end
+            if [ -n "${KEEP_GOING:-}" ]; then
+                failed+=($c)
+                continue
+            fi
+
+            exit 1
+        fi
+
+        # files installed into the prefix instead of DESTDIR would be missing in the artifact
+        if [ -n "$(find $PREFIX -newer $work/started -not -type d -print -quit)" ]; then
+            find $PREFIX -newer $work/started -not -type d | head -20 >&2
+            echo "== $c installed files into $PREFIX instead of DESTDIR" >&2
+
+            if [ -n "${KEEP_GOING:-}" ]; then
+                failed+=($c)
+                continue
+            fi
+
             exit 1
         fi
 
@@ -79,6 +119,11 @@ for c in "${components[@]}"; do
     zstd -dc $artifact | tar -C $PREFIX -x --no-overwrite-dir
 done
 
+if [ ${#failed[@]} -gt 0 ]; then
+    echo "== failed: ${failed[*]}" >&2
+    exit 1
+fi
+
 echo "== assembling the Apps tree"
 rm -rf $O/Apps $O/sources
 mkdir -p $O/Apps/lib $O/Apps/Licenses $O/sources
@@ -90,6 +135,8 @@ name. Every release publishes their source code next to the AppImage.
 EOF
 
 for c in "${components[@]}"; do
+    # downloads missing in the cache, the release ships the sources of every component
+    bash -euo pipefail -c '. $B/lib.sh; . $B/components/$1.sh; fetch' fetch $c
     (bundle_component $c)
 done
 

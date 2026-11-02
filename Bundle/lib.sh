@@ -18,7 +18,8 @@ recipe_var() {
     )
 }
 
-# archives a commit of a git repository, the commit hash verifies the content
+# archives a commit of a git repository with its submodules, the commit hash verifies the content, the
+# submodules are pinned by the commit
 git_fetch() {
     local url=$1 commit=$2 file=$3 tmp
     tmp=$(mktemp -d)
@@ -28,7 +29,17 @@ git_fetch() {
         echo "commit mismatch: $url" >&2
         return 1
     fi
-    git -C "$tmp" archive --prefix="${file%.tar}/" -o "$C/downloads/$file.tmp" FETCH_HEAD
+
+    if git -C "$tmp" cat-file -e FETCH_HEAD:.gitmodules 2> /dev/null; then
+        git -C "$tmp" checkout -q FETCH_HEAD
+        # the Bitbucket repositories of sekrit-twc moved to GitHub
+        git -C "$tmp" -c url.https://github.com/sekrit-twc/.insteadOf=https://bitbucket.org/the-sekrit-twc/ \
+            submodule -q update --init --recursive --depth 1
+        tar -C "$tmp" --exclude=.git --transform "s|^\.|${file%.tar}|" -cf "$C/downloads/$file.tmp" .
+    else
+        git -C "$tmp" archive --prefix="${file%.tar}/" -o "$C/downloads/$file.tmp" FETCH_HEAD
+    fi
+
     mv "$C/downloads/$file.tmp" "$C/downloads/$file"
     rm -rf "$tmp"
 }
