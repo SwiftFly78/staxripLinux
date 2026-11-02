@@ -1539,6 +1539,16 @@ Public Class Package
         .WebURL = "https://github.com/Asd-g/avslibplacebo",
         .AvsFilterNames = {"libplacebo_Deband", "libplacebo_Resample", "libplacebo_Shader", "libplacebo_Tonemap"}})
 
+    Shared Property LibPlaceboRender As Package = Add(New PluginPackage With {
+        .Name = "libplacebo_Render",
+        .Filename = "libplacebo_Render.dll",
+        .RequirementsFunc = Function() StaxRip.Vulkan.IsSupported,
+        .Description = "An AviSynth+ plugin interface to libplacebo, the successor of AVS_LibPlacebo. Its function libplacebo_Render resizes, tone maps, debands and converts colors in one Vulkan GPU-accelerated pass.",
+        .HelpFilename = "README.md",
+        .DownloadURL = "https://github.com/Asd-g/libplacebo_Render/releases",
+        .WebURL = "https://github.com/Asd-g/libplacebo_Render",
+        .AvsFilterNames = {"libplacebo_Render"}})
+
     Shared Property VSLibPlacebo As Package = Add(New PluginPackage With {
         .Name = "libvs_placebo",
         .Filename = "libvs_placebo.dll",

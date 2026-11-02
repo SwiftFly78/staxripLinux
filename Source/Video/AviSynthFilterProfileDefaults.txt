@@ -57,6 +57,8 @@ Tonemap | Placebo =
     # ConvertBits(10)
     # ConvertToYUV420()
 
+Tonemap | Placebo Render = libplacebo_Render(src_csp=$select:msg:Select Source Color Space;SDR|"sdr";HDR10 (default)|"hdr10";HLG|"hlg";Dolby Vision|"dovi"$, dst_csp=$select:msg:Select Target Color Space;SDR (default)|"sdr";HDR10|"hdr10";HLG|"hlg"$, peak_detect=$select:msg:Dynamic Peak Detection?;Yes (default)|True;No|False$, tone_mapping_function=$select:msg:Tonemapping Function;Clip|"clip";ST2094_40|"st2094-40";ST2094_10|"st2094-10";BT2390|"bt2390";BT2446a|"bt2446a";Spline (default)|"spline";Reinhard|"reinhard";Mobius|"mobius";Hable|"hable";Gamma|"gamma";Linear|"linear";LinearLight|"linearlight"$, contrast_recovery=0.3, contrast_smoothness=3.5)
+
 [Crop]
 Crop = $select:msg:Select Version;Crop;Dither_Crop16$(%crop_left%, %crop_top%, -%crop_right%, -%crop_bottom%)
 Hardware Encoder = # hardware encoder crops
@@ -243,6 +245,9 @@ Advanced | Dither_Resize16 In Linear Light =
 Advanced | Hardware Encoder = # hardware encoder resizes
 Advanced | NNEDI3_rpow2 = nnedi3_rpow2(rfactor=$select:msg:Enlargement Factor?;2;4;8;16$, cshift="$select:msg:Center Shift Correction Algorithm?;BicubicResize;BilinearResize;BlackmanResize;GaussResize;LanczosResize;Lanczos4Resize;PointResize;SincResize;Spline16Resize;Spline36Resize;Spline64Resize$", fwidth=%target_width%, fheight=%target_height%)
 Advanced | Placebo = libplacebo_Resample(%target_width%, %target_height%, "$select:spline16;spline36;spline64;nearest;bilinear;gaussian;sinc;lanczos;ginseng;ewa_jinc;ewa_lanczos;ewa_lanczossharp;ewa_lanczos4sharpest;ewa_ginseng;ewa_hann;ewa_hanning;bicubic;hermite;catmull_rom;mitchell;mitchell_clamp;robidoux;robidouxsharp;ewa_robidoux;ewa_robidouxsharp$")
+Advanced | Placebo Render =
+    placebo_scaler = "$select:msg:Select the Scaler;spline16;spline36;spline64;nearest;bilinear;gaussian;sinc;lanczos;ginseng;ewa_jinc;ewa_lanczos;ewa_lanczossharp;ewa_lanczos4sharpest;ewa_ginseng;ewa_hann;bicubic;hermite;catmull_rom;mitchell;robidoux;robidouxsharp;ewa_robidoux;ewa_robidouxsharp$"
+    libplacebo_Render(width=%target_width%, height=%target_height%, upscaler=placebo_scaler, downscaler=placebo_scaler)
 Advanced | ResizeMT = $select:BicubicResizeMT;BilinearResizeMT;BlackmanResizeMT;GaussResizeMT;LanczosResizeMT;Lanczos4ResizeMT;PointResizeMT;SincResizeMT;Spline16ResizeMT;Spline36ResizeMT;Spline64ResizeMT$(%target_width%, %target_height%, prefetch=4)
 Resize... = $select:BicubicResize;BilinearResize;BlackmanResize;DPID;GaussResize;LanczosResize;Lanczos4Resize;PointResize;SincResize;Jinc36Resize;Jinc64Resize;Jinc144Resize;Jinc256Resize;Spline16Resize;Spline36Resize;Spline64Resize$(%target_width%, %target_height%)
 
