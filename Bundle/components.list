@@ -74,9 +74,14 @@ dual-lsmashsource
 dual-f3kdb
 rust
 libdovi
+libhdr10plus
 libplacebo
 vs-placebo
 avs-libplacebo
+vulkan-headers
+opencl-headers
+qsvenc
+vceenc
 vs-addgrain
 vs-bm3d
 vs-bwdif
