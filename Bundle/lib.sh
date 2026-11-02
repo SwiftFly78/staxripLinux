@@ -4,6 +4,7 @@
 #   sources   lines of "<url> <sha256> [<file name>]" or "git <url> <commit> [<file name>]", downloaded and
 #             verified before build, git sources are archived with git archive
 #   binary_sources  file names of sources that are binaries, they aren't copied to out/sources
+#   skip_submodules  names of submodules of its git sources the build doesn't need
 #   packages  IDs of the StaxRip packages the component provides, one per line, StaxRip reads their
 #             version from Apps/versions.txt
 #   build     builds and installs into $DESTDIR$PREFIX, the work folder is the current folder
@@ -32,9 +33,13 @@ git_fetch() {
 
     if git -C "$tmp" cat-file -e FETCH_HEAD:.gitmodules 2> /dev/null; then
         git -C "$tmp" checkout -q FETCH_HEAD
+        local skip=() s
+        for s in ${skip_submodules:-}; do
+            skip+=(-c "submodule.$s.update=none")
+        done
         # the Bitbucket repositories of sekrit-twc moved to GitHub
         git -C "$tmp" -c url.https://github.com/sekrit-twc/.insteadOf=https://bitbucket.org/the-sekrit-twc/ \
-            submodule -q update --init --recursive --depth 1
+            ${skip[@]+"${skip[@]}"} submodule -q update --init --recursive --depth 1
         tar -C "$tmp" --exclude=.git --transform "s|^\.|${file%.tar}|" -cf "$C/downloads/$file.tmp" .
     else
         git -C "$tmp" archive --prefix="${file%.tar}/" -o "$C/downloads/$file.tmp" FETCH_HEAD

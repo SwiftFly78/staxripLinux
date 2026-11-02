@@ -36,6 +36,8 @@ it depends on. With `KEEP_GOING=1` a failed component doesn't stop the build, th
 - `depends`, the components it needs to build, they come before it in `components.list`.
 - `sources`, one download per line: `<URL> <SHA-256> [<file name>]` or `git <URL> <commit> [<file name>]`.
 - `binary_sources`, the file names of the sources that are binaries and not source code.
+- `skip_submodules`, the names of submodules of its git sources the build doesn't need, they're left out of the
+  archive.
 - `build`, which builds the component and installs it into `$DESTDIR$PREFIX`, for example with
   `configure_make`, `cmake_build` or `meson_build`. `stage_license` adds license files.
 - `bundle`, which copies its files from `$PREFIX` into the Apps folder with `apps_install` or `apps_plugin`.
