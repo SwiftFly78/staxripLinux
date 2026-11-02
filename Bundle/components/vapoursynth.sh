@@ -1,23 +1,24 @@
-# the official wheel contains the core, vspipe and VSScript, it's installed into the bundled Python
-version=R81
+# the official wheel contains the core, vspipe and VSScript, it's installed into the bundled Python, R79 is the last
+# version that loads plugins of API 3, which many plugins still use, and the version upstream StaxRip ships
+version=R79
 packages="
 VapourSynth
 vspipe
 "
 depends="python"
 sources="
-https://files.pythonhosted.org/packages/97/47/0d0cf0d1028e7cb7a15ea888161e2c7ceaaccaf8c24c3d276f0f7fa8e946/vapoursynth-81-cp312-abi3-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl 2e3429524728889328897945564235440910a032ebbc879620ba3ff900758b52
-https://files.pythonhosted.org/packages/69/6a/f9441173c91a3355a32b870522726ed2252cd3c7b04b45e499f30b1a2c98/vapoursynth-81.tar.gz 3bf6c90ad737e8ffc5605b05a1ff29cd884f8632fbe0eb49a2705942073a96be
+https://files.pythonhosted.org/packages/c2/82/a4f5e879ff0bb6722ecbecf01482b0783ed05d42aefa7717e6a6f4f77180/vapoursynth-79-cp312-abi3-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl 6f1e37f0ed8eb73e61c3c231fd7f7a0f7acfa893e98d026686e9c81e52c9ce06
+https://files.pythonhosted.org/packages/2d/4d/bb7fcc7f304e7248cf6c83ec0c3c97ee4b4fa2e05bfbbe2a578a9b41fab9/vapoursynth-79.tar.gz 01311b79ef22334115f79a78a6d7548bd29f35cc903ee0cea12443d49e142eb1
 "
-binary_sources="vapoursynth-81-cp312-abi3-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl"
+binary_sources="vapoursynth-79-cp312-abi3-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl"
 
 build() {
     $PREFIX/python/bin/python3 -m pip install --no-deps --no-index --no-compile --root "$DESTDIR" \
-        --no-warn-script-location "$C/downloads/vapoursynth-81-cp312-abi3-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl"
+        --no-warn-script-location "$C/downloads/vapoursynth-79-cp312-abi3-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl"
     local site=$DESTDIR$PREFIX/python/lib/python3.13/site-packages
     # the scripts call the Python of the build, StaxRip starts vspipe of the module directly
     rm -f $DESTDIR$PREFIX/python/bin/vspipe $DESTDIR$PREFIX/python/bin/vapoursynth
-    # StaxRip finds the core by its unversioned name
-    ln -s libvapoursynth.so.4 $site/vapoursynth/libvapoursynth.so
-    stage_license $site/vapoursynth-81.dist-info/licenses/COPYING.LESSER
+    # the core is part of the Python module, StaxRip finds the folder of VapourSynth by the name of the core
+    ln -s vapoursynth.abi3.so $site/vapoursynth/libvapoursynth.so
+    stage_license $site/vapoursynth-79.dist-info/licenses/COPYING.LESSER
 }

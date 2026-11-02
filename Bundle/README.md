@@ -44,6 +44,9 @@ it depends on. With `KEEP_GOING=1` a failed component doesn't stop the build, th
 To update a component, change its version, URLs and checksums, and check the signature of a new source archive
 if the project publishes one. CPU specific code must be detected at runtime, never use `-march=native`.
 
+VapourSynth is R79, the last version that loads plugins of API 3, which many plugins still use, and the version
+upstream StaxRip ships.
+
 ## Libraries
 
 `collect.py` copies the shared libraries the tools need into `Apps/lib` and sets a relative `RUNPATH`, so no
