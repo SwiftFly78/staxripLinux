@@ -80,6 +80,7 @@ dual-f3kdb
 libplacebo
 vs-placebo
 avs-libplacebo
+avs-libplacebo-render
 vulkan-headers
 opencl-headers
 qsvenc

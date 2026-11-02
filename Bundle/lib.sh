@@ -313,12 +313,13 @@ EOF
     fi
 }
 
-# prints the compiler flag that makes std::format available, GCC 12 lacks <format>, the header-only {fmt}
-# of the fmt component has the same function
+# prints the compiler flags that make <format> and std::format available, GCC 12 lacks <format>, the
+# header-only {fmt} of the fmt component has the same function
 std_format_shim() {
+    mkdir -p $PWD/std_format
     printf '#pragma once\n#define FMT_HEADER_ONLY\n#include <fmt/format.h>\nnamespace std { using fmt::format; }\n' \
-        > $PWD/std_format.h
-    echo "-I$PREFIX/share/fmt/include -include $PWD/std_format.h"
+        > $PWD/std_format/format
+    echo "-I$PREFIX/share/fmt/include -I$PWD/std_format -include $PWD/std_format/format"
 }
 
 # builds the C library of a Rust crate with cargo-c and installs it
