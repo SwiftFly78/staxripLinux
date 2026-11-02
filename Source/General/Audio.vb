@@ -265,7 +265,7 @@ Public Class Audio
                 args += " " + Audio.GetDynAudNormArgs(gap.Params)
                 cancel = False
             ElseIf gap.Params.ffmpegNormalizeMode = ffmpegNormalizeMode.loudnorm Then
-                args += " " + Audio.GetLoudNormArgs(gap.Params)
+                args += " " + Audio.GetLoudNormArgs(gap.Params, ap.SourceSamplingRate)
                 cancel = False
             End If
         End If
@@ -354,7 +354,8 @@ Public Class Audio
         End If
     End Sub
 
-    Shared Function GetLoudNormArgs(params As GUIAudioProfile.Parameters) As String
+    'loudnorm outputs 192 kHz when it can't normalize linearly, like when the source has a higher LRA than the target
+    Shared Function GetLoudNormArgs(params As GUIAudioProfile.Parameters, sampleRate As Integer) As String
         Return "-af loudnorm=" +
             "I=" + params.ffmpegLoudnormIntegrated.ToInvariantString +
             ":TP=" + params.ffmpegLoudnormTruePeak.ToInvariantString +
@@ -363,7 +364,7 @@ Public Class Audio
             ":measured_TP=" + params.ffmpegLoudnormTruePeakMeasured.ToInvariantString +
             ":measured_LRA=" + params.ffmpegLoudnormLraMeasured.ToInvariantString +
             ":measured_thresh=" + params.ffmpegLoudnormThresholdMeasured.ToInvariantString +
-            ":print_format=summary"
+            ":print_format=summary,aresample=" & sampleRate
     End Function
 
     Shared Function GetDynAudNormArgs(params As GUIAudioProfile.Parameters) As String

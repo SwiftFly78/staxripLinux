@@ -1473,7 +1473,7 @@ Public Class GUIAudioProfile
             If Params.ffmpegNormalizeMode = ffmpegNormalizeMode.dynaudnorm Then
                 sb.Append(" " + Audio.GetDynAudNormArgs(Params))
             ElseIf Params.ffmpegNormalizeMode = ffmpegNormalizeMode.loudnorm Then
-                sb.Append(" " + Audio.GetLoudNormArgs(Params))
+                sb.Append(" " + Audio.GetLoudNormArgs(Params, TargetSamplingRate))
             End If
         End If
 
@@ -1662,7 +1662,7 @@ Public Class GUIAudioProfile
 
         If Params.Normalize Then
             If Params.ffmpegNormalizeMode = ffmpegNormalizeMode.loudnorm Then
-                sb.Append(" " + Audio.GetLoudNormArgs(Params))
+                sb.Append(" " + Audio.GetLoudNormArgs(Params, TargetSamplingRate))
             ElseIf Params.ffmpegNormalizeMode = ffmpegNormalizeMode.dynaudnorm Then
                 sb.Append(" " + Audio.GetDynAudNormArgs(Params))
             End If
