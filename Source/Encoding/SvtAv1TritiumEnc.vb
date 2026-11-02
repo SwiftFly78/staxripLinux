@@ -910,6 +910,7 @@ Public Class SvtAv1TritiumEncParams
        .Values = {"-2", "0", "1s", "2s", "3s", "4s", "5s", "6s", "7s", "8s", "9s", "10s"},
        .VisibleFunc = Function() Not ConstantRateFactor.Visible,
        .ValueChangedAction = Sub(x) KeyIntCrf.Value = x,
+       .ArgsFunc = Function() GetKeyIntArgs(KeyInt, False),
        .Init = 0}
 
     Property KeyIntCrf As New OptionParam With {
@@ -920,6 +921,7 @@ Public Class SvtAv1TritiumEncParams
        .Values = {"-2", "-1", "1s", "2s", "3s", "4s", "5s", "6s", "7s", "8s", "9s", "10s"},
        .VisibleFunc = Function() ConstantRateFactor.Visible,
        .ValueChangedAction = Sub(x) KeyInt.Value = x,
+       .ArgsFunc = Function() GetKeyIntArgs(KeyIntCrf, False),
        .Init = 0}
 
     Property MinKeyInt As New OptionParam With {
@@ -928,7 +930,26 @@ Public Class SvtAv1TritiumEncParams
         .Expanded = True,
         .Options = {"-1: Multiple of the mini-gop length (Automatic) (default)", "0: No Minimum", "1 second", "2 seconds", "3 seconds", "4 seconds", "5 seconds", "6 seconds", "7 seconds", "8 seconds", "9 seconds", "10 seconds"},
         .Values = {"-1", "0", "1s", "2s", "3s", "4s", "5s", "6s", "7s", "8s", "9s", "10s"},
+        .ArgsFunc = Function() GetKeyIntArgs(MinKeyInt, True),
         .Init = 0}
+
+    'the encoder takes --min-keyint only in frames, it reads "2s" as 2 frames, and rejects --keyint in seconds together
+    'with --min-keyint in frames, so both are passed in frames when the minimum is set in seconds
+    Function GetKeyIntArgs(param As OptionParam, isMinimum As Boolean) As String
+        If param.Value = param.DefaultValue Then
+            Return Nothing
+        End If
+
+        Dim value = param.Values(param.Value)
+
+        If value.EndsWith("s") AndAlso MinKeyInt.Values(MinKeyInt.Value).EndsWith("s") Then
+            Dim frames = CInt(Math.Round(value.TrimEnd("s"c).ToDouble * p.Script.GetFramerate))
+            'the encoder turns --keyint 10s into a GOP of 10 seconds plus one frame
+            value = If(isMinimum, frames, frames + 1).ToInvariantString
+        End If
+
+        Return param.Switch + " " + value
+    End Function
 
     Property IntraRefreshRate As New OptionParam With {
         .Switch = "--irefresh-type",
