@@ -21,7 +21,8 @@ defaults:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 180
+    # a build without cache compiles about 150 components, the maximum of the hosted runners
+    timeout-minutes: 360
 
     steps:
       - name: Check out

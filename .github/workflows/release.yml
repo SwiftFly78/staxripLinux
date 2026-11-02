@@ -23,8 +23,8 @@ jobs:
     # not for deleted tags
     if: ${{ !github.event.deleted }}
     runs-on: ubuntu-latest
-    # building the bundled tools without cache takes long
-    timeout-minutes: 180
+    # building the bundled tools without cache takes long, the maximum of the hosted runners
+    timeout-minutes: 360
     permissions:
       contents: write
     env:
