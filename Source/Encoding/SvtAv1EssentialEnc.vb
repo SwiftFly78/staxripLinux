@@ -1136,7 +1136,7 @@ Public Class SvtAv1EssentialEncParams
         .Text = "ALT-REF Frames",
         .Expanded = True,
         .IntegerValue = True,
-        .Options = {"0: Off", "1: On (default)", "2: Adaptive", "2: Full"},
+        .Options = {"0: Off", "1: On (default)", "2: Adaptive", "3: Full"},
         .Init = 1}
 
     Property EnableOverlays As New BoolParam With {

@@ -764,8 +764,8 @@ Public Class SvtAv1EncParams
         .Switch = "--hbd-mds",
         .Text = "High Bit Depth Mode Decisions",
         .Expanded = True,
-        .IntegerValue = True,
         .Options = {"-1: Off (default)", "0: Forces 8-bit", "1: Forces 10-bit", "2: 8/10-bit Hybrid"},
+        .Values = {"-1", "0", "1", "2"},
         .Init = 0}
 
     Property QpScaleCompressStrength As New NumParam With {
