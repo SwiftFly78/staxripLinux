@@ -102,6 +102,27 @@ Public Class SvtAv1Enc
         End Get
     End Property
 
+    Overrides Function GetError() As String
+        Return GetHbdMdsError(Params.HbdMds.Value >= 2, Params.Decoder.ValueText)
+    End Function
+
+    'the high bit depth mode decisions 10-bit and hybrid stop the encoder right away with an 8-bit input
+    Shared Function GetHbdMdsError(isHighBitDepth As Boolean, decoder As String) As String
+        If Not isHighBitDepth Then
+            Return Nothing
+        End If
+
+        'the ffmpeg decoders output 10-bit for 10-bit sources and scripts
+        Dim depth = If(decoder = "script", p.Script.Info.BitDepth,
+            If(decoder = "qs", p.SourceVideoBitDepth, If(p.SourceVideoBitDepth = 10 OrElse p.Script.Info.BitDepth >= 10, 10, 8)))
+
+        If depth < 10 Then
+            Return "High Bit Depth Mode Decisions needs a 10-bit input, convert the video to 10-bit or turn the option off."
+        End If
+
+        Return Nothing
+    End Function
+
     Overrides Function BeforeEncoding() As Boolean
         Return True
     End Function

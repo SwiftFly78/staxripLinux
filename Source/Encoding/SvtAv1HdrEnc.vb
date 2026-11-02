@@ -107,6 +107,10 @@ Public Class SvtAv1HdrEnc
         End Get
     End Property
 
+    Overrides Function GetError() As String
+        Return SvtAv1Enc.GetHbdMdsError(Params.HbdMds.Value >= 1, Params.Decoder.ValueText)
+    End Function
+
     Overrides Function BeforeEncoding() As Boolean
         Dim rpu = Params.DolbyVisionRpu.Value
 
