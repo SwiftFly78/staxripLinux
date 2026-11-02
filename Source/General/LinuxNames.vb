@@ -57,6 +57,7 @@ Public Class LinuxNames
         {"RemoveGrainVS.dll", {"librgvs.so", "libremovegrain.so"}},
         {"libvs_placebo.dll", {"libvs_placebo.so", "libvsplacebo.so"}},
         {"avs_libplacebo.dll", {"libavs_libplacebo.so"}},
+        {"libfftw3-3.dll", {"libfftw3f.so.3"}},
         {"Shader-x64.dll", {}},
         {"FFT3dGPU.dll", {}},
         {"VSFilter.dll", {}},
