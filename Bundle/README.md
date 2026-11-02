@@ -50,7 +50,7 @@ To update a component, change its version, URLs and checksums, and check the sig
 if the project publishes one. CPU specific code must be detected at runtime, never use `-march=native`.
 
 VapourSynth is R79, the last version that loads plugins of API 3, which many plugins still use, and the version
-upstream StaxRip ships.
+upstream StaxRip ships. The AviSynth and VapourSynth scripts are in `scripts`, see the README there.
 
 ## Libraries
 

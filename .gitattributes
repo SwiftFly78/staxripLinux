@@ -61,3 +61,6 @@
 #*.PDF   diff=astextplain
 #*.rtf   diff=astextplain
 #*.RTF   diff=astextplain
+
+# third-party scripts are stored unchanged, see Bundle/scripts/README.md
+Bundle/scripts/** -text
