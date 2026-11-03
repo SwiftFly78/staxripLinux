@@ -1210,7 +1210,8 @@ Partial Public Class MainForm
 
         Dim setLanguages = p.AudioTracks.Select(Function(x) x.AudioProfile.Language).Where(Function(x) x.IsDetermined).Select(Function(x) x.ThreeLetterCode)
         Dim preferredAudios = p.PreferredAudio.ToLowerInvariant().SplitNoEmptyAndWhiteSpace(",", ";", " ")
-        Dim selectedAudios = preferredAudios.Concat(setLanguages.Distinct().Except(preferredAudios)).ToList()
+        'without a locale the default list starts with und too, a language that comes twice assigns its tracks twice
+        Dim selectedAudios = preferredAudios.Distinct().Concat(setLanguages.Distinct().Except(preferredAudios)).ToList()
 
         Dim audioTracks As New List(Of (FilePath As String, Language As Language, Stream As AudioStream))
 
