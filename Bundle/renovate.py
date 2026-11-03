@@ -119,10 +119,31 @@ def variants(old, new, keys):
     return [(o, n) for o, n in pairs if o and o != n]
 
 
-def replace_version(text, pairs):
+# URLs also get versions after letters (7z2605), the recipe text only versions after other characters, commit hashes
+# contain letters and digits
+def replace_version(text, pairs, url=False):
+    before = r'(?<![0-9])' if url else r'(?<![0-9A-Za-z])'
     for o, n in pairs:
-        text = re.sub(r'(?<![0-9A-Za-z])' + re.escape(o) + r'(?![0-9])', n, text) if o[0] != '/' else text.replace(o, n)
+        text = re.sub(before + re.escape(o) + r'(?![0-9])', n, text) if o[0] != '/' else text.replace(o, n)
     return text
+
+
+def file_name(line):
+    parts = line.split()
+    return parts[2] if len(parts) > 2 else urllib.request.unquote(parts[0].rsplit('/', 1)[1])
+
+
+def stem(name):
+    return re.sub(r'(\.tar)?\.(gz|xz|bz2|zst|tgz|zip|7z|whl)$', '', name)
+
+
+# the names of the downloaded files, their folders and the version in the build and bundle functions
+def replace_in_functions(text, names, pairs):
+    start = text.index('build()') if 'build()' in text else len(text)
+    body = text[start:]
+    for o, n in names:
+        body = body.replace(o, n).replace(stem(o), stem(n))
+    return text[:start] + replace_version(body, pairs)
 
 
 # the hashes of the build tools in requirements-build.txt, of the files of the same platforms in the new versions
@@ -181,7 +202,9 @@ def post_upgrade(recipe):
         pairs = variants(before['value'], value, keys)
 
         if keys['datasource'] == 'pypi':
-            text = update_wheels(text, lines, keys, before['value'], value, indexes)
+            text, names = update_wheels(text, lines, keys, before['value'], value, indexes)
+            number = lambda v: re.sub('^[A-Za-z]+', '', v)
+            text = replace_in_functions(text, names, pairs + [(number(before['value']), number(value))])
             continue
         if keys.get('special') == 'python-build-standalone':
             text = update_python(text, lines, before['value'], value)
@@ -192,8 +215,9 @@ def post_upgrade(recipe):
                 indexes = [next(k for k, line in enumerate(lines) if line.startswith('git '))]
             else:
                 indexes = [k for k, line in enumerate(lines) if not line.startswith('git ') and
-                           replace_version(line.split()[0], pairs) != line.split()[0]]
+                           replace_version(line.split()[0], pairs, url=True) != line.split()[0]]
 
+        names = []
         for i in indexes:
             parts = lines[i].split()
             if parts[0] == 'git':
@@ -201,31 +225,34 @@ def post_upgrade(recipe):
                 text = text.replace(parts[2], commit).replace(parts[2][:12], commit[:12])
                 lines[i] = ' '.join([parts[0], parts[1], commit] + parts[3:])
             else:
-                url = replace_version(parts[0], pairs)
-                name = replace_version(parts[2], pairs) if len(parts) > 2 else None
+                url = replace_version(parts[0], pairs, url=True)
+                name = replace_version(parts[2], pairs, url=True) if len(parts) > 2 else None
                 new_line = ' '.join([url, sha256(url)] + ([name] if name else []))
+                names.append((file_name(lines[i]), file_name(new_line)))
                 text = text.replace(lines[i], new_line)
                 lines[i] = new_line
 
-        # the names of the downloaded files and their folders in the build and bundle functions
-        body_start = text.index('build()') if 'build()' in text else len(text)
-        text = text[:body_start] + replace_version(text[body_start:], pairs)
+        text = replace_in_functions(text, names, pairs)
 
     path.write_text(text)
 
 
-# the wheels of the same platforms in the new version, with the checksums of PyPI
+# the files of the same platforms in the new version, with the checksums of PyPI, and the pairs of old and new names
 def update_wheels(text, lines, keys, old, new, indexes):
-    files = json_of(f"https://pypi.org/pypi/{keys['depName']}/{re.sub('^[A-Za-z]+', '', new)}/json")['urls']
+    number = lambda v: re.sub('^[A-Za-z]+', '', v)
+    files = json_of(f"https://pypi.org/pypi/{keys['depName']}/{number(new)}/json")['urls']
+    names = []
     for i in indexes or range(len(lines)):
         parts = lines[i].split()
-        name = parts[0].rsplit('/', 1)[1]
-        platform = name.split('-', 2)[2]
-        wheel = next((f for f in files if f['filename'].endswith(platform)), None)
-        if not wheel:
-            raise SystemExit(f'{keys["depName"]} {new} has no wheel for {platform}')
-        text = text.replace(lines[i], ' '.join([wheel['url'], wheel['digests']['sha256']] + parts[2:]))
-    return text
+        name = file_name(lines[i])
+        prefix, suffix = name.split(f'-{number(old)}', 1)
+        wanted = f'{prefix}-{number(new)}{suffix}'.lower()
+        file = next((f for f in files if f['filename'].lower() == wanted), None)
+        if not file:
+            raise SystemExit(f'{keys["depName"]} {new} has no file {wanted}')
+        names.append((name, file['filename']))
+        text = text.replace(lines[i], ' '.join([file['url'], file['digests']['sha256']] + parts[2:]))
+    return text, names
 
 
 # the newest Python of the same minor version in the new release of python-build-standalone
@@ -240,7 +267,7 @@ def update_python(text, lines, old, new):
     version = re.search(r'^version=(\S+)', text, re.M).group(1)
     minor = '.'.join(version.split('.')[:2])
     for line in lines:
-        url, digest = line.split()[:2]
+        url, digest, *rest = line.split()
         name = urllib.request.unquote(url.rsplit('/', 1)[1])
         pattern = re.escape(name).replace(re.escape(version), re.escape(minor) + r'\.\d+').replace(old, new)
         candidates = sorted((a for a in release['assets'] if re.fullmatch(pattern, a['name'])),
@@ -248,8 +275,10 @@ def update_python(text, lines, old, new):
         if not candidates:
             raise SystemExit(f'python-build-standalone {new} has no asset like {name}')
         asset = candidates[-1]
-        text = text.replace(line, f"{asset['browser_download_url']} {sums[asset['name']]}")
         new_version = re.search(re.escape(minor) + r'\.\d+', asset['name']).group(0)
+        # the file name of the third field, with the new version
+        rest = [replace_version(r, [(version, new_version)]) for r in rest]
+        text = text.replace(line, ' '.join([asset['browser_download_url'], sums[asset['name']]] + rest))
     text = re.sub(r'^version=\S+', f'version={new_version}', text, count=1, flags=re.M)
     return replace_version(text, [(version, new_version), (old, new)]) if version != new_version else text
 
