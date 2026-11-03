@@ -1420,18 +1420,18 @@ Public Class Package
         .VsFilterNames = {"motionmask.MotionMask"}})
 
     Shared Property DFTTest2 As Package = Add(New PluginPackage With {
-        .Siblings = {"dfttest2_NVRTC vs", "dfttest2_CUDA vs", "dfttest2_CPU vs"},
+        .Siblings = {"dfttest2_NVRTC vs", "dfttest2_CUDA vs", "dfttest2_CPU vs", "dfttest2_GCC vs"},
         .Name = "dfttest2",
         .Filename = "dfttest2.py",
         .Location = IO.Path.Combine("Plugins", "VS", "DFTTest2"),
         .Description = "DFTTest re-implemetation for VapourSynth (CPU and CUDA).",
         .WebURL = "https://github.com/AmusementClub/vs-dfttest2",
         .DownloadURL = "https://github.com/AmusementClub/vs-dfttest2/releases",
-        .Dependencies = {"dfttest2_cpu.dll", "dfttest2_cuda.dll", "dfttest2_nvrtc.dll"},
+        .Dependencies = {"dfttest2_cpu.dll", "dfttest2_cuda.dll", "dfttest2_gcc.dll", "dfttest2_nvrtc.dll"},
         .VsFilterNames = {"dfttest2.DFTTest"}})
 
     Shared Property DFTTest2CPU As Package = Add(New PluginPackage With {
-        .Siblings = {"dfttest2 vs", "dfttest2_NVRTC vs", "dfttest2_CUDA vs"},
+        .Siblings = {"dfttest2 vs", "dfttest2_NVRTC vs", "dfttest2_CUDA vs", "dfttest2_GCC vs"},
         .Name = "dfttest2_CPU",
         .Filename = "dfttest2_cpu.dll",
         .Location = IO.Path.Combine("Plugins", "VS", "DFTTest2"),
@@ -1440,8 +1440,18 @@ Public Class Package
         .DownloadURL = "https://github.com/AmusementClub/vs-dfttest2/releases",
         .VsFilterNames = {"dfttest2_cpu.RDFT", "dfttest2_cpu.DFTTest"}})
 
+    Shared Property DFTTest2GCC As Package = Add(New PluginPackage With {
+        .Siblings = {"dfttest2 vs", "dfttest2_NVRTC vs", "dfttest2_CUDA vs", "dfttest2_CPU vs"},
+        .Name = "dfttest2_GCC",
+        .Filename = "dfttest2_gcc.dll",
+        .Location = IO.Path.Combine("Plugins", "VS", "DFTTest2"),
+        .Description = "",
+        .WebURL = "https://github.com/AmusementClub/vs-dfttest2",
+        .DownloadURL = "https://github.com/AmusementClub/vs-dfttest2/releases",
+        .VsFilterNames = {"dfttest2_gcc.RDFT", "dfttest2_gcc.DFTTest"}})
+
     Shared Property DFTTest2CUDA As Package = Add(New PluginPackage With {
-        .Siblings = {"dfttest2 vs", "dfttest2_NVRTC vs", "dfttest2_CPU vs"},
+        .Siblings = {"dfttest2 vs", "dfttest2_NVRTC vs", "dfttest2_CPU vs", "dfttest2_GCC vs"},
         .Name = "dfttest2_CUDA",
         .Filename = "dfttest2_cuda.dll",
         .Location = IO.Path.Combine("Plugins", "VS", "DFTTest2"),
@@ -1452,7 +1462,7 @@ Public Class Package
         .VsFilterNames = {"dfttest2_cuda.RDFT", "dfttest2_cuda.DFTTest"}})
 
     Shared Property DFTTest2NVRTC As Package = Add(New PluginPackage With {
-        .Siblings = {"dfttest2 vs", "dfttest2_CUDA vs", "dfttest2_CPU vs"},
+        .Siblings = {"dfttest2 vs", "dfttest2_CUDA vs", "dfttest2_CPU vs", "dfttest2_GCC vs"},
         .Name = "dfttest2_NVRTC",
         .Filename = "dfttest2_nvrtc.dll",
         .Location = IO.Path.Combine("Plugins", "VS", "DFTTest2"),
