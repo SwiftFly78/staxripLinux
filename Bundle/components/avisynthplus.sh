@@ -53,6 +53,9 @@ bundle() {
     cp -L $PREFIX/lib/libavisynth.so $dir/$soname
     ln -s $soname $dir/libavisynth.so
     cp $PREFIX/lib/avisynth/*.so $dir/avisynth/
+    # the color constants like color_black, AviSynth+ loads the scripts of the folder
+    tar -xOf $C/downloads/AviSynthPlus-523370a39933.tar AviSynthPlus-523370a39933/distrib/ColorPresets/colors_rgb.avsi \
+        > $dir/avisynth/colors_rgb.avsi
     # for FFmpeg, which loads libavisynth.so
     ln -s ../FrameServer/AviSynth/$soname $O/Apps/lib/libavisynth.so
 }
