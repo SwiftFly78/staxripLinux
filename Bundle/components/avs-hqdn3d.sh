@@ -1,4 +1,4 @@
-version=0.11-86e048e
+version=1.1.1
 packages="
 HQDN3D avs
 "

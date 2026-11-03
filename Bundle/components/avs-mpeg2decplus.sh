@@ -1,4 +1,4 @@
-version=1.5.8-3bbe326
+version=1.3.0
 packages="
 D2VSource avs
 "
