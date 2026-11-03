@@ -1,0 +1,54 @@
+# Failures the tests expect: <suite> | <test name, a regular expression> | <reason> [| <regular expression of the error>]
+# report.py counts them as known issues, and reports them when they pass again. With an error, another error of the
+# test still fails.
+
+static | libraries Support/mpv\.net/mpv | mpv uses the libpulse of the system, desktops have it, the test image doesn't
+static | start Support/mpv\.net/mpv | mpv uses the libpulse of the system, desktops have it, the test image doesn't
+static | avs flash3kyuu_deband | f3kdb has no AviSynth+ interface on Linux, neo_f3kdb covers AviSynth+
+static | avs Dither AVSI | dither.avsi names the functions of the Dither plugin, which only exists for Windows
+static | avs FrameRateConverter DLL | the plugin package names the function of FrameRateConverter.avsi, which loads the plugin
+static | vs G41Fun | needs the Python module nnedi3_resample, which has no license that allows bundling it
+static | vs insaneAA | needs the Python module descale, which isn't bundled
+
+tools | mpv | mpv uses the libpulse of the system, desktops have it, the test image doesn't
+
+# filters that need other input than the test clips: 8 and 10 bit 4:2:0, progressive, 24 fps, without Dolby Vision
+frames | AviSynth Color \| ColorYUV \| Stack.* | needs native 16 bit or stacked input | Input clip must be native 16 bit|Input stacked clip must be
+frames | AviSynth Color \| Convert \| ConvertFromDoubleWidth.* | needs a double width clip | Input double width clip must be
+frames | AviSynth Color \| Dither \| DFTTest\(LSB\) \(10 bit\) #1 | lsb_out needs 8 bit input | lsb_out can be set only for 8 bit clips
+frames | AviSynth Color \| Dither \| YUV / RGB.* | needs RGB or stack16 input | Input can only be 1 RGB or 3 planar stack16 clips
+frames | (AviSynth|VapourSynth) Color \| Tonemap \| Placebo.* | Dolby Vision needs the RPU of a Dolby Vision source | DolbyVisionRPU
+frames | (AviSynth|VapourSynth) Field \| Deinterlace \| QTGMC \| QTGMC.* | QTGMC refuses source matching with the Draft preset | 'MatchPreset' cannot use a slower setting than 'Preset'
+frames | AviSynth Field \| IVTC \| AnimeIVTC.* | needs 30 fps NTSC or 25 fps PAL | It's not 30fps NTSC nor 25fps PAL
+frames | AviSynth Field \| Weave #1 | needs field based input like the fields of SeparateFields | Weave should be applied on field-based material
+frames | VapourSynth Field \| SeparateFields #1 | needs the field order of interlaced input | no field order provided
+frames | (AviSynth|VapourSynth) Frame Rate \| VFR to CFR.* | needs the timestamps StaxRip extracts from MKV sources when the option is on | Timestamps extraction from MKV must be turned on
+frames | AviSynth Misc \| (MTMode \| .*|SplitVertical) #1 | sets an option and returns no clip, scripts use it before the other filters | didn't return a video clip
+frames | AviSynth Restoration \| Chroma Fix \| DeRainbow #2 | DeRainbowYUY2 needs YUY2 input | requires YUY2 input
+frames | VapourSynth Color \| ColorSpace \| (Matrix|Primaries|Transfer).* | colorspace converts 4:4:4 and RGB, the test clips are 4:2:0 | input must be 4:4:4|unsupported color family
+frames | VapourSynth Color \| Dither \| Sigmoid.* | needs 16 bit input | This is not a 16-bit clip
+frames | VapourSynth Color \| Dither \| Stack.* | needs stacked or native 16 bit input | pixel format not supported
+frames | VapourSynth Misc \| Cube #1 | timecube needs RGB input | Cube: must be RGB
+
+# filters of the bundle that can't work on Linux
+frames | AviSynth Noise \| DeNoise \| Denoise MF #1 | the GPU mode needs FFT3DGPU and SetMTMode, which only exist for Windows | no function named 'SetMTMode'
+frames | AviSynth Restoration \| DeBand \| f3kdb #1 | f3kdb has no AviSynth+ interface on Linux, neo_f3kdb covers AviSynth+ | cannot be used as a plugin for AviSynth
+frames | VapourSynth Line \| Anti-Aliasing \| insaneAA #1 | needs the Python module descale, which isn't bundled | No module named 'descale'
+frames | VapourSynth (Line \| Sharpen \| DetailSharpen|Noise \| mClean|Noise \| TemporalDegrain2) #1 | G41Fun needs the Python module nnedi3_resample, which has no license that allows bundling it | No module named 'nnedi3_resample'
+frames | VapourSynth Line \| Anti-Aliasing \| Santiag #1 | the VapourSynth EEDI3 is built without OpenCL, which needs Boost.Compute | no function named EEDI3CL
+
+# OpenCL in the test image, which has no GPU and only the CPU driver PoCL
+frames | (AviSynth|VapourSynth) Noise \| (NLMeans \| )?KNLMeansCL.* | KNLMeansCL finds no OpenCL device | CL_INVALID_VALUE
+frames | VapourSynth (Field \| Deinterlace \| NNEDI3|Resize \| Advanced \| NNEDI3_rpow2) #\d+ | PoCL can't build the program of NNEDI3CL | NNEDI3CL: Invalid Program
+frames | AviSynth Field \| Deinterlace \| QTGMC \| QTGMC\+\.\.\. #\d+ | QTGMC+ interpolates with NNEDI3CL, PoCL can't build its program | NNEDI3CL: Invalid Program
+
+# options of other builds of the encoders, the switches stay listed so a new missing one fails
+options | options x264 --(aq-bias-strength|fade-compensate|log-file|log-file-level|progress-header|no-progress-header) | an option of x264 tMod, the bundle has the x264 of VideoLAN
+options | options x265 --(aq-bias-strength|fovea-delta|fovea-gaze|fovea-gaze-file|fovea-sigma|ip-factor|log-file|log-file-level|mcstf-ref-range|selective-mcstf|no-selective-mcstf|pb-factor|progress-readframes) | an option of x265 Mod, the bundle has the x265 of MulticoreWare
+options | options x265 --(alpha|format|scc) | the bundled x265 is built without alpha, multiview and SCC support
+options | options QSVEncC \(Intel\) \| H\.264 --(d3d|d3d9|d3d11|disable-d3d) | Direct3D only exists on Windows
+options | options ffmpeg \| x264 -vcm | FFmpeg only has the VCM mode of h264_qsv on Windows
+
+# MediaInfo estimates the frame count of these containers from the duration, so StaxRip's frame check aborts the job
+pipelines | muxer (WebM \(mkvmerge\)|ffmpeg \| (MPG|OGG|WMV)) | MediaInfo estimates the frame count of the container, StaxRip's frame check aborts the job | Frame Mismatch.*Target file has 14[5-9] frames, but should have 144 frames
+pipelines | encoder Command Line \(AviSynth\) | the example of the profile uses the AVI output and AviSynth input of xvid_encraw, which only exist for Windows | Not compiled with AVI output support
