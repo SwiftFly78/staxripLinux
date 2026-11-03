@@ -3,7 +3,8 @@
     renovate.py post-upgrade <recipe>   completes an update of Renovate, which only changes the annotated versions:
                                         the commits of git sources, the URLs and checksums of downloads and the names
                                         of their files and folders in the recipe, for requirements-build.txt the hashes
-    renovate.py check [--online]        verifies the annotations of all recipes, --online also the tag commits
+    renovate.py check [--online]        verifies the annotations of all recipes, --online also the tag commits and
+                                        the revisions
 
 A version variable carries its annotation as a comment, which doesn't change the cache key of the recipe:
 
@@ -79,6 +80,22 @@ def tag_commit(url, tag):
     if not commit:
         raise SystemExit(f'tag {tag} not found in {url}')
     return commit
+
+
+# the number of commits up to a commit like git rev-list --count, the last page of the listing with one per page
+def commit_count(url, commit):
+    repo = re.sub(r'^https://github\.com/|\.git$', '', url)
+    request = urllib.request.Request(f'https://api.github.com/repos/{repo}/commits?sha={commit}&per_page=1',
+                                     headers={'User-Agent': 'StaxRipLinux'})
+    with urllib.request.urlopen(request, timeout=120) as r:
+        return int(re.search(r'[?&]page=(\d+)>; rel="last"', r.headers['Link']).group(1))
+
+
+# the revision of recipes like AviSynth+, the commit count of their git source
+def revision(text):
+    m = re.search(r'^revision=(\d+)', text, re.M)
+    git = next((line.split() for line in source_lines(text) if line.startswith('git ')), None)
+    return (m, git) if m and git else (None, None)
 
 
 # the version of a branch commit in the style of the old version: <date>-<commit>, <branch>-<commit> or
@@ -234,6 +251,9 @@ def post_upgrade(recipe):
 
         text = replace_in_functions(text, names, pairs)
 
+    m, git = revision(text)
+    if m and git[2] not in old_text:
+        text = text.replace(m.group(0), f'revision={commit_count(git[1], git[2])}', 1)
     path.write_text(text)
 
 
@@ -323,6 +343,9 @@ def check(online):
                         errors.append(f"{recipe.name}: source {i + 1} isn't the commit of tag {tag_of(keys, a['value'])}")
         for i in set(range(len(lines))) - covered:
             errors.append(f'{recipe.name}: source {i + 1} has no annotation')
+        m, git = revision(text)
+        if online and m and int(m.group(1)) != commit_count(git[1], git[2]):
+            errors.append(f"{recipe.name}: revision isn't the commit count of {git[2]}")
     print('\n'.join(errors) or 'all recipes have annotations')
     return 1 if errors else 0
 

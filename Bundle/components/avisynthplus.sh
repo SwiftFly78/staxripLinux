@@ -1,6 +1,8 @@
 # AviSynth+ with the plugins of its repository, the patch makes it load the plugins of the avisynth folder next
 # to the library, so they are found wherever the AppImage is mounted
 version=3.7.6 # renovate: datasource=github-tags depName=AviSynth/AviSynthPlus extractVersion=^v(?<version>.+)$
+# the commit count of the source commit like git rev-list --count, the archive lacks the history, renovate.py updates it
+revision=4909
 packages=AviSynth
 sources="
 git https://github.com/AviSynth/AviSynthPlus.git 523370a39933e2f9c208a5d74c1d35d43d177a76
@@ -42,6 +44,10 @@ build() {
  
      top_frame.Set("LOG_ERROR", (int)LOGLEVEL_ERROR);
 EOF
+    # the version string of builds from git, scripts like CropResize read the revision of it
+    sed -i 's/ -DRELEASE_TARBALL//' avs_core/CMakeLists.txt
+    sed -i -e "s/@AVS_SEQREV@/$revision/" -e 's/@AVS_BRANCH@/HEAD/' -e 's/@AVS_DEVNEXT_REV@/0/' \
+        -e 's/@AVS_DEV_REVDATE@//' -e 's/@AVS_DEV_GITHASH@//' avs_core/core/version.h.in
     cmake_build -DENABLE_PLUGINS=ON
     stage_license distrib/gpl.txt
 }
