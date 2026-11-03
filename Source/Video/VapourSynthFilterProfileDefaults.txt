@@ -37,12 +37,12 @@ Convert | To 444 = clip = core.fmtc.resample(clip, css='444')
 Dither | Gamma / Linear = clip = $select:Gamma To Linear|Dither.gamma_to_linear;Linear To Gamma|Dither.linear_to_gamma$(clip, curve='$select:msg:Select the Color Curve;601;709;2020$')
 Dither | Sigmoid = $select:Sigmoid Inverse|clip = havsfunc.SigmoidInverse(clip);Sigmoid Direct|clip = havsfunc.SigmoidDirect(clip)$
 Dither | SmoothGrad = clip = muvsfunc.GradFun3(src=clip, mode=6, smode=1)
-Dither | Stack = $select:Native to Stack16|clip = core.fmtc.nativetostack16(clip);Stack16 to Native|clip = fmtc.stack16tonative(clip)$
+Dither | Stack = $select:Native to Stack16|clip = core.fmtc.nativetostack16(clip);Stack16 to Native|clip = core.fmtc.stack16tonative(clip)$
 Dither | To RGB / YUV = clip = $select:To RGB|mvsfunc.ToRGB;To YUV|mvsfunc.ToYUV$(clip,matrix='$select:msg:Select Matrix;470bg;240;709;2020;2020cl;bt2020c$')
 
 Tonemap | Placebo =
     clip = core.fmtc.bitdepth(clip, bits=16)
-    clip = core.placebo.Tonemap(clip, src_csp=$select:msg:Select Source Color Space;SDR|0;HDR10 (Default)|1;HLG|2;Dolby Vision|3$, dst_csp=$select:msg:Select Target Color Space;SDR (Default)|0;HDR10|1;HLG|2;Dolby Vision|3$, dynamic_peak_detection=$select:msg:Dynamic Peak Detection?;Yes (Default)|1;No|0$, gamut_mapping=$select:msg:Gamut Mapping Function;Clip|0;Perceptual (Default)|1;Softclip|2;Relative|3;Saturation|4;Absolute|5;Desaturate|6;Darken|7;Highlight|8;Linear|9$, tone_mapping_function=$select:msg:Tonemapping Function;Clip|0;Spline (Default)|1;ST2094_40|2;ST2094_10|3;BT2390|4;BT2446a|5;Reinhard|6;Mobius|7;Hable|8;Gamma|9;Linear|10;LinearLight|11$, metadata=$select:msg:Metadata;Auto (Default)|0;None (Disabled)|1;HDR10 (Static)|2;HDR10+ (MaxRGB)|3;Luminance (CIE Y)|4$, contrast_recovery=0.0, smoothing_period=20.0, percentile=100.0)
+    clip = core.placebo.Tonemap(clip, src_csp=$select:msg:Select Source Color Space;HDR10 (Default)|1;HLG|2;Dolby Vision|3$, dst_csp=$select:msg:Select Target Color Space;SDR (Default)|0;HDR10|1;HLG|2$, dynamic_peak_detection=$select:msg:Dynamic Peak Detection?;Yes (Default)|1;No|0$, gamut_mapping=$select:msg:Gamut Mapping Function;Clip|0;Perceptual (Default)|1;Softclip|2;Relative|3;Saturation|4;Absolute|5;Desaturate|6;Darken|7;Highlight|8;Linear|9$, tone_mapping_function=$select:msg:Tonemapping Function;Clip|0;Spline (Default)|1;ST2094_40|2;ST2094_10|3;BT2390|4;BT2446a|5;Reinhard|6;Mobius|7;Hable|8;Gamma|9;Linear|10;LinearLight|11$, metadata=$select:msg:Metadata;Auto (Default)|0;None (Disabled)|1;HDR10 (Static)|2;HDR10+ (MaxRGB)|3;Luminance (CIE Y)|4$, contrast_recovery=0.0, smoothing_period=20.0, percentile=100.0)
     # clip = clip.resize.Bicubic(format = vs.YUV420P10)
 
 [Crop]
@@ -172,7 +172,7 @@ BM3D = clip = mvsfunc.BM3D(clip, sigma=[3,3,3], radius1=0)
 
 BM3DCUDA | BM3DCPU =
     clip = core.resize.Bicubic(clip, format=vs.YUV420PS)
-    clip = core.bm3dcpu.BM3D(clip, ref=None, sigma=3.0, block_step=8, bm_range=9, radius=0, ps_num=2, ps_range=4, chroma=False, device_id=0, fast=False, extractor_exp=0)
+    clip = core.bm3dcpu.BM3D(clip, ref=None, sigma=3.0, block_step=8, bm_range=9, radius=0, ps_num=2, ps_range=4, chroma=False)
     clip = core.resize.Bicubic(clip, format=vs.YUV420P10)
 
 BM3DCUDA | BM3DCUDA =
