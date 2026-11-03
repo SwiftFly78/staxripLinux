@@ -1043,7 +1043,7 @@ Public Class Package
         .Location = IO.Path.Combine("Plugins", "VS", "LibP2P"),
         .Description = "Vapoursynth plugin for packing/unpacking of RGB clips.",
         .WebURL = "https://github.com/DJATOM/LibP2P-Vapoursynth",
-        .VsFilterNames = {"libp2p.pack", "libp2p.unpack"}})
+        .VsFilterNames = {"libp2p.Pack", "libp2p.Unpack"}})
 
     Shared Property VIVTC As Package = Add(New PluginPackage With {
         .Name = "VIVTC",
@@ -1070,7 +1070,7 @@ Public Class Package
         .HelpURL = "https://forum.doom9.org/showthread.php?t=166582",
         .Description = "Various popular AviSynth scripts ported To VapourSynth.",
         .Dependencies = {"DCTFilter.dll", "DFTTest.dll", "fmtconv.dll", "libfftw3f-3.dll", "libmvtools.dll", "libnnedi3.dll", "NNEDI3CL.dll", "RemoveGrainVS.dll", "vsznedi3.dll"},
-        .VsFilterNames = {"havsfunc.aaf", "havsfunc.AverageFrames", "havsfunc.Bob", "havsfunc.ChangeFPS", "havsfunc.Clamp", "havsfunc.ContraSharpening", "havsfunc.daa", "havsfunc.Deblock_QED", "havsfunc.DeHalo_alpha", "havsfunc.DitherLumaRebuild", "havsfunc.EdgeCleaner", "havsfunc.FastLineDarkenMOD", "havsfunc.FineDehalo", "havsfunc.FixChromaBleedingMod", "havsfunc.GrainFactory3", "havsfunc.GrainStabilizeMC", "havsfunc.HQDeringmod", "havsfunc.InterFrame", "havsfunc.ivtc_txt60mc", "havsfunc.KNLMeansCL", "havsfunc.logoNR", "havsfunc.LSFmod", "havsfunc.LUTDeCrawl", "havsfunc.LUTDeRainbow", "havsfunc.MCTemporalDenoise", "havsfunc.MinBlur", "havsfunc.mt_deflate_multi", "havsfunc.mt_expand_multi", "havsfunc.mt_inflate_multi", "havsfunc.mt_inpand_multi", "havsfunc.Overlay", "havsfunc.Padding", "havsfunc.QTGMC", "havsfunc.Resize", "havsfunc.santiag", "havsfunc.sbr", "havsfunc.SCDetect", "havsfunc.SigmoidDirect", "havsfunc.SigmoidInverse", "havsfunc.smartfademod", "havsfunc.SMDegrain", "havsfunc.SmoothLevels", "havsfunc.srestore", "havsfunc.Stab", "havsfunc.STPresso", "havsfunc.TemporalDegrain", "havsfunc.Toon", "havsfunc.Vinverse", "havsfunc.Vinverse2", "havsfunc.Weave", "havsfunc.YAHR"}})
+        .VsFilterNames = {"havsfunc.aaf", "havsfunc.AverageFrames", "havsfunc.Bob", "havsfunc.ChangeFPS", "havsfunc.Clamp", "havsfunc.ContraSharpening", "havsfunc.daa", "havsfunc.Deblock_QED", "havsfunc.DeHalo_alpha", "havsfunc.DitherLumaRebuild", "havsfunc.EdgeCleaner", "havsfunc.FastLineDarkenMOD", "havsfunc.FineDehalo", "havsfunc.FixChromaBleedingMod", "havsfunc.GrainFactory3", "havsfunc.HQDeringmod", "havsfunc.InterFrame", "havsfunc.ivtc_txt60mc", "havsfunc.KNLMeansCL", "havsfunc.logoNR", "havsfunc.LSFmod", "havsfunc.LUTDeCrawl", "havsfunc.LUTDeRainbow", "havsfunc.MCTemporalDenoise", "havsfunc.MinBlur", "havsfunc.mt_deflate_multi", "havsfunc.mt_expand_multi", "havsfunc.mt_inflate_multi", "havsfunc.mt_inpand_multi", "havsfunc.Overlay", "havsfunc.Padding", "havsfunc.QTGMC", "havsfunc.Resize", "havsfunc.santiag", "havsfunc.sbr", "havsfunc.SCDetect", "havsfunc.SigmoidDirect", "havsfunc.SigmoidInverse", "havsfunc.smartfademod", "havsfunc.SMDegrain", "havsfunc.SmoothLevels", "havsfunc.srestore", "havsfunc.Stab", "havsfunc.STPresso", "havsfunc.TemporalDegrain", "havsfunc.Toon", "havsfunc.Vinverse", "havsfunc.Vinverse2", "havsfunc.Weave", "havsfunc.YAHR"}})
 
     Shared Property DescaleAVS As Package = Add(New PluginPackage With {
         .Name = "Descale",
@@ -1217,7 +1217,7 @@ Public Class Package
         .DownloadURL = "https://github.com/realfinder/AVS-Stuff/blob/Community/avs%202.5%20and%20up/Zs_RF_Shared.avsi",
         .Description = "Shared Functions and utility.",
         .Dependencies = {"fft3dfilter.dll", "neo-fft3d.dll", "tmm2.dll"},
-        .AvsFilterNames = {"sh_StrReplace", "sAverageLumaMask", "m4_sh", "sh_sharpen2", "sh_SootheSS", "slinesm", "t_linemask", "swlinesm", "GreyCenteredToMask_dhh", "Camembert_dhh", "Camembert_dhhMod", "EMask_dhh", "spasses", "spasses2", "sspasses", "sminideen", "DarkPreserve_function", "lightPreserve_function", "sh_Padding", "sTryFTurnRight", "sTryFTurnLeft", "sTryFTurn180", "slimit_dif", "slimit_dif2", "sh_GetCSP", "sh_Y8_YV411", "ContraSharpening", "MinBlur", "sbr", "Dither_YUY2toPlanar16", "Dither_YUY2toPlanar", "Dither_YUY2toInterleaved16", "Dither_YUY2toInterleaved", "Dither_Luma_Rebuild", "SH_KNLMeansCL", "sh_RemoveGrain", "y_gamma_to_linear", "y_linear_to_gamma", "linear_and_gamma", "build_sigmoid_expr", "sigmoid_direct", "sigmoid_inverse", "sh_Vinverse2", "sbrV", "sh_Vinverse2H", "sbrH", "sBlackerPixel", "swhiterPixel", "chroma_rep", "chroma_rep2", "smartfademod", "ediaa", "daa", "maa", "SharpAAMCmod", "VinverseD", "smam", "smam_mask", "Hqdn3d_2", "interlaced60or50", "convert_Fields_scan_order", "yadifmodclipin", "yadifmodclipout", "tmm2_ortmm1", "nonyuy2clipin", "nonyuy2clipout", "sh_LimitChange", "sh_Bob", "sneo_FFT3D", "sneo_dfttest", "svsTTempSmooth", "svsTTempSmoothf", "svsMSharpen", "svsTBilateral", "svsTcanny", "sTcannyMod", "sh_GetUserGlobalIMT", "sh_GetUserGlobalIMTint", "sh_GetUserGlobalIMTbool", "sChromaShift2", "ChrEatWhite", "IsAvsNeo", "IsAvsPlus", "AvsPlusVersionNumber"}})
+        .AvsFilterNames = {"sh_StrReplace", "sAverageLumaMask", "m4_sh", "sh_sharpen2", "sh_SootheSS", "slinesm", "t_linemask", "swlinesm", "GreyCenteredToMask_dhh", "Camembert_dhh", "Camembert_dhhMod", "EMask_dhh", "spasses", "spasses2", "sspasses", "sminideen", "DarkPreserve_function", "lightPreserve_function", "sh_Padding", "sTryFTurnRight", "sTryFTurnLeft", "sTryFTurn180", "slimit_dif", "slimit_dif2", "sh_GetCSP", "sh_Y8_YV411", "ContraSharpening", "MinBlur", "Dither_YUY2toPlanar16", "Dither_YUY2toPlanar", "Dither_YUY2toInterleaved16", "Dither_YUY2toInterleaved", "Dither_Luma_Rebuild", "SH_KNLMeansCL", "sh_RemoveGrain", "y_gamma_to_linear", "y_linear_to_gamma", "linear_and_gamma", "build_sigmoid_expr", "sigmoid_direct", "sigmoid_inverse", "sh_Vinverse2", "sh_Vinverse2H", "sbrH", "sBlackerPixel", "swhiterPixel", "chroma_rep", "chroma_rep2", "smartfademod", "ediaa", "maa", "SharpAAMCmod", "VinverseD", "smam", "smam_mask", "Hqdn3d_2", "interlaced60or50", "convert_Fields_scan_order", "yadifmodclipin", "yadifmodclipout", "tmm2_ortmm1", "nonyuy2clipin", "nonyuy2clipout", "sh_LimitChange", "sh_Bob", "sneo_FFT3D", "sneo_dfttest", "svsTTempSmooth", "svsTTempSmoothf", "svsMSharpen", "svsTBilateral", "svsTcanny", "sTcannyMod", "sh_GetUserGlobalIMT", "sh_GetUserGlobalIMTint", "sh_GetUserGlobalIMTbool", "sChromaShift2", "ChrEatWhite", "IsAvsNeo", "IsAvsPlus", "AvsPlusVersionNumber"}})
 
     Shared Property LSFmod As Package = Add(New PluginPackage With {
         .Name = "LSFmod",
@@ -1380,7 +1380,7 @@ Public Class Package
         .WebURL = "https://github.com/Irrational-Encoding-Wizardry/descale",
         .DownloadURL = "https://github.com/Irrational-Encoding-Wizardry/descale/releases",
         .Description = "Video/Image filter to undo upscaling.",
-        .VsFilterNames = {"descale.Debilinear", "descale.Debicubic", "descale.Delanczos", "descale.Despline16", "descale.Despline36", "descale.Despline64", "descale.Descale"}})
+        .VsFilterNames = {"descale.Debilinear", "descale.Debicubic", "descale.Delanczos", "descale.Despline16", "descale.Despline36", "descale.Despline64"}})
 
     Shared Property InsaneAA As Package = Add(New PluginPackage With {
         .Name = "insaneAA",
@@ -1646,7 +1646,7 @@ Public Class Package
             .WebURL = "https://github.com/pinterf/mvtools",
             .DownloadURL = "https://github.com/pinterf/mvtools/releases",
             .HelpURL = "http://avisynth.nl/index.php/MVTools",
-            .AvsFilterNames = {"MSuper", "MAnalyse", "MCompensate", "MMask", "MSCDetection", "MShow", "MDepan", "MFlow", "MFlowInter", "MFlowFps", "MBlockFps", "MFlowBlur", "MDegrain1", "MDegrain2", "MDegrain3", "MDegrain4", "MDegrain5", "MDegrain6", "MDegrainN", "MRecalculate", "MVShow"}})
+            .AvsFilterNames = {"MSuper", "MAnalyse", "MCompensate", "MMask", "MSCDetection", "MShow", "MDepan", "MFlow", "MFlowInter", "MFlowFps", "MBlockFps", "MFlowBlur", "MDegrain1", "MDegrain2", "MDegrain3", "MDegrain4", "MDegrain5", "MDegrain6", "MDegrainN", "MRecalculate"}})
 
         Add(New PluginPackage With {
             .Name = "DePan",
@@ -2180,7 +2180,7 @@ Public Class Package
             .Filename = "vcmod.dll",
             .Description = "vcmod plugin for VapourSynth.",
             .WebURL = "https://github.com/AmusementClub/vcm",
-            .VsFilterNames = {"vcmod.Median", "vcmod.Amplitude", "vcmod.GBlur", "vcmod.MBlur", "vcmod.Histogram", "vcmod.Fan", "vcmod.Variance", "vcmod.Neural", "vcmod.Veed", "vcmod.SaltPepper"}})
+            .VsFilterNames = {"vcm.Median", "vcm.Amp", "vcm.GBlur", "vcm.MBlur", "vcm.Hist", "vcm.Fan", "vcm.Variance", "vcm.Neural", "vcm.Veed", "vcm.SaltPepper"}})
 
         Add(New PluginPackage With {
             .Name = "vcmove",
@@ -2297,7 +2297,7 @@ Public Class Package
             .Location = IO.Path.Combine("Plugins", "VS", "Scripts"),
             .WebURL = "https://github.com/dubhater/vapoursynth-mvtools",
             .Description = "MVTools is a set of filters for motion estimation and compensation.",
-            .VsFilterNames = {"mvmulti.StoreVect", "mvmulti.Analyse", "mvmulti.Recalculate", "mvmulti.Compensate", "mvmulti.Restore", "mvmulti.Flow", "mvmulti.DegrainN"}})
+            .VsFilterNames = {"mvmulti.StoreVect", "mvmulti.Analyze", "mvmulti.Recalculate", "mvmulti.Compensate", "mvmulti.RestoreVect", "mvmulti.Flow", "mvmulti.DegrainN"}})
 
         Add(New PluginPackage With {
             .Name = "Sangnom",
@@ -2414,7 +2414,7 @@ Public Class Package
             .Location = IO.Path.Combine("Plugins", "VS", "Scripts"),
             .Description = "Plum is a sharpening/blind deconvolution suite with certain advanced features like Non-Local error, Block Matching, etc..",
             .WebURL = "https://github.com/IFeelBloated/Vine",
-            .VsFilterNames = {"Vine.Super", "Vine.Basic", "Vine.Final", "Vine.Dilation", "Vine.Erosion", "Vine.Closing", "Vine.Opening", "Vine.Gradient", "Vine.TopHat", "Vine.Blackhat"}})
+            .VsFilterNames = {"Vine.Super", "Vine.Basic", "Vine.Final", "Vine.Dilation", "Vine.Erosion", "Vine.Closing", "Vine.Opening", "Vine.Gradient", "Vine.TopHat", "Vine.BlackHat"}})
 
         Add(New PluginPackage With {
             .Name = "TCanny",
@@ -2429,7 +2429,7 @@ Public Class Package
             .Description = "A ported AA-script from Avisynth.",
             .Location = IO.Path.Combine("Plugins", "VS", "Scripts"),
             .WebURL = "https://github.com/HomeOfVapourSynthEvolution/vsTAAmbk",
-            .VsFilterNames = {"vsTAAmbk.TAAmbk", "vsTAAmbk.vsTAAmbk"}})
+            .VsFilterNames = {"vsTAAmbk.TAAmbk"}})
 
         Add(New PluginPackage With {
             .Name = "mvsfunc",
@@ -2574,8 +2574,8 @@ Public Class Package
             .WebURL = "https://github.com/EleonoreMizo/fmtconv",
             .HelpFilename = IO.Path.Combine("doc", "fmtconv.html"),
             .Description = "Fmtconv is a format-conversion plug-in for the Vapoursynth video processing engine. It does resizing, bitdepth conversion with dithering and colorspace conversion.",
-            .AvsFilterNames = {"fmtc_bitdepth", "fmtc_convert", "fmtc_matrix", "fmtc_resample", "fmtc_transfer", "fmtc_primaries", "fmtc_matrix2020cl", "fmtc_nativetostack16", "fmtc_stack16tonative"},
-            .VsFilterNames = {"fmtc.bitdepth", "fmtc.convert", "fmtc.matrix", "fmtc.resample", "fmtc.transfer", "fmtc.primaries", "fmtc.matrix2020cl", "fmtc.nativetostack16", "fmtc.stack16tonative"}})
+            .AvsFilterNames = {"fmtc_bitdepth", "fmtc_matrix", "fmtc_resample", "fmtc_transfer", "fmtc_primaries", "fmtc_matrix2020cl"},
+            .VsFilterNames = {"fmtc.bitdepth", "fmtc.matrix", "fmtc.resample", "fmtc.transfer", "fmtc.primaries", "fmtc.matrix2020cl", "fmtc.nativetostack16", "fmtc.stack16tonative"}})
 
         Add(New PluginPackage With {
             .Name = "finesharp",
