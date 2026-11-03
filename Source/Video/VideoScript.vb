@@ -577,27 +577,19 @@ clipname.set_output()" + BR
                 If plugin.VsFilterNames IsNot Nothing Then
                     For Each filterName In plugin.VsFilterNames
                         If functions.Contains(filterName) Then
-                            WriteVSCode(script, code, filterName, plugin)
+                            WriteVSCode(script, code, plugin)
                         End If
                     Next
                 End If
 
                 If script.ToString().Contains("import " & plugin.Name) OrElse code.ToString().Contains("import " & plugin.Name) Then
-                    WriteVSCode(script, code, Nothing, plugin)
-                End If
-
-                If plugin.AvsFilterNames IsNot Nothing Then
-                    For Each filterName In plugin.AvsFilterNames
-                        If script.Contains(".avs." & filterName) Then
-                            WriteVSCode(script, code, filterName, plugin)
-                        End If
-                    Next
+                    WriteVSCode(script, code, plugin)
                 End If
             End If
         Next
     End Function
 
-    Shared Sub WriteVSCode(ByRef script As String, ByRef code As String, ByRef filterName As String, plugin As PluginPackage)
+    Shared Sub WriteVSCode(ByRef script As String, ByRef code As String, plugin As PluginPackage)
         If plugin.Filename.Ext = "py" Then
             Dim line = plugin.Name + " = importlib.machinery.SourceFileLoader('" + plugin.Name + "', " + ToPythonString(plugin.Path) + ").load_module()"
 
@@ -612,9 +604,7 @@ clipname.set_output()" + BR
             End If
         Else
             If s.LoadVapourSynthPlugins AndAlso Not IsVsPluginInAutoLoadFolder(plugin.Filename) AndAlso Not script.Contains(plugin.Filename) AndAlso Not code.Contains(plugin.Filename) Then
-                Dim line = If(script.Contains(".avs." + filterName) OrElse code.Contains(".avs." + filterName),
-                    "core.avs.LoadPlugin(" + ToPythonString(plugin.Path) + ")",
-                    "core.std.LoadPlugin(" + ToPythonString(plugin.Path) + ", altsearchpath=True)")
+                Dim line = "core.std.LoadPlugin(" + ToPythonString(plugin.Path) + ", altsearchpath=True)"
 
                 If Not plugin.RequirementsFulfilled Then
                     code += "# !! The following line is commented out by StaxRipLinux, because the system does not fulfill all requirements to execute it !!" & BR & "# "
