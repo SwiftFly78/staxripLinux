@@ -2635,6 +2635,15 @@ Public Class Package
             .AvsFilterNames = {"vsTTempSmooth"}})
 
         Add(New PluginPackage With {
+            .Name = "vsTCanny",
+            .Filename = "vsTCanny.dll",
+            .Description = "Builds an edge map using canny edge detection. This is a port of the VapourSynth plugin TCanny.",
+            .WebURL = "https://github.com/Asd-g/AviSynth-vsTCanny",
+            .HelpURL = "http://avisynth.nl/index.php/VsTCanny",
+            .DownloadURL = "https://github.com/Asd-g/AviSynth-vsTCanny/releases",
+            .AvsFilterNames = {"vsTCanny"}})
+
+        Add(New PluginPackage With {
             .Name = "CASm",
             .Filename = "CASm.avsi",
             .Location = IO.Path.Combine("Plugins", "AVS", "Scripts"),

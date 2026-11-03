@@ -66,6 +66,7 @@ avs-bifrost
 avs-hqdn3d
 avs-vscnr2
 avs-vsttempsmooth
+avs-vstcanny
 avs-mpeg2decplus
 avs-timecodefps
 avs-descale
