@@ -1,4 +1,4 @@
-version=1.8.4
+version=1.8.4 # renovate: datasource=github-tags depName=pinterf/AddGrainC extractVersion=^v(?<version>.+)$
 packages="
 AddGrainC avs
 "

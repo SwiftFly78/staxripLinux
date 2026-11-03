@@ -1,4 +1,4 @@
-version=1.1.0
+version=1.1.0 # renovate: datasource=github-tags depName=Asd-g/AviSynth-DPID
 packages="
 DPID avs
 "

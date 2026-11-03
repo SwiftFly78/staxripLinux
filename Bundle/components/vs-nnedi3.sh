@@ -1,4 +1,4 @@
-version=12
+version=12 # renovate: datasource=github-tags depName=dubhater/vapoursynth-nnedi3 extractVersion=^v(?<version>.+)$
 packages="
 nnedi3 vs
 "

@@ -1,5 +1,5 @@
 # the Essential fork of SVT-AV1 by nekotrix
-version=4.0.1-Essential
+version=4.0.1-Essential # renovate: datasource=github-tags depName=nekotrix/SVT-AV1-Essential versioning=loose extractVersion=^v(?<version>.+)$
 packages="SvtAv1EncApp (SVT-AV1-Essential)"
 sources="
 git https://github.com/nekotrix/SVT-AV1-Essential.git 7b064486c2f3996e9371593bb6c4ab6e1ba41b9f

@@ -1,6 +1,7 @@
 # the Rust toolchain and cargo-c for the components written in Rust, only used to build them, the standard
 # library of Rust is linked into their libraries
-version=1.99.1
+version=1.99.1 # renovate: datasource=github-tags depName=rust-lang/rust
+cargo_c_version=0.10.26 # renovate: datasource=github-releases depName=lu-zero/cargo-c extractVersion=^v(?<version>.+)$ source=4
 sources="
 https://static.rust-lang.org/dist/rustc-1.99.1-x86_64-unknown-linux-gnu.tar.xz 2ff05ff9c08a90861e7f6e4065b40a8b87463b4576186fd613871c3e37f2091f
 https://static.rust-lang.org/dist/cargo-1.99.1-x86_64-unknown-linux-gnu.tar.xz 53f3521949404d595efb06a55c12c5658d4ed1c75566f33d3d514eaebe70bd8a

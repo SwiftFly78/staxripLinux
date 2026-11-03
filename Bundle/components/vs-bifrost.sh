@@ -1,4 +1,4 @@
-version=4.0
+version=4.0 # renovate: datasource=github-tags depName=dubhater/vapoursynth-bifrost extractVersion=^v(?<version>.+)$
 packages="
 Bifrost vs
 "

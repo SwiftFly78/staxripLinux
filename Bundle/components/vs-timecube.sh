@@ -1,4 +1,4 @@
-version=r5
+version=r5 # renovate: datasource=github-tags depName=sekrit-twc/timecube versioning=loose
 packages="
 TimeCube vs
 "

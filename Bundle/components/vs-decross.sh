@@ -1,4 +1,4 @@
-version=3
+version=3 # renovate: datasource=github-tags depName=dubhater/vapoursynth-decross extractVersion=^v(?<version>.+)$
 packages="
 DeCross vs
 "

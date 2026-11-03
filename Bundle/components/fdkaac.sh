@@ -1,5 +1,6 @@
 # fdkaac with a static build of the Fraunhofer FDK AAC library
-version=1.0.9
+version=1.0.9 # renovate: datasource=github-tags depName=nu774/fdkaac extractVersion=^v(?<version>.+)$ source=2
+fdk_aac_version=2.0.3 # renovate: datasource=github-tags depName=mstorsjo/fdk-aac extractVersion=^v(?<version>.+)$ source=1
 packages=fdkaac
 sources="
 git https://github.com/mstorsjo/fdk-aac.git 716f4394641d53f0d79c9ddac3fa93b03a49f278

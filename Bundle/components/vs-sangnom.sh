@@ -1,4 +1,4 @@
-version=45
+version=45 # renovate: datasource=github-tags depName=dubhater/vapoursynth-sangnom extractVersion=^r(?<version>.+)$
 packages="
 Sangnom vs
 "

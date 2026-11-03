@@ -1,5 +1,5 @@
 # the static build of the release, the sources contain the source code of the same release
-version=0.8.1
+version=0.8.1 # renovate: datasource=github-releases depName=xiph/rav1e extractVersion=^v(?<version>.+)$
 packages="rav1e"
 sources="
 https://github.com/xiph/rav1e/releases/download/v0.8.1/rav1e-0.8.1-linux-generic.tar.gz 5e03b1c120e9cd113c790a08867f8ac944f612fab8a59c2e72f00e29a86c853d

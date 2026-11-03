@@ -1,4 +1,4 @@
-version=1.3.0
+version=1.3.0 # renovate: datasource=github-tags depName=Asd-g/AviSynth-BWDIF
 packages="
 Bwdif avs
 "

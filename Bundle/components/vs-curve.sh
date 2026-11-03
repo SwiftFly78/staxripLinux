@@ -1,4 +1,4 @@
-version=r3
+version=r3 # renovate: datasource=github-tags depName=HomeOfVapourSynthEvolution/VapourSynth-Curve versioning=loose
 packages="
 Curve vs
 "

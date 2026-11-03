@@ -1,4 +1,4 @@
-version=29.2
+version=29.2 # renovate: datasource=github-tags depName=dubhater/vapoursynth-mvtools versioning=regex:^v?(?<major>\d+)[._](?<minor>\d+)$ tag=v{version_}
 packages="
 mvtools vs
 "

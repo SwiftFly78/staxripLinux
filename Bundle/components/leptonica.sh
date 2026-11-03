@@ -1,5 +1,5 @@
 # the image library of Tesseract, StaxRip's OCR passes PNG files
-version=1.87.0
+version=1.87.0 # renovate: datasource=github-releases depName=DanBloomberg/leptonica
 sources="
 https://github.com/DanBloomberg/leptonica/releases/download/1.87.0/leptonica-1.87.0.tar.gz c73363397f96eb1295602bf44d708a994ad42046c791bf03ea0505d829bdb6a7
 "

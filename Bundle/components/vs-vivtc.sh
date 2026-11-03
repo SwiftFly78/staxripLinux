@@ -1,4 +1,4 @@
-version=R2
+version=R2 # renovate: datasource=github-tags depName=vapoursynth/vivtc versioning=loose
 packages="
 VIVTC vs
 "

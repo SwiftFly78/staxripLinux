@@ -1,4 +1,4 @@
-version=0.2.8
+version=0.2.8 # renovate: datasource=github-tags depName=Asd-g/yadifmod2
 packages="
 yadifmod2 avs
 "

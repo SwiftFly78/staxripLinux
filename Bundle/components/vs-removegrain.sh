@@ -1,4 +1,4 @@
-version=R1-89ca38a
+version=R1-89ca38a # renovate: datasource=git-refs depName=https://github.com/vapoursynth/vs-removegrain.git branch=master digest=89ca38a6971e371bdce2778291393258daa5f03b
 packages="
 RemoveGrain vs
 "

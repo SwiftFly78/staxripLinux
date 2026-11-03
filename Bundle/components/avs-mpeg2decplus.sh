@@ -1,4 +1,4 @@
-version=1.3.0
+version=1.3.0 # renovate: datasource=github-tags depName=Asd-g/MPEG2DecPlus
 packages="
 D2VSource avs
 "

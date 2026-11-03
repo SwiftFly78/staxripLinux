@@ -1,4 +1,4 @@
-version=2.2.30
+version=2.2.30 # renovate: datasource=github-tags depName=pinterf/masktools
 packages="
 masktools2 avs
 "

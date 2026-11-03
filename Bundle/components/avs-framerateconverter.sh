@@ -1,4 +1,4 @@
-version=1.3-21fb765
+version=1.3-21fb765 # renovate: datasource=git-refs depName=https://github.com/mysteryx93/FrameRateConverter.git branch=master digest=21fb7654e4c1b4899894692ab4ad24063643c496
 packages="
 FrameRateConverter DLL avs
 "

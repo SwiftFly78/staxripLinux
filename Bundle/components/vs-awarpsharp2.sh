@@ -1,4 +1,4 @@
-version=4
+version=4 # renovate: datasource=github-tags depName=dubhater/vapoursynth-awarpsharp2 extractVersion=^v(?<version>.+)$
 packages="
 AWarpSharp2 vs
 "

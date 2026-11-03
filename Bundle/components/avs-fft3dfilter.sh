@@ -1,4 +1,4 @@
-version=2.12
+version=2.12 # renovate: datasource=github-tags depName=pinterf/fft3dfilter extractVersion=^v(?<version>.+)$
 packages="
 FFT3DFilter avs
 "

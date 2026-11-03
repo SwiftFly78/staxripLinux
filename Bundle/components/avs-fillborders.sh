@@ -1,4 +1,4 @@
-version=1.5.0
+version=1.5.0 # renovate: datasource=github-tags depName=Asd-g/AviSynth-FillBorders
 packages="
 FillBorders avs
 "

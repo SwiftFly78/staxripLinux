@@ -1,6 +1,6 @@
 # the player of the preview and the play commands, for X11, Wayland desktops run it with XWayland, the Wayland
 # and Vulkan versions of Ubuntu 22.04 are too old for it
-version=0.41.0
+version=0.41.0 # renovate: datasource=github-tags depName=mpv-player/mpv extractVersion=^v(?<version>.+)$
 packages=mpv
 depends="ffmpeg libass libplacebo"
 sources="

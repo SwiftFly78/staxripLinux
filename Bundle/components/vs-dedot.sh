@@ -1,4 +1,4 @@
-version=4
+version=4 # renovate: datasource=github-tags depName=dubhater/vapoursynth-dedot extractVersion=^v(?<version>.+)$
 packages="
 LibDedot vs
 "

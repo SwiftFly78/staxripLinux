@@ -1,4 +1,4 @@
-version=1.1.6
+version=1.1.6 # renovate: datasource=github-tags depName=Asd-g/TimecodeFPS
 packages="
 TimecodeFPS avs
 "

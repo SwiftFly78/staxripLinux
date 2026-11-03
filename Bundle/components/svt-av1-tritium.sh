@@ -1,5 +1,5 @@
 # the Tritium fork of SVT-AV1 by Uranite
-version=2026-10-02-2f66694
+version=2026-10-02-2f66694 # renovate: datasource=git-refs depName=https://github.com/Uranite/svt-av1-tritium.git branch=main digest=2f666940c0817145c1e995207fc69d2bb9847340
 packages="SvtAv1EncApp (SVT-AV1-Tritium)"
 depends="libdovi libhdr10plus"
 sources="

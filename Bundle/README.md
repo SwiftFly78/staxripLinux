@@ -30,7 +30,8 @@ it depends on. With `KEEP_GOING=1` a failed component doesn't stop the build, th
 
 `components/<name>.sh` is the recipe of a component, the helpers it uses are in `lib.sh`. It defines:
 
-- `version`, the version of the component.
+- `version`, the version of the component, with a `# renovate:` comment that tells Renovate where to look for
+  new versions, see [Updates](#updates). Sources with versions of their own get variables like `zimg_version`.
 - `packages`, the IDs of the StaxRipLinux packages (see `Source/General/Package.vb`) the component provides,
   one per line. Their versions are written to `Apps/versions.txt`.
 - `depends`, the components it needs to build, they come before it in `components.list`.
@@ -50,11 +51,52 @@ projects, with stand-ins for the parts of the Windows API they use. The C librar
 `cargo_c_install` and the toolchain of the `rust` component, cargo downloads the crates their `Cargo.lock` pins and
 verifies them.
 
-To update a component, change its version, URLs and checksums, and check the signature of a new source archive
-if the project publishes one. CPU specific code must be detected at runtime, never use `-march=native`.
+Renovate recommends the updates of the components, see [Updates](#updates). CPU specific code must be detected at
+runtime, never use `-march=native`.
 
 VapourSynth is R79, the last version that loads plugins of API 3, which many plugins still use, and the version
 upstream StaxRip ships. The AviSynth and VapourSynth scripts are in `scripts`, see the README there.
+
+## Updates
+
+[Renovate](https://docs.renovatebot.com) recommends every update as a pull request: of the components, the NuGet
+packages, the actions of the workflows, the base image and the build tools of `requirements-build.txt`. It runs
+weekly in `.github/workflows/renovate.yml` with the configuration `.github/renovate.json5`:
+
+- A release is proposed two weeks after its publication, when broken and malicious releases are usually known.
+- Every component gets a pull request of its own, at most ten are open at a time. The base image and the build
+  tools are grouped and proposed once a month, a new build image rebuilds every component.
+- Commits of a branch, the source of components without releases, are proposed once a month.
+- Known breaks aren't proposed by themselves: major versions of FFmpeg (L-SMASH-Works), VapourSynth R80 and newer
+  (plugins of API 3) and libplacebo newer than 7.360 (QSVEncC, VCEEncC). The Dependency Dashboard issue lists them
+  with every other pending update, a tick there opens the pull request.
+
+The `# renovate:` comment of a version names the datasource and package of its upstream, for example:
+
+```sh
+version=8.1.3 # renovate: datasource=github-tags depName=FFmpeg/FFmpeg extractVersion=^n(?<version>.+)$
+version=1.0-d00a374 # renovate: datasource=git-refs depName=https://github.com/o/r.git branch=master digest=<commit>
+```
+
+Renovate changes the version (or the digest), `renovate.py post-upgrade` completes the update in the same commit: the
+commit of the tag of a git source, the URLs and checksums of downloads and the names in `build` and `bundle`.
+`source=<n>[,<n>]` assigns the version to lines of `sources`, `none=<reason>` marks a component without updates.
+`renovate.py check --online` verifies the comments of all recipes, run it after adding a component.
+
+The CI workflow tests every pull request: it builds the changed components with everything that depends on them,
+builds the AppImages and runs the test suites of `Tests`, see the README there. An update is merged when its tests
+pass, with "Squash and merge", every commit of master gets a version. CI then tags the commit with
+`Source/version.sh` and releases it.
+
+Renovate runs as a GitHub App of the repository, the pull requests of the token of a workflow wouldn't start CI. To
+set it up once:
+
+1. Create a GitHub App (Settings, Developer settings, GitHub Apps, New GitHub App) without webhook, with the
+   repository permissions Contents, Issues, Pull requests and Workflows (read and write), Checks and Commit statuses
+   (read), and install it on the repository.
+2. Store its App ID as the variable `RENOVATE_APP_ID` and a private key of it as the secret
+   `RENOVATE_APP_PRIVATE_KEY` of the repository (Settings, Secrets and variables, Actions).
+3. Protect master with a ruleset that requires the status check `Tests passed` of CI.
 
 ## Libraries
 

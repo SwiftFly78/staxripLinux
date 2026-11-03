@@ -1,4 +1,4 @@
-version=3.3.1
+version=3.3.1 # renovate: datasource=github-tags depName=sgt0/vs-placebo extractVersion=^v(?<version>.+)$
 packages="
 libvs_placebo vs
 "

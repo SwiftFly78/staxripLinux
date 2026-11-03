@@ -1,4 +1,4 @@
-version=1.0.32
+version=1.0.32 # renovate: datasource=github-tags depName=pinterf/TIVTC extractVersion=^v(?<version>.+)$
 packages="
 TIVTC avs
 TDeint avs

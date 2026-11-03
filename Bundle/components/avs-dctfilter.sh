@@ -1,5 +1,5 @@
 # only Visual Studio projects upstream, built with port_plugin
-version=0.5.1-6ee89c9
+version=0.5.1-6ee89c9 # renovate: datasource=git-refs depName=https://github.com/Asd-g/DCTFilter.git branch=v8_interface digest=6ee89c9f92c981edbd1e67e4cd67866316671115
 packages="
 DCTFilter avs
 "

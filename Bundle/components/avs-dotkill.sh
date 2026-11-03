@@ -1,4 +1,4 @@
-version=1.0.0
+version=1.0.0 # renovate: datasource=github-tags depName=Asd-g/AviSynth-DotKill
 packages="
 DotKill avs
 "

@@ -1,4 +1,4 @@
-version=1.1.1
+version=1.1.1 # renovate: datasource=github-tags depName=Asd-g/AviSynth-hqdn3d
 packages="
 HQDN3D avs
 "

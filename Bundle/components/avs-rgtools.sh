@@ -1,4 +1,4 @@
-version=1.3
+version=1.3 # renovate: datasource=github-tags depName=pinterf/RgTools
 packages="
 RgTools avs
 "

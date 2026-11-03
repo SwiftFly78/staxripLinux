@@ -1,5 +1,5 @@
 # the static build of the release, the sources contain the source code of the same release
-version=1.7.2
+version=1.7.2 # renovate: datasource=github-releases depName=quietvoid/hdr10plus_tool
 packages="HDR10Plus_Tool"
 sources="
 https://github.com/quietvoid/hdr10plus_tool/releases/download/1.7.2/hdr10plus_tool-1.7.2-x86_64-unknown-linux-musl.tar.gz 06385f37a639d61ba21d4be3150c863846933bc3b58110e094d8fc8f1c2249f2

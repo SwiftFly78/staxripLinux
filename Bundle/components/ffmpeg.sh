@@ -1,5 +1,5 @@
 # 8.1, L-SMASH-Works uses AVCodecParser.split, which FFmpeg 9 removed
-version=8.1.3
+version=8.1.3 # renovate: datasource=github-tags depName=FFmpeg/FFmpeg extractVersion=^n(?<version>.+)$
 packages="
 ffmpeg
 ffprobe

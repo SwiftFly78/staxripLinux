@@ -1,6 +1,6 @@
 # the official wheel contains the core, vspipe and VSScript, it's installed into the bundled Python, R79 is the last
 # version that loads plugins of API 3, which many plugins still use, and the version upstream StaxRip ships
-version=R79
+version=R79 # renovate: datasource=pypi depName=VapourSynth versioning=regex:^R?(?<major>\d+)$ source=1,2
 packages="
 VapourSynth
 vspipe

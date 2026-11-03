@@ -1,4 +1,4 @@
-version=r10
+version=r10 # renovate: datasource=github-tags depName=HomeOfVapourSynthEvolution/VapourSynth-EEDI3 versioning=loose
 packages="
 EEDI3m vs
 "

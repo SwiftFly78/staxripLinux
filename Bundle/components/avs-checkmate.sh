@@ -1,5 +1,5 @@
 # only a Visual Studio project upstream, built with port_plugin
-version=0.9-31f0c5d
+version=0.9-31f0c5d # renovate: datasource=git-refs depName=https://github.com/tp7/checkmate.git branch=master digest=31f0c5d571c5d1ff682eba534a078f74cc017546
 packages="
 checkmate avs
 "

@@ -1,0 +1,72 @@
+name: Renovate
+
+# Recommends updates of the bundled tools and the other dependencies as pull requests, see "Updates" in
+# Bundle/README.md. Runs weekly, by hand, and when someone ticks a box in the Dependency Dashboard issue or in an update
+# pull request. Uses the GitHub App of the repository, the pull requests of the GITHUB_TOKEN wouldn't start CI.
+on:
+  schedule:
+    - cron: '17 3 * * 1'
+  workflow_dispatch:
+  issues:
+    types: [edited]
+  pull_request:
+    types: [edited]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: renovate
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  renovate:
+    # Renovate edits the dashboard and its pull requests itself, only the edits of people start it
+    if: >-
+      github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' ||
+      github.event.sender.type != 'Bot' && (github.event.issue.title == 'Dependency Dashboard' ||
+      startsWith(github.event.pull_request.head.ref, 'renovate/'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      RENOVATE_VERSION: 44.171.1 # renovate: datasource=npm depName=renovate
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Get a token of the GitHub App
+        id: app
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ vars.RENOVATE_APP_ID }}
+          private-key: ${{ secrets.RENOVATE_APP_PRIVATE_KEY }}
+
+      - name: Install Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Run Renovate
+        env:
+          RENOVATE_TOKEN: ${{ steps.app.outputs.token }}
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          APP_SLUG: ${{ steps.app.outputs.app-slug }}
+          RENOVATE_PLATFORM: github
+          RENOVATE_REPOSITORIES: ${{ github.repository }}
+          RENOVATE_ONBOARDING: 'false'
+          RENOVATE_REQUIRE_CONFIG: required
+          # the tools of the runner, Bundle/renovate.py needs Python and git
+          RENOVATE_BINARY_SOURCE: global
+          RENOVATE_ALLOWED_COMMANDS: '["^python3 Bundle/renovate\\.py post-upgrade Bundle/[A-Za-z0-9._/-]+$"]'
+          LOG_LEVEL: info
+        run: |
+          # the commits are the App's, its bot user is <id>+<slug>[bot]
+          id=$(gh api "/users/$APP_SLUG%5Bbot%5D" --jq .id)
+          export RENOVATE_GIT_AUTHOR="$APP_SLUG[bot] <$id+$APP_SLUG[bot]@users.noreply.github.com>"
+          npx --yes "renovate@$RENOVATE_VERSION"

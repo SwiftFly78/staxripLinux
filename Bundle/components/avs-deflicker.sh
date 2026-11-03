@@ -1,5 +1,5 @@
 # only Visual Studio projects upstream, built with port_plugin
-version=0.6
+version=0.6 # renovate: datasource=github-tags depName=pinterf/Deflicker extractVersion=^v(?<version>.+)$
 packages="
 DeFlicker avs
 "

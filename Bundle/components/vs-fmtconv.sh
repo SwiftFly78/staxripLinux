@@ -1,5 +1,5 @@
 # r31 is only on GitLab, the GitHub mirror stopped at r30
-version=r31
+version=r31 # renovate: datasource=gitlab-tags depName=EleonoreMizo/fmtconv versioning=loose
 packages="
 fmtconv dual
 "

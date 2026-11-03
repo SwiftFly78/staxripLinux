@@ -1,4 +1,4 @@
-version=r8
+version=r8 # renovate: datasource=github-tags depName=HomeOfVapourSynthEvolution/VapourSynth-NNEDI3CL versioning=loose
 packages="
 nnedi3cl vs
 "

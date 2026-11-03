@@ -1,5 +1,5 @@
 # R22 and newer use functions of the VapourSynth API that R79 lacks
-version=R21
+version=R21 # renovate: datasource=github-tags depName=vapoursynth/bestsource versioning=loose
 packages="
 BestSource dual
 "

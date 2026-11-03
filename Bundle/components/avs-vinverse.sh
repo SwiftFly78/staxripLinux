@@ -1,4 +1,4 @@
-version=0.9.6
+version=0.9.6 # renovate: datasource=github-tags depName=Asd-g/vinverse
 packages="
 vinverse avs
 "

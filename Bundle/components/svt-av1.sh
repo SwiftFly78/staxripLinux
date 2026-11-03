@@ -1,5 +1,5 @@
 # the SVT-AV1 encoder and its library for FFmpeg
-version=4.2.0
+version=4.2.0 # renovate: datasource=gitlab-tags depName=AOMediaCodec/SVT-AV1 extractVersion=^v(?<version>.+)$
 packages="SvtAv1EncApp (SVT-AV1)"
 sources="
 git https://gitlab.com/AOMediaCodec/SVT-AV1.git 9292ec8e32bce26f781f277ec8739b53426c4300

@@ -1,5 +1,5 @@
 # only Visual Studio projects upstream, built with port_plugin
-version=1.0.1-a54f7b2
+version=1.0.1-a54f7b2 # renovate: datasource=git-refs depName=https://github.com/Asd-g/AviSynth-CAS.git branch=master digest=a54f7b29056629fdcbf9c50fbc7dc5dd33267a30
 packages="
 CAS avs
 "

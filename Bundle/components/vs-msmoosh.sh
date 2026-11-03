@@ -1,4 +1,4 @@
-version=1.1
+version=1.1 # renovate: datasource=github-tags depName=dubhater/vapoursynth-msmoosh extractVersion=^v(?<version>.+)$
 packages="
 msmoosh vs
 "

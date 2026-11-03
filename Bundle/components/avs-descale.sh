@@ -1,4 +1,4 @@
-version=11.0.1-56926fa
+version=11.0.1-56926fa # renovate: datasource=git-refs depName=https://github.com/Asd-g/vapoursynth-descale.git branch=master digest=56926fac62967bef15b52f56bfcafc136d61f903
 packages="
 Descale avs
 Descale vs

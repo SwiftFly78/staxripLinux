@@ -1,5 +1,5 @@
 # for libass
-version=1.0.17
+version=1.0.17 # renovate: datasource=github-releases depName=fribidi/fribidi extractVersion=^v(?<version>.+)$
 sources="
 https://github.com/fribidi/fribidi/releases/download/v1.0.17/fribidi-1.0.17.tar.xz 6949dcde27d41cebad1fd741fcafc36d55a1020d2d872d4a6eb3914caabbada2
 "

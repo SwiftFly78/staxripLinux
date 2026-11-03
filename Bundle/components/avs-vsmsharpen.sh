@@ -1,5 +1,5 @@
 # only Visual Studio projects upstream, built with port_plugin
-version=2.0.1-58036b3
+version=2.0.1-58036b3 # renovate: datasource=git-refs depName=https://github.com/Asd-g/AviSynth-vsMSharpen.git branch=master digest=58036b3b2a9e1b5fff7dad7b2295d7bde17c5929
 packages="
 vsMSharpen avs
 "

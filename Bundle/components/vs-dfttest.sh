@@ -1,4 +1,4 @@
-version=r7
+version=r7 # renovate: datasource=github-tags depName=HomeOfVapourSynthEvolution/VapourSynth-DFTTest versioning=loose
 packages="
 DFTTest vs
 "

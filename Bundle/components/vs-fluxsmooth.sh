@@ -1,4 +1,4 @@
-version=2
+version=2 # renovate: datasource=github-tags depName=dubhater/vapoursynth-fluxsmooth extractVersion=^v(?<version>.+)$
 packages="
 FluxSmooth vs
 "

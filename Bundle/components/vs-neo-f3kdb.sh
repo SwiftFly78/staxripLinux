@@ -1,4 +1,4 @@
-version=r11
+version=r11 # renovate: datasource=github-tags depName=HomeOfAviSynthPlusEvolution/neo_f3kdb versioning=loose
 packages="
 f3kdb Neo dual
 "

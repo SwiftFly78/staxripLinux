@@ -1,4 +1,4 @@
-version=1.2
+version=1.2 # renovate: datasource=github-tags depName=HomeOfVapourSynthEvolution/VapourSynth-IT extractVersion=^v(?<version>.+)$
 packages="
 IT vs
 "

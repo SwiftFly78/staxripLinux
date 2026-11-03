@@ -1,4 +1,4 @@
-version=1.1.2
+version=1.1.2 # renovate: datasource=github-tags depName=Asd-g/libplacebo_Render
 packages="
 libplacebo_Render avs
 "

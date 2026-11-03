@@ -1,4 +1,4 @@
-version=r3.2
+version=r3.2 # renovate: datasource=github-tags depName=HomeOfVapourSynthEvolution/VapourSynth-DCTFilter versioning=loose
 packages="
 DCTFilter vs
 "

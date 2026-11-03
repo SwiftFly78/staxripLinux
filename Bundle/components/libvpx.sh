@@ -1,5 +1,5 @@
 # the VP8 and VP9 library of FFmpeg
-version=1.17.0
+version=1.17.0 # renovate: datasource=github-tags depName=webmproject/libvpx extractVersion=^v(?<version>.+)$
 sources="
 git https://github.com/webmproject/libvpx.git 6df3ec34557879fff673706f4a1d9fbd0f3a6f0e
 "

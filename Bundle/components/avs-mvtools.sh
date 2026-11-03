@@ -1,4 +1,4 @@
-version=2.7.48
+version=2.7.48 # renovate: datasource=github-tags depName=pinterf/mvtools
 packages="
 mvtools2 avs
 DePan avs

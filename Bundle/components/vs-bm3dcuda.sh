@@ -1,4 +1,4 @@
-version=2.17
+version=2.17 # renovate: datasource=github-tags depName=WolframRhodium/VapourSynth-BM3DCUDA extractVersion=^R(?<version>.+)$
 packages="
 BM3DCPU vs
 "

@@ -1,5 +1,5 @@
 # the static build of the release, the sources contain the source code of the same release
-version=2.3.4
+version=2.3.4 # renovate: datasource=github-releases depName=quietvoid/dovi_tool
 packages="DoVi_Tool"
 sources="
 https://github.com/quietvoid/dovi_tool/releases/download/2.3.4/dovi_tool-2.3.4-x86_64-unknown-linux-musl.tar.gz 1844258e13c26607b32224bf1fa82b595d3b35949f5467405fda560daad32b3f

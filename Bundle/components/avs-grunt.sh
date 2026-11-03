@@ -1,4 +1,4 @@
-version=1.0.2-4f4b38b
+version=1.0.2-4f4b38b # renovate: datasource=git-refs depName=https://github.com/pinterf/GRunT.git branch=master digest=4f4b38b41ac71ed99ff9ba4103026beb1b1d9d27
 packages="
 GRunT avs
 "

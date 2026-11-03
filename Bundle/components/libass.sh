@@ -1,5 +1,5 @@
 # the subtitle renderer of the subtitle plugins
-version=0.17.5
+version=0.17.5 # renovate: datasource=github-releases depName=libass/libass
 depends="fribidi harfbuzz"
 sources="
 https://github.com/libass/libass/releases/download/0.17.5/libass-0.17.5.tar.xz 2dca25c0e0c837ddf00b52011b3f82cac1e4ddd3ad018227806b0c2288864acc

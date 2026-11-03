@@ -1,5 +1,5 @@
 # MP4Box of GPAC, only with the features for ISO media files
-version=26.07.0
+version=26.07.0 # renovate: datasource=github-tags depName=gpac/gpac extractVersion=^v(?<version>.+)$
 packages=MP4Box
 sources="
 git https://github.com/gpac/gpac.git a07cbfff238a331233e11e916f9fb185d5da8604

@@ -1,4 +1,4 @@
-version=1
+version=1 # renovate: datasource=github-tags depName=dubhater/vapoursynth-temporalsoften2 extractVersion=^v(?<version>.+)$
 packages="
 TemporalSoften2 vs
 "

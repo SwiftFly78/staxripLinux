@@ -1,4 +1,4 @@
-version=2.1.4
+version=2.1.4 # renovate: datasource=github-tags depName=Asd-g/AviSynth-JincResize
 packages="
 JincResize avs
 "

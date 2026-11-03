@@ -1,4 +1,4 @@
-version=0.30-80ce55d
+version=0.30-80ce55d # renovate: datasource=git-refs depName=https://github.com/DJATOM/avs2yuv.git branch=master digest=80ce55dffba41b1e3ae71f90c8628a7475150e87
 packages=avs2yuv
 depends="avisynthplus"
 sources="

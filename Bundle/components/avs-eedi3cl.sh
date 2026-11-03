@@ -1,4 +1,4 @@
-version=1.1.2
+version=1.1.2 # renovate: datasource=github-tags depName=Asd-g/AviSynthPlus-EEDI3CL
 packages="
 EEDI3CL avs
 "

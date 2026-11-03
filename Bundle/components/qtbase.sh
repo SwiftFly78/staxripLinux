@@ -1,5 +1,5 @@
 # Qt Core, MKVToolNix needs it for the command line tools too
-version=6.11.3
+version=6.11.3 # renovate: datasource=github-tags depName=qt/qtbase extractVersion=^v(?<version>.+)$
 sources="
 https://download.qt.io/official_releases/qt/6.11/6.11.3/submodules/qtbase-everywhere-src-6.11.3.tar.xz 46de0710b594945a5d446ae44354daa386141c6903c53781b2ca547bc62f8f8f
 "

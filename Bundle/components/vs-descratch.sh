@@ -1,4 +1,4 @@
-version=R4
+version=R4 # renovate: datasource=github-tags depName=vapoursynth/descratch versioning=loose
 packages="
 DeScratch dual
 "

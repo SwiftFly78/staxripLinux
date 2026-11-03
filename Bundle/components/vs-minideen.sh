@@ -1,4 +1,4 @@
-version=r11
+version=r11 # renovate: datasource=github-tags depName=HomeOfAviSynthPlusEvolution/MiniDeen versioning=loose
 packages="
 MiniDeen dual
 "

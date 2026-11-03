@@ -1,5 +1,7 @@
 # opusenc and opusdec with static builds of libopusenc and opusfile
-version=0.2
+version=0.2 # renovate: datasource=github-tags depName=xiph/opus-tools extractVersion=^v(?<version>.+)$ source=3
+libopusenc_version=0.3 # renovate: datasource=github-tags depName=xiph/libopusenc extractVersion=^v(?<version>.+)$ source=1
+opusfile_version=0.12 # renovate: datasource=github-tags depName=xiph/opusfile extractVersion=^v(?<version>.+)$ source=2
 packages="
 OpusEnc
 OpusDec

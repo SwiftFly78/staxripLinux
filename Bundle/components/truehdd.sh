@@ -1,5 +1,5 @@
 # the static build of the release, the sources contain the source code of the same release
-version=0.6.2
+version=0.6.2 # renovate: datasource=github-releases depName=truehdd/truehdd
 packages="Truehdd"
 sources="
 https://github.com/truehdd/truehdd/releases/download/0.6.2/truehdd-0.6.2-x86_64-unknown-linux-musl.tar.gz 1edef38a79107e4e70bfacfc9c758a77180145ec7fb3484c084efaac464d5806

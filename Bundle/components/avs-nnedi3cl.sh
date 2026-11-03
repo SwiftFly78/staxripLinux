@@ -1,4 +1,4 @@
-version=1.0.9
+version=1.0.9 # renovate: datasource=github-tags depName=Asd-g/AviSynthPlus-NNEDI3CL
 packages="
 NNEDI3CL avs
 "

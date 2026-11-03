@@ -1,4 +1,4 @@
-version=r7.1
+version=r7.1 # renovate: datasource=github-tags depName=HomeOfVapourSynthEvolution/VapourSynth-EEDI2 versioning=loose
 packages="
 EEDI2 vs
 "

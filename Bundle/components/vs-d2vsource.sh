@@ -1,4 +1,4 @@
-version=1.4
+version=1.4 # renovate: datasource=github-tags depName=dwbuiten/d2vsource extractVersion=^v(?<version>.+)$
 packages="
 d2vsource vs
 "

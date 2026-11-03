@@ -1,5 +1,5 @@
 # the static build of 7-Zip, named like the command StaxRip looks for
-version=26.05
+version=26.05 # renovate: datasource=github-releases depName=ip7z/7zip urlversion=nodots
 packages=7zip
 sources="
 https://github.com/ip7z/7zip/releases/download/26.05/7z2605-linux-x64.tar.xz 22cf82fcc6eb7474f1d5bb4f02c0f8ebd573a718089d6833dc30f8350a3b232e

@@ -1,5 +1,5 @@
 # only Visual Studio projects upstream, built with port_plugin
-version=1.0.0-33e545f
+version=1.0.0-33e545f # renovate: datasource=git-refs depName=https://github.com/Asd-g/AviSynth-EEDI2.git branch=master digest=33e545f625e6aa1d327c5ddd611ed3c7670f49d1
 packages="
 EEDI2 avs
 "

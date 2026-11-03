@@ -1,6 +1,6 @@
 # AviSynth+ with the plugins of its repository, the patch makes it load the plugins of the avisynth folder next
 # to the library, so they are found wherever the AppImage is mounted
-version=3.7.6
+version=3.7.6 # renovate: datasource=github-tags depName=AviSynth/AviSynthPlus extractVersion=^v(?<version>.+)$
 packages=AviSynth
 sources="
 git https://github.com/AviSynth/AviSynthPlus.git 523370a39933e2f9c208a5d74c1d35d43d177a76

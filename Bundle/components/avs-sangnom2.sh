@@ -1,4 +1,4 @@
-version=0.6.1
+version=0.6.1 # renovate: datasource=github-tags depName=Asd-g/AviSynth-SangNom2
 packages="
 SangNom2 avs
 "

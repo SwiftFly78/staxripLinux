@@ -1,4 +1,4 @@
-version=r14
+version=r14 # renovate: datasource=github-tags depName=HomeOfAviSynthPlusEvolution/neo_FFT3D versioning=loose
 packages="
 FFT3D Neo dual
 "

@@ -1,4 +1,4 @@
-version=1
+version=1 # renovate: datasource=github-tags depName=dubhater/vapoursynth-degrainmedian extractVersion=^v(?<version>.+)$
 packages="
 DegrainMedian vs
 "

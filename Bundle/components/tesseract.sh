@@ -1,4 +1,4 @@
-version=5.5.3
+version=5.5.3 # renovate: datasource=github-tags depName=tesseract-ocr/tesseract
 packages=Tesseract
 depends="leptonica"
 sources="

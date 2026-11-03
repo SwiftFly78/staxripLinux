@@ -1,5 +1,5 @@
 # the HDR fork of SVT-AV1 by juliobbv-p
-version=2026-09-29-a46bc2d
+version=2026-09-29-a46bc2d # renovate: datasource=git-refs depName=https://github.com/juliobbv-p/svt-av1-hdr.git branch=main digest=a46bc2d59774785f4db7341003fa23dbeb473b5a
 packages="SvtAv1EncApp (SVT-AV1-HDR)"
 depends="libdovi libhdr10plus"
 sources="

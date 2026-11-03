@@ -1,5 +1,5 @@
 # only Visual Studio projects upstream, built with port_plugin
-version=0.1.5
+version=0.1.5 # renovate: datasource=github-tags depName=Asd-g/TMM2
 packages="
 TMM2 avs
 "

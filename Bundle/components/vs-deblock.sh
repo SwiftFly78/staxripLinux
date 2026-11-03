@@ -1,4 +1,4 @@
-version=r9
+version=r9 # renovate: datasource=github-tags depName=HomeOfVapourSynthEvolution/VapourSynth-Deblock versioning=loose
 packages="
 Deblock vs
 "

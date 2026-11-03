@@ -1,4 +1,4 @@
-version=stable-b35605a
+version=stable-b35605a # renovate: datasource=git-refs depName=https://code.videolan.org/videolan/x264.git branch=stable digest=b35605ace3ddf7c1a5d67a2eb553f034aef41d55
 packages=x264
 sources="
 git https://code.videolan.org/videolan/x264.git b35605ace3ddf7c1a5d67a2eb553f034aef41d55

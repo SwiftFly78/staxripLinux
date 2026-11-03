@@ -1,6 +1,6 @@
 # L-SMASH-Works for AviSynth+ and VapourSynth in one library, with the FFmpeg of the bundle instead of the
 # patched FFmpeg its builds use
-version=1310-7e63c84
+version=1310-7e63c84 # renovate: datasource=git-refs depName=https://github.com/HomeOfAviSynthPlusEvolution/L-SMASH-Works.git branch=master digest=7e63c8400a252f4dbbeea80cc3bfec895abf12cf
 packages="
 L-SMASH-Works dual
 "

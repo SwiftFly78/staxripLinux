@@ -1,5 +1,5 @@
 # the PSYEX fork of SVT-AV1 by BlueSwordM
-version=3.0.2-B
+version=3.0.2-B # renovate: datasource=github-tags depName=BlueSwordM/svt-av1-psyex versioning=loose extractVersion=^v(?<version>.+)$
 packages="SvtAv1EncApp (SVT-AV1-PSYEX)"
 depends="libdovi libhdr10plus"
 sources="

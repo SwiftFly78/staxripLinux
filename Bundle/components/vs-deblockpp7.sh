@@ -1,4 +1,4 @@
-version=r4.1
+version=r4.1 # renovate: datasource=github-tags depName=HomeOfVapourSynthEvolution/VapourSynth-DeblockPP7 versioning=loose
 packages="
 DeblockPP7 vs
 "

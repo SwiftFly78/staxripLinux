@@ -1,5 +1,5 @@
 # the library StaxRip reads the media info with
-version=26.10
+version=26.10 # renovate: datasource=github-tags depName=MediaArea/MediaInfoLib extractVersion=^v(?<version>.+)$
 packages=MediaInfo
 depends="zenlib"
 sources="

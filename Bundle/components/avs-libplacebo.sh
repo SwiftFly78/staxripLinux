@@ -1,4 +1,4 @@
-version=1.6.0
+version=1.6.0 # renovate: datasource=github-tags depName=Asd-g/avslibplacebo
 packages="
 AVS_LibPlacebo avs
 "

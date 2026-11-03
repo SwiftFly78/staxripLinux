@@ -1,4 +1,4 @@
-version=4.2
+version=4.2 # renovate: datasource=bitbucket-tags depName=multicoreware/x265_git
 packages=x265
 sources="
 https://bitbucket.org/multicoreware/x265_git/downloads/x265_4.2.tar.gz 40b1ea0453e0309f0eba934e0ddf533f8f6295966679e8894e8f1c1c8d5e1210

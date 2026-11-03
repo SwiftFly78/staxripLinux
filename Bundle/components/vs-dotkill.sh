@@ -1,4 +1,4 @@
-version=R4
+version=R4 # renovate: datasource=github-tags depName=myrsloik/DotKill versioning=loose
 packages="
 DotKill vs
 "

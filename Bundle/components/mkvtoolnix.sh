@@ -1,4 +1,4 @@
-version=103.0
+version=103.0 # renovate: datasource=gitea-tags depName=mbunkus/mkvtoolnix registryUrl=https://codeberg.org extractVersion=^release\-(?<version>.+)$
 packages="
 mkvmerge
 mkvextract

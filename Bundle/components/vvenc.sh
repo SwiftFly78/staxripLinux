@@ -1,4 +1,4 @@
-version=1.14.0
+version=1.14.0 # renovate: datasource=github-tags depName=fraunhoferhhi/vvenc extractVersion=^v(?<version>.+)$
 packages=vvencFFapp
 sources="
 git https://github.com/fraunhoferhhi/vvenc.git 9428ea8636ae7f443ecde89999d16b2dfc421524

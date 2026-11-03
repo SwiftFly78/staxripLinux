@@ -1,0 +1,107 @@
+// Recommends updates of the bundled tools, the NuGet packages, the actions and the images as pull requests, which the
+// tests of CI check before a merge. Runs weekly in .github/workflows/renovate.yml, see "Updates" in Bundle/README.md.
+{
+  $schema: 'https://docs.renovatebot.com/renovate-schema.json',
+  extends: ['config:recommended', ':semanticCommits'],
+  // broken and malicious releases are usually found within two weeks
+  minimumReleaseAge: '14 days',
+  prConcurrentLimit: 10,
+  prHourlyLimit: 0,
+  labels: ['dependencies'],
+  customManagers: [
+    {
+      // the annotated versions of the recipes, Bundle/renovate.py completes the updates
+      customType: 'regex',
+      managerFilePatterns: ['/^Bundle/components/[^/]+\\.sh$/'],
+      matchStrings: [
+        '[a-z0-9_]*version=(?<currentValue>\\S+) # renovate: datasource=(?<datasource>[a-z-]+) depName=(?<depName>\\S+)(?: registryUrl=(?<registryUrl>\\S+))?(?: versioning=(?<versioning>\\S+))?(?: extractVersion=(?<extractVersion>\\S+))?(?: (?:source|tag|urlversion|special)=\\S+)*\\n',
+        '[a-z0-9_]*version=\\S+ # renovate: datasource=(?<datasource>git-refs) depName=(?<depName>\\S+) branch=(?<currentValue>\\S+) digest=(?<currentDigest>[0-9a-f]{40})(?: source=\\S+)?\\n',
+      ],
+    },
+    {
+      // Renovate only reads the hashes of requirements files in the style of pip-compile
+      customType: 'regex',
+      managerFilePatterns: ['/^Bundle/requirements-build\\.txt$/'],
+      matchStrings: ['(?<depName>[A-Za-z0-9._-]+)==(?<currentValue>\\S+) --hash=sha256:[0-9a-f]{64}'],
+      datasourceTemplate: 'pypi',
+    },
+    {
+      customType: 'regex',
+      managerFilePatterns: ['/^\\.github/workflows/renovate\\.yml$/'],
+      matchStrings: ['RENOVATE_VERSION: (?<currentValue>\\S+) # renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)'],
+    },
+  ],
+  packageRules: [
+    {
+      matchFileNames: ['Bundle/components/**'],
+      semanticCommitType: 'build',
+      semanticCommitScope: 'bundle',
+      commitMessageTopic: "{{depName}} of {{{replace '^Bundle/components/(.+)\\.sh$' '$1' packageFile}}}",
+      addLabels: ['bundle'],
+      postUpgradeTasks: {
+        commands: ['python3 Bundle/renovate.py post-upgrade {{{packageFile}}}'],
+        fileFilters: ['Bundle/components/**'],
+        executionMode: 'update',
+      },
+    },
+    {
+      // git branches have no release dates, their new commits are proposed once a month
+      matchDatasources: ['git-refs'],
+      minimumReleaseAge: null,
+      schedule: ['* * 1-7 * *'],
+    },
+    {
+      // a new build image rebuilds every bundled tool, hours on the runners of GitHub
+      matchFileNames: ['Bundle/Dockerfile', 'Bundle/requirements-build.txt'],
+      groupName: 'build image of the bundled tools',
+      semanticCommitType: 'build',
+      semanticCommitScope: 'bundle',
+      schedule: ['* * 1-7 * *'],
+      postUpgradeTasks: {
+        commands: ['python3 Bundle/renovate.py post-upgrade {{{packageFile}}}'],
+        fileFilters: ['Bundle/requirements-build.txt'],
+        executionMode: 'update',
+      },
+    },
+    {
+      matchManagers: ['pip_requirements'],
+      enabled: false,
+    },
+    {
+      matchFileNames: ['Tests/Dockerfile'],
+      semanticCommitType: 'test',
+    },
+    {
+      matchManagers: ['nuget'],
+      semanticCommitType: 'build',
+      semanticCommitScope: 'deps',
+    },
+    {
+      matchManagers: ['nuget'],
+      matchPackageNames: ['Eto.*'],
+      groupName: 'Eto.Forms',
+    },
+    {
+      matchManagers: ['github-actions'],
+      semanticCommitType: 'ci',
+    },
+    {
+      // known breaks, recommended in the Dependency Dashboard, a pull request only after its approval there
+      matchDepNames: ['FFmpeg/FFmpeg'],
+      matchUpdateTypes: ['major'],
+      dependencyDashboardApproval: true,
+      prBodyNotes: ['L-SMASH-Works needs the API of FFmpeg 8, check whether it builds with the new major version.'],
+    },
+    {
+      matchDepNames: ['VapourSynth'],
+      dependencyDashboardApproval: true,
+      prBodyNotes: ['VapourSynth R80 and newer don\'t load the API 3 plugins of the bundle, check the plugin load test.'],
+    },
+    {
+      matchDepNames: ['videolan/libplacebo'],
+      matchUpdateTypes: ['major', 'minor'],
+      dependencyDashboardApproval: true,
+      prBodyNotes: ['QSVEncC and VCEEncC need the API layout of libplacebo 7.360.'],
+    },
+  ],
+}

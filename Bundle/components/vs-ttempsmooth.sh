@@ -1,4 +1,4 @@
-version=r4.1
+version=r4.1 # renovate: datasource=github-tags depName=HomeOfVapourSynthEvolution/VapourSynth-TTempSmooth versioning=loose
 packages="
 TTempSmooth vs
 "

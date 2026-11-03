@@ -1,4 +1,4 @@
-version=0.37
+version=0.37 # renovate: datasource=github-tags depName=pinterf/assrender
 packages="
 AssRender avs
 "

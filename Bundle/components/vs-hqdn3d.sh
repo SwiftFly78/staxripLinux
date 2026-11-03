@@ -1,4 +1,4 @@
-version=r10-eb820cb
+version=r10-eb820cb # renovate: datasource=git-refs depName=https://github.com/Hinterwaeldlers/vapoursynth-hqdn3d.git branch=master digest=eb820cb23f7dc47eb67ea95def8a09ab69251d30
 packages="
 HQDN3D vs
 "

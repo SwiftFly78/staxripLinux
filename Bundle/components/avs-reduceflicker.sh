@@ -1,5 +1,5 @@
 # only Visual Studio projects upstream, built with port_plugin
-version=0.1.1-d5e0cdd
+version=0.1.1-d5e0cdd # renovate: datasource=git-refs depName=https://github.com/Asd-g/ReduceFlicker.git branch=v8_interface digest=d5e0cdd397dcca9356683d7e40a3e595d78e35c8
 packages="
 ReduceFlicker avs
 "

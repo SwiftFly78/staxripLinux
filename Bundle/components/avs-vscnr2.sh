@@ -1,4 +1,4 @@
-version=1.0.2
+version=1.0.2 # renovate: datasource=github-tags depName=Asd-g/AviSynth-vsCnr2
 packages="
 vsCnr2 avs
 "

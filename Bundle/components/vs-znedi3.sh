@@ -1,4 +1,4 @@
-version=r3.3
+version=r3.3 # renovate: datasource=github-tags depName=sekrit-twc/znedi3 versioning=loose
 packages="
 znedi3 vs
 "

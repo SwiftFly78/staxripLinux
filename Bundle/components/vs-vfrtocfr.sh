@@ -1,4 +1,4 @@
-version=1.0-d00a374
+version=1.0-d00a374 # renovate: datasource=git-refs depName=https://github.com/Irrational-Encoding-Wizardry/Vapoursynth-VFRToCFR.git branch=master digest=d00a3743db70b928f3b0529d54f21aeae93d9db8
 packages="VFRToCFR vs"
 depends="vapoursynth"
 sources="

@@ -1,5 +1,5 @@
 # the NVENC and NVDEC headers of FFmpeg, the NVIDIA driver provides the libraries, needs driver 550 or newer
-version=12.2.72.0
+version=12.2.72.0 # renovate: datasource=github-tags depName=FFmpeg/nv-codec-headers extractVersion=^n(?<version>.+)$
 sources="
 git https://github.com/FFmpeg/nv-codec-headers.git c69278340ab1d5559c7d7bf0edf615dc33ddbba7
 "

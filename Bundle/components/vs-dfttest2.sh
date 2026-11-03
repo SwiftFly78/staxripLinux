@@ -1,4 +1,4 @@
-version=11
+version=11 # renovate: datasource=github-tags depName=AmusementClub/vs-dfttest2 extractVersion=^v(?<version>.+)$
 packages="
 dfttest2_CPU vs
 "

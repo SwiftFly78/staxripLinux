@@ -1,4 +1,4 @@
-version=r5
+version=r5 # renovate: datasource=github-tags depName=HomeOfVapourSynthEvolution/VapourSynth-CTMF versioning=loose
 packages="
 CTMF vs
 "

@@ -1,4 +1,4 @@
-version=r2
+version=r2 # renovate: datasource=github-tags depName=DJATOM/LibP2P-Vapoursynth versioning=loose
 packages="
 LibP2P vs
 "

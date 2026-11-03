@@ -1,5 +1,5 @@
 # the C library of dovi_tool, Cargo.lock pins the crates cargo downloads and verifies
-version=3.4.0
+version=3.4.0 # renovate: datasource=github-tags depName=quietvoid/dovi_tool extractVersion=^libdovi\-(?<version>.+)$
 depends="rust"
 sources="
 git https://github.com/quietvoid/dovi_tool.git d1abe0e27ff2c7ab3339614d06db9f8a058af6b2

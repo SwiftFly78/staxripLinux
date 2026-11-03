@@ -1,5 +1,5 @@
 # built with the libraries of the bundle, its releases link static libraries whose source isn't published
-version=9.22
+version=9.22 # renovate: datasource=github-tags depName=rigaya/VCEEnc
 packages="VCEEncC"
 depends="ffmpeg libass libplacebo libdovi libhdr10plus vapoursynth avisynthplus vulkan-headers opencl-headers amf-headers"
 sources="

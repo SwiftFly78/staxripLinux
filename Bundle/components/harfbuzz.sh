@@ -1,5 +1,5 @@
 # for libass, without GLib
-version=14.6.0
+version=14.6.0 # renovate: datasource=github-releases depName=harfbuzz/harfbuzz
 sources="
 https://github.com/harfbuzz/harfbuzz/releases/download/14.6.0/harfbuzz-14.6.0.tar.xz d07a007327277708a2a73ae437887cdbaf282937f6d03ca5467723e9099af586
 "

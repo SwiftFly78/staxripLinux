@@ -1,4 +1,4 @@
-version=2.0-b023e21
+version=2.0-b023e21 # renovate: datasource=git-refs depName=https://github.com/VFR-maniac/VapourSynth-FFT3DFilter.git branch=master digest=b023e21954423f29fdefcb54a6b0540deb3bdac4
 packages="
 FFT3DFilter vs
 "

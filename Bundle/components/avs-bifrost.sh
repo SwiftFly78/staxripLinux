@@ -1,4 +1,4 @@
-version=2.2-31cf836
+version=2.2-31cf836 # renovate: datasource=git-refs depName=https://github.com/Asd-g/AviSynth-bifrost.git branch=avisynth digest=31cf83664f98406ed7bf12c0c63330d0fcaedb24
 packages="
 Bifrost avs
 "

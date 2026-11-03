@@ -1,4 +1,4 @@
-version=r12
+version=r12 # renovate: datasource=github-tags depName=HomeOfVapourSynthEvolution/VapourSynth-BM3D versioning=loose
 packages="
 BM3D vs
 "

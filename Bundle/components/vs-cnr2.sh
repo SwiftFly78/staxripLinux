@@ -1,4 +1,4 @@
-version=1
+version=1 # renovate: datasource=github-tags depName=dubhater/vapoursynth-cnr2 extractVersion=^v(?<version>.+)$
 packages="
 CNR2 vs
 "

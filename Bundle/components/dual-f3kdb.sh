@@ -1,5 +1,5 @@
 # the maintained fork of flash3kyuu_deband, AviSynth+ and VapourSynth in one library
-version=2.0.1
+version=2.0.1 # renovate: datasource=github-tags depName=sauruuwu/flash3kyuu_deband
 packages="
 flash3kyuu_deband dual
 "

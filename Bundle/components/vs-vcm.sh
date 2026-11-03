@@ -1,4 +1,4 @@
-version=2022-02-10.AC3
+version=2022-02-10.AC3 # renovate: datasource=github-tags depName=AmusementClub/vcm versioning=loose
 packages="
 vcmod vs
 "

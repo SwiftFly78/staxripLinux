@@ -1,4 +1,4 @@
-version=0.9.0
+version=0.9.0 # renovate: datasource=github-tags depName=HomeOfAviSynthPlusEvolution/neo-fft
 packages="
 neo-fft dual
 "

@@ -1,4 +1,4 @@
-version=r10.1
+version=r10.1 # renovate: datasource=github-tags depName=HomeOfVapourSynthEvolution/VapourSynth-Yadifmod versioning=loose
 packages="
 Yadifmod vs
 "

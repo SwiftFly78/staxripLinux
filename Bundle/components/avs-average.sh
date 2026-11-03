@@ -1,4 +1,4 @@
-version=0.95
+version=0.95 # renovate: datasource=github-tags depName=pinterf/Average
 packages="
 Average avs
 "

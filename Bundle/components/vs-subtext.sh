@@ -1,4 +1,4 @@
-version=R7
+version=R7 # renovate: datasource=github-tags depName=vapoursynth/subtext versioning=loose
 packages="
 SubText vs
 "

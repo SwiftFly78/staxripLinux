@@ -1,4 +1,4 @@
-version=r5.1
+version=r5.1 # renovate: datasource=github-tags depName=HomeOfVapourSynthEvolution/VapourSynth-Bwdif versioning=loose
 packages="
 Bwdif vs
 "

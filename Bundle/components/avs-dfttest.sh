@@ -1,4 +1,4 @@
-version=1.9.8
+version=1.9.8 # renovate: datasource=github-tags depName=pinterf/dfttest
 packages="
 DFTTest avs
 "

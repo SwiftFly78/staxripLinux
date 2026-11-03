@@ -1,5 +1,6 @@
 # relocatable CPython of python-build-standalone, it runs VapourSynth and its Python scripts
-version=3.13.16
+version=3.13.16 # renovate: none=set_by_the_update_of_pbs_version
+pbs_version=20261013 # renovate: datasource=github-releases depName=astral-sh/python-build-standalone versioning=regex:^(?<major>\d{8})$ source=1,2 special=python-build-standalone
 packages=Python
 sources="
 https://github.com/astral-sh/python-build-standalone/releases/download/20261013/cpython-3.13.16%2B20261013-x86_64-unknown-linux-gnu-install_only_stripped.tar.gz d0080766b6b74aeb81e1949ef0d9a20e6c17f7b160fb295a69b936ccb17660be cpython-3.13.16-install_only_stripped.tar.gz

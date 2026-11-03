@@ -1,4 +1,4 @@
-version=r10
+version=r10 # renovate: datasource=github-tags depName=HomeOfVapourSynthEvolution/VapourSynth-AddGrain versioning=loose
 packages="
 AddGrain vs
 "

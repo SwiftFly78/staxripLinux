@@ -1,4 +1,4 @@
-version=0.4.41
+version=0.4.41 # renovate: datasource=github-tags depName=MediaArea/ZenLib extractVersion=^v(?<version>.+)$
 sources="
 https://mediaarea.net/download/source/libzen/0.4.41/libzen_0.4.41.tar.bz2 eb237d7d3dca6dc6ba068719420a27de0934a783ccaeb2867562b35af3901e2d
 "

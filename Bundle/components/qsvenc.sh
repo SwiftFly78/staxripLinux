@@ -1,5 +1,5 @@
 # built with the libraries of the bundle, its releases link static libraries whose source isn't published
-version=8.37
+version=8.37 # renovate: datasource=github-tags depName=rigaya/QSVEnc
 packages="QSVEncC"
 depends="ffmpeg libass libplacebo libdovi libhdr10plus vapoursynth avisynthplus vulkan-headers opencl-headers"
 sources="

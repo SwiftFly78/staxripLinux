@@ -1,4 +1,4 @@
-version=r5-e70d7fb
+version=r5-e70d7fb # renovate: datasource=git-refs depName=https://github.com/IFeelBloated/Fix-Telecined-Fades.git branch=master digest=e70d7fb759cf0109c8ed74a446c94124aa6b1201
 packages="FixTelecinedFades vs"
 depends="vapoursynth"
 sources="

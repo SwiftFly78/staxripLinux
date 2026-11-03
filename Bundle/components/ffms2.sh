@@ -1,5 +1,5 @@
 # master, the last release 5.0 predates the API removals of FFmpeg 8 and 9
-version=5.1.2-3af2ef2
+version=5.1.2-3af2ef2 # renovate: datasource=git-refs depName=https://github.com/FFMS/ffms2.git branch=master digest=3af2ef2ae47bc30b64597c9e419e5b19c4bda7d8
 packages="
 ffms2 dual
 ffmsindex

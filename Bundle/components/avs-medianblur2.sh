@@ -1,4 +1,4 @@
-version=1.1-e45ab28
+version=1.1-e45ab28 # renovate: datasource=git-refs depName=https://github.com/pinterf/MedianBlur2.git branch=master digest=e45ab2874c9754f4bc519a1f1b0cb84d377eb431
 packages="
 MedianBlur2 avs
 "

@@ -1,4 +1,4 @@
-version=1.4.0
+version=1.4.0 # renovate: datasource=github-tags depName=Asd-g/AviSynth-vsTTempSmooth
 packages="
 vsTTempSmooth avs
 "
