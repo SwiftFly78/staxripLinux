@@ -68,5 +68,5 @@ jobs:
         run: |
           # the commits are the App's, its bot user is <id>+<slug>[bot]
           id=$(gh api "/users/$APP_SLUG%5Bbot%5D" --jq .id)
-          export RENOVATE_GIT_AUTHOR="$APP_SLUG[bot] <$id+$APP_SLUG[bot]@users.noreply.github.com>"
+          export RENOVATE_GIT_AUTHOR="${APP_SLUG}[bot] <$id+${APP_SLUG}[bot]@users.noreply.github.com>"
           npx --yes "renovate@$RENOVATE_VERSION"

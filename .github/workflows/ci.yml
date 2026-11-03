@@ -1,0 +1,214 @@
+name: CI
+
+# Builds the bundled tools and the full AppImage of every pull request and push of master and runs the test suites of
+# Tests, see the README there. A ruleset of master requires the check "Tests passed". After the tests of a push of
+# master, the new commits get their version tags and the newest version its release.
+on:
+  pull_request:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+  DOTNET_NOLOGO: 1
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    # a build without cache compiles about 160 components, the maximum of the hosted runners
+    timeout-minutes: 360
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Check the Renovate comments of the recipes
+        run: python3 -I Bundle/renovate.py check
+
+      # pull requests, the updates of Renovate too, only read the cache of master, so they don't evict it
+      - name: Restore the build cache of the bundled tools
+        if: github.event_name == 'pull_request'
+        uses: actions/cache/restore@v6
+        with:
+          path: Bundle/.cache
+          key: bundle-${{ hashFiles('Bundle/**', '!Bundle/README.md') }}
+          restore-keys: bundle-
+
+      - name: Restore and save the build cache of the bundled tools
+        if: github.event_name != 'pull_request'
+        uses: actions/cache@v6
+        with:
+          path: Bundle/.cache
+          key: bundle-${{ hashFiles('Bundle/**', '!Bundle/README.md') }}
+          restore-keys: bundle-
+
+      # the changed components and every component that depends on them are built again
+      - name: Build the bundled tools
+        run: KEEP_GOING=1 Bundle/build.sh
+
+      - name: Upload the build logs of the bundled tools
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: bundle-logs
+          path: Bundle/.cache/logs
+
+      - name: Install .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Build the AppImage
+        env:
+          APPIMAGETOOL: ${{ runner.temp }}/appimagetool
+          APPIMAGE_RUNTIME: ${{ runner.temp }}/runtime-x86_64
+          APPIMAGE_EXTRACT_AND_RUN: 1
+        run: |
+          # the same versions and checksums as release.yml
+          curl -fsSL -o "$APPIMAGETOOL" \
+            https://github.com/AppImage/appimagetool/releases/download/1.9.1/appimagetool-x86_64.AppImage
+          curl -fsSL -o "$APPIMAGE_RUNTIME" \
+            https://github.com/AppImage/type2-runtime/releases/download/20251108/runtime-x86_64
+          sha256sum -c << EOF
+          ed4ce84f0d9caff66f50bcca6ff6f35aae54ce8135408b3fa33abfc3cb384eb0  $APPIMAGETOOL
+          2fca8b443c92510f1483a883f60061ad09b46b978b2631c807cd873a47ec260d  $APPIMAGE_RUNTIME
+          EOF
+          chmod +x "$APPIMAGETOOL"
+          APPS=Bundle/out/Apps Source/build-appimage.sh "$RUNNER_TEMP/appimage"
+
+      - name: Upload the AppImage
+        uses: actions/upload-artifact@v7
+        with:
+          name: appimage
+          path: ${{ runner.temp }}/appimage/*.AppImage
+          retention-days: 7
+          compression-level: 0
+
+  test:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: [static, tools, options, frames, 'pipelines:1/6', 'pipelines:2/6', 'pipelines:3/6', 'pipelines:4/6',
+                'pipelines:5/6', 'pipelines:6/6']
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Download the AppImage
+        uses: actions/download-artifact@v8
+        with:
+          name: appimage
+          path: ${{ runner.temp }}/appimage
+
+      - name: Run the tests
+        env:
+          SUITE: ${{ matrix.suite }}
+        run: Tests/run.sh "$RUNNER_TEMP"/appimage/*.AppImage "$SUITE"
+
+      - name: Upload the results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: results-${{ strategy.job-index }}
+          path: Tests/.work/results/*.tsv
+          if-no-files-found: ignore
+
+      - name: Upload the details of failures
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: failures-${{ strategy.job-index }}
+          path: |
+            Tests/.work/out/*.png
+            Tests/.work/out/*.log
+            Tests/.work/out/*.result
+            Tests/.work/out/*.out
+            Tests/.work/frames/*.err
+          if-no-files-found: ignore
+
+  report:
+    name: Tests passed
+    needs: [build, test]
+    if: always()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Download the results
+        uses: actions/download-artifact@v8
+        with:
+          pattern: results-*
+          merge-multiple: true
+          path: results
+
+      - name: Summarize the results
+        env:
+          BUILD: ${{ needs.build.result }}
+        run: |
+          if [ "$BUILD" != success ]; then
+            echo "::error::The build failed, see the job build"
+            exit 1
+          fi
+          # a suite that crashed has no results, which report.py can't tell from no failures
+          for suite in static tools options frames pipelines-{1..6}-of-6; do
+            if [ ! -s "results/$suite.tsv" ]; then
+              echo "::error::The suite $suite has no results, see its job"
+              exit 1
+            fi
+          done
+          python3 -I Tests/report.py results
+
+  release:
+    needs: report
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - name: Check out master
+        uses: actions/checkout@v7
+        with:
+          ref: master
+          fetch-depth: 0
+
+      # the tags of the token of a workflow start no workflow, the release is started directly
+      - name: Tag the new commits and start the release
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          before=$(git tag --list 'v*' | sort)
+          Source/version.sh
+          mapfile -t created < <(comm -13 <(printf '%s\n' "$before") <(git tag --list 'v*' | sort))
+          if [ ${#created[@]} -gt 0 ]; then
+            git push origin "${created[@]}"
+          fi
+          gh workflow run release.yml --ref master
