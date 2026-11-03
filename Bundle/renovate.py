@@ -305,7 +305,7 @@ def update_python(text, lines, old, new):
 
 def check(online):
     errors = []
-    for recipe in sorted((B / 'components').glob('*.sh')):
+    for recipe in sorted((B / 'components').glob('*.sh')) + [B.parent / 'Source/appimage-tools.sh']:
         text = recipe.read_text()
         lines = source_lines(text)
         anns = annotations(text)

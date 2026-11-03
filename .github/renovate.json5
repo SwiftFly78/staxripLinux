@@ -10,9 +10,9 @@
   labels: ['dependencies'],
   customManagers: [
     {
-      // the annotated versions of the recipes, Bundle/renovate.py completes the updates
+      // the annotated versions of the recipes and of the tools of the AppImage, Bundle/renovate.py completes the updates
       customType: 'regex',
-      managerFilePatterns: ['/^Bundle/components/[^/]+\\.sh$/'],
+      managerFilePatterns: ['/^Bundle/components/[^/]+\\.sh$/', '/^Source/appimage-tools\\.sh$/'],
       matchStrings: [
         '[a-z0-9_]*version=(?<currentValue>\\S+) # renovate: datasource=(?<datasource>[a-z-]+) depName=(?<depName>\\S+)(?: registryUrl=(?<registryUrl>\\S+))?(?: versioning=(?<versioning>\\S+))?(?: extractVersion=(?<extractVersion>\\S+))?(?: (?:source|tag|urlversion|special)=\\S+)*\\n',
         '[a-z0-9_]*version=\\S+ # renovate: datasource=(?<datasource>git-refs) depName=(?<depName>\\S+) branch=(?<currentValue>\\S+) digest=(?<currentDigest>[0-9a-f]{40})(?: source=\\S+)?\\n',
@@ -41,6 +41,16 @@
       postUpgradeTasks: {
         commands: ['python3 Bundle/renovate.py post-upgrade {{{packageFile}}}'],
         fileFilters: ['Bundle/components/**'],
+        executionMode: 'update',
+      },
+    },
+    {
+      matchFileNames: ['Source/appimage-tools.sh'],
+      semanticCommitType: 'build',
+      semanticCommitScope: 'appimage',
+      postUpgradeTasks: {
+        commands: ['python3 Bundle/renovate.py post-upgrade {{{packageFile}}}'],
+        fileFilters: ['Source/appimage-tools.sh'],
         executionMode: 'update',
       },
     },

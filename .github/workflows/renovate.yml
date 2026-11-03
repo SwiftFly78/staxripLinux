@@ -63,7 +63,7 @@ jobs:
           RENOVATE_REQUIRE_CONFIG: required
           # the tools of the runner, Bundle/renovate.py needs Python and git
           RENOVATE_BINARY_SOURCE: global
-          RENOVATE_ALLOWED_COMMANDS: '["^python3 Bundle/renovate\\.py post-upgrade Bundle/[A-Za-z0-9._/-]+$"]'
+          RENOVATE_ALLOWED_COMMANDS: '["^python3 Bundle/renovate\\.py post-upgrade (Bundle/[A-Za-z0-9._/-]+|Source/appimage-tools\\.sh)$"]'
           LOG_LEVEL: info
         run: |
           # the commits are the App's, its bot user is <id>+<slug>[bot]

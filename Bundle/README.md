@@ -60,8 +60,9 @@ upstream StaxRip ships. The AviSynth and VapourSynth scripts are in `scripts`, s
 ## Updates
 
 [Renovate](https://docs.renovatebot.com) recommends every update as a pull request: of the components, the NuGet
-packages, the actions of the workflows, the base image and the build tools of `requirements-build.txt`. It runs
-weekly in `.github/workflows/renovate.yml` with the configuration `.github/renovate.json5`:
+packages, the actions of the workflows, the base images, the build tools of `requirements-build.txt` and the
+appimagetool and AppImage runtime of `Source/appimage-tools.sh`. It runs weekly in `.github/workflows/renovate.yml`
+with the configuration `.github/renovate.json5`:
 
 - A release is proposed two weeks after its publication, when broken and malicious releases are usually known.
 - Every component gets a pull request of its own, at most ten are open at a time. The base image and the build
