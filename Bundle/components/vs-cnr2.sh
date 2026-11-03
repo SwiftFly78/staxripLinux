@@ -12,7 +12,8 @@ build() {
     cd vapoursynth-cnr2-efbc438526b4
     # MAKEFLAGS of a parallel make end up in the compiler flags
     autoreconf -fi
-    ./configure --prefix=$PREFIX
+    # cos of libm, which the VapourSynth process happens to load
+    ./configure --prefix=$PREFIX LIBS=-lm
     make
     plugin_install '*cnr2*.so*' Plugins/VS/CNR2 libcnr2.so
     stage_license_files
