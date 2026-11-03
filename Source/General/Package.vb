@@ -2209,7 +2209,7 @@ Public Class Package
         Add(New PluginPackage With {
             .Name = "FFT3DFilter",
             .Filename = "fft3dfilter.dll",
-            .WebURL = "https://github.com/VFR-maniac/VapourSynth-FFT3DFilter",
+            .WebURL = "https://github.com/myrsloik/VapourSynth-FFT3DFilter",
             .Description = "FFT3DFilter uses Fast Fourier Transform method for image processing in frequency domain.",
             .VsFilterNames = {"fft3dfilter.FFT3DFilter"}})
 
