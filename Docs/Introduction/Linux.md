@@ -281,18 +281,21 @@ Ubuntu, otherwise it runs node-semver with `npx` (Node.js).
 
 ### Releases
 
-When a push brings new version tags to `master`, the workflow [Release](../../.github/workflows/release.yml) builds the
-AppImages of the newest version and publishes them with the source code of the bundled tools as GitHub release. The
-release notes list the versions since the previous release with the subjects of their commits. The tags can be pushed
-before, with or after the branch, but GitHub starts no workflow for the tags of a push with more than three tags, so
-push them together with the branch:
+The workflow [CI](../../.github/workflows/ci.yml) builds the bundled tools and the full AppImage of every pull
+request and push of `master` and runs the [tests](../../Tests/README.md), a ruleset of `master` requires them to pass.
+After the tests of a push of `master`, CI tags the new commits without version, like the merged pull requests, with
+`Source/version.sh` and starts the workflow [Release](../../.github/workflows/release.yml). It builds the AppImages of
+the newest version and publishes them with the source code of the bundled tools as GitHub release, the release notes
+list the versions since the previous release with the subjects of their commits. Commits pushed with their tags keep
+them:
 
 ```sh
 git push origin HEAD:master v1.15.0 v1.15.1
 ```
 
-Versions that have a release already are skipped. *Run workflow* on the page of the workflow in the *Actions* tab of
-the repository releases the newest version if it has no release yet, for example after a failed run.
-
-The workflow [Tools](../../.github/workflows/tools.yml) builds the bundled tools when a push changes `Bundle`. The
-release finds them in the cache of GitHub Actions and only builds the ones that changed since.
+Merge pull requests with *Squash and merge*, so that every commit of `master` gets one version. Versions that have a
+release already are skipped. *Run workflow* on the page of the workflow Release in the *Actions* tab of the repository
+releases the newest version if it has no release yet, for example after a failed run. CI saves the build cache of the
+bundled tools of `master` in GitHub Actions, pull requests and releases only build the components that changed since.
+[Renovate](../../Bundle/README.md#updates) recommends the updates of the bundled tools and the other dependencies as
+pull requests.

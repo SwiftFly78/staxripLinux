@@ -99,7 +99,9 @@ set it up once:
    (read), and install it on the repository.
 2. Store its App ID as the variable `RENOVATE_APP_ID` and a private key of it as the secret
    `RENOVATE_APP_PRIVATE_KEY` of the repository (Settings, Secrets and variables, Actions).
-3. Protect master with a ruleset that requires the status check `Tests passed` of CI.
+3. Protect master with a ruleset that requires the status check `Tests passed` of CI, with the role Repository admin
+   in its bypass list, so pushes of the maintainers to master still go through, CI tests them after the push.
+4. Allow only "Squash and merge" for pull requests (Settings, General, Pull Requests).
 
 ## Libraries
 
