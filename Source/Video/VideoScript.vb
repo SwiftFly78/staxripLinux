@@ -611,9 +611,27 @@ clipname.set_output()" + BR
                 End If
 
                 code = line + BR + code
+
+                If Not plugin.Dependencies.NothingOrEmpty Then
+                    For Each iDependency In plugin.Dependencies
+                        Dim dep = FindDependency(iDependency, ScriptEngine.VapourSynth)
+
+                        If dep IsNot Nothing AndAlso dep.Path.Ext = "so" Then
+                            WriteVSCode(script, code, dep)
+                        End If
+                    Next
+                End If
             End If
         End If
     End Sub
+
+    'dependencies name the Windows files, which plugins of both engines can share
+    Shared Function FindDependency(name As String, engine As ScriptEngine) As PluginPackage
+        Return Package.Items.Values.OfType(Of PluginPackage).
+            Where(Function(pack) pack.WindowsFilename.ToLowerEx() = name.ToLowerEx()).
+            OrderByDescending(Function(pack) Not If(engine = ScriptEngine.AviSynth, pack.AvsFilterNames, pack.VsFilterNames).NothingOrEmpty).
+            FirstOrDefault()
+    End Function
 
     Shared Function IsVsPluginInAutoLoadFolder(filename As String) As Boolean
         If FrameServerHelp.IsPortable Then
@@ -676,7 +694,7 @@ clipname.set_output()" + BR
 
                                 If Not plugin.Dependencies.NothingOrEmpty Then
                                     For Each iDependency In plugin.Dependencies
-                                        Dim dep = Package.Items.Values.OfType(Of PluginPackage).FirstOrDefault(Function(pack) pack.Filename.ToLowerEx() = iDependency.ToLowerEx())
+                                        Dim dep = FindDependency(iDependency, ScriptEngine.AviSynth)
                                         Dim fp2 = dep?.Path
 
                                         If fp2.Ext.EqualsAny("dll", "so") Then
@@ -717,7 +735,7 @@ clipname.set_output()" + BR
 
                                 If Not plugin.Dependencies.NothingOrEmpty Then
                                     For Each iDependency In plugin.Dependencies
-                                        Dim dep = Package.Items.Values.OfType(Of PluginPackage).FirstOrDefault(Function(pack) pack.Filename.ToLowerEx() = iDependency.ToLowerEx())
+                                        Dim dep = FindDependency(iDependency, ScriptEngine.AviSynth)
                                         Dim fp2 = dep?.Path
 
                                         If fp2.Ext.EqualsAny("dll", "so") Then

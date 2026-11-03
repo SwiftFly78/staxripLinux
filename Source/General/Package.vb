@@ -2621,6 +2621,7 @@ Public Class Package
             .Filename = "TTempSmooth.dll",
             .Description = "VapourSynth port of TTempSmooth.",
             .WebURL = "https://github.com/HomeOfVapourSynthEvolution/VapourSynth-TTempSmooth",
+            .Dependencies = {"MiscFilters.dll"},
             .VsFilterNames = {"ttmpsm.TTempSmooth"}})
 
         Add(New PluginPackage With {
