@@ -165,6 +165,18 @@ Public Class VideoScript
                 Continue While
             End If
 
+            If c = "<"c AndAlso (String.CompareOrdinal(code, i, "<if(", 0, 4) = 0 OrElse
+                String.CompareOrdinal(code, i, "<replace(", 0, 9) = 0) Then
+
+                Dim macroEnd = code.IndexOf(")>", i, StringComparison.Ordinal)
+
+                If macroEnd > 0 Then
+                    sb.Append(code, i, macroEnd + 2 - i)
+                    i = macroEnd + 2
+                    Continue While
+                End If
+            End If
+
             Dim prefix = ""
 
             If Char.IsLetter(c) OrElse c = "_"c Then
