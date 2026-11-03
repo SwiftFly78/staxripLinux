@@ -1495,18 +1495,23 @@ Public Class GlobalClass
         ShowCode("Code Preview", code, find, wordwrap)
     End Sub
 
+    Private ReadOnly ffmsindexLock As New Object
+
     Sub ffmsindex(sourcePath As String, cachePath As String, Optional indexAudio As Boolean = False, Optional proj As Project = Nothing)
-        If File.Exists(sourcePath) AndAlso Not File.Exists(cachePath) AndAlso Not FileTypes.VideoText.Contains(sourcePath.Ext) Then
-            Using proc As New Proc
-                proc.Header = "Indexing using ffmsindex"
-                proc.SkipString = "Indexing, please wait..."
-                proc.Project = proj
-                proc.Priority = s.ToolProcessPriority
-                proc.File = Package.ffmsindex.Path
-                proc.Arguments = If(indexAudio, "-t -1 ", "") + sourcePath.LongPathPrefix.Escape + " " + cachePath.LongPathPrefix.Escape
-                proc.Start()
-            End Using
-        End If
+        'the audio tracks of a file are processed in parallel, ffmsindex fails when the index of another run exists
+        SyncLock ffmsindexLock
+            If File.Exists(sourcePath) AndAlso Not File.Exists(cachePath) AndAlso Not FileTypes.VideoText.Contains(sourcePath.Ext) Then
+                Using proc As New Proc
+                    proc.Header = "Indexing using ffmsindex"
+                    proc.SkipString = "Indexing, please wait..."
+                    proc.Project = proj
+                    proc.Priority = s.ToolProcessPriority
+                    proc.File = Package.ffmsindex.Path
+                    proc.Arguments = If(indexAudio, "-t -1 ", "") + sourcePath.LongPathPrefix.Escape + " " + cachePath.LongPathPrefix.Escape
+                    proc.Start()
+                End Using
+            End If
+        End SyncLock
     End Sub
 
     Function IsValidSource(Optional warn As Boolean = True) As Boolean
