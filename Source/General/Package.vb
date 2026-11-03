@@ -1106,7 +1106,7 @@ Public Class Package
         .DownloadURL = "https://github.com/Dogway/Avisynth-Scripts/blob/master/SMDegrain/SMDegrain.avsi",
         .Description = "SMDegrain is a simple wrapper for MVTools and client functions for general purpose temporal denoising.",
         .Dependencies = {"Average.dll", "dfttest.dll", "ExTools.avsi", "GradePack.avsi", "KNLMeansCL.dll", "LSFplus.avsi", "MasksPack.avsi", "MedianBlur2.dll", "mvtools2.dll", "nnedi3cl.dll", "ResizersPack.avsi", "RgTools.dll", "SharpenersPack.avsi", "vsTTempSmooth.dll"},
-        .AvsFilterNames = {"SMDegrain"}})
+        .AvsFilterNames = {"SMDegrain", "ex_MinBlur", "ex_sbr", "ex_Luma_Rebuild", "ex_retinex", "ex_BM3D", "ex_DGDenoise", "ex_KNLMeansCL"}})
 
     Shared Property BBorders As Package = Add(New PluginPackage With {
         .Name = "BBorders",
