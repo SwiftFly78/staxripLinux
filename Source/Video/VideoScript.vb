@@ -857,17 +857,28 @@ clipname.set_output()" + BR
 
     Shared Function GetAVSLoadCodeFromImports(code As String) As String
         Dim ret = ""
+        Dim scanned As New HashSet(Of String)
+        Dim lines = code
 
-        'the paths keep their case, file systems on Linux are case-sensitive
-        For Each line In code.SplitLinesNoEmpty
-            If line.IndexOf("import", StringComparison.OrdinalIgnoreCase) >= 0 Then
-                Dim match = Regex.Match(line, "\bimport\s*\(\s*""\s*(.+\.avsi*)\s*""\s*\)", RegexOptions.IgnoreCase)
+        'the scripts imported for imported scripts need their plugins too, like Zs_RF_Shared.avsi of QTGMC
+        While lines <> ""
+            Dim added = ""
 
-                If match.Success AndAlso File.Exists(match.Groups(1).Value) Then
-                    ret += GetAvsLoadCode(match.Groups(1).Value.ReadAllText, code)
+            'the paths keep their case, file systems on Linux are case-sensitive
+            For Each line In lines.SplitLinesNoEmpty
+                If line.IndexOf("import", StringComparison.OrdinalIgnoreCase) >= 0 Then
+                    Dim match = Regex.Match(line, "\bimport\s*\(\s*""\s*(.+\.avsi*)\s*""\s*\)", RegexOptions.IgnoreCase)
+                    Dim path = match.Groups(1).Value
+
+                    If match.Success AndAlso scanned.Add(path) AndAlso File.Exists(path) Then
+                        added += GetAvsLoadCode(path.ReadAllText, code + BR + ret + added)
+                    End If
                 End If
-            End If
-        Next
+            Next
+
+            ret += added
+            lines = added
+        End While
 
         Return ret.SplitLinesNoEmpty.Distinct.Join(BR)
     End Function
