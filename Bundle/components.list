@@ -68,6 +68,7 @@ avs-hqdn3d
 avs-vscnr2
 avs-vsttempsmooth
 avs-vstcanny
+avs-vapoursource
 avs-mpeg2decplus
 avs-timecodefps
 avs-descale

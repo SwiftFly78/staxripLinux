@@ -317,7 +317,7 @@ EOF
 # header-only {fmt} of the fmt component has the same function
 std_format_shim() {
     mkdir -p $PWD/std_format
-    printf '#pragma once\n#define FMT_HEADER_ONLY\n#include <fmt/format.h>\nnamespace std { using fmt::format; }\n' \
+    printf '#pragma once\n#define FMT_HEADER_ONLY\n#include <fmt/format.h>\nnamespace std { using fmt::format; using fmt::format_string; }\n' \
         > $PWD/std_format/format
     echo "-I$PREFIX/share/fmt/include -I$PWD/std_format -include $PWD/std_format/format"
 }
