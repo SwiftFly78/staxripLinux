@@ -95,8 +95,9 @@ Renovate runs as a GitHub App of the repository, the pull requests of the token 
 set it up once:
 
 1. Create a GitHub App (Settings, Developer settings, GitHub Apps, New GitHub App) without webhook, with the
-   repository permissions Contents, Issues, Pull requests and Workflows (read and write), Checks and Commit statuses
-   (read), and install it on the repository.
+   repository permissions Checks, Commit statuses, Contents, Issues, Pull requests and Workflows (read and write) and
+   Administration and Dependabot alerts (read), and install it on the repository. Renovate aborts its run when it
+   can't set a commit status.
 2. Store its App ID as the variable `RENOVATE_APP_ID` and a private key of it as the secret
    `RENOVATE_APP_PRIVATE_KEY` of the repository (Settings, Secrets and variables, Actions).
 3. Protect master with a ruleset that requires the status check `Tests passed` of CI, with the role Repository admin
