@@ -14,6 +14,8 @@ fi
 
 appimage=$(realpath "$1")
 shift
+# downloaded artifacts lose the executable bit
+[ -x "$appimage" ] || chmod +x "$appimage"
 W=${TEST_WORK:-$PWD/.work}
 mkdir -p "$W/results"
 
