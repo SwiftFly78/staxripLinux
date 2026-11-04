@@ -47,10 +47,18 @@ jobs:
           client-id: ${{ vars.RENOVATE_CLIENT_ID }}
           private-key: ${{ secrets.RENOVATE_APP_PRIVATE_KEY }}
 
+      # the major version of the range Renovate requires, like 24 of ^24.11.0
+      - name: Find the Node.js version of Renovate
+        id: node
+        run: |
+          major=$(npm view "renovate@$RENOVATE_VERSION" engines.node | grep -o -m1 '[0-9][0-9]*' | head -1)
+          [ -n "$major" ] || { echo "::error::no Node.js version in the engines of renovate@$RENOVATE_VERSION"; exit 1; }
+          echo "version=$major" >> "$GITHUB_OUTPUT"
+
       - name: Install Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: ${{ steps.node.outputs.version }}
 
       - name: Run Renovate
         env:
