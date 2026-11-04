@@ -1,4 +1,4 @@
-version=r5 # renovate: datasource=github-tags depName=HomeOfVapourSynthEvolution/VapourSynth-CTMF versioning=loose
+version=r5 # renovate: datasource=github-tags depName=HomeOfVapourSynthEvolution/VapourSynth-CTMF versioning=regex:^[rR](?<major>\d+)(?:\.(?<minor>\d+))?$
 packages="
 CTMF vs
 "

@@ -1,4 +1,4 @@
-version=r10 # renovate: datasource=github-tags depName=HomeOfVapourSynthEvolution/VapourSynth-EEDI3 versioning=loose
+version=r10 # renovate: datasource=github-tags depName=HomeOfVapourSynthEvolution/VapourSynth-EEDI3 versioning=regex:^[rR](?<major>\d+)(?:\.(?<minor>\d+))?$
 packages="
 EEDI3m vs
 "

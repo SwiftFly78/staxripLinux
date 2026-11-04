@@ -1,4 +1,4 @@
-version=R4 # renovate: datasource=github-tags depName=myrsloik/DotKill versioning=loose
+version=R4 # renovate: datasource=github-tags depName=myrsloik/DotKill versioning=regex:^[rR](?<major>\d+)(?:\.(?<minor>\d+))?$
 packages="
 DotKill vs
 "

@@ -1,4 +1,4 @@
-version=R7 # renovate: datasource=github-tags depName=vapoursynth/subtext versioning=loose
+version=R7 # renovate: datasource=github-tags depName=vapoursynth/subtext versioning=regex:^[rR](?<major>\d+)(?:\.(?<minor>\d+))?$
 packages="
 SubText vs
 "

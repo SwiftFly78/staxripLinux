@@ -1,4 +1,4 @@
-version=r3.3 # renovate: datasource=github-tags depName=sekrit-twc/znedi3 versioning=loose
+version=r3.3 # renovate: datasource=github-tags depName=sekrit-twc/znedi3 versioning=regex:^[rR](?<major>\d+)(?:\.(?<minor>\d+))?$
 packages="
 znedi3 vs
 "

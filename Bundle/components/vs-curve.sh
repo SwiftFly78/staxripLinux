@@ -1,4 +1,4 @@
-version=r3 # renovate: datasource=github-tags depName=HomeOfVapourSynthEvolution/VapourSynth-Curve versioning=loose
+version=r3 # renovate: datasource=github-tags depName=HomeOfVapourSynthEvolution/VapourSynth-Curve versioning=regex:^[rR](?<major>\d+)(?:\.(?<minor>\d+))?$
 packages="
 Curve vs
 "

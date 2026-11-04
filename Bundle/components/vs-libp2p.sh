@@ -1,4 +1,4 @@
-version=r2 # renovate: datasource=github-tags depName=DJATOM/LibP2P-Vapoursynth versioning=loose
+version=r2 # renovate: datasource=github-tags depName=DJATOM/LibP2P-Vapoursynth versioning=regex:^[rR](?<major>\d+)(?:\.(?<minor>\d+))?$
 packages="
 LibP2P vs
 "

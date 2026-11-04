@@ -1,4 +1,4 @@
-version=r12 # renovate: datasource=github-tags depName=HomeOfAviSynthPlusEvolution/neo_DFTTest versioning=loose
+version=r12 # renovate: datasource=github-tags depName=HomeOfAviSynthPlusEvolution/neo_DFTTest versioning=regex:^[rR](?<major>\d+)(?:\.(?<minor>\d+))?$
 packages="
 DFTTest Neo dual
 "

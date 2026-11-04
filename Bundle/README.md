@@ -82,6 +82,8 @@ version=1.0-d00a374 # renovate: datasource=git-refs depName=https://github.com/o
 Renovate changes the version (or the digest), `renovate.py post-upgrade` completes the update in the same commit: the
 commit of the tag of a git source, the URLs and checksums of downloads and the names in `build` and `bundle`.
 `source=<n>[,<n>]` assigns the version to lines of `sources`, `none=<reason>` marks a component without updates.
+`versioning=loose` compares versions with four numbers or a suffix, versions like `r12` or `R21` need
+`versioning=regex:^[rR](?<major>\d+)(?:\.(?<minor>\d+))?$`, Renovate ignores components whose version it can't read.
 A `revision=` of a recipe is the commit count of its git source, which archives lack, post-upgrade counts it for a new
 commit (AviSynth+ shows it in its version string). `renovate.py check --online` verifies the comments of all recipes
 and the revisions, run it after adding a component.

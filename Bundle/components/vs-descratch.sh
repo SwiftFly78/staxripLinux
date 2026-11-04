@@ -1,4 +1,4 @@
-version=R4 # renovate: datasource=github-tags depName=vapoursynth/descratch versioning=loose
+version=R4 # renovate: datasource=github-tags depName=vapoursynth/descratch versioning=regex:^[rR](?<major>\d+)(?:\.(?<minor>\d+))?$
 packages="
 DeScratch dual
 "

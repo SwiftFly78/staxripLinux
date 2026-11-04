@@ -1,4 +1,4 @@
-version=r4.1 # renovate: datasource=github-tags depName=HomeOfVapourSynthEvolution/VapourSynth-TTempSmooth versioning=loose
+version=r4.1 # renovate: datasource=github-tags depName=HomeOfVapourSynthEvolution/VapourSynth-TTempSmooth versioning=regex:^[rR](?<major>\d+)(?:\.(?<minor>\d+))?$
 packages="
 TTempSmooth vs
 "

@@ -1,4 +1,4 @@
-version=R2 # renovate: datasource=github-tags depName=myrsloik/VapourSynth-FFT3DFilter versioning=loose
+version=R2 # renovate: datasource=github-tags depName=myrsloik/VapourSynth-FFT3DFilter versioning=regex:^[rR](?<major>\d+)(?:\.(?<minor>\d+))?$
 packages="
 FFT3DFilter vs
 "

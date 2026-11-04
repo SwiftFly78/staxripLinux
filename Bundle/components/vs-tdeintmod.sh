@@ -1,4 +1,4 @@
-version=r10.1 # renovate: datasource=github-tags depName=HomeOfVapourSynthEvolution/VapourSynth-TDeintMod versioning=loose
+version=r10.1 # renovate: datasource=github-tags depName=HomeOfVapourSynthEvolution/VapourSynth-TDeintMod versioning=regex:^[rR](?<major>\d+)(?:\.(?<minor>\d+))?$
 packages="
 TDeintMod vs
 "

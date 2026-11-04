@@ -1,4 +1,4 @@
-version=r27 # renovate: datasource=gitea-tags depName=StvG/avsresize registryUrl=https://codeberg.org versioning=loose source=1
+version=r27 # renovate: datasource=gitea-tags depName=StvG/avsresize registryUrl=https://codeberg.org versioning=regex:^[rR](?<major>\d+)(?:\.(?<minor>\d+))?$ source=1
 zimg_version=release-3.0.6-f6cc75a # renovate: datasource=git-refs depName=https://github.com/sekrit-twc/zimg.git branch=master digest=f6cc75ad23db1bb9c53673c15523e6b6e960ffc6 source=2
 packages="
 AvsResize avs

@@ -1,4 +1,4 @@
-version=r7 # renovate: datasource=github-tags depName=HomeOfVapourSynthEvolution/VapourSynth-DFTTest versioning=loose
+version=r7 # renovate: datasource=github-tags depName=HomeOfVapourSynthEvolution/VapourSynth-DFTTest versioning=regex:^[rR](?<major>\d+)(?:\.(?<minor>\d+))?$
 packages="
 DFTTest vs
 "

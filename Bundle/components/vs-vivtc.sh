@@ -1,4 +1,4 @@
-version=R2 # renovate: datasource=github-tags depName=vapoursynth/vivtc versioning=loose
+version=R2 # renovate: datasource=github-tags depName=vapoursynth/vivtc versioning=regex:^[rR](?<major>\d+)(?:\.(?<minor>\d+))?$
 packages="
 VIVTC vs
 "

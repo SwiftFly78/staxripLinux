@@ -1,4 +1,4 @@
-version=r10 # renovate: datasource=github-tags depName=HomeOfVapourSynthEvolution/VapourSynth-AddGrain versioning=loose
+version=r10 # renovate: datasource=github-tags depName=HomeOfVapourSynthEvolution/VapourSynth-AddGrain versioning=regex:^[rR](?<major>\d+)(?:\.(?<minor>\d+))?$
 packages="
 AddGrain vs
 "

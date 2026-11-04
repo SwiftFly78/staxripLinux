@@ -1,4 +1,4 @@
-version=r8 # renovate: datasource=github-tags depName=HomeOfVapourSynthEvolution/VapourSynth-NNEDI3CL versioning=loose
+version=r8 # renovate: datasource=github-tags depName=HomeOfVapourSynthEvolution/VapourSynth-NNEDI3CL versioning=regex:^[rR](?<major>\d+)(?:\.(?<minor>\d+))?$
 packages="
 nnedi3cl vs
 "

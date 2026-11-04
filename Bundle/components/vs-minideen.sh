@@ -1,4 +1,4 @@
-version=r11 # renovate: datasource=github-tags depName=HomeOfAviSynthPlusEvolution/MiniDeen versioning=loose
+version=r11 # renovate: datasource=github-tags depName=HomeOfAviSynthPlusEvolution/MiniDeen versioning=regex:^[rR](?<major>\d+)(?:\.(?<minor>\d+))?$
 packages="
 MiniDeen dual
 "

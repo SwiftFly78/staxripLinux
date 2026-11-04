@@ -1,4 +1,4 @@
-version=r4.1 # renovate: datasource=github-tags depName=HomeOfVapourSynthEvolution/VapourSynth-DeblockPP7 versioning=loose
+version=r4.1 # renovate: datasource=github-tags depName=HomeOfVapourSynthEvolution/VapourSynth-DeblockPP7 versioning=regex:^[rR](?<major>\d+)(?:\.(?<minor>\d+))?$
 packages="
 DeblockPP7 vs
 "

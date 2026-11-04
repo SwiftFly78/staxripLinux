@@ -1,4 +1,4 @@
-version=r3 # renovate: datasource=github-tags depName=HomeOfVapourSynthEvolution/VapourSynth-CAS versioning=loose
+version=r3 # renovate: datasource=github-tags depName=HomeOfVapourSynthEvolution/VapourSynth-CAS versioning=regex:^[rR](?<major>\d+)(?:\.(?<minor>\d+))?$
 packages="
 CAS vs
 "

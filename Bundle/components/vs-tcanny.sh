@@ -1,4 +1,4 @@
-version=r14 # renovate: datasource=github-tags depName=HomeOfVapourSynthEvolution/VapourSynth-TCanny versioning=loose
+version=r14 # renovate: datasource=github-tags depName=HomeOfVapourSynthEvolution/VapourSynth-TCanny versioning=regex:^[rR](?<major>\d+)(?:\.(?<minor>\d+))?$
 packages="
 TCanny vs
 "

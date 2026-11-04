@@ -1,4 +1,4 @@
-version=r12 # renovate: datasource=github-tags depName=HomeOfVapourSynthEvolution/VapourSynth-BM3D versioning=loose
+version=r12 # renovate: datasource=github-tags depName=HomeOfVapourSynthEvolution/VapourSynth-BM3D versioning=regex:^[rR](?<major>\d+)(?:\.(?<minor>\d+))?$
 packages="
 BM3D vs
 "

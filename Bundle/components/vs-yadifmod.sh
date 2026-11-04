@@ -1,4 +1,4 @@
-version=r10.1 # renovate: datasource=github-tags depName=HomeOfVapourSynthEvolution/VapourSynth-Yadifmod versioning=loose
+version=r10.1 # renovate: datasource=github-tags depName=HomeOfVapourSynthEvolution/VapourSynth-Yadifmod versioning=regex:^[rR](?<major>\d+)(?:\.(?<minor>\d+))?$
 packages="
 Yadifmod vs
 "

@@ -1,4 +1,4 @@
-version=r5 # renovate: datasource=github-tags depName=sekrit-twc/timecube versioning=loose
+version=r5 # renovate: datasource=github-tags depName=sekrit-twc/timecube versioning=regex:^[rR](?<major>\d+)(?:\.(?<minor>\d+))?$
 packages="
 TimeCube vs
 "
