@@ -37,9 +37,6 @@ frames | VapourSynth Line \| Anti-Aliasing \| insaneAA #1 | needs the Python mod
 frames | VapourSynth (Line \| Sharpen \| DetailSharpen|Noise \| mClean|Noise \| TemporalDegrain2) #1 | G41Fun needs the Python module nnedi3_resample, which has no license that allows bundling it | No module named 'nnedi3_resample'
 frames | VapourSynth Line \| Anti-Aliasing \| Santiag #1 | the VapourSynth EEDI3 is built without OpenCL, which needs Boost.Compute | no function named EEDI3CL
 
-# OpenCL in the test image, which has no GPU and only the CPU driver PoCL
-frames | (AviSynth|VapourSynth) Noise \| (NLMeans \| )?KNLMeansCL.* | KNLMeansCL finds no OpenCL device | CL_INVALID_VALUE
-
 # options of other builds of the encoders, the switches stay listed so a new missing one fails
 options | options x264 --(aq-bias-strength|fade-compensate|log-file|log-file-level|progress-header|no-progress-header) | an option of x264 tMod, the bundle has the x264 of VideoLAN
 options | options x265 --(aq-bias-strength|fovea-delta|fovea-gaze|fovea-gaze-file|fovea-sigma|ip-factor|log-file|log-file-level|mcstf-ref-range|selective-mcstf|no-selective-mcstf|pb-factor|progress-readframes) | an option of x265 Mod, the bundle has the x265 of MulticoreWare

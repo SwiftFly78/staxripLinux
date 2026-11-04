@@ -10,6 +10,9 @@ git https://github.com/pinterf/KNLMeansCL.git c4af339b1d7b41268b3c5015627e68434b
 build() {
     unpack KNLMeansCL-c4af339b1d7b.tar
     cd KNLMeansCL-c4af339b1d7b
+    # the checks of platforms and devices read their version into 64 bytes, a longer one like that of PoCL fails with
+    # CL_INVALID_VALUE before any device is checked
+    sed -i -e 's/_txt\[64\]/_txt[2048]/' -e 's/sizeof(char) \* 64,/sizeof(char) * 2048,/' KNLMeansCL/shared/ocl_utils.cpp
     # the AviSynth+ interface is only compiled on Windows, and only with the header of an older AviSynth+
     sed -i -e '0,/^#ifdef _WIN32$/s//#if 1/' -e 's/^#ifdef __AVISYNTH_8_H__$/#if 1/' KNLMeansCL/NLMAvisynth.h
     sed -i 's/^#ifdef __AVISYNTH_8_H__$/#if 1/' KNLMeansCL/NLMAvisynth.cpp
