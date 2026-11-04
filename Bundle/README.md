@@ -98,7 +98,7 @@ set it up once:
    repository permissions Checks, Commit statuses, Contents, Issues, Pull requests and Workflows (read and write) and
    Administration and Dependabot alerts (read), and install it on the repository. Renovate aborts its run when it
    can't set a commit status.
-2. Store its App ID as the variable `RENOVATE_APP_ID` and a private key of it as the secret
+2. Store its Client ID as the variable `RENOVATE_CLIENT_ID` and a private key of it as the secret
    `RENOVATE_APP_PRIVATE_KEY` of the repository (Settings, Secrets and variables, Actions).
 3. Protect master with a ruleset that requires the status check `Tests passed` of CI, with the role Repository admin
    in its bypass list, so pushes of the maintainers to master still go through, CI tests them after the push.
