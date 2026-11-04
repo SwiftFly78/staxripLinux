@@ -69,8 +69,9 @@ with the configuration `.github/renovate.json5`:
   tools are grouped and proposed once a month, a new build image rebuilds every component.
 - Commits of a branch, the source of components without releases, are proposed once a month.
 - Known breaks aren't proposed by themselves: major versions of FFmpeg (L-SMASH-Works), VapourSynth R80 and newer
-  (plugins of API 3) and libplacebo newer than 7.360 (QSVEncC, VCEEncC). The Dependency Dashboard issue lists them
-  with every other pending update, a tick there opens the pull request.
+  (plugins of API 3), libplacebo newer than 7.360 (QSVEncC, VCEEncC), BestSource R22 and newer (VapourSynth R79) and
+  major versions of nv-codec-headers (minimum NVIDIA driver). The Dependency Dashboard issue lists them with every
+  other pending update, a tick there opens the pull request.
 
 The `# renovate:` comment of a version names the datasource and package of its upstream, for example:
 

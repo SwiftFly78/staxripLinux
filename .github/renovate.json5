@@ -118,5 +118,17 @@
       dependencyDashboardApproval: true,
       prBodyNotes: ['QSVEncC and VCEEncC need the API layout of libplacebo 7.360.'],
     },
+    {
+      matchDepNames: ['vapoursynth/bestsource'],
+      dependencyDashboardApproval: true,
+      prBodyNotes: ['BestSource R22 and newer use VapourSynth API functions R79 lacks, check the plugin load test.'],
+    },
+    {
+      // the minimum drivers are in the README of nv-codec-headers (12: 550.54, 13: 570), CI has no NVIDIA GPU
+      matchDepNames: ['FFmpeg/nv-codec-headers'],
+      matchUpdateTypes: ['major'],
+      dependencyDashboardApproval: true,
+      prBodyNotes: ['A major version raises the minimum NVIDIA driver of NVENC, NVDEC and CUDA in FFmpeg.'],
+    },
   ],
 }
