@@ -2245,9 +2245,9 @@ Public Class Package
             .WebURL = "https://github.com/IFeelBloated/vapoursynth-mvtools-sf",
             .Description = "MVTools is a set of filters for motion estimation and compensation.",
             .Dependencies = {"libfftw3-3.dll"},
-            .VsFilterNames = {"mvsf.Super", "mvsf.Analyse", "mvsf.Recalculate", "mvsf.Compensate", "mvsf.Degrain1", "mvsf.Degrain2",
-                "mvsf.Degrain3", "mvsf.Mask", "mvsf.Finest", "mvsf.Flow", "mvsf.FlowBlur", "mvsf.FlowInter", "mvsf.FlowFPS", "mvsf.BlockFPS", "mvsf.SCDetection",
-                "mvsf.DepanAnalyse", "mvsf.DepanEstimate", "mvsf.DepanCompensate", "mvsf.DepanStabilise"}})
+            .VsFilterNames = {"mvsf.Super", "mvsf.Analyze", "mvsf.Analyse", "mvsf.Recalculate", "mvsf.Compensate", "mvsf.Mask",
+                "mvsf.Finest", "mvsf.Flow", "mvsf.FlowBlur", "mvsf.FlowInter", "mvsf.FlowFPS", "mvsf.BlockFPS", "mvsf.SCDetection"}.
+                Concat(Enumerable.Range(1, 24).Select(Function(i) "mvsf.Degrain" & i)).ToArray()})
 
         Add(New PluginPackage With {
             .Name = "TemporalMedian",
