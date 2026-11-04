@@ -641,7 +641,7 @@ Public Class Package
     Shared Property scenechange As Package = Add(New PluginPackage With {
         .Name = "scenechange",
         .Filename = "scenechange.dll",
-        .VsFilterNames = {"scenechange"}})
+        .VsFilterNames = {"scd.Detect", "scd.ApplyLog"}})
 
     'on Linux ffmpeg reads AviSynth scripts, so avs2pipemod is only used when it's installed
     Shared Property avs2pipemod As Package = Add(New Package With {
