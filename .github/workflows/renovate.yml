@@ -1,11 +1,13 @@
 name: Renovate
 
 # Recommends updates of the bundled tools and the other dependencies as pull requests, see "Updates" in
-# Bundle/README.md. Runs weekly, by hand, and when someone ticks a box in the Dependency Dashboard issue or in an update
-# pull request. Uses the GitHub App of the repository, the pull requests of the GITHUB_TOKEN wouldn't start CI.
+# Bundle/README.md. Runs on Fridays at noon, when the schedule of .github/renovate.json5 lets it create branches, by
+# hand, and when someone ticks a box in the Dependency Dashboard issue or in an update pull request. Uses the GitHub
+# App of the repository, the pull requests of the GITHUB_TOKEN wouldn't start CI.
 on:
   schedule:
-    - cron: '17 3 * * 1'
+    - cron: '7 12 * * 5'
+      timezone: Europe/Berlin
   workflow_dispatch:
   issues:
     types: [edited]

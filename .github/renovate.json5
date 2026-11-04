@@ -1,10 +1,14 @@
 // Recommends updates of the bundled tools, the NuGet packages, the actions and the images as pull requests, which the
-// tests of CI check before a merge. Runs weekly in .github/workflows/renovate.yml, see "Updates" in Bundle/README.md.
+// tests of CI check before a merge. Runs in .github/workflows/renovate.yml, see "Updates" in Bundle/README.md.
 {
   $schema: 'https://docs.renovatebot.com/renovate-schema.json',
   extends: ['config:recommended', ':semanticCommits'],
   // broken and malicious releases are usually found within two weeks
   minimumReleaseAge: '14 days',
+  // new branches on Fridays at noon, when the workflow starts Renovate, the hour after covers delayed and long runs,
+  // updates ticked in the Dependency Dashboard get their branch at once
+  timezone: 'Europe/Berlin',
+  schedule: ['* 12-13 * * 5'],
   prConcurrentLimit: 10,
   prHourlyLimit: 0,
   labels: ['dependencies'],
@@ -55,10 +59,10 @@
       },
     },
     {
-      // git branches have no release dates, their new commits are proposed once a month
+      // git branches have no release dates, their new commits are proposed on the first Friday of a month
       matchDatasources: ['git-refs'],
       minimumReleaseAge: null,
-      schedule: ['* * 1-7 * *'],
+      schedule: ['* 12-13 1-7 * 5'],
     },
     {
       // a new build image rebuilds every bundled tool, hours on the runners of GitHub
@@ -66,7 +70,7 @@
       groupName: 'build image of the bundled tools',
       semanticCommitType: 'build',
       semanticCommitScope: 'bundle',
-      schedule: ['* * 1-7 * *'],
+      schedule: ['* 12-13 1-7 * 5'],
       postUpgradeTasks: {
         commands: ['python3 Bundle/renovate.py post-upgrade {{{packageFile}}}'],
         fileFilters: ['Bundle/requirements-build.txt'],
