@@ -13,7 +13,7 @@ Tests/run.sh <AppImage> <suite>...
 | Suite | Tests |
 |---|---|
 | `static` | the libraries and symbols of every bundled file, that every AviSynth+ and VapourSynth plugin loads and has the functions StaxRipLinux calls, that every executable starts |
-| `tools` | a small real job of every bundled tool: encoders, the encoders of FFmpeg that the profiles use, audio encoders, muxers, demuxers, the HDR tools, the frame servers |
+| `tools` | a small real job of every bundled tool: encoders, the encoders of FFmpeg that the profiles use, audio encoders, muxers, demuxers, the HDR tools, the frame servers, the plugins no filter profile uses |
 | `options` | that the encoders know every switch the options of their StaxRipLinux profiles can pass: a switch their help doesn't name must not be rejected as unknown, so removed or renamed switches show up |
 | `frames` | every default filter profile of both frame servers, with every option of its menus, renders frames of the script StaxRipLinux generates for it, Vulkan and OpenCL with the software drivers lavapipe and PoCL |
 | `pipelines` | StaxRipLinux jobs: every encoder profile with both frame servers, every muxer, every source filter with every source it can open, every audio encoder with the decoders, downmixing and normalization, and features like multi-pass encoding, chunks, cutting, cropping, deinterlacing, hard subtitles, HDR10, Dolby Vision and VFR |

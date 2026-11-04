@@ -89,6 +89,36 @@ printf '"%s" = ["%s","%s","%s"]\n' "$vsscript" "$python" "$(realpath $A/FrameSer
     "$(stat -c %Y "$python")" > $HOME/.config/vapoursynth/vapoursynth.toml
 VSSCRIPT_PATH=$vsscript check "vspipe" $VSPIPE blank.vpy --
 
+# the frames suite only runs plugins that filter profiles use
+echo "-- plugins without filter profiles"
+P=$A/Plugins
+printf 'LoadPlugin("%s")\nVSImport("blank.vpy")\n' $P/AVS/VapourSource/libVapourSource_x64.so > vsimport.avs
+VSSCRIPT_PATH=$vsscript check "VapourSource" $AVS2YUV vsimport.avs -o /dev/null
+for ext in png jpg tif; do
+    $F -f lavfi -i testsrc2=s=320x240 -frames:v 1 image.$ext
+done
+cat > plugins.py << EOF
+import sys
+import vapoursynth as vs
+core = vs.core
+core.std.LoadPlugin('$P/VS/' + sys.argv[2])
+if sys.argv[1] == 'imwri':
+    for ext in ('png', 'jpg', 'tif'):
+        assert core.imwri.Read('image.' + ext).get_frame(0).width == 320
+    core.imwri.Write(core.std.BlankClip(format=vs.RGB24), 'PNG', 'write%d.png').get_frame(0)
+elif sys.argv[1] == 'mvtools-sf':
+    clip = core.std.BlankClip(format=vs.YUV444PS, width=320, height=240, length=10)
+    sup = core.mvsf.Super(clip)
+    core.mvsf.Degrain1(clip, sup, core.mvsf.Analyse(sup, isb=True), core.mvsf.Analyse(sup, isb=False)).get_frame(5)
+else:
+    clip = core.std.BlankClip(format=vs.YUV420P8, length=10)
+    frame = core.scd.Detect(clip + core.std.BlankClip(clip, color=[235, 128, 128])).get_frame(10)
+    assert frame.props['_SceneChangePrev'] == 1
+EOF
+check "libimwri" $PYTHON plugins.py imwri libimwri/libimwri.so
+check "mvtools-sf" $PYTHON plugins.py mvtools-sf mvtools-sf/libmvtools_sf_em64t.so
+check "scenechange" $PYTHON plugins.py scenechange scenechange/libscenechange.so
+
 echo "-- other tools"
 check "7z" bash -c "$A/Support/7zip/7z a -bd archive.7z in.wav > /dev/null && $A/Support/7zip/7z t archive.7z > /dev/null"
 # StaxRip downloads the languages
