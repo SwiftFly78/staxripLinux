@@ -17,6 +17,7 @@ xvid
 rav1e
 opus
 fmt
+imagemagick
 fribidi
 harfbuzz
 libass
@@ -137,6 +138,7 @@ vs-fft3dfilter
 vs-timecube
 vs-znedi3
 vs-fmtconv
+vs-imwri
 vs-neo-dfttest
 vs-neo-fft3d
 vs-neo-f3kdb
