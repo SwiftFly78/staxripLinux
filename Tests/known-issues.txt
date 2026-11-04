@@ -37,10 +37,12 @@ frames | VapourSynth Line \| Anti-Aliasing \| insaneAA #1 | needs the Python mod
 frames | VapourSynth (Line \| Sharpen \| DetailSharpen|Noise \| mClean|Noise \| TemporalDegrain2) #1 | G41Fun needs the Python module nnedi3_resample, which has no license that allows bundling it | No module named 'nnedi3_resample'
 frames | VapourSynth Line \| Anti-Aliasing \| Santiag #1 | the VapourSynth EEDI3 is built without OpenCL, which needs Boost.Compute | no function named EEDI3CL
 
-# OpenCL in the test image, which has no GPU and only the CPU driver PoCL
+# OpenCL in the test image, which has no GPU and only the CPU driver PoCL 1.8 of Ubuntu 22.04. Its LLVM 11 doesn't
+# know newer CPUs like AMD Zen 3, so PoCL builds no program (Invalid Program). On CPUs it knows the programs build,
+# but NNEDI3CL needs an image PoCL 1.8 doesn't support (Invalid Operation). The CPU depends on the runner of CI.
 frames | (AviSynth|VapourSynth) Noise \| (NLMeans \| )?KNLMeansCL.* | KNLMeansCL finds no OpenCL device | CL_INVALID_VALUE
-frames | VapourSynth (Field \| Deinterlace \| NNEDI3|Resize \| Advanced \| NNEDI3_rpow2) #\d+ | PoCL can't build the program of NNEDI3CL | NNEDI3CL: Invalid Program
-frames | AviSynth Field \| Deinterlace \| QTGMC \| QTGMC\+\.\.\. #\d+ | QTGMC+ interpolates with NNEDI3CL, PoCL can't build its program | NNEDI3CL: Invalid Program
+frames | VapourSynth (Field \| Deinterlace \| NNEDI3|Resize \| Advanced \| NNEDI3_rpow2) #\d+ | PoCL 1.8 can't run NNEDI3CL | NNEDI3CL: Invalid (Program|Operation)
+frames | AviSynth Field \| Deinterlace \| QTGMC \| QTGMC\+\.\.\. #\d+ | QTGMC+ interpolates with NNEDI3CL, which PoCL 1.8 can't run | NNEDI3CL: Invalid (Program|Operation)
 
 # options of other builds of the encoders, the switches stay listed so a new missing one fails
 options | options x264 --(aq-bias-strength|fade-compensate|log-file|log-file-level|progress-header|no-progress-header) | an option of x264 tMod, the bundle has the x264 of VideoLAN
