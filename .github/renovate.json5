@@ -82,7 +82,7 @@
       enabled: false,
     },
     {
-      matchFileNames: ['Tests/Dockerfile'],
+      matchFileNames: ['Tests/Dockerfile', 'Tests/Dockerfile.gpu'],
       semanticCommitType: 'test',
     },
     {

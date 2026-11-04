@@ -3,8 +3,9 @@
 The test suites of the full AppImage, CI runs them for every pull request and push of master (see
 `.github/workflows/ci.yml`), so an update of a bundled tool can't break a tool, plugin or job that depends on it. They
 run in a desktop-like Ubuntu 22.04 without any of the bundled tools (`Dockerfile`), the oldest system the AppImage
-supports, so missing libraries show up. The media of the tests are generated with the bundled tools
-(`container/media.sh`).
+supports, so missing libraries show up. The frames suite runs in Ubuntu 24.04 with the software drivers of Vulkan and
+OpenCL (`Dockerfile.gpu`), the OpenCL driver PoCL of 22.04 can't run NNEDI3CL. The media of the tests are generated
+with the bundled tools (`container/media.sh`).
 
 ```sh
 Tests/run.sh <AppImage> <suite>...

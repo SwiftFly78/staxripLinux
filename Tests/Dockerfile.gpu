@@ -1,0 +1,11 @@
+# The image of the frames suite: a desktop-like Ubuntu 24.04 like Dockerfile, with Mesa's software Vulkan driver
+# lavapipe and the CPU OpenCL driver PoCL for the plugins that need a GPU. The PoCL 1.8 of Ubuntu 22.04 can't run
+# NNEDI3CL: its LLVM 11 doesn't know newer CPUs, and it lacks an image type NNEDI3CL uses, like the PoCL 6.0 of 26.04.
+# PoCL 5.0 fails an assertion of its kernel cache when several of its threads run the kernels of NNEDI3CL, so it runs
+# them on one thread.
+FROM ubuntu:24.04@sha256:fe81560990fae86dc4743202b2cb4d3df98d0bcf949173cecef15ce1127ef852
+ENV DEBIAN_FRONTEND=noninteractive LANG=C.UTF-8 POCL_MAX_PTHREAD_COUNT=1
+RUN apt-get update \
+    && apt-get install -y libgtk-3-0t64 libicu74 xvfb xauth fonts-dejavu-core xdotool x11-apps mesa-vulkan-drivers \
+        pocl-opencl-icd \
+    && rm -rf /var/lib/apt/lists/*

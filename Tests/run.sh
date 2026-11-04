@@ -19,13 +19,15 @@ shift
 W=${TEST_WORK:-$PWD/.work}
 mkdir -p "$W/results"
 
-# the image of the Dockerfile, GPU=1 adds the software drivers of Vulkan and OpenCL
+# the image of Dockerfile, with gpu=1 the one of Dockerfile.gpu with the software drivers of Vulkan and OpenCL
 image() {
-    local tag
-    tag=staxriplinux-test$([ "$1" = 1 ] && echo -gpu || true):$(sha256sum Dockerfile | cut -c1-12)
+    local file=Dockerfile tag
+    [ "$1" = 1 ] && file=Dockerfile.gpu
+    tag=staxriplinux-test$([ "$1" = 1 ] && echo -gpu || true):$(sha256sum $file | cut -c1-12)
 
     if ! docker image inspect "$tag" > /dev/null 2>&1; then
-        docker build -q --build-arg GPU="$1" -t "$tag" . > /dev/null
+        # without context, the images copy no files
+        docker build -q -t "$tag" - < $file > /dev/null
     fi
 
     echo "$tag"
