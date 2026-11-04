@@ -1,4 +1,4 @@
-version=1.1.1e # renovate: datasource=github-tags depName=pinterf/KNLMeansCL versioning=loose extractVersion=^v(?<version>.+)$
+version=1.1.1e # renovate: datasource=github-tags depName=pinterf/KNLMeansCL versioning=deb extractVersion=^v(?<version>\d+\.\d+\.\d+[a-z]?)$
 packages="
 KNLMeansCL dual
 "

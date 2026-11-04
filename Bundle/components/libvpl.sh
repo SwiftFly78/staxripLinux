@@ -1,5 +1,5 @@
 # the dispatcher of the Intel QSV encoders of FFmpeg, it loads the runtime of the system
-version=2.17.0 # renovate: datasource=github-tags depName=intel/libvpl extractVersion=^v(?<version>.+)$
+version=2.17.0 # renovate: datasource=github-tags depName=intel/libvpl extractVersion=^v(?<version>\d{1,3}\.\d+\.\d+)$
 sources="
 git https://github.com/intel/libvpl.git d77f9195cf495b937631607333288fd917ae8939
 "

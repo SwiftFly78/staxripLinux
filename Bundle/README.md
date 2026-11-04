@@ -84,6 +84,10 @@ commit of the tag of a git source, the URLs and checksums of downloads and the n
 `source=<n>[,<n>]` assigns the version to lines of `sources`, `none=<reason>` marks a component without updates.
 `versioning=loose` compares versions with four numbers or a suffix, versions like `r12` or `R21` need
 `versioning=regex:^[rR](?<major>\d+)(?:\.(?<minor>\d+))?$`, Renovate ignores components whose version it can't read.
+Loose versioning ranks `3.0.2` above `3.0.2-B`, suffixes of later builds of a version like `3.0.2-B` or `1.1.1e` need
+`versioning=deb`. `extractVersion` keeps only the tags of the project's own releases, forks like SVT-AV1-Essential
+also have the tags of their upstream, and has the form `^<prefix>(?<version>...)$` without groups in the version,
+post-upgrade derives the tag from it.
 A `revision=` of a recipe is the commit count of its git source, which archives lack, post-upgrade counts it for a new
 commit (AviSynth+ shows it in its version string). `renovate.py check --online` verifies the comments of all recipes
 and the revisions, run it after adding a component.

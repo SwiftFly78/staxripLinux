@@ -48,10 +48,14 @@ def run(*args, cwd=None):
     return subprocess.run(args, capture_output=True, text=True, check=True, cwd=cwd, timeout=600).stdout
 
 
+# the prefix of the tags in front of the version group of extractVersion, which mustn't contain groups
+TAG_PREFIX = re.compile(r'\^(.*)\(\?<version>[^)]*\)\$')
+
+
 def tag_of(keys, version):
     if 'tag' in keys:
         return keys['tag'].replace('{version_}', version.replace('.', '_')).replace('{version}', version)
-    m = re.fullmatch(r'\^(.*)\(\?<version>[^)]*\)\$', keys.get('extractVersion', '^(?<version>.+)$'))
+    m = TAG_PREFIX.fullmatch(keys.get('extractVersion', '^(?<version>.+)$'))
     return (m.group(1).replace('\\', '') if m else '') + version
 
 
@@ -321,6 +325,9 @@ def check(online):
             if keys.get('datasource') is None or keys.get('depName') is None:
                 errors.append(f"{recipe.name}: {a['var']} lacks datasource or depName")
                 continue
+            if 'extractVersion' in keys and 'tag' not in keys and not TAG_PREFIX.fullmatch(keys['extractVersion']):
+                errors.append(f"{recipe.name}: extractVersion of {a['var']} needs the form ^<prefix>(?<version>...)$ "
+                              "without groups in the version")
             if 'source' in keys:
                 indexes = [int(i) - 1 for i in keys['source'].split(',')]
             elif keys['datasource'] == 'git-refs' or keys['datasource'].endswith('-tags') and \
