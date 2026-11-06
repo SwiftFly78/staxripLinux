@@ -1,13 +1,13 @@
 # ImageMagick 7 for libimwri: a static library with its configuration compiled in, which reads PNG, JPEG and TIFF
 # with the libraries of the build image
-version=7.1.2-33 # renovate: datasource=github-tags depName=ImageMagick/ImageMagick versioning=loose
+version=7.1.2-34 # renovate: datasource=github-tags depName=ImageMagick/ImageMagick versioning=loose
 sources="
-git https://github.com/ImageMagick/ImageMagick.git 211e5b975a0019a88dcef5f84c1193f46738d815
+git https://github.com/ImageMagick/ImageMagick.git a0c4bf729a26a5c2feb28b0365b47a8db736078a
 "
 
 build() {
-    unpack ImageMagick-211e5b975a00.tar
-    cd ImageMagick-211e5b975a00
+    unpack ImageMagick-a0c4bf729a26.tar
+    cd ImageMagick-a0c4bf729a26
     configure_make --disable-shared --enable-static --with-pic --enable-hdri --with-quantum-depth=16 \
         --enable-zero-configuration --without-modules --disable-openmp --disable-docs --without-utilities \
         --with-magick-plus-plus --without-perl --without-x --with-png --with-jpeg --with-tiff --with-lcms --with-zlib \
