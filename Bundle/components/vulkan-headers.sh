@@ -1,13 +1,13 @@
 # for the encoders of rigaya, the Vulkan headers of Ubuntu 22.04 lack the video queues, the Vulkan loader comes
 # from the system
-version=1.4.365 # renovate: datasource=github-tags depName=KhronosGroup/Vulkan-Headers extractVersion=^v(?<version>.+)$
+version=1.4.366 # renovate: datasource=github-tags depName=KhronosGroup/Vulkan-Headers extractVersion=^v(?<version>.+)$
 sources="
-git https://github.com/KhronosGroup/Vulkan-Headers.git c46850864f4661461b0f6cb9922c058ffea4915e
+git https://github.com/KhronosGroup/Vulkan-Headers.git 73814d006638aa00bd553215b054f0f02e457e22
 "
 
 build() {
-    unpack Vulkan-Headers-c46850864f46.tar
-    cd Vulkan-Headers-c46850864f46
+    unpack Vulkan-Headers-73814d006638.tar
+    cd Vulkan-Headers-73814d006638
     cmake_build
     stage_license LICENSE.md
 }
