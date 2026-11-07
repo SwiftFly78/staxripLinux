@@ -168,6 +168,28 @@ def replace_in_functions(text, names, pairs):
 
 
 # the hashes of the build tools in requirements-build.txt, of the files of the same platforms in the new versions
+# the glibc of the build image, Ubuntu 22.04, and the versions of the legacy manylinux tags
+GLIBC = (2, 35)
+MANYLINUX = {'manylinux1': (2, 5), 'manylinux2010': (2, 12), 'manylinux2014': (2, 17)}
+
+
+# the python and abi tags and the platform tags of a wheel, a compound platform tag lists them in any order,
+# or the archive type of a source distribution
+def file_tags(name):
+    if not name.endswith('.whl'):
+        return ('sdist', '.tar.gz' if name.endswith('.tar.gz') else Path(name).suffix), set()
+    python, abi, platform = name[:-4].split('-')[-3:]
+    return (python, abi), set(platform.split('.'))
+
+
+def installs_on_image(platform):
+    m = re.fullmatch(r'manylinux_(\d+)_(\d+)_x86_64', platform)
+    if m:
+        return (int(m.group(1)), int(m.group(2))) <= GLIBC
+    m = re.fullmatch(r'(manylinux1|manylinux2010|manylinux2014)_x86_64', platform)
+    return platform == 'any' or bool(m) and MANYLINUX[m.group(1)] <= GLIBC
+
+
 def update_requirements(path):
     line = re.compile(r'^([A-Za-z0-9._-]+)==(\S+) --hash=sha256:([0-9a-f]{64})$', re.M)
     old = {m.group(1): (m.group(2), m.group(3)) for m in line.finditer(run('git', 'show', f'HEAD:Bundle/{path.name}', cwd=B.parent))}
@@ -178,11 +200,16 @@ def update_requirements(path):
             continue
         files = json_of(f'https://pypi.org/pypi/{name}/{old[name][0]}/json')['urls']
         old_file = next(f for f in files if f['digests']['sha256'] == old[name][1])['filename']
-        suffix = old_file.split('-', 2)[2]
-        new_files = json_of(f'https://pypi.org/pypi/{name}/{version}/json')['urls']
-        new_file = next((f for f in new_files if f['filename'].endswith(suffix)), None)
-        if not new_file:
-            raise SystemExit(f'{name} {version} has no file like {old_file}')
+        kind, platforms = file_tags(old_file)
+        # a file of the same kind that installs on the build image, preferably with the platform tags of the old one
+        new_files = []
+        for f in json_of(f'https://pypi.org/pypi/{name}/{version}/json')['urls']:
+            new_kind, new_platforms = file_tags(f['filename'])
+            if new_kind == kind and (kind[0] == 'sdist' or any(installs_on_image(p) for p in new_platforms)):
+                new_files.append((len(platforms & new_platforms), f))
+        if not new_files:
+            raise SystemExit(f'{name} {version} has no file that installs like {old_file}')
+        new_file = max(new_files, key=lambda x: x[0])[1]
         text = text.replace(m.group(0), f"{name}=={version} --hash=sha256:{new_file['digests']['sha256']}")
     path.write_text(text)
 
