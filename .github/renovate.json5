@@ -86,6 +86,14 @@
       semanticCommitType: 'test',
     },
     {
+      // the Ubuntu releases are chosen: the bundle is built on 22.04 for the glibc of the oldest supported systems,
+      // the tests run there too, the frames suite on 24.04, whose PoCL runs NNEDI3CL, only their digests are updated
+      matchDatasources: ['docker'],
+      matchPackageNames: ['ubuntu'],
+      matchUpdateTypes: ['major', 'minor'],
+      enabled: false,
+    },
+    {
       matchManagers: ['nuget'],
       semanticCommitType: 'build',
       semanticCommitScope: 'deps',

@@ -67,6 +67,9 @@ configuration `.github/renovate.json5` and creates the branches of new updates o
 - A release is proposed two weeks after its publication, when broken and malicious releases are usually known.
 - Every component gets a pull request of its own, at most ten are open at a time. The base image and the build
   tools are grouped and proposed on the first Friday of a month, a new build image rebuilds every component.
+  The Ubuntu releases of the images only get their digests updated: the tools are built on 22.04 for the glibc of
+  the oldest systems the AppImage supports, the tests run there too, and the frames suite on 24.04, whose PoCL runs
+  NNEDI3CL.
 - Commits of a branch, the source of components without releases, are proposed on the first Friday of a month.
 - Known breaks aren't proposed by themselves: major versions of FFmpeg (L-SMASH-Works), VapourSynth R80 and newer
   (plugins of API 3), libplacebo newer than 7.360 (QSVEncC, VCEEncC), BestSource R22 and newer (VapourSynth R79) and
