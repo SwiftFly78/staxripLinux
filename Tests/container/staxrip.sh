@@ -6,7 +6,11 @@ SUITE=$1
 export HOME=/tmp/home DISPLAY=:99 STAXRIP_SETTINGS=/tmp/home/settings NO_AT_BRIDGE=1
 mkdir -p $HOME
 Xvfb :99 -screen 0 1600x1000x24 -nolisten tcp > /tmp/xvfb.log 2>&1 &
-sleep 1
+# GTK can't start before the display accepts connections
+for i in $(seq 1 100); do
+    xdotool getdisplaygeometry > /dev/null 2>&1 && break
+    sleep 0.1
+done
 
 # staxrip <seconds> <script> [<arg>...]: runs a PowerShell script in a new StaxRip process, the script ends it,
 # returns 124 after a timeout
@@ -21,41 +25,46 @@ screenshot() {
     xwd -root -display :99 -silent > "/tmp/$1.xwd" 2> /dev/null && $FF -loglevel error -y -i "/tmp/$1.xwd" "/work/out/$1.png"
 }
 
-# the first start shows the changelog in a dialog before StaxRip runs the script, it's confirmed with its button
-# at the bottom right
-rm -f /tmp/started
-staxrip 240 /t/started.ps1 /tmp/started &
-pid=$!
-clicked=
+# the first start shows the changelog in a dialog before StaxRip runs the script. The OK button at its bottom right
+# is clicked when the dialog is visible and keeps its place, and again every 5 seconds while it stays open.
+first_start() {
+    local pid i=0 next=0 dialog last= best id x y w h
+    rm -f /tmp/started
+    staxrip 120 /t/started.ps1 /tmp/started &
+    pid=$!
 
-for i in $(seq 1 480); do
-    [ -f /tmp/started ] && break
-    ids=$(xdotool search --name '^StaxRipLinux v' 2> /dev/null)
-
-    if [ -z "$clicked" ] && [ -n "$ids" ]; then
-        best=
-        for id in $ids; do
+    while [ ! -f /tmp/started ] && kill -0 $pid 2> /dev/null; do
+        dialog= best=
+        for id in $(xdotool search --onlyvisible --name '^StaxRipLinux v' 2> /dev/null); do
             eval "$(xdotool getwindowgeometry --shell "$id")"
             if [ -z "$best" ] || [ $((WIDTH * HEIGHT)) -lt "$best" ]; then
-                best=$((WIDTH * HEIGHT)) bx=$X by=$Y bw=$WIDTH bh=$HEIGHT
+                best=$((WIDTH * HEIGHT)) dialog="$X $Y $WIDTH $HEIGHT"
             fi
         done
-        sleep 1
-        xdotool mousemove $((bx + bw - 62)) $((by + bh - 40)) click 1
-        clicked=1
-    fi
 
-    sleep 0.5
-done
+        if [ -n "$dialog" ] && [ "$dialog" = "$last" ] && [ $i -ge $next ]; then
+            read -r x y w h <<< "$dialog"
+            xdotool mousemove $((x + w - 62)) $((y + h - 40)) click 1
+            next=$((i + 10))
+        fi
 
-wait $pid
+        last=$dialog
+        i=$((i + 1))
+        sleep 0.5
+    done
 
-if [ ! -f /tmp/started ]; then
-    screenshot start
-    echo "StaxRip didn't start, see /work/out/start.png" >&2
+    wait $pid
+    [ -f /tmp/started ]
+}
+
+# a start that doesn't reach the script is tried once more
+for attempt in 1 2; do
+    first_start && break
+    screenshot start-$attempt
+    echo "StaxRip didn't start, see /work/out/start-$attempt.png" >&2
     tail -20 /tmp/staxrip.out >&2
-    exit 1
-fi
+    [ $attempt = 2 ] && exit 1
+done
 
 case $SUITE in
     script)
