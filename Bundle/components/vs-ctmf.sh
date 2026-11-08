@@ -10,6 +10,8 @@ git https://github.com/HomeOfVapourSynthEvolution/VapourSynth-CTMF.git 073eccda9
 build() {
     unpack VapourSynth-CTMF-073eccda90db.tar
     cd VapourSynth-CTMF-073eccda90db
+    # the histograms of 8 bit input have 16 bins, the vectors of the AVX-512 code 32, it crashed reading past them
+    sed -i 's/Vec32us()/std::conditional_t<bins == 16, Vec16us, Vec32us>()/g' CTMF/CTMF_AVX512.cpp
     lock_thread_maps
     meson_plugin
     plugin_install '*ctmf*.so*' Plugins/VS/CTMF libCTMF.so
