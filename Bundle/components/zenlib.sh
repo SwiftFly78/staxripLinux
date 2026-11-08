@@ -6,6 +6,7 @@ https://mediaarea.net/download/source/libzen/0.4.41/libzen_0.4.41.tar.bz2 eb237d
 build() {
     unpack libzen_0.4.41.tar.bz2
     cd ZenLib/Project/CMake
-    cmake_build -DBUILD_SHARED_LIBS=ON
+    # CMake 4 refuses its minimum version 3.1, its master already requires 3.5
+    cmake_build -DBUILD_SHARED_LIBS=ON -DCMAKE_POLICY_VERSION_MINIMUM=3.5
     stage_license ../../License.txt
 }
