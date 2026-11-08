@@ -297,5 +297,5 @@ Merge pull requests with *Squash and merge*, so that every commit of `master` ge
 release already are skipped. *Run workflow* on the page of the workflow Release in the *Actions* tab of the repository
 releases the newest version if it has no release yet, for example after a failed run. CI saves the build cache of the
 bundled tools of `master` in GitHub Actions, pull requests and releases only build the components that changed since.
-[Renovate](../../Bundle/README.md#updates) recommends the updates of the bundled tools and the other dependencies as
-pull requests.
+[Renovate](../../Bundle/README.md#updates) recommends the updates of the bundled tools and the other dependencies in
+one pull request a week.

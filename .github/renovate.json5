@@ -1,5 +1,6 @@
-// Recommends updates of the bundled tools, the NuGet packages, the actions and the images as pull requests, which the
-// tests of CI check before a merge. Runs in .github/workflows/renovate.yml, see "Updates" in Bundle/README.md.
+// Recommends the updates of the bundled tools, the NuGet packages, the actions and the images in one pull request,
+// which the tests of CI check before a merge. Runs in .github/workflows/renovate.yml, see "Updates" in the README of
+// Bundle.
 {
   $schema: 'https://docs.renovatebot.com/renovate-schema.json',
   extends: ['config:recommended', ':semanticCommits'],
@@ -9,6 +10,7 @@
   // updates ticked in the Dependency Dashboard get their branch at once
   timezone: 'Europe/Berlin',
   schedule: ['* 12-13 * * 5'],
+  separateMajorMinor: false,
   prConcurrentLimit: 10,
   prHourlyLimit: 0,
   labels: ['dependencies'],
@@ -59,18 +61,15 @@
       },
     },
     {
-      // git branches have no release dates, their new commits are proposed on the first Friday of a month
+      // git branches have no release dates
       matchDatasources: ['git-refs'],
       minimumReleaseAge: null,
-      schedule: ['* 12-13 1-7 * 5'],
     },
     {
-      // a new build image rebuilds every bundled tool, hours on the runners of GitHub
+      // a new build image rebuilds every bundled tool
       matchFileNames: ['Bundle/Dockerfile', 'Bundle/requirements-build.txt'],
-      groupName: 'build image of the bundled tools',
       semanticCommitType: 'build',
       semanticCommitScope: 'bundle',
-      schedule: ['* 12-13 1-7 * 5'],
       postUpgradeTasks: {
         commands: ['python3 Bundle/renovate.py post-upgrade {{{packageFile}}}'],
         fileFilters: ['Bundle/requirements-build.txt'],
@@ -99,11 +98,6 @@
       semanticCommitScope: 'deps',
     },
     {
-      matchManagers: ['nuget'],
-      matchPackageNames: ['Eto.*'],
-      groupName: 'Eto.Forms',
-    },
-    {
       matchManagers: ['github-actions'],
       semanticCommitType: 'ci',
     },
@@ -113,26 +107,43 @@
       allowedVersions: '!/^1\\.5\\.8$/',
     },
     {
-      // known breaks, recommended in the Dependency Dashboard, a pull request only after its approval there
+      // all updates in one pull request, a group takes most settings from its first update, so its schedule and scope
+      // are the same for all
+      matchPackageNames: ['*'],
+      groupName: 'all dependencies',
+      groupSlug: 'all',
+      semanticCommitScope: 'deps',
+    },
+    {
+      // known breaks, recommended in the Dependency Dashboard, a pull request of their own only after their approval
+      // there, in the group every update would wait for it
       matchDepNames: ['FFmpeg/FFmpeg'],
       matchUpdateTypes: ['major'],
       dependencyDashboardApproval: true,
+      groupName: null,
+      semanticCommitScope: 'bundle',
       prBodyNotes: ['L-SMASH-Works needs the API of FFmpeg 8, check whether it builds with the new major version.'],
     },
     {
       matchDepNames: ['VapourSynth'],
       dependencyDashboardApproval: true,
+      groupName: null,
+      semanticCommitScope: 'bundle',
       prBodyNotes: ['VapourSynth R80 and newer don\'t load the API 3 plugins of the bundle, check the plugin load test.'],
     },
     {
       matchDepNames: ['videolan/libplacebo'],
       matchUpdateTypes: ['major', 'minor'],
       dependencyDashboardApproval: true,
+      groupName: null,
+      semanticCommitScope: 'bundle',
       prBodyNotes: ['QSVEncC and VCEEncC need the API layout of libplacebo 7.360.'],
     },
     {
       matchDepNames: ['vapoursynth/bestsource'],
       dependencyDashboardApproval: true,
+      groupName: null,
+      semanticCommitScope: 'bundle',
       prBodyNotes: ['BestSource R22 and newer use VapourSynth API functions R79 lacks, check the plugin load test.'],
     },
     {
@@ -140,6 +151,8 @@
       matchDepNames: ['FFmpeg/nv-codec-headers'],
       matchUpdateTypes: ['major'],
       dependencyDashboardApproval: true,
+      groupName: null,
+      semanticCommitScope: 'bundle',
       prBodyNotes: ['A major version raises the minimum NVIDIA driver of NVENC, NVDEC and CUDA in FFmpeg.'],
     },
   ],

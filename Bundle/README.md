@@ -59,22 +59,24 @@ upstream StaxRip ships. The AviSynth and VapourSynth scripts are in `scripts`, s
 
 ## Updates
 
-[Renovate](https://docs.renovatebot.com) recommends every update as a pull request: of the components, the NuGet
+[Renovate](https://docs.renovatebot.com) recommends the updates in one pull request: of the components, the NuGet
 packages, the actions of the workflows, the base images, the build tools of `requirements-build.txt` and the
 appimagetool and AppImage runtime of `Source/appimage-tools.sh`. It runs in `.github/workflows/renovate.yml` with the
-configuration `.github/renovate.json5` and creates the branches of new updates on Fridays at noon (Europe/Berlin):
+configuration `.github/renovate.json5` and creates the pull request on Fridays at noon (Europe/Berlin):
 
 - A release is proposed two weeks after its publication, when broken and malicious releases are usually known.
-- Every component gets a pull request of its own, at most ten are open at a time. The base image and the build
-  tools are grouped and proposed on the first Friday of a month, a new build image rebuilds every component.
-  The Ubuntu releases of the images only get their digests updated: the tools are built on 22.04 for the glibc of
+  Commits of a branch, the source of components without releases, have no publication date and come at once.
+- The pull request contains every pending update, the major versions too. CI builds the updated components with
+  everything that depends on them, a new build image, of the base image or the build tools, rebuilds every component.
+  An update that breaks the tests holds back the others: exclude it with a package rule, for example with
+  `allowedVersions`, and Renovate recreates the pull request without it.
+- The Ubuntu releases of the images only get their digests updated: the tools are built on 22.04 for the glibc of
   the oldest systems the AppImage supports, the tests run there too, and the frames suite on 24.04, whose PoCL runs
   NNEDI3CL.
-- Commits of a branch, the source of components without releases, are proposed on the first Friday of a month.
-- Known breaks aren't proposed by themselves: major versions of FFmpeg (L-SMASH-Works), VapourSynth R80 and newer
-  (plugins of API 3), libplacebo newer than 7.360 (QSVEncC, VCEEncC), BestSource R22 and newer (VapourSynth R79) and
-  major versions of nv-codec-headers (minimum NVIDIA driver). The Dependency Dashboard issue lists them with every
-  other pending update, a tick there opens the pull request at once, outside of the schedule too.
+- Known breaks aren't part of it: major versions of FFmpeg (L-SMASH-Works), VapourSynth R80 and newer (plugins of
+  API 3), libplacebo newer than 7.360 (QSVEncC, VCEEncC), BestSource R22 and newer (VapourSynth R79) and major
+  versions of nv-codec-headers (minimum NVIDIA driver). The Dependency Dashboard issue lists them with every other
+  pending update, a tick there opens a pull request of their own at once, outside of the schedule too.
 
 The `# renovate:` comment of a version names the datasource and package of its upstream, for example:
 
