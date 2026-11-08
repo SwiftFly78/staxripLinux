@@ -6,12 +6,16 @@ dir=$1
 
 render() {
     local file=$1 name=$2 out
+    # PoCL 5.0 deletes a cached program before it writes it again, a render that reads it meanwhile fails to build the
+    # kernel, so every render has a cache of its own
+    export POCL_CACHE_DIR=$(mktemp -d)
     if [ "${file##*.}" = avs ]; then
         out=$(timeout 300 $AVS2YUV "$file" -frames 3 -o /dev/null 2>&1)
     else
         out=$(timeout 300 $VSPIPE -e 2 "$file" -- 2>&1)
     fi
     local code=$?
+    rm -rf "$POCL_CACHE_DIR"
 
     if [ $code = 0 ] && ! printf '%s' "$out" | grep -q '^Error\|Python exception'; then
         printf 'pass\t%s\t\n' "$name"
