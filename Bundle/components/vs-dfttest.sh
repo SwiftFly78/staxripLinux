@@ -13,6 +13,7 @@ build() {
     # Ubuntu's FFTW has the thread functions DFTTest calls in a separate library
     sed -i "s/^fftw3f_dep = dependency('fftw3f')$/fftw3f_dep = [dependency('fftw3f'), meson.get_compiler('cpp').find_library('fftw3f_threads')]/" \
         meson.build
+    lock_thread_maps
     meson_plugin
     plugin_install '*dfttest*.so*' Plugins/VS/DFTTest libDFTTest.so
     stage_license_files

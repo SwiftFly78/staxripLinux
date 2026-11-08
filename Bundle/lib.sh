@@ -322,6 +322,63 @@ std_format_shim() {
     echo "-I$PREFIX/share/fmt/include -I$PWD/std_format -include $PWD/std_format/format"
 }
 
+# locks the maps of the buffers per thread of HolyWu's VapourSynth plugins, their parallel filters add and look up
+# the buffer of their thread without a lock, a lost insert aborts the process: replaces the maps with a locked map,
+# which CXXFLAGS declares
+lock_thread_maps() {
+    local map='std::unordered_map<std::thread::id, ' files
+    files=$(grep -rl --include='*.cpp' --include='*.h' --include='*.hpp' "$map" . || true)
+    if [ -z "$files" ]; then
+        echo "no map of thread IDs found" >&2
+        return 1
+    fi
+
+    sed -i "s/$map/thread_map</g" $files
+    cat > $PWD/thread_map.h <<'EOF'
+#pragma once
+#include <mutex>
+#include <thread>
+#include <unordered_map>
+#include <utility>
+
+template<typename T> class thread_map {
+    std::unordered_map<std::thread::id, T> map;
+    mutable std::mutex mutex;
+
+public:
+    void reserve(std::size_t n) {
+        std::lock_guard<std::mutex> lock{ mutex };
+        map.reserve(n);
+    }
+
+    std::size_t count(std::thread::id id) const {
+        std::lock_guard<std::mutex> lock{ mutex };
+        return map.count(id);
+    }
+
+    template<typename... Args> auto emplace(Args &&... args) {
+        std::lock_guard<std::mutex> lock{ mutex };
+        return map.emplace(std::forward<Args>(args)...);
+    }
+
+    // inserts don't invalidate references to elements
+    T & at(std::thread::id id) {
+        std::lock_guard<std::mutex> lock{ mutex };
+        return map.at(id);
+    }
+
+    const T & at(std::thread::id id) const {
+        std::lock_guard<std::mutex> lock{ mutex };
+        return map.at(id);
+    }
+
+    auto begin() { return map.begin(); }
+    auto end() { return map.end(); }
+};
+EOF
+    export CXXFLAGS="$CXXFLAGS -include $PWD/thread_map.h"
+}
+
 # builds the C library of a Rust crate with cargo-c and installs it
 cargo_c_install() {
     PATH=$PREFIX/rust/bin:$PATH CARGO_HOME=$PWD/.cargo cargo cinstall --release --locked --library-type=cdylib \

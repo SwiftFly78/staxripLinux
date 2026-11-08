@@ -10,6 +10,7 @@ git https://github.com/HomeOfVapourSynthEvolution/VapourSynth-TDeintMod.git 9641
 build() {
     unpack VapourSynth-TDeintMod-96418f06af4b.tar
     cd VapourSynth-TDeintMod-96418f06af4b
+    lock_thread_maps
     meson_plugin
     plugin_install '*tdeintmod*.so*' Plugins/VS/TDeintMod libTDeintMod.so
     stage_license_files

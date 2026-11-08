@@ -10,6 +10,7 @@ git https://github.com/HomeOfVapourSynthEvolution/VapourSynth-DCTFilter.git 45bc
 build() {
     unpack VapourSynth-DCTFilter-45bc72a5066a.tar
     cd VapourSynth-DCTFilter-45bc72a5066a
+    lock_thread_maps
     meson_plugin
     plugin_install '*dctfilter*.so*' Plugins/VS/DCTFilter libDCTFilter.so
     stage_license_files

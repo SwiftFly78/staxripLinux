@@ -10,6 +10,7 @@ git https://github.com/HomeOfVapourSynthEvolution/VapourSynth-CTMF.git 073eccda9
 build() {
     unpack VapourSynth-CTMF-073eccda90db.tar
     cd VapourSynth-CTMF-073eccda90db
+    lock_thread_maps
     meson_plugin
     plugin_install '*ctmf*.so*' Plugins/VS/CTMF libCTMF.so
     stage_license_files

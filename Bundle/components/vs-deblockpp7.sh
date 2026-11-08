@@ -10,6 +10,7 @@ git https://github.com/HomeOfVapourSynthEvolution/VapourSynth-DeblockPP7.git 24b
 build() {
     unpack VapourSynth-DeblockPP7-24bf2fc96a0a.tar
     cd VapourSynth-DeblockPP7-24bf2fc96a0a
+    lock_thread_maps
     meson_plugin
     plugin_install '*deblockpp7*.so*' Plugins/VS/DeblockPP7 libDeblockPP7.so
     stage_license_files

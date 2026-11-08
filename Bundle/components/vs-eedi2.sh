@@ -10,6 +10,7 @@ git https://github.com/HomeOfVapourSynthEvolution/VapourSynth-EEDI2.git 9d82bc56
 build() {
     unpack VapourSynth-EEDI2-9d82bc56d6d4.tar
     cd VapourSynth-EEDI2-9d82bc56d6d4
+    lock_thread_maps
     meson_plugin
     plugin_install '*eedi2*.so*' Plugins/VS/EEDI2 libEEDI2.so
     stage_license_files
