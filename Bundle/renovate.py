@@ -141,12 +141,23 @@ def variants(old, new, keys):
 
 
 # URLs also get versions after letters (7z2605), the recipe text only versions after other characters, commit hashes
-# contain letters and digits
-def replace_version(text, pairs, url=False):
-    before = r'(?<![0-9])' if url else r'(?<![0-9A-Za-z])'
+# contain letters and digits. A version inside a longer one, like 0.2 in 0.2.1 or 3.0.2, stays. All pairs and the
+# literal names are replaced in one pass, so the new version of one pair isn't replaced again by another pair.
+def replace_version(text, pairs, url=False, literals=None):
+    literals, versions = dict(literals or {}), {}
     for o, n in pairs:
-        text = re.sub(before + re.escape(o) + r'(?![0-9])', n, text) if o[0] != '/' else text.replace(o, n)
-    return text
+        if o[0] == '/':
+            literals[o] = n
+        elif versions.setdefault(o, n) != n:
+            raise SystemExit(f'{o} becomes both {versions[o]} and {n}, complete the update by hand')
+    alternatives = [re.escape(o) for o in sorted(literals, key=len, reverse=True)]
+    if versions:
+        before = r'(?<![0-9])' if url else r'(?<![0-9A-Za-z])'
+        olds = '|'.join(re.escape(o) for o in sorted(versions, key=len, reverse=True))
+        alternatives.append(before + r'(?<![0-9]\.)(?:' + olds + r')(?![0-9]|\.[0-9])')
+    if not alternatives:
+        return text
+    return re.sub('|'.join(alternatives), lambda m: literals.get(m.group(0), versions.get(m.group(0))), text)
 
 
 def file_name(line):
@@ -161,10 +172,10 @@ def stem(name):
 # the names of the downloaded files, their folders and the version in the build and bundle functions
 def replace_in_functions(text, names, pairs):
     start = text.index('build()') if 'build()' in text else len(text)
-    body = text[start:]
+    literals = {}
     for o, n in names:
-        body = body.replace(o, n).replace(stem(o), stem(n))
-    return text[:start] + replace_version(body, pairs)
+        literals[o], literals[stem(o)] = n, stem(n)
+    return text[:start] + replace_version(text[start:], pairs, literals=literals)
 
 
 # the hashes of the build tools in requirements-build.txt, of the files of the same platforms in the new versions
@@ -222,7 +233,10 @@ def post_upgrade(recipe):
     text = path.read_text()
     old_text = run('git', 'show', f'HEAD:{path.as_posix()}', cwd=B.parent)
     old = {a['var']: a for a in annotations(old_text)}
-    lines = source_lines(text)
+    lines, old_lines = source_lines(text), source_lines(old_text)
+    # Renovate runs this for every update of a group, a version whose sources differ from HEAD is already completed
+    done = lambda indexes: any(lines[i] != old_lines[i] for i in indexes)
+    all_names, all_pairs = [], []
 
     for a in annotations(text):
         keys, before = a['keys'], old.get(a['var'])
@@ -232,9 +246,9 @@ def post_upgrade(recipe):
 
         if keys['datasource'] == 'git-refs':
             commit, old_commit = keys['digest'], before['keys']['digest']
-            if commit == old_commit:
-                continue
             i = indexes[0] if indexes else next(k for k, line in enumerate(lines) if line.startswith('git '))
+            if commit == old_commit or done([i]):
+                continue
             url = lines[i].split()[1]
             version = branch_version(before['value'], url, keys['branch'], commit)
             text = text.replace(a['line'], a['line'].replace(f"{a['var']}={a['value']}", f"{a['var']}={version}", 1))
@@ -244,26 +258,32 @@ def post_upgrade(recipe):
         if a['value'] == before['value']:
             continue
         raw, value = a['value'], normalize(before['value'], a['value'])
+        pairs = variants(before['value'], value, keys)
+
+        if keys['datasource'] == 'pypi' or keys.get('special'):
+            indexes = indexes or list(range(len(lines)))
+        elif indexes is None:
+            if keys['datasource'].endswith('-tags') and any(line.startswith('git ') for line in old_lines):
+                indexes = [next(k for k, line in enumerate(old_lines) if line.startswith('git '))]
+            else:
+                indexes = [k for k, line in enumerate(old_lines) if not line.startswith('git ') and
+                           replace_version(line.split()[0], pairs, url=True) != line.split()[0]]
+        if done(indexes):
+            continue
+
         if value != raw:
             text = text.replace(a['line'], a['line'].replace(f"{a['var']}={raw}", f"{a['var']}={value}", 1))
             a['value'] = value
-        pairs = variants(before['value'], value, keys)
 
         if keys['datasource'] == 'pypi':
             text, names = update_wheels(text, lines, keys, before['value'], value, indexes)
             number = lambda v: re.sub('^[A-Za-z]+', '', v)
-            text = replace_in_functions(text, names, pairs + [(number(before['value']), number(value))])
+            all_names += names
+            all_pairs += pairs + [(number(before['value']), number(value))]
             continue
         if keys.get('special') == 'python-build-standalone':
             text = update_python(text, lines, before['value'], value)
             continue
-
-        if indexes is None:
-            if keys['datasource'].endswith('-tags') and any(line.startswith('git ') for line in lines):
-                indexes = [next(k for k, line in enumerate(lines) if line.startswith('git '))]
-            else:
-                indexes = [k for k, line in enumerate(lines) if not line.startswith('git ') and
-                           replace_version(line.split()[0], pairs, url=True) != line.split()[0]]
 
         names = []
         for i in indexes:
@@ -280,8 +300,10 @@ def post_upgrade(recipe):
                 text = text.replace(lines[i], new_line)
                 lines[i] = new_line
 
-        text = replace_in_functions(text, names, pairs)
+        all_names += names
+        all_pairs += pairs
 
+    text = replace_in_functions(text, all_names, all_pairs)
     m, git = revision(text)
     if m and git[2] not in old_text:
         text = text.replace(m.group(0), f'revision={commit_count(git[1], git[2])}', 1)
