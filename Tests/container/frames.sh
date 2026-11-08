@@ -32,6 +32,9 @@ render() {
 export -f render
 export AVS2YUV VSPIPE
 
+# PoCL compiles the OpenCL kernels for the CPU
+echo "PoCL $(dpkg-query -W -f '${Version}' pocl-opencl-icd) on $(grep -m1 'model name' /proc/cpuinfo | sed 's/.*: //')"
+
 while IFS=$'\t' read -r file name error; do
     if [ -z "$file" ]; then
         result fail "$name" "$error"
