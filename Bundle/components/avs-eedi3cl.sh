@@ -10,6 +10,7 @@ git https://github.com/Asd-g/AviSynthPlus-EEDI3CL.git b46bea5dbd164cee3c8b75f497
 build() {
     unpack AviSynthPlus-EEDI3CL-b46bea5dbd16.tar
     cd AviSynthPlus-EEDI3CL-b46bea5dbd16
+    opencl_build_error src/EEDI3CL.cpp
     # the SIMD files use copyPad of EEDI3CL.cpp, where GCC inlines it without an instantiation the others could link
     cat >> src/EEDI3CL.cpp << 'EOF'
 

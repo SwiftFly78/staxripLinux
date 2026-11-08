@@ -10,6 +10,7 @@ git https://github.com/Asd-g/AviSynthPlus-NNEDI3CL.git bd454d1e9fea7c9f7e059f4e6
 build() {
     unpack AviSynthPlus-NNEDI3CL-bd454d1e9fea.tar
     cd AviSynthPlus-NNEDI3CL-bd454d1e9fea
+    opencl_build_error src/NNEDI3CL.cpp
     CXXFLAGS="$CXXFLAGS $(std_format_shim)" cmake_plugin
     plugin_install 'libnnedi3cl*.so*' Plugins/AVS/NNEDI3CL libnnedi3cl.so
     # it loads the weights next to it

@@ -379,6 +379,18 @@ EOF
     export CXXFLAGS="$CXXFLAGS -include $PWD/thread_map.h"
 }
 
+# reports the error of a failed OpenCL build of plugins that add program.build_log() to it: the program stays empty
+# when build_with_source of Boost.Compute fails, its build log threw "Invalid Program" instead, the plugins have
+# Boost.Compute print the build log
+opencl_build_error() {
+    if ! grep -q 'throw .*program\.build_log()' $1; then
+        echo "no build log in $1" >&2
+        return 1
+    fi
+
+    sed -i 's/throw .*program\.build_log().*;/throw error.error_string();/' $1
+}
+
 # builds the C library of a Rust crate with cargo-c and installs it
 cargo_c_install() {
     PATH=$PREFIX/rust/bin:$PATH CARGO_HOME=$PWD/.cargo cargo cinstall --release --locked --library-type=cdylib \

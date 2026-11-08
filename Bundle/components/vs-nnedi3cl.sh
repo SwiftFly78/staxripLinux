@@ -10,6 +10,7 @@ git https://github.com/HomeOfVapourSynthEvolution/VapourSynth-NNEDI3CL.git eb2a8
 build() {
     unpack VapourSynth-NNEDI3CL-eb2a810c0b7d.tar
     cd VapourSynth-NNEDI3CL-eb2a810c0b7d
+    opencl_build_error NNEDI3CL/NNEDI3CL.cpp
     meson_plugin
     plugin_install '*nnedi3cl*.so*' Plugins/VS/nnedi3 libNNEDI3CL.so
     stage_license_files
