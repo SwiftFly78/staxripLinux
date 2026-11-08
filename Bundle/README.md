@@ -103,8 +103,9 @@ builds the AppImages and runs the test suites of `Tests`, see the README there. 
 pass, with "Squash and merge", every commit of master gets a version. CI then tags the commit with
 `Source/version.sh` and releases it.
 
-Renovate runs as a GitHub App of the repository, the pull requests of the token of a workflow wouldn't start CI. To
-set it up once:
+Renovate runs as a GitHub App of the repository, the pull requests of the token of a workflow wouldn't start CI. CI
+pushes the version tags with it too, GitHub refuses the tags of the token of a workflow on commits whose workflows
+differ from master. To set it up once:
 
 1. Create a GitHub App (Settings, Developer settings, GitHub Apps, New GitHub App) without webhook, with the
    repository permissions Checks, Commit statuses, Contents, Issues, Pull requests and Workflows (read and write) and

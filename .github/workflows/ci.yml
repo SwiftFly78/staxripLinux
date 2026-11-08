@@ -179,19 +179,29 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
       actions: write
     env:
       GH_TOKEN: ${{ github.token }}
 
     steps:
+      # GitHub refuses the tags of the token of a workflow on commits whose workflows differ from master, like the
+      # commits before a merge that changed one, the GitHub App of Renovate may change workflows
+      - name: Get a token of the GitHub App
+        id: app
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.RENOVATE_CLIENT_ID }}
+          private-key: ${{ secrets.RENOVATE_APP_PRIVATE_KEY }}
+
       - name: Check out master
         uses: actions/checkout@v7
         with:
           ref: master
           fetch-depth: 0
+          token: ${{ steps.app.outputs.token }}
 
-      # the tags of the token of a workflow start no workflow, the release is started directly
+      # no workflow starts on tags, the release is started directly
       - name: Tag the new commits and start the release
         run: |
           git config user.name 'github-actions[bot]'
