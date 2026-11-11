@@ -16,10 +16,15 @@
 - [Features](Introduction/Features.md)
 - [Screenshots](Introduction/Screenshots.md) :recycle:
 - [Community](Introduction/Community.md)
-- [System Requirements](Introduction/System-Requirements.md)
-- [Installation](Introduction/Installation.md)
 - [Linux](Introduction/Linux.md)
-- [Changelog](../CHANGELOG.md) :link:
+    - [Requirements](Introduction/Linux.md#requirements)
+    - [Subtitle OCR](Introduction/Linux.md#subtitle-ocr)
+    - [AppImage](Introduction/Linux.md#appimage)
+    - [Building](Introduction/Linux.md#building)
+    - [Installation](Introduction/Linux.md#installation)
+    - [Troubleshooting](Introduction/Linux.md#troubleshooting)
+    - [Versioning](Introduction/Linux.md#versioning)
+- [Changelog](https://github.com/SwiftFly78/staxripLinux/releases) :link:
 
 ## [Usage](Usage/README.md)
 - [First Start](Usage/First-Start.md)
@@ -84,7 +89,6 @@
 - [Command Line Interface](Usage/Command-Line-Interface.md)
 - [Filter Profiles](Usage/Filter-Profiles.md) :x:
 - [PowerShell Scripting](Usage/PowerShell.md) :x:
-- [Long Path Support](Usage/Long-Path-Support.md) :x:
 - [Useful Links](Usage/Useful-Links.md) :x:
 
 ## [Guides](Guides/README.md) :x:

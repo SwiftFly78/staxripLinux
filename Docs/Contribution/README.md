@@ -9,7 +9,7 @@ persisted settings or the packaging.
 StaxRipLinux is built with the .NET 10 SDK, see [Building](../Introduction/Linux.md#building). A successful build
 doesn't mean that every workflow runs: the encoders, frame servers, plugins and other tools come from the system, see
 [Requirements](../Introduction/Linux.md#requirements). The C++ frame server in `Source/FrameServer`, AutoCrop in
-`Source/Tools/AutoCrop` and the PowerShell build scripts in `Source` belong to the Windows version and aren't used.
+`Source/Tools/AutoCrop` and the PowerShell build scripts in `Source` come from StaxRip and aren't part of the build.
 
 ## Commits
 

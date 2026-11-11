@@ -66,7 +66,6 @@ so you can use StaxRipLinux and its settings correctly.
 - [Command Line Interface](Command-Line-Interface.md)
 - [Filter Profiles](Filter-Profiles.md)
 - [PowerShell Scripting](PowerShell.md)
-- [Long Path Support](Long-Path-Support.md)
 - [Useful Links](Useful-Links.md)
 - Outdated external documentations
     - [encodingwissen.de](https://encodingwissen.de/praxis/staxrip) (German)
