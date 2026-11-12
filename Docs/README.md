@@ -2,16 +2,13 @@
 
 # Documentation
 
-> [!CAUTION]
-> This documentation is under development and therefore incomplete.
-
 ## [Introduction](Introduction/README.md)
 - [Overview](Introduction/Overview.md)
     - [About StaxRipLinux](Introduction/Overview.md#about-staxriplinux)
     - [Target Group](Introduction/Overview.md#target-group)
     - [License](Introduction/Overview.md#license)
 - [Features](Introduction/Features.md)
-- [Screenshots](Introduction/Screenshots.md) :recycle:
+- [Screenshots](Introduction/Screenshots.md)
 - [Community](Introduction/Community.md)
 - [Linux](Introduction/Linux.md)
     - [Tools](Introduction/Linux.md#tools)
@@ -37,42 +34,42 @@
         - [Video](Usage/User-Interface/Main.md#video)
         - [Audio](Usage/User-Interface/Main.md#audio)
         - [Next Step](Usage/User-Interface/Main.md#next-step)
-    - [Open Video Source File(s)](Usage/User-Interface/Opening.md) :x:
-        - [eac3to Demuxing](Usage/User-Interface/Opening#eac3to-demuxing.md) :x:
-    - [Template Selection](Usage/User-Interface/Template-Selection.md) :x:
+    - [Open Video Source File(s)](Usage/User-Interface/Opening.md)
+        - [eac3to Demuxing](Usage/User-Interface/Opening.md#eac3to-demuxing)
+    - [Template Selection](Usage/User-Interface/Template-Selection.md)
     - [Save Template](Usage/User-Interface/Save-Template.md)
-    - [Crop](Usage/User-Interface/Crop.md) :x:
-    - [Code Editor](Usage/User-Interface/Code-Editor.md) :x:
-    - [Filter Profiles](Usage/User-Interface/Filter-Profiles.md) :x:
-    - [Encoder Options](Usage/User-Interface/Encoder-Options.md) :x:
-    - [Container Options](Usage/User-Interface/Container-Options.md) :x:
-    - [Audio Settings](Usage/User-Interface/Audio-Settings.md) :x:
-    - [Preview](Usage/User-Interface/Preview.md) :x:
-    - [Video Comparison](Usage/User-Interface/Video-Comparison.md) :x:
-    - [Jobs](Usage/User-Interface/Jobs.md) :x:
-    - [Menu Editor](Usage/User-Interface/Menu-Editor.md) :x:
-    - [Events](Usage/User-Interface/Events.md) :x:
-    - [Log File Viewer](Usage/User-Interface/Log-File-Viewer.md) :x:
-    - [Apps Manager](Usage/User-Interface/Apps-Manager.md) :x:
-    - [Project Options](Usage/User-Interface/Project-Options.md) :x:
-    - [Settings](Usage/User-Interface/Settings.md) :x:
+    - [Crop](Usage/User-Interface/Crop.md)
+    - [Code Editor](Usage/User-Interface/Code-Editor.md)
+    - [Filter Profiles](Usage/User-Interface/Filter-Profiles.md)
+    - [Encoder Options](Usage/User-Interface/Encoder-Options.md)
+    - [Container Options](Usage/User-Interface/Container-Options.md)
+    - [Audio Settings](Usage/User-Interface/Audio-Settings.md)
+    - [Preview](Usage/User-Interface/Preview.md)
+    - [Video Comparison](Usage/User-Interface/Video-Comparison.md)
+    - [Jobs](Usage/User-Interface/Jobs.md)
+    - [Menu Editor](Usage/User-Interface/Menu-Editor.md)
+    - [Events](Usage/User-Interface/Events.md)
+    - [Log File Viewer](Usage/User-Interface/Log-File-Viewer.md)
+    - [Apps Manager](Usage/User-Interface/Apps-Manager.md)
+    - [Project Options](Usage/User-Interface/Project-Options.md)
+    - [Settings](Usage/User-Interface/Settings.md)
         - [General](Usage/User-Interface/Settings.md#general)
-        - [Logs](Usage/User-Interface/Settings.md#logs) :x:
-        - [Startup](Usage/User-Interface/Settings.md#startup) :x:
-        - [Source Opening](Usage/User-Interface/Settings.md#source-opening) :x:
-        - [Quality Definitions](Usage/User-Interface/Settings.md#quality-definitions) :x:
-        - [Generation](Usage/User-Interface/Settings.md#generation) :x:
-        - [System](Usage/User-Interface/Settings.md#system) :x:
-        - [User Interface](Usage/User-Interface/Settings.md#user-interface) :x:
-        - [Frame Server](Usage/User-Interface/Settings.md#frameserver) :x:
-        - [Preprocessing](Usage/User-Interface/Settings.md#preprocessing) :x:
-        - [Source Filters](Usage/User-Interface/Settings.md#source-filters) :x:
-        - [Danger Zone](Usage/User-Interface/Settings.md#danger-zone) :x:
-- [Frame Servers](Usage/Frame-Servers.md) :x:
-- [Cropping](Usage/Cropping.md) :x:
-- [Workflow](Usage/Workflow.md) :x:
+        - [Logs](Usage/User-Interface/Settings.md#logs)
+        - [Startup](Usage/User-Interface/Settings.md#startup)
+        - [Source Opening](Usage/User-Interface/Settings.md#source-opening)
+        - [Quality Definitions](Usage/User-Interface/Settings.md#quality-definitions)
+        - [Generation](Usage/User-Interface/Settings.md#generation)
+        - [System](Usage/User-Interface/Settings.md#system)
+        - [User Interface](Usage/User-Interface/Settings.md#user-interface)
+        - [Frame Server](Usage/User-Interface/Settings.md#frameserver)
+        - [Preprocessing](Usage/User-Interface/Settings.md#preprocessing)
+        - [Source Filters](Usage/User-Interface/Settings.md#source-filters)
+        - [Danger Zone](Usage/User-Interface/Settings.md#danger-zone)
+- [Frame Servers](Usage/Frame-Servers.md)
+- [Cropping](Usage/Cropping.md)
+- [Workflow](Usage/Workflow.md)
 - [Fonts](Usage/Fonts.md)
-- [Events](Usage/Events.md) :x:
+- [Events](Usage/Events.md)
 - [Macros](Usage/Macros.md)
     - [Global Macros](Usage/Macros.md#global-macros)
     - [Parameter Included Macros](Usage/Macros.md#parameter-included-macros)
@@ -85,28 +82,28 @@
         - [Appendix A: DataColumn Expression Syntax](Usage/Macros.md#appendix-a-datacolumn-expression-syntax)
 - [Commands](Usage/Commands.md)
 - [Command Line Interface](Usage/Command-Line-Interface.md)
-- [Filter Profiles](Usage/Filter-Profiles.md) :x:
-- [PowerShell Scripting](Usage/PowerShell.md) :x:
-- [Useful Links](Usage/Useful-Links.md) :x:
+- [Filter Profiles](Usage/Filter-Profiles.md)
+- [PowerShell Scripting](Usage/PowerShell.md)
+- [Useful Links](Usage/Useful-Links.md)
 
-## [Guides](Guides/README.md) :x:
-- [First Time Encode](Guides/First-Time-Encode.md) :x:
-- [General](Guides/General/README.md) :x:
-    - [Video](Guides/General/Video.md) :x:
-    - [Audio](Guides/General/Audio.md) :x:
-- [Encoder related](Guides/Encoder/README.md) :x:
-    - [Video](Guides/Encoder/Video.md) :x:
-    - [Audio](Guides/Encoder/Audio.md) :x:
-- [Frame Server related](Guides/FrameServer/README.md) :x:
-    - [AviSynth+](Guides/FrameServer/AviSynth.md) :x:
-    - [VapourSynth](Guides/FrameServer/VapourSynth.md) :x:
-- [PowerShell Scripts](Guides/PowerShell/README.md) :x:
+## [Guides](Guides/README.md)
+- [First Time Encode](Guides/First-Time-Encode.md)
+- [General](Guides/General/README.md)
+    - [Video](Guides/General/Video.md)
+    - [Audio](Guides/General/Audio.md)
+- [Encoder related](Guides/Encoder/README.md)
+    - [Video](Guides/Encoder/Video.md)
+    - [Audio](Guides/Encoder/Audio.md)
+- [Frame Server related](Guides/FrameServer/README.md)
+    - [AviSynth+](Guides/FrameServer/AviSynth.md)
+    - [VapourSynth](Guides/FrameServer/VapourSynth.md)
+- [PowerShell Scripts](Guides/PowerShell/README.md)
 
-## [Tools](Tools/README.md) :x:
-- [Supported Tools](Tools/Supported-Tools.md) :x:
-- [Supported Encoders](Tools/Supported-Encoders/README.md) :x:
-    - [Video Encoders](Tools/Supported-Encoders/Video.md) :x:
-    - [Audio Encoders](Tools/Supported-Encoders/Audio.md) :x:
+## [Tools](Tools/README.md)
+- [Supported Tools](Tools/Supported-Tools.md)
+- [Supported Encoders](Tools/Supported-Encoders/README.md)
+    - [Video Encoders](Tools/Supported-Encoders/Video.md)
+    - [Audio Encoders](Tools/Supported-Encoders/Audio.md)
 
 ## [Support](Support/README.md)
 

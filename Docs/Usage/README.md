@@ -17,7 +17,7 @@ so you can use StaxRipLinux and its settings correctly.
         - [Audio](User-Interface/Main.md#audio)
         - [Next Step](User-Interface/Main.md#next-step)
     - [Open Video Source File(s)](User-Interface/Opening.md)
-        - [eac3to Demuxing](User-Interface/Opening#eac3to-demuxing.md)
+        - [eac3to Demuxing](User-Interface/Opening.md#eac3to-demuxing)
     - [Template Selection](User-Interface/Template-Selection.md)
     - [Save Template](User-Interface/Save-Template.md)
     - [Crop](User-Interface/Crop.md)

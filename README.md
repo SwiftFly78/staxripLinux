@@ -60,8 +60,8 @@ parameters could have been changed and mess up the values. This is pretty rare, 
 
 # Documentation
 
-- The [documentation](Docs/README.md) describes the user interface, the settings, macros, commands and the command
-  line interface.
+- The [documentation](Docs/README.md) describes the user interface and its options, the frame servers, macros,
+  commands and the command line interface, and has guides for the first encode, the encoders and the frame servers.
 - [Linux](Docs/Introduction/Linux.md) describes the requirements, the AppImages, how StaxRipLinux finds tools and
   plugins, building, installation and troubleshooting.
 - The [releases](https://github.com/SwiftFly78/staxripLinux/releases) list the changes of every version.

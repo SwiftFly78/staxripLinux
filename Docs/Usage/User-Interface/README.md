@@ -16,7 +16,7 @@ Most controls, and/or their belonging labels, offer you a quick help, if you rig
     - [Audio](Main.md#audio)
     - [Next Step](Main.md#next-step)
 - [Open Video Source File(s)](Opening.md)
-    - [eac3to Demuxing](Opening#eac3to-demuxing.md)
+    - [eac3to Demuxing](Opening.md#eac3to-demuxing)
 - [Template Selection](Template-Selection.md)
 - [Save Template](Save-Template.md)
 - [Crop](Crop.md)

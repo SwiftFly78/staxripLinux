@@ -104,7 +104,7 @@ to feed the video encoder. It is also used to cut the video.
 	At the bottom you can click on `Open Script Folder` to open that folder.
 - #### Advanced
 	- ##### Event Commands
-    	Opens the [Event Commands](Event-Commands.md) dialog, where you can alter the events.
+    	Opens the [Event Commands](Events.md) dialog, where you can alter the events.
 	- ##### Reset Settings
     	Opens a dialog allowing you to reset specific settings.
 	- ##### Terminal
