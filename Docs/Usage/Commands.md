@@ -307,13 +307,22 @@ Opens a given help topic in the help browser.
 | --- | --- |
 | Help Topic \<string\> | Name of the help topic to be opened. |
 
+### OpenTerminal
+
+Opens a terminal emulator.
+
+| Parameter | Description |
+| --- | --- |
+| Command \<string\> | Command to run in the terminal, by default the shell is started. Macros are solved. |
+| Working Directory \<string\> | Working directory of the terminal. Macros are solved. |
+
 ### PlaySound
 
 Plays audio file.
 
 | Parameter | Description |
 | --- | --- |
-| FilePath \<string\> | Filepath to a mp3, wav or wmv sound file. |
+| FilePath \<string\> | Filepath to a mp3, wav or ogg sound file. |
 | Volume (%) \<integer\> | |
 
 ### ResetSettings
@@ -472,7 +481,7 @@ Dialog to manage audio profiles.
 
 ### ShowChangelog
 
-Shows the latest changes.
+Shows the changes of all versions of the port.
 
 | Parameter |
 | --- |
