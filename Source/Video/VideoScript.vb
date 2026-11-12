@@ -993,7 +993,7 @@ clipname.set_output()" + BR
         script.Engine = ScriptEngine.VapourSynth
         script.Filters.Add(New VideoFilter("Source", "Automatic", "# can be configured at: Tools > Settings > Source Filters"))
         script.Filters.Add(New VideoFilter("Crop", "Crop", "clip = core.std.Crop(clip, %crop_left%, %crop_right%, %crop_top%, %crop_bottom%)", False))
-        script.Filters.Add(New VideoFilter("Field", "QTGMC Medium", $"clip = core.std.SetFieldBased(clip, 2) # 1=BFF, 2=TFF{BR}clip = havsfunc.QTGMC(clip, TFF=True, Preset='Medium')", False))
+        script.Filters.Add(New VideoFilter("Field", "QTGMC Medium", $"clip = core.std.SetFieldBased(clip, <if('%source_mi_v:ScanOrder%'='BFF';1;2)>) # 1=BFF, 2=TFF{BR}clip = havsfunc.QTGMC(clip, TFF=<if('%source_mi_v:ScanOrder%'='BFF';False;True)>, Preset='Medium')", False))
         script.Filters.Add(New VideoFilter("Noise", "DFTTest", "clip = core.dfttest.DFTTest(clip, sigma=6, tbsize=3, opt=3)", False))
         script.Filters.Add(New VideoFilter("Resize", "BicubicResize", "clip = core.resize.Bicubic(clip, %target_width%, %target_height%)", False))
         ret.Add(script)

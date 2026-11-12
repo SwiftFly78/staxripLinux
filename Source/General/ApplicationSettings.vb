@@ -345,7 +345,7 @@ Public Class ApplicationSettings
             End If
         End If
 
-        If Check(VapourSynthProfiles, "VapourSynth Filter Profiles", 36) Then
+        If Check(VapourSynthProfiles, "VapourSynth Filter Profiles", 37) Then
             If VapourSynthProfiles Is Nothing Then
                 VapourSynthProfiles = FilterCategory.GetVapourSynthDefaults
             Else
