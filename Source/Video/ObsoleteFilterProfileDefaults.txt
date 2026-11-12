@@ -1,0 +1,64 @@
+# Earlier default filter profiles of StaxRipLinux. When the defaults are updated, profiles
+# that still have one of these scripts are replaced instead of being kept as backup.
+
+[Color]
+Convert | Format = z_ConvertFormat(pixel_type="$enter_text:Enter the Format you wish to convert to$", colorspace_op="$select:msg:Select Input Color Matrix;rgb;709;unspec;fcc;470bg;170m;240;ycgco;2020ncl;2020cl;chromancl;chromacl;ictcp$:$select:msg:Select Input Color Transfer;709;unspec;470m;470bg;601;240m;linear;log100;log316;xvycc;srgb;2020_10;2020_12;st2084;std-b67$:$select:msg:Select Input Color Primaries;709;unspec;470m;470bg;170m;240m;film;2020;st428;st431-2;st432-1;jedec-p22$:$select:msg:Select Pixel Range;limited;l;full;f$=>$select:msg:Select Output Color Matrix;rgb;709;unspec;fcc;470bg;170m;240;ycgco;2020ncl;2020cl;chromancl;chromacl;ictcp$:$select:msg:Select Output Color Transfer;709;unspec;470m;470bg;601;240m;linear;log100;log316;xvycc;srgb;2020_10;2020_12;st2084;std-b67$:$select:msg:Select Output Color Primaries;709;unspec;470m;470bg;170m;240m;film;2020;st428;st431-2;st432-1;jedec-p22$:$select:msg:Select Pixel Range;limited;l;full;f$", dither_type="$select:msg:Select Dither Type;none;ordered;random;error_diffusion$")
+Tonemap | Placebo =
+    ConvertBits(16)
+    libplacebo_Tonemap(src_csp=$select:msg:Select Source Color Space;SDR|0;HDR10 (default)|1;HLG|2;Dolby Vision|3$, dst_csp=$select:msg:Select Target Color Space;SDR (default)|0;HDR10|1;HLG|2;Dolby Vision|3$, dynamic_peak_detection=$select:msg:Dynamic Peak Detection?;Yes (default)|True;No|False$, tone_mapping_function=$select:msg:Tonemapping Function;Clip|"clip";ST2094_40|"st2094_40";ST2094_10|"st2094_10";BT2390 (default)|"bt2390";BT2446a|"bt2446a";Spline|"spline";Reinhard|"reinhard";Mobius|"mobius";Hable|"hable";Gamma|"gamma";Linear|"linear";LinearLight|"linearlight"$, contrast_recovery=0.3, contrast_smoothness=3.5)
+    # ConvertBits(10)
+    # ConvertToYUV420()
+
+Dither | Stack = $select:Native to Stack16|clip = core.fmtc.nativetostack16(clip);Stack16 to Native|clip = fmtc.stack16tonative(clip)$
+Tonemap | Placebo =
+    clip = core.fmtc.bitdepth(clip, bits=16)
+    clip = core.placebo.Tonemap(clip, src_csp=$select:msg:Select Source Color Space;SDR|0;HDR10 (Default)|1;HLG|2;Dolby Vision|3$, dst_csp=$select:msg:Select Target Color Space;SDR (Default)|0;HDR10|1;HLG|2;Dolby Vision|3$, dynamic_peak_detection=$select:msg:Dynamic Peak Detection?;Yes (Default)|1;No|0$, gamut_mapping=$select:msg:Gamut Mapping Function;Clip|0;Perceptual (Default)|1;Softclip|2;Relative|3;Saturation|4;Absolute|5;Desaturate|6;Darken|7;Highlight|8;Linear|9$, tone_mapping_function=$select:msg:Tonemapping Function;Clip|0;Spline (Default)|1;ST2094_40|2;ST2094_10|3;BT2390|4;BT2446a|5;Reinhard|6;Mobius|7;Hable|8;Gamma|9;Linear|10;LinearLight|11$, metadata=$select:msg:Metadata;Auto (Default)|0;None (Disabled)|1;HDR10 (Static)|2;HDR10+ (MaxRGB)|3;Luminance (CIE Y)|4$, contrast_recovery=0.0, smoothing_period=20.0, percentile=100.0)
+    # clip = clip.resize.Bicubic(format = vs.YUV420P10)
+
+Convert | Format = clip = core.avs.z_ConvertFormat(clip, pixel_type='$enter_text:Enter the Format You Wish to Convert to$', colorspace_op='$select:msg:Select Input Color Matrix;rgb;709;unspec;fcc;470bg;170m;240;ycgco;2020ncl;2020cl;chromancl;chromacl;ictcp$:$select:msg:Select Input Color Transfer;709;unspec;470m;470bg;601;240m;linear;log100;log316;xvycc;srgb;2020_10;2020_12;st2084;std-b67$:$select:msg:Select Input Color Primaries;709;unspec;470m;470bg;170m;240m;film;2020;st428;st431-2;st432-1;jedec-p22$:$select:msg:Select Pixel Range;limited;l;full;f$=>$select:msg:Select Output Color Matrix;rgb;709;unspec;fcc;470bg;170m;240;ycgco;2020ncl;2020cl;chromancl;chromacl;ictcp$:$select:msg:Select Output Color Transfer;709;unspec;470m;470bg;601;240m;linear;log100;log316;xvycc;srgb;2020_10;2020_12;st2084;std-b67$:$select:msg:Select Output Color Primaries;709;unspec;470m;470bg;170m;240m;film;2020;st428;st431-2;st432-1;jedec-p22$:$select:msg:Select Pixel Range;limited;l;full;f$', dither_type='$select:msg:Select Dither Type;none;ordered;random;error_diffusion$')
+
+[Field]
+Deinterlace | QTGMC | QTGMC+... = QTGMCp(thSAD1=640, thSAD2=256, Preset="$select:msg:Select a Preset;Draft;Ultra Fast;Super Fast;Very Fast;Faster;Fast;Medium;Slow;Slower;Very Slow;Placebo$", SourceMatch=0, MatchPreset="$select:msg:Select a Preset;Draft;Ultra Fast;Super Fast;Very Fast;Faster;Fast;Medium;Slow;Slower;Very Slow;Placebo$", MatchPreset2="$select:msg:Select a Preset;Draft;Ultra Fast;Super Fast;Very Fast;Faster;Fast;Medium;Slow;Slower;Very Slow;Placebo$", MatchEnhance=0.5, Lossless=0, EZDenoise=0.0, EZKeepGrain=1.0, NoisePreset="$select:msg:Select a NoisePreset;Faster;Fast;Medium;Slow;Slower", FPSDivisor=1, threads=$select:msg:Select the number of threads;2;4;6;8;10;12;14;16$, show=false)
+
+[Noise]
+FFT3DFilter | FFT3DGPU = FFT3DGPU(sigma=1.5, bt=3, bw=32, bh=32, ow=16, oh=16, sharpen=0.4, NVPerf=$select:msg:Enable Nvidia Function;True;False$)
+BM3DCUDA | BM3DCPU =
+    clip = core.resize.Bicubic(clip, format=vs.YUV420PS)
+    clip = core.bm3dcpu.BM3D(clip, ref=None, sigma=3.0, block_step=8, bm_range=9, radius=0, ps_num=2, ps_range=4, chroma=False, device_id=0, fast=False, extractor_exp=0)
+    clip = core.resize.Bicubic(clip, format=vs.YUV420P10)
+
+
+[Resize]
+Advanced | Placebo Render =
+    placebo_scaler = "$select:msg:Select the Scaler;spline16;spline36;spline64;nearest;bilinear;gaussian;sinc;lanczos;ginseng;ewa_jinc;ewa_lanczos;ewa_lanczossharp;ewa_lanczos4sharpest;ewa_ginseng;ewa_hann;bicubic;hermite;catmull_rom;mitchell;robidoux;robidouxsharp;ewa_robidoux;ewa_robidouxsharp$"
+    libplacebo_Render(width=%target_width%, height=%target_height%, upscaler=placebo_scaler, downscaler=placebo_scaler)
+
+Advanced | SuperRes = $select:msg:Select Version;SuperResXBR|SuperResXBR;SuperRes|SuperRes;SuperXBR|SuperXBR$(passes=$select:msg:How many Passes do you wish to perform?;2;3;4;5$, factor=$select:msg:Factor Increase by?;2;4$)
+
+[Source]
+BestSource = 
+    tcFile = "%temp_file%_timestamps.txt" # timestamps file path
+    # hwdevice: The interface to use for hardware decoding. Depends on OS and hardware. On Linux vaapi, cuda and vulkan (H264, HEVC and AV1) are probably the ones most likely to work. Defaults to CPU decoding. Will throw errors for formats where hardware decoding isn't possible.
+    Exist(tcFile) ? BSVideoSource("%source_file%", track=-1, fpsnum=-1, fpsden=1, rff=False, threads=0, seekpreroll=20, enable_drefs=False, use_absolute_path=False, cachemode=3, cachepath="%source_temp_file%", cachesize=1000, hwdevice="", extrahwframes=9, timecodes=tcFile) : BSVideoSource("%source_file%", track=-1, fpsnum=-1, fpsden=1, rff=False, threads=0, seekpreroll=20, enable_drefs=False, use_absolute_path=False, cachemode=3, cachepath="%source_temp_file%", cachesize=1000, hwdevice="", extrahwframes=9)
+
+AviSource = AviSource("%source_file%", audio=false)
+DirectShowSource = DirectShowSource("%source_file%", audio=false) # specify the frame rate with fps=... for wmv or mov files
+DSS2 = DSS2("%source_file%") # specify the frame rate with fps=... for wmv or mov files
+MPEG2Source = MPEG2Source("%source_file%")
+BestSource = 
+    tcFile = "%temp_file%_timestamps.txt" # timestamps file path
+    # hwdevice: The interface to use for hardware decoding. Depends on OS and hardware. On windows d3d11va, cuda and vulkan (H264, HEVC and AV1) are probably the ones most likely to work. Defaults to CPU decoding. Will throw errors for formats where hardware decoding isn't possible.
+    Exist(tcFile) ? BSVideoSource("%source_file%", track=-1, fpsnum=-1, fpsden=1, rff=False, threads=0, seekpreroll=20, enable_drefs=False, use_absolute_path=False, cachemode=3, cachepath="%source_temp_file%", cachesize=1000, hwdevice="", extrahwframes=9, timecodes=tcFile) : BSVideoSource("%source_file%", track=-1, fpsnum=-1, fpsden=1, rff=False, threads=0, seekpreroll=20, enable_drefs=False, use_absolute_path=False, cachemode=3, cachepath="%source_temp_file%", cachesize=1000, hwdevice="", extrahwframes=9)
+
+BestSource =
+    tcFile = r"%temp_file%_timestamps.txt" # timestamps file path
+    # hwdevice: The interface to use for hardware decoding. Depends on OS and hardware. On Linux vaapi, cuda and vulkan (H264, HEVC and AV1) are probably the ones most likely to work. Defaults to CPU decoding. Will throw errors for formats where hardware decoding isn't possible.
+    clip = core.bs.VideoSource(r"%source_file%", track=-1, fpsnum=-1, fpsden=1, rff=False, threads=0, seekpreroll=20, enable_drefs=False, use_absolute_path=False, cachemode=3, cachepath=r"%source_temp_file%", cachesize=1000, hwdevice="", extrahwframes=9, timecodes=tcFile) if os.path.exists(tcFile) else core.bs.VideoSource(r"%source_file%", track=-1, fpsnum=-1, fpsden=1, rff=False, threads=0, seekpreroll=20, enable_drefs=False, use_absolute_path=False, cachemode=3, cachepath=r"%source_temp_file%", cachesize=1000, hwdevice="", extrahwframes=9)
+
+AVISource = clip = core.avisource.AVISource(r"%source_file%")
+BestSource =
+    tcFile = r"%temp_file%_timestamps.txt" # timestamps file path
+    # hwdevice: The interface to use for hardware decoding. Depends on OS and hardware. On windows d3d11va, cuda and vulkan (H264, HEVC and AV1) are probably the ones most likely to work. Defaults to CPU decoding. Will throw errors for formats where hardware decoding isn't possible.
+    clip = core.bs.VideoSource(r"%source_file%", track=-1, fpsnum=-1, fpsden=1, rff=False, threads=0, seekpreroll=20, enable_drefs=False, use_absolute_path=False, cachemode=3, cachepath=r"%source_temp_file%", cachesize=1000, hwdevice="", extrahwframes=9, timecodes=tcFile) if os.path.exists(tcFile) else core.bs.VideoSource(r"%source_file%", track=-1, fpsnum=-1, fpsden=1, rff=False, threads=0, seekpreroll=20, enable_drefs=False, use_absolute_path=False, cachemode=3, cachepath=r"%source_temp_file%", cachesize=1000, hwdevice="", extrahwframes=9)
+
+MPEG2Source = clip = core.dgdecode.MPEG2Source(r"%source_file%")

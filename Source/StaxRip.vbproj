@@ -62,6 +62,7 @@
     <EmbeddedResource Include="Resources\StaxRip.png" LogicalName="StaxRip.png" />
     <EmbeddedResource Include="Video\AviSynthFilterProfileDefaults.txt" LogicalName="StaxRip.AviSynthFilterProfileDefaults.txt" />
     <EmbeddedResource Include="Video\VapourSynthFilterProfileDefaults.txt" LogicalName="StaxRip.VapourSynthFilterProfileDefaults.txt" />
+    <EmbeddedResource Include="Video\ObsoleteFilterProfileDefaults.txt" LogicalName="StaxRip.ObsoleteFilterProfileDefaults.txt" />
     <EmbeddedResource Include="..\CHANGELOG.md" LogicalName="StaxRip.CHANGELOG.md" Link="CHANGELOG.md" />
     <None Include="..\License.txt" Link="License.txt" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>

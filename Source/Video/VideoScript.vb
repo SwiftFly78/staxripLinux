@@ -1172,6 +1172,15 @@ Public Class FilterCategory
         End Using
     End Function
 
+    'scripts of earlier defaults, unchanged profiles are replaced by the new defaults instead of kept as backup
+    Shared Function GetObsoleteDefaultScripts() As HashSet(Of String)
+        Using stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("StaxRip.ObsoleteFilterProfileDefaults.txt")
+            Using sr As New StreamReader(stream)
+                Return ParseFilterProfilesIniContent(sr.ReadToEnd).SelectMany(Function(i) i.Filters).Select(Function(i) i.Script).ToHashSet()
+            End Using
+        End Using
+    End Function
+
     Shared Function ParseFilterProfilesIniContent(content As String) As List(Of FilterCategory)
         Dim ret As New List(Of FilterCategory)
         Dim cat As FilterCategory = Nothing

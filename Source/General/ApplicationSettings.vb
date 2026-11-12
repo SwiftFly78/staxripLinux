@@ -331,7 +331,9 @@ Public Class ApplicationSettings
                 AviSynthProfiles = FilterCategory.GetAviSynthDefaults
                 Dim defaults = AviSynthProfiles.SelectMany(Function(category) category.Filters)
                 Dim defaultScripts = defaults.Select(Function(filter) filter.Script)
-                Dim unknown = current.Where(Function(filter) Not defaultScripts.Contains(filter.Script))
+                Dim obsoleteScripts = FilterCategory.GetObsoleteDefaultScripts()
+                Dim unknown = current.Where(Function(filter) Not defaultScripts.Contains(filter.Script) AndAlso
+                                                Not obsoleteScripts.Contains(filter.Script))
 
                 For Each i In unknown
                     If Not i.Path?.StartsWith("Backup | ") Then
@@ -351,7 +353,9 @@ Public Class ApplicationSettings
                 VapourSynthProfiles = FilterCategory.GetVapourSynthDefaults
                 Dim defaults = VapourSynthProfiles.SelectMany(Function(category) category.Filters)
                 Dim defaultScripts = defaults.Select(Function(filter) filter.Script)
-                Dim unknown = current.Where(Function(filter) Not defaultScripts.Contains(filter.Script))
+                Dim obsoleteScripts = FilterCategory.GetObsoleteDefaultScripts()
+                Dim unknown = current.Where(Function(filter) Not defaultScripts.Contains(filter.Script) AndAlso
+                                                Not obsoleteScripts.Contains(filter.Script))
 
                 For Each i In unknown
                     If Not i.Path?.StartsWith("Backup | ") Then
