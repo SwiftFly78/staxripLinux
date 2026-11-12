@@ -15,6 +15,7 @@
     - [Requirements](Introduction/Linux.md#requirements)
     - [Subtitle OCR](Introduction/Linux.md#subtitle-ocr)
     - [AppImage](Introduction/Linux.md#appimage)
+    - [Updates](Introduction/Linux.md#updates)
     - [Building](Introduction/Linux.md#building)
     - [Installation](Introduction/Linux.md#installation)
     - [Troubleshooting](Introduction/Linux.md#troubleshooting)

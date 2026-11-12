@@ -53,9 +53,10 @@ StaxRipLinux stores its settings in `~/.config/StaxRip`. A folder next to the Ap
 appended, like `StaxRipLinux-<version>-x86_64.AppImage.config`, keeps them next to the AppImage instead, so different
 versions can be used side by side with their own settings.
 
-The title bar shows the version, *Help > What's new...* lists the changes of every version. The settings of different
-versions can be incompatible, which can lead to unwanted side effects like missing functionality or changed encoder
-parameters. It is also **very important** to **not** run existing jobs with a different version, as some encoder
+The title bar shows the version, *Help > What's new...* lists the changes of every version. *Help > Check for Updates*
+finds new releases and downloads their AppImage, see [Updates](Docs/Introduction/Linux.md#updates). The settings of
+different versions can be incompatible, which can lead to unwanted side effects like missing functionality or changed
+encoder parameters. It is also **very important** to **not** run existing jobs with a different version, as some encoder
 parameters could have been changed and mess up the values. This is pretty rare, but it can happen.
 
 # Documentation

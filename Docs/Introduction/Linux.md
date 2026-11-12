@@ -191,6 +191,26 @@ chmod +x StaxRipLinux-*-x86_64.AppImage
 - The licenses of the tools are in the folder `usr/lib/staxrip/Apps/Licenses` of the full AppImage, which
   `--appimage-mount` shows, the releases contain the source code of the tools.
 
+## Updates
+
+*Help > Check for Updates* compares the version of StaxRipLinux with the newest
+[release](https://github.com/SwiftFly78/staxripLinux/releases). StaxRipLinux also checks about once a day, unless
+*Check for updates approx. once per day* is disabled in the settings (*Startup*). When there is a newer version:
+
+- *Download the AppImage* saves the AppImage of the release next to the running one, the full or the slim AppImage like
+  the running one. It's executable and starts like the old one. When the old AppImage has its settings in a folder
+  next to it (`<AppImage>.config`), the folder is copied for the new AppImage.
+- *Open the release page* shows the changes and both AppImages.
+- *Dismiss* hides this version until the next one is released.
+
+StaxRipLinux keeps running until it's closed, the new AppImage is used from the next start on. Builds that don't run as
+AppImage only get the link to the release page.
+
+The tools of the full AppImage are updated with new releases of StaxRipLinux: *Auto Update* in the
+[Apps Manager](../Usage/User-Interface/Apps-Manager.md) checks whether a newer release exists for the selected tool and
+offers the full AppImage. Tools of the system are updated with the package manager, *Update Request* asks for a newer
+version of a tool in the full AppImage.
+
 ## Building
 
 Install the [.NET 10 SDK](https://learn.microsoft.com/dotnet/core/install/linux), clone this repository and run in
@@ -241,7 +261,8 @@ when StaxRipLinux is started without installation, a generic icon is shown inste
 StaxRipLinux has its own version, which the title bar shows. It follows [Semantic Versioning](https://semver.org),
 began with v1.0.0 at the commit that ported StaxRip to Linux, and every commit gets an annotated tag with its version.
 The tags of StaxRip itself, like v2.52.6, aren't versions of StaxRipLinux. The assembly version is still the one of
-the StaxRip version StaxRipLinux is based on, settings and the update check use it.
+the StaxRip version StaxRipLinux is based on, the settings use it. The update check compares the version of
+StaxRipLinux with the releases, see [Updates](#updates).
 
 The build takes the version from the tags with `git describe`, so it needs a clone that contains them. A commit without
 a tag yet gets the version of the last tag with the number of commits since then and the commit, like

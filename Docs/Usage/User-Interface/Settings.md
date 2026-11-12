@@ -67,7 +67,8 @@ A right-click on an option shows its help.
   project is closed.
 - **Start without focus**: StaxRipLinux doesn't take the focus when it starts, for example when it's started by a
   script.
-- **Check for updates approx. once per day**
+- **Check for updates approx. once per day**: looks for a new release of StaxRipLinux, see
+  [Updates](../../Introduction/Linux.md#updates).
 
 ## Source Opening
 

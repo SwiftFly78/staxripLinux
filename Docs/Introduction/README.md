@@ -12,6 +12,7 @@
     - [Requirements](Linux.md#requirements)
     - [Subtitle OCR](Linux.md#subtitle-ocr)
     - [AppImage](Linux.md#appimage)
+    - [Updates](Linux.md#updates)
     - [Building](Linux.md#building)
     - [Installation](Linux.md#installation)
     - [Troubleshooting](Linux.md#troubleshooting)

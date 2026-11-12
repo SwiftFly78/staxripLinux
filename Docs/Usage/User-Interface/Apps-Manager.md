@@ -45,6 +45,8 @@ The `Tools` menu at the top has the commands for the selected app:
 | Website | `Ctrl+W` | Opens the website |
 | Explore | `Ctrl+E` | Opens the folder of the app in the file manager |
 | Launch | `Ctrl+L` | Starts the app, console apps show their help in a terminal |
+| Auto Update | `Ctrl+U` | Checks for a newer release of StaxRipLinux, whose full AppImage updates the tool, see [Updates](../../Introduction/Linux.md#updates) |
+| Update Request | `Ctrl+R` | Opens the form of the issue tracker that requests a newer version of the tool for the full AppImage, with the name and version of the tool filled in |
 | Help | `F1` | Opens the help of the app |
 
 > [!NOTE]
