@@ -365,10 +365,12 @@ Public Class eac3toForm
                         End If
                     Next
 
+                    'eac3to can't identify some streams of TS files, the other streams can still be demuxed
                     If Not ms.IsVideo AndAlso Not ms.IsAudio AndAlso
                         Not ms.IsSubtitle AndAlso Not ms.IsChapters Then
 
-                        Throw New Exception("Failed to detect stream: " + line)
+                        Project.Log.WriteLine("Unknown stream, it isn't listed: " + line)
+                        Continue For
                     End If
 
                     Streams.Add(ms)
