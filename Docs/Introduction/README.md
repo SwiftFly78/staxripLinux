@@ -8,6 +8,7 @@
 - [Screenshots](Screenshots.md)
 - [Community](Community.md)
 - [Linux](Linux.md)
+    - [Tools](Linux.md#tools)
     - [Requirements](Linux.md#requirements)
     - [Subtitle OCR](Linux.md#subtitle-ocr)
     - [AppImage](Linux.md#appimage)

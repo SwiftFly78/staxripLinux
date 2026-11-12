@@ -99,7 +99,8 @@ to feed the video encoder. It is also used to cut the video.
 - #### Folders
 	Lists StaxRipLinux related folders like the `Settings` folder, that you can open from there.
 - #### Scripts
-	At the top there are all the PowerShell scripts in your `Settings\Scripts` folder, that you can execute from there.
+	At the top there are all the PowerShell scripts of the `Scripts` folder in the settings, like
+	`~/.config/StaxRip/Scripts`, that you can execute from there.
 	At the bottom you can click on `Open Script Folder` to open that folder.
 - #### Advanced
 	- ##### Event Commands
@@ -109,7 +110,7 @@ to feed the video encoder. It is also used to cut the video.
 	- ##### Terminal
     	Opens a terminal in the working folder with additional and/or extended environment variables.
 	- ##### PowerShell Terminal
-    	Opens a PowerShell session in a terminal with additional and/or extended environment variables.
+    	Opens a PowerShell session (`pwsh`) in a terminal with additional and/or extended environment variables.
 
 - #### Edit Menu
 	Opens the [Menu Editor](Menu-Editor.md), which you can use to customize the Main Menu.

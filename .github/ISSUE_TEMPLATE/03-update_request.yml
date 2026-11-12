@@ -11,8 +11,8 @@ body:
   - type: input
     id: oldversion
     attributes:
-      label: Current version used in StaxRip
-      description: Current version used in StaxRip
+      label: Current version in the full AppImage
+      description: The version the apps dialog (Apps > Manage...) shows
       placeholder: e.g. 1.09
     validations:
       required: true

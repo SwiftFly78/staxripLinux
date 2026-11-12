@@ -1,9 +1,12 @@
 ﻿# [Documentation](../README.md) / [Introduction](README.md) / Community
 
 Feel free to join in the [StaxRip Community on Discord](https://discord.gg/uz8pVR79Bd),
-where you can chat and share knowledge with other StaxRip users and the devs, or rather me. 
+where you can chat and share knowledge with other StaxRip users.
 This is the way to go if you have questions regarding settings, usage, recommendations, etc.,
-you want just to be up to date.
+or if you just want to be up to date.
+
+Bugs and feature requests of StaxRipLinux belong in its
+[issue tracker](https://github.com/SwiftFly78/staxripLinux/issues).
 
 
 Usage questions can also be asked on the *StaxRip threads* on

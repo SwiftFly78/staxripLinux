@@ -2,8 +2,8 @@
 
 ## About StaxRipLinux
 
-StaxRipLinux is a powerful and customizable video/audio encoding GUI for Linux, a port of
-[StaxRip](https://github.com/staxrip/staxrip) for Windows.  
+StaxRipLinux is a powerful and customizable video/audio encoding GUI for Linux, based on
+[StaxRip](https://github.com/staxrip/staxrip).  
 It executes and controls console apps such as x265, mkvmerge, ffmpeg, etc. and uses scripting based frame servers,
 AviSynth+ and VapourSynth, for video processing. Each project can also be extended by various events and settings.
 

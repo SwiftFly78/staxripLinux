@@ -67,5 +67,3 @@ so you can use StaxRipLinux and its settings correctly.
 - [Filter Profiles](Filter-Profiles.md)
 - [PowerShell Scripting](PowerShell.md)
 - [Useful Links](Useful-Links.md)
-- Outdated external documentations
-    - [encodingwissen.de](https://encodingwissen.de/praxis/staxrip) (German)

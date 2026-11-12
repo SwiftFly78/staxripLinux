@@ -1,34 +1,30 @@
 # [Documentation](../README.md) / [Introduction](README.md) / Linux
 
 > [!NOTE]
-> StaxRipLinux is a port of StaxRip with a GTK 3 user interface based on [Eto.Forms](https://github.com/picoe/Eto).
-> It was tested on Arch Linux with VapourSynth R80, Python 3.14, x264, x265, FFmpeg and MKVToolNix 102.
-> StaxRipLinux doesn't depend on a specific distribution, it uses the tools and libraries found on the system,
-> the full [AppImage](#appimage) brings the most important ones along.
+> StaxRipLinux is based on [StaxRip](https://github.com/staxrip/staxrip), its GTK 3 user interface uses
+> [Eto.Forms](https://github.com/picoe/Eto). It was tested on Arch Linux with VapourSynth R80, Python 3.14, x264,
+> x265, FFmpeg and MKVToolNix 102. StaxRipLinux doesn't depend on a specific distribution, it uses the tools and
+> libraries found on the system, the full [AppImage](#appimage) brings the most important ones along.
 
-## Differences to the Windows version
+## Tools
 
-- StaxRipLinux doesn't include any tools. It uses the tools, libraries and plugins installed on the system,
-  usually with the package manager of the distribution.
-- Tools that only exist for Windows are hidden in the apps dialog, Linux tools take over their tasks:
+Besides the encoders, StaxRipLinux uses these tools:
 
-  | Windows | Linux |
-  | --- | --- |
-  | qaac | [fdkaac](https://github.com/nu774/fdkaac), AAC profiles in automatic mode use it if it's installed, otherwise the AAC encoder of FFmpeg |
-  | DGIndex | [D2V Witch](https://github.com/dubhater/D2VWitch) indexes MPEG-2 sources when a d2v source filter is selected |
-  | DGDecode | [D2VSource](https://github.com/Asd-g/MPEG2DecPlus) (AviSynth+) and [d2vsource](https://github.com/dwbuiten/d2vsource) (VapourSynth) open the d2v index |
-  | AVSMeter | `Project > Advanced Script Info` shows the info of a script and benchmarks it with [avs2yuv](https://github.com/DJATOM/avs2yuv) (AviSynth+) or vspipe (VapourSynth) |
-  | avs2pipemod | [avs2yuv](https://github.com/DJATOM/avs2yuv) pipes AviSynth+ scripts to the encoders, without it FFmpeg is used, which requires an FFmpeg build with AviSynth support |
-  | MPC, mpv.net | [mpv](https://mpv.io) |
-  | VSFilterMod, xy-VSFilter | Hardcoded subtitles use [SubText](https://github.com/vapoursynth/subtext) (VapourSynth) and [AssRender](https://github.com/pinterf/assrender) (AviSynth+, text subtitles only) |
-  | DirectShowSource, DSS2, AviSource (DirectShow, VFW) | The FFmpeg based source filters FFMS2, BestSource and L-SMASH Works |
-  | NicAudio and DirectShow audio decoding and cutting | FFAudioSource of FFMS2 with AviSynth+, FFmpeg decodes the script, so it must be built with AviSynth support |
-  | AutoCrop | Auto crop runs inside StaxRipLinux |
-  | DoViSplit | The editor of [dovi_tool](https://github.com/quietvoid/dovi_tool) trims the Dolby Vision metadata when the video is cut |
+| Task | Tools |
+| --- | --- |
+| AAC encoding | [fdkaac](https://github.com/nu774/fdkaac), AAC profiles in automatic mode use it if it's installed, otherwise the AAC encoder of FFmpeg |
+| MPEG-2 sources | [D2V Witch](https://github.com/dubhater/D2VWitch) indexes MPEG-2 sources when a d2v source filter is selected, [D2VSource](https://github.com/Asd-g/MPEG2DecPlus) (AviSynth+) and [d2vsource](https://github.com/dwbuiten/d2vsource) (VapourSynth) open the d2v index |
+| Script info | `Project > Advanced Script Info` shows the info of a script and benchmarks it with [avs2yuv](https://github.com/DJATOM/avs2yuv) (AviSynth+) or vspipe (VapourSynth) |
+| Encoding AviSynth+ scripts | avs2yuv pipes AviSynth+ scripts to the encoders, without it FFmpeg is used, which requires an FFmpeg build with AviSynth support |
+| Playback | [mpv](https://mpv.io) |
+| Hardcoded subtitles | [SubText](https://github.com/vapoursynth/subtext) (VapourSynth) and [AssRender](https://github.com/pinterf/assrender) (AviSynth+, text subtitles only) |
+| Source filters | The FFmpeg based source filters FFMS2, BestSource and L-SMASH Works |
+| Audio decoding and cutting with AviSynth+ | FFAudioSource of FFMS2 opens the audio, FFmpeg decodes the script, so it must be built with AviSynth support |
+| Cutting Dolby Vision videos | The editor of [dovi_tool](https://github.com/quietvoid/dovi_tool) trims the Dolby Vision metadata |
 
-- VapourSynth scripts are played with mpv and passed to NVEncC, QSVEncC, VCEEncC and rav1e by piping
-  them with vspipe, because many FFmpeg and encoder builds can't read VapourSynth scripts.
-- The hardware decoding options of the encoders use VAAPI (Intel, AMD) and CUDA (NVIDIA) instead of DXVA2.
+- VapourSynth scripts are played with mpv and passed to NVEncC, QSVEncC, VCEEncC and rav1e by piping them with vspipe,
+  because many FFmpeg and encoder builds can't read VapourSynth scripts.
+- The hardware decoding options of the encoders use VA-API (Intel, AMD) and CUDA (NVIDIA).
 - The ffmpeg encoder has VA-API profiles (`ffmpeg | VAAPI | H.264`, `H.265` and `AV1`), which use the hardware
   encoders of AMD and Intel GPUs through Mesa or the Intel media driver without proprietary runtimes. The device
   is `/dev/dri/renderD128` unless another render node is defined in the encoder options.
@@ -36,15 +32,9 @@
   `SvtAv1EncApp` found in `PATH` for a fork only if its version output names that fork. Otherwise define the path of
   a fork build in the apps dialog (`Tools > Edit Path`) and confirm its version (`Version`, F12). Dolby Vision and
   HDR10+ require a build with `-DLIBDOVI_FOUND=ON -DLIBHDR10PLUS_RS_FOUND=ON` (libdovi and libhdr10plus-rs).
-- eac3to only exists for Windows. StaxRipLinux runs it with Wine when a command named `eac3to` starts it, like the
-  wrapper script of the AUR package `eac3to` (`wine /path/to/eac3to.exe "$@"`). StaxRipLinux passes the paths as Wine
-  paths (`Z:\...`), because eac3to reads arguments that start with `/` as options.
-- Thumbnail sheets can be saved as JPEG, PNG, BMP and TIFF, but not as GIF.
-- The controls use the GTK theme. The themes of StaxRipLinux only define the colors of highlighting and other custom
-  drawn content and are only used with a dark GTK theme.
-- Settings are stored in `~/.config/StaxRip` (`$XDG_CONFIG_HOME/StaxRip`). A folder named `Settings` next to the
-  `StaxRip` executable enables a portable installation, the environment variable `STAXRIP_SETTINGS` overrides both.
-  The console help of tools is cached in `~/.cache/staxrip/Help` (`$XDG_CACHE_HOME`).
+- StaxRipLinux runs eac3to with Wine through a command named `eac3to`, like the wrapper script of the AUR package
+  `eac3to` (`wine /path/to/eac3to.exe "$@"`), and passes the paths as Wine paths (`Z:\...`), because eac3to reads
+  arguments that start with `/` as options.
 
 ## Requirements
 
@@ -77,9 +67,9 @@ sudo pacman -S dotnet-runtime gtk3 libmediainfo mkvtoolnix-cli ffmpeg vapoursynt
 ```
 
 `fdkaac`, `avisynthplus`, `dovi-tool`, `hdr10plus-tool` (Dolby Vision and HDR10+ metadata) and `tesseract` are in the
-official repositories as well. The AUR has packages for the other tools and plugins that replace the Windows tools:
-`d2vwitch-git`, `vapoursynth-plugin-d2vsource`, `vapoursynth-plugin-subtext-git` and, for AviSynth+,
-`avs2yuv-git`, `avisynth-plugin-assrender-git` and `avisynth-plugin-mpeg2decplus-git` (D2VSource).
+official repositories as well. The AUR has packages for the other [tools](#tools) and plugins: `d2vwitch-git`,
+`vapoursynth-plugin-d2vsource`, `vapoursynth-plugin-subtext-git` and, for AviSynth+, `avs2yuv-git`,
+`avisynth-plugin-assrender-git` and `avisynth-plugin-mpeg2decplus-git` (D2VSource).
 
 Fedora (x264 and x265 are available from [RPM Fusion](https://rpmfusion.org), which also has a complete FFmpeg):
 
@@ -138,6 +128,11 @@ see [Subtitle OCR](#subtitle-ocr).
   Xfce Terminal, Alacritty, kitty, foot, WezTerm and xterm.
 - While encoding, standby is prevented with `systemd-inhibit` or `elogind-inhibit`. Shutdown and standby after
   the jobs use `systemctl` or `loginctl`.
+- The controls use the GTK theme. The themes of StaxRipLinux only define the colors of highlighting and other custom
+  drawn content and are only used with a dark GTK theme.
+- Settings are stored in `~/.config/StaxRip` (`$XDG_CONFIG_HOME/StaxRip`). A folder named `Settings` next to the
+  `StaxRip` executable enables a portable installation, the environment variable `STAXRIP_SETTINGS` overrides both.
+  The console help of tools is cached in `~/.cache/staxrip/Help` (`$XDG_CACHE_HOME`).
 
 ## Subtitle OCR
 
@@ -243,10 +238,10 @@ when StaxRipLinux is started without installation, a generic icon is shown inste
 
 ## Versioning
 
-The Linux port has its own version, which the title bar shows. It follows [Semantic Versioning](https://semver.org),
+StaxRipLinux has its own version, which the title bar shows. It follows [Semantic Versioning](https://semver.org),
 began with v1.0.0 at the commit that ported StaxRip to Linux, and every commit gets an annotated tag with its version.
-The tags of StaxRip itself, like v2.52.6, aren't versions of the port. The assembly version is still the one of the
-StaxRip version the port is based on, settings and the update check use it.
+The tags of StaxRip itself, like v2.52.6, aren't versions of StaxRipLinux. The assembly version is still the one of
+the StaxRip version StaxRipLinux is based on, settings and the update check use it.
 
 The build takes the version from the tags with `git describe`, so it needs a clone that contains them. A commit without
 a tag yet gets the version of the last tag with the number of commits since then and the commit, like
@@ -273,7 +268,7 @@ After committing, tag the new commits:
 Source/version.sh
 ```
 
-It tags the commits of the port up to HEAD that have no version yet, from the oldest one, and prints the command to
+It tags the commits of StaxRipLinux up to HEAD that have no version yet, from the oldest one, and prints the command to
 push the tags. `Source/version.sh -n` only shows the versions, `Source/version.sh current` shows the version of HEAD.
 Fetch the tags of other contributors first (`git fetch --tags`), so that no version is used twice. The script needs
 [node-semver](https://github.com/npm/node-semver), the package `semver` on Arch Linux and `node-semver` on Debian and

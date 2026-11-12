@@ -1,17 +1,16 @@
 ﻿# [Documentation](../README.md) / [Usage](README.md) / Fonts
 
-Since `v2.48` StaxRip comes with its own fonts, from which you can choose. As of now you can select between fonts
-for default texts as well as for fonts for code type presentations like encoder parameters. This gives you the
-possibility to improve the readability and/or reduce the needed space by texts, so more text fits a desired space.  
+StaxRipLinux uses the fonts installed on the system. You can choose a font for default texts as well as a font for
+code type presentations like encoder parameters and scripts. This gives you the possibility to improve the readability
+and/or reduce the needed space by texts, so more text fits a desired space.  
 To change them go to: `Tools » Settings » User Interface`:
 
 <img width=600 src="../../Images/Screenshots/SettingsUserInterface.png">
 
+Without a choice, the interface font of the desktop is used for texts and the monospace font of fontconfig for code.
+The code fonts to choose from are only monospaced fonts. The font of thumbnail sheets is chosen in the thumbnail
+options of the project (`Project » Options » Thumbnails`).
+
 > [!TIP]
-> You can also add you own fonts.  
-> Make sure you use `.ttf` font files and put them into your Settings folder:
-> - `.\Settings\Fonts\Code\` for *Code Fonts*
-> - `.\Settings\Fonts\Default\` for *Default Fonts*
-> - `.\Settings\Fonts\Thumbnail\` for *Thumbnail Fonts* (see [Project Options](User-Interface/Project-Options#User-Interface.md))
-> 
-> Folder hierarchy doesn't matter as all subfolders are included for searching.
+> To use other fonts, install them with the package manager or copy the font files to `~/.local/share/fonts`.
+> StaxRipLinux lists new fonts after a restart.

@@ -23,21 +23,29 @@ body:
   - type: input
     id: version
     attributes:
-      label: StaxRip version
-      description: Let us know which version you have tested. Please make sure to test latest stable version available. 
-      placeholder: e.g. 2.50.4
+      label: StaxRipLinux version
+      description: The version in the title bar. Please make sure to test the latest release.
+      placeholder: e.g. v1.45.34
+    validations:
+      required: true
+  - type: input
+    id: distribution
+    attributes:
+      label: Distribution
+      description: The Linux distribution and its version.
+      placeholder: e.g. Ubuntu 24.04
     validations:
       required: true
   - type: dropdown
-    id: os
+    id: installation
     attributes:
-      label: OS
-      multiple: true
+      label: Installation
       options:
-        - Windows 11
-        - Windows 10
-        - Windows 8(.1)
-        - Windows 7
+        - Full AppImage
+        - Slim AppImage
+        - Built from source
+    validations:
+      required: true
   - type: dropdown
     id: frameserver
     attributes:
