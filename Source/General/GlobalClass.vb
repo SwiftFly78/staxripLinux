@@ -753,12 +753,21 @@ Public Class GlobalClass
                 Dim hasFrames = MediaInfo.GetVideo(p.TargetFile, "FrameCount").ToInt(-1)
                 Dim shouldFrames = p.TargetFrames
 
+                'MediaInfo can't count the frames of raw streams like HEVC
+                If hasFrames < 0 Then
+                    hasFrames = Ffprobe.GetVideoPacketCount(p.TargetFile)
+                End If
+
                 If hasFrames <> shouldFrames Then
                     UIInvoke(Sub() g.MainForm.UpdateTargetParameters(p))
                     shouldFrames = p.TargetFrames
                 End If
 
-                If hasFrames <> shouldFrames Then
+                If hasFrames < 0 Then
+                    Log.WriteHeader("Frame Count")
+                    Log.WriteLine("The frame count of the target file couldn't be determined, so it wasn't compared with the " +
+                                  $"{shouldFrames} frames of the script.")
+                ElseIf hasFrames <> shouldFrames Then
                     Dim difference = shouldFrames - hasFrames
                     If deleteTempFiles AndAlso p.DeleteTempFilesOnFrameMismatchNegative >= 0 AndAlso difference > 0 Then deleteTempFiles = difference <= p.DeleteTempFilesOnFrameMismatchNegative
                     If deleteTempFiles AndAlso p.DeleteTempFilesOnFrameMismatchPositive >= 0 AndAlso difference < 0 Then deleteTempFiles = -difference <= p.DeleteTempFilesOnFrameMismatchPositive
@@ -771,7 +780,7 @@ Public Class GlobalClass
                         Log.WriteLine($"Encoding was probably terminated at {hasFrames / shouldFrames * 100:0.0}% with a mismatch of {difference} frames!")
                     End If
 
-                    If hasFrames > -1 AndAlso p.AbortOnFrameMismatch AndAlso Not isCuttedRemux Then
+                    If p.AbortOnFrameMismatch AndAlso Not isCuttedRemux Then
                         Throw New ErrorAbortException("Frame Mismatch", $"Target file has {hasFrames} frames, but should have {shouldFrames} frames!", p)
                     End If
                 End If

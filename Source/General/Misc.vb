@@ -4732,6 +4732,16 @@ Public Class Ffprobe
         Next
     End Sub
 
+    'the packets of the first video stream, the frame count of raw streams MediaInfo can't count, -1 on failure
+    Public Shared Function GetVideoPacketCount(path As String) As Integer
+        If Not path.FileExists() OrElse Package.ffprobe.Path = "" Then Return -1
+
+        Dim output = ProcessHelp.GetConsoleOutput(Package.ffprobe.Path, {"-v", "error", "-select_streams", "v:0",
+            "-count_packets", "-show_entries", "stream=nb_read_packets", "-of", "csv=p=0", path})
+
+        Return output.Trim().ToInt(-1)
+    End Function
+
     Public Shared Function GetInfo(path As String) As Ffprobe
         If String.IsNullOrWhiteSpace(path) Then Return Nothing
         If Not path.FileExists() Then Return Nothing
