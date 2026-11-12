@@ -132,7 +132,7 @@ Public Class Documentation
         sb.AppendLine("|---|---|")
 
         For Each tip In Macro.GetTips(True, False, False, False, False)
-            sb.AppendLine($"| `{tip.Name}` | {tip.Value} |")
+            sb.AppendLine($"| `{tip.Name}` | {tip.Value.Replace("|", "\|")} |")
         Next
 
         sb.AppendLine()
@@ -142,7 +142,7 @@ Public Class Documentation
         sb.AppendLine("|---|---|")
 
         For Each tip In Macro.GetTips(False, False, True, False, False)
-            sb.AppendLine($"| `{tip.Name}` | {tip.Value} |")
+            sb.AppendLine($"| `{tip.Name}` | {tip.Value.Replace("|", "\|")} |")
         Next
 
         sb.AppendLine()
@@ -153,7 +153,7 @@ Public Class Documentation
         sb.AppendLine("|---|---|")
 
         For Each tip In Macro.GetTips(False, True, False, False, False)
-            sb.AppendLine($"| `{tip.Name}` | {tip.Value} |")
+            sb.AppendLine($"| `{tip.Name}` | {tip.Value.Replace("|", "\|")} |")
         Next
 
         sb.AppendLine()
@@ -195,7 +195,7 @@ Public Class Documentation
         sb.AppendLine("|---|---|")
 
         For Each tip In Macro.GetTips(False, False, False, True, False)
-            sb.AppendLine($"| `{tip.Name}` | {tip.Value} |")
+            sb.AppendLine($"| `{tip.Name}` | {tip.Value.Replace("|", "\|")} |")
         Next
 
         sb.AppendLine()
@@ -206,7 +206,7 @@ Public Class Documentation
         sb.AppendLine("|---|---|")
 
         For Each tip In Macro.GetTips(False, False, False, False, True)
-            sb.AppendLine($"| `{tip.Name}` | {tip.Value} |")
+            sb.AppendLine($"| `{tip.Name}` | {tip.Value.Replace("|", "\|")} |")
         Next
 
         sb.AppendLine()
