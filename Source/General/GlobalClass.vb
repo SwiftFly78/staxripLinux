@@ -1671,8 +1671,9 @@ Public Class GlobalClass
         g.ShellExecute(Package.mpvnet.Path, file.Escape)
     End Sub
 
-    Sub ShowWikiPage(title As String)
-        ShellExecute($"https://github.com/staxrip/staxrip/wiki/{title}")
+    'a page of the documentation, like Usage/Macros.md
+    Sub ShowDocumentationPage(page As String)
+        ShellExecute(ProjectLinks.GetDocumentationPage(page))
     End Sub
 
     Sub OnUnhandledException(sender As Object, e As UnhandledExceptionEventArgs)
@@ -1736,7 +1737,7 @@ Public Class GlobalClass
             End If
 
             g.SelectFileWithExplorer(fp)
-            g.ShellExecute("https://github.com/staxrip/staxrip/issues")
+            g.ShellExecute(ProjectLinks.NewIssue)
         End If
     End Sub
 

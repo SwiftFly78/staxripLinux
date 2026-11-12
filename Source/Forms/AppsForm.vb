@@ -56,7 +56,7 @@ Public Class AppsForm
         miStatus = menuItem("Check All", Keys.Control Or Keys.S, "Check status of all tools")
         miStatusRequired = menuItem("Check Required Only", Keys.Control Or Keys.Y, "Check status of all required tools")
         miAutoUpdate = menuItem("Auto Update", Keys.Control Or Keys.U, "Full automatic update")
-        miUpdateRequest = menuItem("Update Request", Keys.Control Or Keys.R, Nothing)
+        miUpdateRequest = menuItem("Update Request", Keys.Control Or Keys.R, "Requests a newer version of the tool for the AppImage")
         miDownload = menuItem("Download", Keys.Control Or Keys.D, "Opens the apps download web page")
         miWebsite = menuItem("Website", Keys.Control Or Keys.W, "Opens the apps website")
         miExplore = menuItem("Explore", Keys.Control Or Keys.E, "Opens the apps folder in the file manager")
@@ -785,6 +785,6 @@ Public Class AppsForm
     End Sub
 
     Sub miUpdateRequest_Click(sender As Object, e As EventArgs) Handles miUpdateRequest.Click
-        g.ShowWikiPage("Tool-Update-Requests")
+        g.ShellExecute(ProjectLinks.GetToolUpdateRequest(CurrentPackage))
     End Sub
 End Class

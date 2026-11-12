@@ -67,7 +67,7 @@ Public Class EventCommandsEditor
     End Sub
 
     Sub EventCommandsEditor_HelpRequested() Handles Me.HelpRequested
-        g.ShowWikiPage("Commands")
+        g.ShowDocumentationPage("Usage/Events.md")
     End Sub
 
     Sub bnClone_Click() Handles bnClone.Click

@@ -301,6 +301,11 @@ Public Class ApplicationSettings
             CustomMenuMainForm = MainForm.GetDefaultMainMenu
         End If
 
+        'the help menu linked the pages of StaxRip, customized menus are kept
+        If Check(CustomMenuMainForm, "Links of the main menu", 1) Then
+            ProjectLinks.ReplaceLinks(CustomMenuMainForm)
+        End If
+
         If Check(CustomMenuPreview, "Menu in preview dialog", 56) Then
             CustomMenuPreview = PreviewForm.GetDefaultMenu()
         End If

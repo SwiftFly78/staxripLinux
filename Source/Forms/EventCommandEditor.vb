@@ -185,7 +185,7 @@ Public Class EventCommandEditor
     End Sub
 
     Sub EventCommandEditor_HelpRequested() Handles Me.HelpRequested
-        g.ShowWikiPage("Commands")
+        g.ShowDocumentationPage("Usage/Commands.md")
     End Sub
 
     Sub pgParameters_PropertyValueChanged(sender As Object, e As EventArgs) Handles pgParameters.PropertyValueChanged

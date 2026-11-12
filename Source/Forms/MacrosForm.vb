@@ -88,7 +88,7 @@ Public Class MacrosForm
     End Sub
 
     Sub MacrosForm_HelpRequested(sender As Object, e As EventArgs) Handles Me.HelpRequested
-        g.ShowWikiPage("Macros")
+        g.ShowDocumentationPage("Usage/Macros.md")
     End Sub
 
     Sub TaskForm_KeyDown(sender As Object, e As KeyEventArgs) Handles Me.KeyDown
