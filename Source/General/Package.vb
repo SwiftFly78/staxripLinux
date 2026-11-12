@@ -31,7 +31,6 @@ Public Class Package
     Property SetupAction As Action
     Property Siblings As String()
     Property StatusFunc As Func(Of String)
-    Property SupportsAutoUpdate As Boolean = True
     Property TreePath As String
     Private VersionValue As String = ""
 
@@ -73,7 +72,6 @@ Public Class Package
         .Description = "MPEG-2 demuxing and d2v indexing GUI app.",
         .WebURL = "https://rationalqm.us/dgmpgdec/dgmpgdec.html",
         .Location = IO.Path.Combine("Support", "DgMpgDec"),
-        .SupportsAutoUpdate = False,
         .RequiredFunc = Function() CommandLineDemuxer.IsActive("%app_name:DGIndex%")})
 
     Shared Property DGDecode As Package = Add(New PluginPackage With {
@@ -83,7 +81,6 @@ Public Class Package
         .WebURL = "https://rationalqm.us/dgmpgdec/dgmpgdec.html",
         .Description = "Source filter to open D2V index files created with DGIndex or D2V Witch.",
         .Location = IO.Path.Combine("Support", "DgMpgDec"),
-        .SupportsAutoUpdate = False,
         .AvsFilterNames = {"MPEG2Source"},
         .VsFilterNames = {"dgdecode.MPEG2Source"}})
 
@@ -133,7 +130,6 @@ Public Class Package
         .Filename = "ffprobe.exe",
         .Locations = {IO.Path.Combine("Encoders", "ffmpeg"), IO.Path.Combine("FrameServer", "AviSynth")},
         .Siblings = {"ffmpeg"},
-        .SupportsAutoUpdate = False,
         .AllowCustomPath = False,
         .WebURL = "https://ffmpeg.org",
         .HelpURL = "https://www.ffmpeg.org/documentation.html",
@@ -146,7 +142,6 @@ Public Class Package
         .Filename = "ffmpeg.exe",
         .Locations = {IO.Path.Combine("Encoders", "ffmpeg"), IO.Path.Combine("FrameServer", "AviSynth")},
         .Siblings = {"ffprobe"},
-        .SupportsAutoUpdate = False,
         .AllowCustomPath = False,
         .WebURL = "https://ffmpeg.org",
         .HelpURL = "https://www.ffmpeg.org/documentation.html",
@@ -174,7 +169,6 @@ Public Class Package
         .WebURL = "",
         .DownloadURL = "",
         .HelpSwitch = "--help",
-        .SupportsAutoUpdate = False,
         .RequiredFunc = Function() False,
         .Description = "Opus is a totally open, royalty-free, highly versatile audio codec. Opus is unmatched for interactive speech and music transmission over the Internet, but is also intended for storage and streaming applications."})
 
@@ -185,7 +179,6 @@ Public Class Package
         .WebURL = "",
         .DownloadURL = "",
         .HelpSwitch = "--help",
-        .SupportsAutoUpdate = False,
         .RequiredFunc = Function() Audio.IsEncoderUsed(GuiAudioEncoder.opusenc),
         .Description = "Opus is a totally open, royalty-free, highly versatile audio codec. Opus is unmatched for interactive speech and music transmission over the Internet, but is also intended for storage and streaming applications."})
 
@@ -199,7 +192,6 @@ Public Class Package
         .IsIncluded = False,
         .VersionAllowAny = True,
         .Find = False,
-        .SupportsAutoUpdate = False,
         .RequiredFunc = Function() Audio.IsEncoderUsed(GuiAudioEncoder.deezy),
         .Description = "Dolby Encoding Engine."})
 
@@ -211,7 +203,6 @@ Public Class Package
         .DownloadURL = "https://github.com/truehdd/truehdd/releases",
         .HelpURL = "https://github.com/truehdd/truehdd",
         .HelpSwitch = "--help",
-        .SupportsAutoUpdate = False,
         .RequiredFunc = Function() Audio.IsEncoderUsed(GuiAudioEncoder.deezy),
         .Description = "Tools for inspecting and decoding Dolby TrueHD bitstreams."})
 
@@ -223,7 +214,6 @@ Public Class Package
         .DownloadURL = "https://github.com/jlw4049/DeeZy/releases",
         .HelpURL = "https://github.com/jlw4049/DeeZy",
         .HelpSwitch = "--help",
-        .SupportsAutoUpdate = False,
         .RequiredFunc = Function() Audio.IsEncoderUsed(GuiAudioEncoder.deezy),
         .Description = "Simple Dolby Encoding Engine CLI Wrapper."})
 
@@ -244,7 +234,6 @@ Public Class Package
         .Name = "Apple Application Support",
         .IsLinuxSupported = False,
         .Filename = "CoreAudioToolbox.dll",
-        .SupportsAutoUpdate = False,
         .VersionAllowAny = True,
         .IsIncluded = False,
         .DownloadURL = "https://github.com/staxrip/staxrip/wiki/qaac",
@@ -286,7 +275,6 @@ Public Class Package
         .Name = "MediaInfo",
         .Filename = "MediaInfo.dll",
         .Location = IO.Path.Combine("Support", "MediaInfo.NET"),
-        .SupportsAutoUpdate = False,
         .WebURL = "https://mediaarea.net/en/MediaInfo",
         .DownloadURL = "https://mediaarea.net/en/MediaInfo/Download/Windows",
         .Description = "Library to retrieve info from media files."})
@@ -298,7 +286,6 @@ Public Class Package
         .Location = IO.Path.Combine("Support", "MediaInfo.NET"),
         .WebURL = "https://github.com/stax76/MediaInfo.NET",
         .DownloadURL = "https://github.com/stax76/MediaInfo.NET/releases",
-        .SupportsAutoUpdate = False,
         .Description = "GUI app originally built for StaxRip to show info about media files."})
 
     Shared Property GetMediaInfo As Package = Add(New Package With {
@@ -306,7 +293,6 @@ Public Class Package
         .IsLinuxSupported = False,
         .Location = IO.Path.Combine("Support", "MediaInfo.NET"),
         .Filename = "Get-MediaInfo.ps1",
-        .SupportsAutoUpdate = False,
         .Description = "Complete PowerShell MediaInfo solution used for the media info folder view.",
         .WebURL = "https://github.com/stax76/Get-MediaInfo",
         .DownloadURL = "https://github.com/stax76/Get-MediaInfo/releases"})
@@ -342,7 +328,6 @@ Public Class Package
         .WebURL = "https://www.vapoursynth.com",
         .HelpURL = "https://www.vapoursynth.com/doc",
         .DownloadURL = "https://github.com/vapoursynth/vapoursynth/releases",
-        .SupportsAutoUpdate = False,
         .HelpFilename = IO.Path.Combine("doc", "index.html"),
         .Siblings = {"vspipe"},
         .RequiredFunc = Function() p.Script.Engine = ScriptEngine.VapourSynth,
@@ -356,7 +341,6 @@ Public Class Package
         .HelpURL = "https://www.vapoursynth.com/doc/vspipe.html",
         .DownloadURL = "https://github.com/vapoursynth/vapoursynth/releases",
         .HelpSwitch = "stderr",
-        .SupportsAutoUpdate = False,
         .Siblings = {"VapourSynth"},
         .RequiredFunc = Function() p.Script.Engine = ScriptEngine.VapourSynth,
         .HintDirFunc = Function() Package.vspipe.GetVapourSynthPipeHintDir})
@@ -390,7 +374,6 @@ Public Class Package
         .Description = "Packing console app.",
         .WebURL = "https://www.7-zip.org",
         .HelpSwitch = "",
-        .SupportsAutoUpdate = False,
         .DownloadURL = "https://www.7-zip.org/download.html"})
 
     Shared Property xvid_encraw As Package = Add(New Package With {
@@ -483,7 +466,6 @@ Public Class Package
         .Name = "Tesseract",
         .Filename = "tesseract.exe",
         .Location = IO.Path.Combine("Subtitles", "Tesseract"),
-        .SupportsAutoUpdate = False,
         .VersionAllowAny = True,
         .WebURL = "https://github.com/tesseract-ocr/tesseract",
         .HelpURL = "https://tesseract-ocr.github.io/tessdoc",
@@ -672,7 +654,6 @@ Public Class Package
         .Filename = "x264.exe",
         .Locations = {IO.Path.Combine("Encoders", "x264"), IO.Path.Combine("FrameServer", "AviSynth")},
         .Description = "H.264 video encoding console app.",
-        .SupportsAutoUpdate = False,
         .AllowCustomPath = False,
         .WebURL = "https://x264.org",
         .DownloadURL = "https://github.com/Patman86/x264-Mod-by-Patman/releases",
@@ -688,7 +669,6 @@ Public Class Package
         .HelpURL = "https://x265.readthedocs.org",
         .DownloadURL = "https://github.com/Patman86/x265-Mod-by-Patman/releases",
         .AllowCustomPath = False,
-        .SupportsAutoUpdate = False,
         .HelpSwitch = "--fullhelp",
         .Description = "H.265 video encoding console app."})
 
@@ -700,7 +680,6 @@ Public Class Package
         .HelpSwitch = "--fullhelp",
         .AllowCustomPath = False,
         .RequiredFunc = Function() TypeOf p.VideoEncoder Is VvencffappEnc,
-        .SupportsAutoUpdate = False,
         .WebURL = "https://github.com/fraunhoferhhi/vvenc",
         .DownloadURL = "https://github.com/f11894/VVenC_Build_Actions/releases"})
 
@@ -978,7 +957,6 @@ Public Class Package
         .Description = "Indexing console app of ffms2.",
         .WebURL = "https://github.com/FFMS/ffms2",
         .HelpSwitch = "",
-        .SupportsAutoUpdate = False,
         .RequiredFunc = Function() False})
 
     Shared Property AviSynthShader As Package = Add(New PluginPackage With {

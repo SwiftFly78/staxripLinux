@@ -7,6 +7,7 @@ Public Class ProjectLinks
     Public Const Releases As String = Repository & "/releases"
     Public Const NewIssue As String = Repository & "/issues/new/choose"
     Public Const Support As String = Repository & "?tab=readme-ov-file#contribution--support"
+    Public Const LatestReleaseApi As String = "https://api.github.com/repos/SwiftFly78/staxripLinux/releases/latest"
 
     'a page of the documentation, like Usage/Macros.md
     Shared Function GetDocumentationPage(page As String) As String

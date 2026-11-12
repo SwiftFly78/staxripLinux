@@ -1,5 +1,4 @@
 
-Imports System.Net.Http
 Imports System.Runtime.InteropServices
 Imports System.Text.RegularExpressions
 
@@ -11,9 +10,7 @@ Public Class ToolUpdate
     Property DownloadFile As String
     Property ExtractDir As String
     Property TargetDir As String
-    Property UseCurl As Boolean
 
-    Private HttpClient As New HttpClient
     Private UpdateUI As IUpdateUI
 
     Sub New(pack As Package, updateUI As IUpdateUI)
@@ -25,63 +22,6 @@ Public Class ToolUpdate
             TargetDir = Path.Combine(Folder.Apps, If(pack.Location <> "", pack.Location, Path.Combine("Tools", pack.Name)))
         End If
         Me.UpdateUI = updateUI
-    End Sub
-
-    Async Sub Update()
-        If Package.IsSystemInstalled Then
-            MsgInfo(Package.Name + " is installed system wide, please update it with the package manager.", Package.Path)
-            Exit Sub
-        End If
-
-        If Package.IsBundled Then
-            MsgInfo(Package.Name + " ships with StaxRipLinux and is updated with it.", Package.Path)
-            Exit Sub
-        End If
-
-        'exceptions of an Async Sub are unhandled and terminate StaxRip
-        Try
-            Dim content = Await HttpClient.GetStringAsync(Package.DownloadURL)
-            Dim matches = Regex.Matches(content, "href=(""|')[^ ]+\.(7z|zip|tar\.gz|tar\.xz|tar\.bz2|tar\.zst|tgz)(""|')")
-
-            For Each match As Match In matches
-                Dim url = match.Value
-
-                If Ignore(url) Then Continue For
-                If Package.Include <> "" AndAlso Not url.Contains(Package.Include) Then Continue For
-
-                url = url.Substring(6, url.Length - 7)
-
-                If Not url.StartsWith("http") Then
-                    Dim match2 = Regex.Match(Package.DownloadURL, "https?://[^/]+")
-                    url = match2.Value + If(url.StartsWith("/"), "", "/") + url
-                End If
-
-                DownloadFile = IO.Path.Combine(Folder.Desktop, IO.Path.GetFileName(url))
-                Download(url)
-                Exit For
-            Next
-        Catch ex As Exception
-            g.ShowException(ex, "Update of " + Package.Name + " failed")
-        End Try
-    End Sub
-
-    Sub Download(url As String)
-        'TaskDialog trims URLs
-        If MsgQuestion("Download the file shown below?", url) = DialogResult.OK Then
-
-            Using form As New DownloadForm(url, DownloadFile)
-                If form.ShowDialog() = DialogResult.OK AndAlso DownloadFile.FileExists Then
-                    If DownloadFile.FileExists Then
-                        Extract()
-                    Else
-                        MsgError("Downloaded file is missing.")
-                    End If
-                Else
-                    FileHelp.Delete(DownloadFile)
-                    MsgInfo("Download was canceled or failed.")
-                End If
-            End Using
-        End If
     End Sub
 
     Sub Extract()

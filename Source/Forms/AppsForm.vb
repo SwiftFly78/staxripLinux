@@ -55,7 +55,7 @@ Public Class AppsForm
         miShowGrid = menuItem("Show Grid", Keys.Control Or Keys.G, "Show tools as CSV table")
         miStatus = menuItem("Check All", Keys.Control Or Keys.S, "Check status of all tools")
         miStatusRequired = menuItem("Check Required Only", Keys.Control Or Keys.Y, "Check status of all required tools")
-        miAutoUpdate = menuItem("Auto Update", Keys.Control Or Keys.U, "Full automatic update")
+        miAutoUpdate = menuItem("Auto Update", Keys.Control Or Keys.U, "Checks for a new version of StaxRipLinux, whose AppImage updates the tool")
         miUpdateRequest = menuItem("Update Request", Keys.Control Or Keys.R, "Requests a newer version of the tool for the AppImage")
         miDownload = menuItem("Download", Keys.Control Or Keys.D, "Opens the apps download web page")
         miWebsite = menuItem("Website", Keys.Control Or Keys.W, "Opens the apps website")
@@ -204,7 +204,6 @@ Public Class AppsForm
         miLaunch.Enabled = tsbLaunch.Enabled
         tsbDownload.Enabled = CurrentPackage.DownloadURL <> ""
         miDownload.Enabled = tsbDownload.Enabled
-        miAutoUpdate.Enabled = tsbDownload.Enabled AndAlso CurrentPackage.SupportsAutoUpdate
         tsbWebsite.Enabled = CurrentPackage.URL <> ""
 
         tsbVersion.Enabled = CurrentPackage.Path.FileExists AndAlso Not CurrentPackage.IsBundled AndAlso
@@ -692,21 +691,7 @@ Public Class AppsForm
     End Sub
 
     Sub miAutoUpdate_Click(sender As Object, e As EventArgs) Handles miAutoUpdate.Click
-        Dim url = CurrentPackage.DownloadURL
-
-        If url = "" Then
-            Exit Sub
-        End If
-
-        If url.Contains("mediafire") Then
-            MsgError("The auto update feature does currently not support MediaFire.")
-            Exit Sub
-        End If
-
-        If MsgQuestion("Experimental feature not working for all tools, continue?") = DialogResult.OK Then
-            ToolUpdate = New ToolUpdate(CurrentPackage, Me)
-            ToolUpdate.Update()
-        End If
+        StaxRipUpdate.UpdateToolAsync(CurrentPackage)
     End Sub
 
     Sub miEditChangelog_Click(sender As Object, e As EventArgs) Handles miEditChangelog.Click

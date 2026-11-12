@@ -306,6 +306,11 @@ Public Class ApplicationSettings
             ProjectLinks.ReplaceLinks(CustomMenuMainForm)
         End If
 
+        'a dismissed version of StaxRip would hide the updates of StaxRipLinux
+        If Check(CheckForUpdatesDismissed, "Dismissed update", 1) Then
+            CheckForUpdatesDismissed = ""
+        End If
+
         If Check(CustomMenuPreview, "Menu in preview dialog", 56) Then
             CustomMenuPreview = PreviewForm.GetDefaultMenu()
         End If
