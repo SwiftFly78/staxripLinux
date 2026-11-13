@@ -48,8 +48,8 @@ Besides the options of the encoder, the first pages contain options of StaxRipLi
 
 x264, x265, aomenc, SvtAv1EncApp and its forks and vvencFFapp can split the video into chunks and encode them in
 parallel, which uses CPUs with many cores better. **Chunks** sets the number of chunks, the
-[Settings](Settings.md#general) limit the parallel processes. The chunks are joined before muxing. Chunk encoding
-isn't used with Dolby Vision.
+[Settings](Settings.md#general) limit the parallel processes. The chunks are joined before muxing. With x265 and
+the SvtAv1EncApp forks every chunk gets the Dolby Vision and HDR10+ metadata of its frames.
 
 ### Compressibility Check
 
