@@ -483,6 +483,35 @@ Public Class GlobalCommands
         p.VideoEncoder.ImportCommandLine(commandLine)
     End Sub
 
+    <Command("Changes the command line of an audio track: the custom arguments of GUI audio profiles, " +
+             "the whole command lines of Command Line audio profiles.")>
+    Sub ImportAudioEncoderCommandLine(
+        <DispName("Track"), Description("Number of the audio track, starting with 1.")> track As Integer,
+        <DispName("Command Line")> commandLine As String)
+
+        Dim ap = p.AudioTracks.ElementAtOrDefault(track - 1)?.AudioProfile
+
+        If TypeOf ap Is GUIAudioProfile Then
+            DirectCast(ap, GUIAudioProfile).Params.CustomSwitches = commandLine
+        ElseIf TypeOf ap Is BatchAudioProfile Then
+            ap.CommandLines = commandLine
+        Else
+            Throw New ErrorAbortException("Audio command line not imported",
+                $"Audio track {track} doesn't exist or its profile has no command line, like Copy/Mux.")
+        End If
+
+        g.MainForm.UpdateAudioMenus()
+        g.MainForm.UpdateSizeOrBitrate()
+    End Sub
+
+    <Command("Changes the command line of an audio track from a text file, like ImportAudioEncoderCommandLine.")>
+    Sub ImportAudioEncoderCommandLineFromTextFile(
+        <DispName("Track"), Description("Number of the audio track, starting with 1.")> track As Integer,
+        <DispName("File Path")> filePath As String)
+
+        ImportAudioEncoderCommandLine(track, filePath.ReadAllText().Trim())
+    End Sub
+
     <Command("Adds a filter at the end of the script.")>
     Sub AddFilter(<DefaultValue(True)> active As Boolean,
                   name As String,
