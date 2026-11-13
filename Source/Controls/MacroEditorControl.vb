@@ -14,6 +14,7 @@ Public Class MacroEditorControl
     Public WithEvents rtbDefaults As RichTextBoxEx
     Public WithEvents llMacros As ButtonLabel
     Public WithEvents llHelp As ButtonLabel
+    Public WithEvents tbFind As SearchTextBox
     Public TipProvider As New TipProvider
 
     Private ReadOnly HelpPaths As New List(Of String)
@@ -36,13 +37,74 @@ Public Class MacroEditorControl
         TabControl.Pages.Add(tpDefaults)
         llMacros = New ButtonLabel With {.Text = "Macros"}
         llHelp = New ButtonLabel With {.Text = "Help", .Visible = False}
+        tbFind = New SearchTextBox With {.PlaceholderText = "Find (Ctrl+F)", .Width = FH(16)}
 
         gb = New GroupBox With {
             .Content = New TableLayout(
                 New TableRow(TabControl) With {.ScaleHeight = True},
-                New TableRow(HRow(llMacros, llHelp))) With {.Spacing = DefaultSpacing}}
+                New TableRow(SplitRow({llMacros, llHelp}, {tbFind}))) With {.Spacing = DefaultSpacing}}
 
         Content = gb
+
+        For Each rtb In {rtbEdit, rtbPreview, rtbDefaults}
+            AddHandler rtb.KeyDown, AddressOf TextBoxKeyDown
+        Next
+    End Sub
+
+    Function GetSelectedTextBox() As RichTextBoxEx
+        If TabControl.SelectedPage Is tpPreview Then Return rtbPreview
+        If TabControl.SelectedPage Is tpDefaults Then Return rtbDefaults
+        Return rtbEdit
+    End Function
+
+    'selects the next match in the text of the selected tab, at the end the search continues at the start
+    Function FindText(backward As Boolean, includeSelection As Boolean) As Boolean
+        Dim search = tbFind.Text
+        If search = "" Then Return False
+
+        Dim rtb = GetSelectedTextBox()
+        Dim text = rtb.Text
+        Dim start = Math.Min(rtb.SelectionStart, text.Length)
+        Dim index As Integer
+
+        If backward Then
+            Dim last = Math.Min(text.Length - 1, start + search.Length - 2)
+            index = If(last >= 0, text.LastIndexOf(search, last, StringComparison.OrdinalIgnoreCase), -1)
+            If index < 0 Then index = text.LastIndexOf(search, StringComparison.OrdinalIgnoreCase)
+        Else
+            index = text.IndexOf(search, Math.Min(If(includeSelection, start, start + 1), text.Length), StringComparison.OrdinalIgnoreCase)
+            If index < 0 Then index = text.IndexOf(search, StringComparison.OrdinalIgnoreCase)
+        End If
+
+        If index < 0 Then Return False
+
+        rtb.Select(index, search.Length)
+        rtb.ScrollTo(New Range(Of Integer)(index, index + search.Length - 1))
+        Return True
+    End Function
+
+    Sub TextBoxKeyDown(sender As Object, e As KeyEventArgs)
+        If e.KeyData = (Keys.Control Or Keys.F) Then
+            e.Handled = True
+            tbFind.Focus()
+        ElseIf e.KeyData = Keys.F3 OrElse e.KeyData = (Keys.Shift Or Keys.F3) Then
+            e.Handled = True
+            FindText(e.Shift, False)
+        End If
+    End Sub
+
+    Sub tbFind_KeyDown(sender As Object, e As KeyEventArgs) Handles tbFind.KeyDown
+        If e.KeyData = Keys.Enter OrElse e.KeyData = Keys.F3 Then
+            e.Handled = True
+            FindText(False, False)
+        ElseIf e.KeyData = (Keys.Shift Or Keys.Enter) OrElse e.KeyData = (Keys.Shift Or Keys.F3) Then
+            e.Handled = True
+            FindText(True, False)
+        End If
+    End Sub
+
+    Sub tbFind_TextChanged() Handles tbFind.TextChanged
+        FindText(False, True)
     End Sub
 
     Property Text As String
