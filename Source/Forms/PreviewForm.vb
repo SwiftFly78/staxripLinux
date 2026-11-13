@@ -122,6 +122,11 @@ Public Class PreviewForm
             New Size(CInt(info.Height * Calc.GetTargetDAR), CInt(info.Height)),
             New Size(CInt(info.Width), CInt(info.Height)))
 
+        'the window has the display aspect ratio of the target, which the renderer has to keep too
+        If VideoSize.Height > 0 Then
+            Renderer.DisplayAspectRatio = VideoSize.Width / VideoSize.Height
+        End If
+
         p.CutFrameCount = info.FrameCount
         p.CutFrameRate = FrameServer.FrameRate
 
