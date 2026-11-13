@@ -89,6 +89,7 @@ Public Class MediaInfo
                     at.Title = GetAudio(index, "Title").Trim
                     at.Forced = GetAudio(index, "Forced") = "Yes"
                     at.Default = GetAudio(index, "Default") = "Yes"
+                    at.Commentary = HasServiceKind(GetAudio(index, "ServiceKind"), "C")
                     at.SBR = GetAudio(index, "Format/String").ContainsEx("SBR")
 
                     Dim lm = GetAudio(index, "Language_More")
@@ -178,8 +179,9 @@ Public Class MediaInfo
 
                     subtitle.Default = GetText(index, "Default") = "Yes"
                     subtitle.Forced = GetText(index, "Forced") = "Yes"
-                    subtitle.Commentary = GetText(index, "Commentary") = "Yes"
-                    subtitle.Hearingimpaired = GetText(index, "HearingImpaired") = "Yes"
+                    Dim serviceKind = GetText(index, "ServiceKind")
+                    subtitle.Commentary = GetText(index, "Commentary") = "Yes" OrElse HasServiceKind(serviceKind, "C")
+                    subtitle.Hearingimpaired = GetText(index, "HearingImpaired") = "Yes" OrElse HasServiceKind(serviceKind, "HI")
                     subtitle.ID = GetText(index, "ID").ToInt
                     subtitle.Title = GetText(index, "Title").Trim
                     subtitle.CodecString = GetText(index, "Codec/String")
@@ -212,6 +214,11 @@ Public Class MediaInfo
             Return ret
         End Get
     End Property
+
+    'MediaInfo lists the flags of Matroska tracks as service kinds, like HI / C
+    Shared Function HasServiceKind(serviceKind As String, code As String) As Boolean
+        Return If(serviceKind, "").Split("/"c).Any(Function(i) i.Trim() = code)
+    End Function
 
     Shared Function GetAudioStreams(path As String) As List(Of AudioStream)
         Return GetMediaInfo(path).AudioStreams

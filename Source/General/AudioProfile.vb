@@ -73,6 +73,7 @@ Public MustInherit Class AudioProfile
                 Stream = Nothing
                 If p.TakeOverAudioDefault Then [Default] = value.Contains("[Default]")
                 If p.TakeOverAudioForced Then Forced = value.Contains("[Forced]")
+                If value.Contains("[Commentary]") Then Commentary = True
                 OnFileChanged()
             End If
         End Set

@@ -89,6 +89,10 @@ Public Class Audio
             ret += " [Forced]"
         End If
 
+        If stream.Commentary Then
+            ret += " [Commentary]"
+        End If
+
         If stream.SBR Then
             ret += " [SBR]"
         End If
