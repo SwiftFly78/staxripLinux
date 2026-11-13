@@ -49,7 +49,7 @@ Public Class VideoComparisonForm
         Menu.Add("Close selected tab", AddressOf RemoveTab, Keys.Delete, enabledFunc)
         Menu.Add("Select next tab", AddressOf NextTab, Keys.Space, enabledFunc)
         Menu.Add("Save PNGs at current position", AddressOf Save, Keys.S, enabledFunc, "Saves a PNG image for every file/tab at the current position in the directory of the source file.")
-        Menu.Add("Crop and Zoom...", AddressOf CropZoom, Keys.C)
+        Menu.Add("Crop...", AddressOf CropVideos, Keys.C, "Crops the selected video or all videos.")
         Menu.Add("Go To Frame...", AddressOf GoToFrame, Keys.F, enabledFunc)
         Menu.Add("Go To Time...", AddressOf GoToTime, Keys.T, enabledFunc)
         miSyncByTime = Menu.Add("Synchronize by Time", AddressOf ToggleSyncByTime, "Switching the tab keeps the time instead of the frame number, for videos with different frame rates.")
@@ -152,6 +152,7 @@ Public Class VideoComparisonForm
 
     Sub Add(sourcePath As String)
         Dim tab = New VideoTab With {.Form = Me}
+        tab.SetCrop({CropLeft, CropTop, CropRight, CropBottom})
         tab.VideoPanel.ContextMenu = Menu
 
         If tab.Open(sourcePath) Then
@@ -284,39 +285,55 @@ Public Class VideoComparisonForm
         Add()
     End Sub
 
-    Sub CropZoom()
-        Using form As New SimpleSettingsForm("Crop and Zoom")
-            form.ScaleClientSize(24, 20)
+    Sub CropVideos()
+        Dim tab = TryCast(TabControl.SelectedTab, VideoTab)
+        Dim cropAll = tab Is Nothing OrElse s.Storage.GetBool("video comparison crop all", True)
+        Dim values = If(tab Is Nothing, {CropLeft, CropTop, CropRight, CropBottom}, {tab.CropLeft, tab.CropTop, tab.CropRight, tab.CropBottom})
+
+        Using form As New SimpleSettingsForm("Crop")
+            form.ScaleClientSize(24, 14)
             Dim ui = form.SimpleUI
             Dim page = ui.CreateFlowPage("main page")
+            Dim labels = {"Crop Left:", "Crop Top:", "Crop Right:", "Crop Bottom:"}
 
-            Dim nb = ui.AddNum(page)
-            nb.Label.Text = "Crop Left:"
-            nb.NumEdit.Config = {0, 10000, 10}
-            nb.NumEdit.Value = CropLeft
-            nb.NumEdit.SaveAction = Sub(value) CropLeft = CInt(value)
+            For i = 0 To 3
+                Dim index = i
+                Dim nb = ui.AddNum(page)
+                nb.Label.Text = labels(i)
+                nb.NumEdit.Config = {0, 10000, 10}
+                nb.NumEdit.Value = values(i)
+                nb.NumEdit.SaveAction = Sub(value) values(index) = CInt(value)
+            Next
 
-            nb = ui.AddNum(page)
-            nb.Label.Text = "Crop Top:"
-            nb.NumEdit.Config = {0, 10000, 10}
-            nb.NumEdit.Value = CropTop
-            nb.NumEdit.SaveAction = Sub(value) CropTop = CInt(value)
-
-            nb = ui.AddNum(page)
-            nb.Label.Text = "Crop Right:"
-            nb.NumEdit.Config = {0, 10000, 10}
-            nb.NumEdit.Value = CropRight
-            nb.NumEdit.SaveAction = Sub(value) CropRight = CInt(value)
-
-            nb = ui.AddNum(page)
-            nb.Label.Text = "Crop Bottom:"
-            nb.NumEdit.Config = {0, 10000, 10}
-            nb.NumEdit.Value = CropBottom
-            nb.NumEdit.SaveAction = Sub(value) CropBottom = CInt(value)
+            Dim cb = ui.AddBool(page)
+            cb.Text = "Crop all videos"
+            cb.Checked = cropAll
+            cb.Enabled = tab IsNot Nothing
+            cb.SaveAction = Sub(value) cropAll = value
 
             If form.ShowDialog() = DialogResult.OK Then
                 ui.Save()
-                Reload()
+
+                If tab IsNot Nothing Then
+                    s.Storage.SetBool("video comparison crop all", cropAll)
+                End If
+
+                If cropAll Then
+                    CropLeft = values(0)
+                    CropTop = values(1)
+                    CropRight = values(2)
+                    CropBottom = values(3)
+
+                    For Each i In TabControl.TabPages.OfType(Of VideoTab)
+                        i.SetCrop(values)
+                    Next
+
+                    Reload()
+                Else
+                    tab.SetCrop(values)
+                    tab.Reload()
+                End If
+
                 TrackBarValueChanged()
             End If
         End Using
@@ -371,6 +388,18 @@ Public Class VideoComparisonForm
         Private Renderer As VideoRenderer
         Private FrameInfo As String()
         Private DisplayAspectRatioValue As Double
+
+        Property CropLeft As Integer
+        Property CropTop As Integer
+        Property CropRight As Integer
+        Property CropBottom As Integer
+
+        Sub SetCrop(values As Integer())
+            CropLeft = values(0)
+            CropTop = values(1)
+            CropRight = values(2)
+            CropBottom = values(3)
+        End Sub
 
         'display aspect ratio that replaces the one of the video, 0 uses the sample aspect ratio
         Property DisplayAspectRatio As Double
@@ -497,12 +526,12 @@ Public Class VideoComparisonForm
             End Select
 
             Dim cropCode = If(isVS,
-                "clip = core.std.Crop(clip, " & Form.CropLeft & ", " & Form.CropRight & ", " & Form.CropTop & ", " & Form.CropBottom & ")",
-                "Crop(" & Form.CropLeft & ", " & Form.CropTop & ", -" & Form.CropRight & ", -" & Form.CropBottom & ")")
+                "clip = core.std.Crop(clip, " & CropLeft & ", " & CropRight & ", " & CropTop & ", " & CropBottom & ")",
+                "Crop(" & CropLeft & ", " & CropTop & ", -" & CropRight & ", -" & CropBottom & ")")
 
             Select Case FileType
                 Case VideoComparisonFileType.Picture, VideoComparisonFileType.Video
-                    If (Form.CropLeft Or Form.CropTop Or Form.CropRight Or Form.CropBottom) <> 0 Then
+                    If (CropLeft Or CropTop Or CropRight Or CropBottom) <> 0 Then
                         script.Filters.Add(New VideoFilter("Crop", "Crop", cropCode))
                     End If
                 Case VideoComparisonFileType.AviSynthScript
@@ -618,7 +647,8 @@ Public Class VideoComparisonForm
                 Else
                     Dim dt = DateTime.Today.AddSeconds(GetTime(Pos))
                     Form.laInfo.Text = $"Position: {Pos,5}, Time: {dt:HH:mm:ss.fff}, Size: {Server.Info.Width} x {Server.Info.Height}, " +
-                        $"DAR: {Renderer.VideoAspectRatio.ToInvariantString("0.###")}"
+                        $"DAR: {Renderer.VideoAspectRatio.ToInvariantString("0.###")}" +
+                        If((CropLeft Or CropTop Or CropRight Or CropBottom) <> 0, $", Crop: {CropLeft},{CropTop},{CropRight},{CropBottom}", "")
                 End If
 
             Catch ex As Exception
