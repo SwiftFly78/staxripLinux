@@ -341,7 +341,7 @@ Public Class ApplicationSettings
             CustomMenuSize = MainForm.GetDefaultMenuSize
         End If
 
-        If Check(AviSynthProfiles, "AviSynth Filter Profiles", 156) Then
+        If Check(AviSynthProfiles, "AviSynth Filter Profiles", 157) Then
             If AviSynthProfiles Is Nothing Then
                 AviSynthProfiles = FilterCategory.GetAviSynthDefaults
             Else
@@ -363,7 +363,7 @@ Public Class ApplicationSettings
             End If
         End If
 
-        If Check(VapourSynthProfiles, "VapourSynth Filter Profiles", 38) Then
+        If Check(VapourSynthProfiles, "VapourSynth Filter Profiles", 39) Then
             If VapourSynthProfiles Is Nothing Then
                 VapourSynthProfiles = FilterCategory.GetVapourSynthDefaults
             Else

@@ -154,6 +154,14 @@ Borders | Letterbox =
 Cube = clip = core.timecube.Cube(clip, cube=r"$browse_file$")
 Histogram = clip = muvsfunc.DisplayHistogram(clip)
 
+Logo... =
+    logo = core.imwri.Read(r"$browse_file$", alpha=True)
+    mask = core.std.PropToClip(logo, "_Alpha") if "_Alpha" in logo.get_frame(0).props else None
+    logo = core.resize.Bicubic(logo, format=clip.format.replace(subsampling_w=0, subsampling_h=0), matrix_s="709")
+    mask = core.resize.Point(mask, format=mask.format.replace(bits_per_sample=clip.format.bits_per_sample)) if mask else None
+    clip = havsfunc.Overlay(clip, core.std.Loop(logo, clip.num_frames), $select:msg:Position of the logo;Top Right|x=clip.width - logo.width - 20, y=20;Top Left|x=20, y=20;Bottom Right|x=clip.width - logo.width - 20, y=clip.height - logo.height - 20;Bottom Left|x=20, y=clip.height - logo.height - 20$, mask=core.std.Loop(mask, clip.num_frames) if mask else None, opacity=0.8)
+
+
 SelectEvery =
     # SelectEvery(clip, cycle=, offsets=)
     # offsets is a single number, or a list of numbers, representing selected frames.

@@ -143,6 +143,11 @@ Borders | AddBorders = AddBorders(0, 0, 0, 0) #left, top, right, bottom
 Borders | FillBorders = FillBorders(left=$enter_text:Number of Left Pixels$, top=$enter_text:Number of Top Pixels$, right=$enter_text:Number of Right Pixels$, bottom=$enter_text:Number of Bottom Pixels$, mode=$select:msg:Select Mode;fillmargins (Default)|0;repeat|1;mirror|2;reflect|3;wrap|4;fade|5;fixborders|6$)
 Borders | Letterbox = Letterbox($enter_text:Number of Top Pixels$, $enter_text:Number of Bottom Pixels$, x1=$enter_text:Number of Left Pixels$, x2=$enter_text:Number of Right Pixels$)
 Histogram = Histogram("levels", bits=$select:msg:Select BitDepth;8;10;12$)
+
+Logo... =
+    logo = ImageSource("$browse_file$", end=0, pixel_type="RGB32")
+    Overlay(logo.Loop(FrameCount()), $select:msg:Position of the logo;Top Right|x=Width() - logo.Width() - 20, y=20;Top Left|x=20, y=20;Bottom Right|x=Width() - logo.Width() - 20, y=Height() - logo.Height() - 20;Bottom Left|x=20, y=Height() - logo.Height() - 20$, mask=logo.ShowAlpha().Loop(FrameCount()), opacity=0.8)
+
 MTMode | Prefetch = Prefetch($enter_text:Enter the Number of Threads to use$)
 MTMode | Set Max Memory = SetMemoryMax($enter_text:Enter the Maximum Memory Avisynth can use$)
 MTMode | Set Threads = threads=$enter_text:Enter the Number of Threads to use$
