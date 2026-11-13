@@ -1100,6 +1100,8 @@ Public Class AudioTrack
     Private _textEdit As AudioTextEdit
     <NonSerialized>
     Private _menuButton As ButtonEx
+    <NonSerialized>
+    Private _trackNameLabel As Label
 
     Public Property AudioProfile As AudioProfile
         Get
@@ -1154,6 +1156,16 @@ Public Class AudioTrack
         End Get
         Set
             _nameLabel = Value
+        End Set
+    End Property
+
+    'the name of the track in the target
+    Public Property TrackNameLabel As Label
+        Get
+            Return _trackNameLabel
+        End Get
+        Set
+            _trackNameLabel = Value
         End Set
     End Property
 

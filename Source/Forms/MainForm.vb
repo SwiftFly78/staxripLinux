@@ -1075,6 +1075,7 @@ Partial Public Class MainForm
                                        nameLabel.Text = g.ConvertPath(audioTrack.AudioProfile.Name)
                                        languageButton.TrackLanguage = audioTrack.AudioProfile.Language
                                        ShowAudioTip(audioTrack.AudioProfile)
+                                       UpdateAudioRowVisibility(proj)
                                    End Sub
                 }
 
@@ -1092,6 +1093,16 @@ Partial Public Class MainForm
                                                 UpdateAudioFileMenu(audioTrack, index, Sub() textEditDoubleClick(Nothing, Nothing))
                                             End If
                                         End Sub
+
+                'long names are ellipsized, the tooltip has the whole name
+                Dim trackNameLabel As New Label With {.VerticalAlignment = VerticalAlignment.Center}
+                trackNameLabel.AddStyleClass("dim-label")
+                Dim nativeNameLabel = TryCast(trackNameLabel.ControlObject, Global.Gtk.Label)
+
+                If nativeNameLabel IsNot Nothing Then
+                    nativeNameLabel.Ellipsize = Global.Pango.EllipsizeMode.End
+                    nativeNameLabel.MaxWidthChars = 18
+                End If
 
                 Dim menuButton As New ButtonEx With {.IconName = Styling.GetIconName("view-more-symbolic", "open-menu-symbolic"), .MinimumSize = Size.Empty}
                 menuButton.AddStyleClass("flat")
@@ -1111,11 +1122,11 @@ Partial Public Class MainForm
                 AddHandler textEdit.MouseDown, textEditMouseDown
 
                 If proj.AudioTracks.ElementAtOrDefault(index) Is Nothing Then
-                    audioTrack = New AudioTrack(index) With {.AudioProfile = audioProfile, .EditLabel = editLabel, .LanguageButton = languageButton, .NameLabel = nameLabel, .TextEdit = textEdit,
+                    audioTrack = New AudioTrack(index) With {.AudioProfile = audioProfile, .EditLabel = editLabel, .LanguageButton = languageButton, .NameLabel = nameLabel, .TextEdit = textEdit, .TrackNameLabel = trackNameLabel,
                         .RowLabel = New AudioRowLabel(index), .MenuButton = menuButton}
                     proj.AudioTracks.Add(audioTrack)
                 Else
-                    audioTrack = New AudioTrack(index) With {.AudioProfile = proj.AudioTracks(index).AudioProfile, .EditLabel = editLabel, .LanguageButton = languageButton, .NameLabel = nameLabel, .TextEdit = textEdit,
+                    audioTrack = New AudioTrack(index) With {.AudioProfile = proj.AudioTracks(index).AudioProfile, .EditLabel = editLabel, .LanguageButton = languageButton, .NameLabel = nameLabel, .TextEdit = textEdit, .TrackNameLabel = trackNameLabel,
                         .RowLabel = New AudioRowLabel(index), .MenuButton = menuButton}
                     proj.AudioTracks(index) = audioTrack
                 End If
@@ -1130,6 +1141,7 @@ Partial Public Class MainForm
                 rows.Add(New TableRow(
                     New TableCell(track.RowLabel),
                     New TableCell(track.TextEdit, True),
+                    New TableCell(track.TrackNameLabel),
                     New TableCell(track.MenuButton),
                     New TableCell(track.LanguageButton),
                     New TableCell(track.NameLabel),
@@ -1172,6 +1184,14 @@ Partial Public Class MainForm
             For Each control In New Control() {track.RowLabel, track.TextEdit, track.MenuButton, track.LanguageButton, track.NameLabel, track.EditLabel}
                 control.Visible = shown
             Next
+
+            If track.TrackNameLabel IsNot Nothing Then
+                Dim ap = track.AudioProfile
+                Dim name = If(ap.StreamName <> "", ap.ExpandMacros(ap.StreamName), "")
+                track.TrackNameLabel.Text = name
+                track.TrackNameLabel.ToolTip = If(name <> "", "Track name: " + name, Nothing)
+                track.TrackNameLabel.Visible = shown AndAlso name <> ""
+            End If
 
             anyShown = anyShown OrElse shown
             anyHidden = anyHidden OrElse Not shown
