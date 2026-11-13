@@ -447,7 +447,50 @@ Partial Public Class MainForm
         Next
     End Sub
 
+    'the project is closed when saving isn't canceled, so its temp folder can be deleted then
     Function IsSaveCanceled(Optional saveProject As Boolean = True) As Boolean
+        Dim canceled = IsSaveCanceledCore(saveProject)
+
+        If Not canceled Then
+            DeleteTempFolderOnClose()
+        End If
+
+        Return canceled
+    End Function
+
+    'the temp folder of the closed project, unless a job uses it or the source is in it
+    Sub DeleteTempFolderOnClose()
+        If s.DeleteTempFolderOnClose = DeleteTempFolderMode.Never OrElse p.SourceFile = "" Then Exit Sub
+
+        Dim dir = p.TempDir
+
+        If dir = "" OrElse Not Directory.Exists(dir) OrElse Not New DirectoryInfo(dir).Name.EndsWith("_temp") Then Exit Sub
+        If p.SourceFiles.Concat({p.FirstOriginalSourceFile}).Any(Function(i) i.StartsWith(dir.FixDir)) Then Exit Sub
+        If JobManager.GetJobs().Any(Function(i) i.Path.StartsWith(dir.FixDir)) Then Exit Sub
+
+        If s.DeleteTempFolderOnClose = DeleteTempFolderMode.Ask Then
+            Using td As New TaskDialog(Of String)
+                td.Title = "Delete the temp folder?"
+                td.Content = dir + BR2 + "It has the demuxed streams, the index files and the logs of the project" +
+                    If(g.ProjectPath <> "" AndAlso g.ProjectPath.StartsWith(dir.FixDir), " and the saved project", "") +
+                    ". Without them, opening the source again takes longer."
+                td.AddButton("Delete", "delete")
+                td.AddButton("Keep", "keep")
+                td.CheckBoxText = "Remember the choice, Settings > System changes it"
+                Dim answer = td.Show()
+
+                If td.CheckBoxChecked AndAlso answer <> "" Then
+                    s.DeleteTempFolderOnClose = If(answer = "delete", DeleteTempFolderMode.Always, DeleteTempFolderMode.Never)
+                End If
+
+                If answer <> "delete" Then Exit Sub
+            End Using
+        End If
+
+        FolderHelp.Delete(dir, RecycleOption.SendToRecycleBin)
+    End Sub
+
+    Function IsSaveCanceledCore(saveProject As Boolean) As Boolean
         SetLastModifiedTemplate()
 
         If s.ApplicationExitMode <> ApplicationExitMode.Regular Then

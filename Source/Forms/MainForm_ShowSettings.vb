@@ -220,6 +220,13 @@ Partial Public Class MainForm
             toolProcPrio.Expanded = True
             toolProcPrio.Field = NameOf(s.ToolProcessPriority)
 
+            Dim deleteTemp = ui.AddMenu(Of DeleteTempFolderMode)
+            deleteTemp.Text = "Delete temp folder on project close"
+            deleteTemp.Help = "When a project with a source is closed, its temp folder with the demuxed streams, " +
+                "the index files and the logs can be moved to the trash. Temp folders that jobs use are kept."
+            deleteTemp.Expanded = True
+            deleteTemp.Field = NameOf(s.DeleteTempFolderOnClose)
+
             Dim cmdline = ui.AddMenu(Of CommandLinePreview)
             cmdline.Text = "Command Line Preview"
             cmdline.Expanded = True

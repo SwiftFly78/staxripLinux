@@ -48,6 +48,8 @@ Public Class ApplicationSettings
 
     'user variables, one name = value per line, for %var:name% and $Variables in PowerShell
     Public Variables As String
+
+    Public DeleteTempFolderOnClose As DeleteTempFolderMode
     Public EventWhileProcessingCooldown As Integer = 60
     Public ExpandPreviewWindow As Boolean = True
     Public FilterSetupProfiles As List(Of TargetVideoScript)

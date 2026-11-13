@@ -2479,6 +2479,12 @@ Public Enum DemuxMode
     None
 End Enum
 
+Public Enum DeleteTempFolderMode
+    Never
+    Ask
+    Always
+End Enum
+
 Public Enum SubtitleTypeMode
     <DispName("Text and bitmap")> All
     <DispName("Text only")> Text
