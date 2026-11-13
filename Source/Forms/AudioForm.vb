@@ -1037,6 +1037,18 @@ Public Class AudioForm
                 bPhaseInv.SaveAction = Sub(value) TempProfile.Params.OpusencPhaseinversion = value
         End Select
 
+        If Not {AudioCodec.FLAC, AudioCodec.W64, AudioCodec.WAV}.Contains(TempProfile.Params.Codec) Then
+            Dim channelBitrates = ui.AddText(page)
+            channelBitrates.Label.Text = "Bitrates by Channels:"
+            channelBitrates.Help = "Bitrates for channel counts of the target, like 2=128 6=256 8=320. " +
+                "When the source has one of the channel counts, its bitrate replaces the bitrate of the profile."
+            channelBitrates.Edit.Text = If(TempProfile.Params.ChannelBitrates, "")
+            channelBitrates.Edit.SaveAction = Sub(value)
+                                                  TempProfile.Params.ChannelBitrates = value.Trim()
+                                                  numBitrate.Value = TempProfile.GetChannelBitrate()
+                                              End Sub
+        End If
+
         ui.UpdateTree()
         AddHandler SimpleUI.ValueChanged, AddressOf SimpleUIValueChanged
     End Sub

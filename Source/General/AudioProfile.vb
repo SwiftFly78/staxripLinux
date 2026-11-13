@@ -859,6 +859,22 @@ Public Class GUIAudioProfile
         Params.Migrate()
     End Sub
 
+    'the bitrate of the target channel count in Params.ChannelBitrates, else Bitrate,
+    'it applies when the channel count is known from the source or the channels setting
+    Function GetChannelBitrate() As Double
+        If If(Params.ChannelBitrates, "") <> "" AndAlso (Params.ChannelsMode <> ChannelsMode.Original OrElse Stream IsNot Nothing OrElse IO.File.Exists(File)) Then
+            For Each pair In Params.ChannelBitrates.Split({" "c, ","c, ";"c}, StringSplitOptions.RemoveEmptyEntries)
+                Dim parts = pair.Split({"="c, ":"c})
+
+                If parts.Length = 2 AndAlso parts(0).Trim().ToInt() = Channels AndAlso parts(1).Trim().ToDouble() > 0 Then
+                    Return parts(1).Trim().ToDouble()
+                End If
+            Next
+        End If
+
+        Return Bitrate
+    End Function
+
     Public Function GetBitrate() As Integer
         If Params.RateMode = AudioRateMode.VBR Then
             Select Case Params.Codec
@@ -880,7 +896,7 @@ Public Class GUIAudioProfile
                         Return Calc.GetYFromTwoPointForm(0, 64, 10, 500, Params.Quality)
                     End If
                 Case AudioCodec.Opus
-                    Return CInt(Bitrate)
+                    Return CInt(GetChannelBitrate())
             End Select
         End If
 
@@ -901,7 +917,7 @@ Public Class GUIAudioProfile
                 End If
         End Select
 
-        Return CInt(Bitrate)
+        Return CInt(GetChannelBitrate())
     End Function
 
     Public Overrides Sub Encode()
@@ -1098,6 +1114,8 @@ Public Class GUIAudioProfile
     End Function
 
     Function GetCommandLine(includePaths As Boolean, Optional useCrcSuffix As Boolean = False) As String
+        Bitrate = GetChannelBitrate()
+
         Select Case GetEncoder()
             Case GuiAudioEncoder.deezy
                 Return GetDeezyCommandLine(includePaths)
@@ -1819,6 +1837,9 @@ Public Class GUIAudioProfile
     <Serializable()>
     Public Class Parameters
         Property AnalyzeDuration As Integer = 5
+
+        'bitrates of channel counts, like 2=128 6=256
+        Property ChannelBitrates As String = ""
         Property ChannelsMode As ChannelsMode
         Property Codec As AudioCodec
         Property CustomSwitches As String = ""
