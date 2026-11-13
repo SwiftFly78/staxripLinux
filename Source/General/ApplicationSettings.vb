@@ -310,8 +310,9 @@ Public Class ApplicationSettings
         End If
 
         'commands that were added to the main menu later, customized menus are kept
-        If Check(CustomMenuMainForm, "Items of the main menu", 1) Then
+        If Check(CustomMenuMainForm, "Items of the main menu", 2) Then
             CustomMenuMainForm.AddMissingItem(MainForm.GetDefaultMainMenu(), NameOf(MainForm.EditCuts))
+            CustomMenuMainForm.AddMissingItem(MainForm.GetDefaultMainMenu(), NameOf(MainForm.ShowPowerShellConsole))
         End If
 
         'a dismissed version of StaxRip would hide the updates of StaxRipLinux

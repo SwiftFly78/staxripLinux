@@ -3386,6 +3386,12 @@ Partial Public Class MainForm
         End If
     End Sub
 
+    <Command("Window to run PowerShell commands with the objects of StaxRip, like $p for the project.")>
+    Sub ShowPowerShellConsole()
+        Dim form As New PowerShellConsoleForm
+        form.Show()
+    End Sub
+
     <Command("Window to preview or cut the video.")>
     Sub ShowPreview()
         ShowPreview(False)
@@ -3805,6 +3811,7 @@ Partial Public Class MainForm
         ret.Add("Tools|Advanced|-")
         ret.Add("Tools|Advanced|Terminal", NameOf(g.DefaultCommands.OpenTerminal), Keys.Control Or Keys.T, Symbol.fa_terminal, {"", "%working_dir%"})
         ret.Add("Tools|Advanced|PowerShell Terminal", NameOf(g.DefaultCommands.OpenTerminal), Symbol.fa_terminal, {"pwsh -NoLogo", "%working_dir%"})
+        ret.Add("Tools|Advanced|PowerShell Console", NameOf(ShowPowerShellConsole), Symbol.fa_terminal)
 
         ret.Add("Tools|Advanced|-")
         ret.Add("Tools|Advanced|Generate Wiki Content", NameOf(g.DefaultCommands.GenerateWikiContent))
