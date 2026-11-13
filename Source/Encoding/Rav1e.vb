@@ -83,6 +83,31 @@ Public Class Rav1e
         End Using
     End Sub
 
+    Overrides Sub RunCompCheck()
+        If Not g.VerifyRequirements OrElse Not g.IsValidSource Then
+            Exit Sub
+        End If
+
+        Dim newParams As New Rav1eParams
+        newParams.Init(ObjectHelp.GetCopy(ParamsStore))
+        newParams.Mode.Value = 0
+        newParams.Quantizer.Value = newParams.CompCheck.Value
+        newParams.Limit.Value = 0
+
+        Dim script = GetCompCheckScript()
+
+        Try
+            Encode("Compressibility Check", newParams.GetArgs(1, script, CompCheckOutputPath, True, True), s.EncoderProcessPriority)
+        Catch ex As AbortException
+            Exit Sub
+        Catch ex As Exception
+            g.ShowException(ex)
+            Exit Sub
+        End Try
+
+        SetCompressibility(script)
+    End Sub
+
     Overloads Function GetArgs(pass As Integer, script As VideoScript, Optional includePaths As Boolean = True) As String
         Return Params.GetArgs(pass, script, OutputPath.DirAndBase + OutputExtFull, includePaths, True)
     End Function
@@ -111,6 +136,7 @@ Public Class Rav1e
             End If
 
             If form.ShowDialog() = DialogResult.OK Then
+                AutoCompCheckValue = CInt(newParams.CompCheckAimedQuality.Value)
                 Params = newParams
                 ParamsStore = store
                 OnStateChange()
@@ -121,7 +147,7 @@ Public Class Rav1e
 
     Overrides Property QualityMode() As Boolean
         Get
-            Return Params.Mode.OptionText.EqualsAny("Quality")
+            Return Params.Mode.Value = 0
         End Get
         Set(Value As Boolean)
         End Set
@@ -280,6 +306,20 @@ Public Class Rav1eParams
         .Path = "Basic",
         .Config = {0, 20}}
 
+    Property CompCheck As New NumParam With {
+        .Name = "CompCheckQuant",
+        .Text = "Comp. Check",
+        .Value = 72,
+        .Help = "Quantizer used as 100% for the compressibility check.",
+        .Config = {0, 255}}
+
+    Property CompCheckAimedQuality As New NumParam With {
+        .Name = "CompCheckAimedQuality",
+        .Text = "Aimed Quality",
+        .Value = 50,
+        .Help = "Percent value to adjusts the target file size or image size after the compressibility check accordingly.",
+        .Config = {1, 100}}
+
     Property Custom As New StringParam With {
         .Text = "Custom",
         .Path = "Misc",
@@ -302,6 +342,9 @@ Public Class Rav1eParams
                 )
                 Add("Custom",
                     Custom
+                )
+                Add("Other",
+                    CompCheck, CompCheckAimedQuality
                 )
             End If
 

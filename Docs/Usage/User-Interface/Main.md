@@ -316,7 +316,8 @@ The card comes in 2 outfits:
 Encoders like x264, x265, SVT-AV1, vvenc and NVEncC show their most important settings, like the quality and the preset.
 A click on a setting opens a menu with its values. `Override target name` enables the
 [Override Target File Name](Encoder-Options.md) feature, a right-click on it opens this option in the
-[Encoder Options](Encoder-Options.md). Encoders that encode with a bitrate offer the compressibility check.
+[Encoder Options](Encoder-Options.md). Software encoders that encode with a bitrate offer the
+[compressibility check](Encoder-Options.md#compressibility-check).
 
 Other encoders show their command line, `Copy/Mux` copies the video stream without encoding it.
 

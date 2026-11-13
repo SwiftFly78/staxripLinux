@@ -53,11 +53,11 @@ the SvtAv1EncApp forks every chunk gets the Dolby Vision and HDR10+ metadata of 
 
 ### Compressibility Check
 
-Encoders with bitrate based rate control can run a compressibility check: StaxRipLinux encodes parts of the video
-with the quality value **Comp. Check** and compares the result with **Aimed Quality** to estimate the bitrate the
-video needs. The result adjusts the target size or the image size, see *After comp. check adjust* in the
-[Project Options](Project-Options.md#misc). `Project > Options > Misc` can run it automatically after opening a
-source.
+x264, x265, aomenc, rav1e, SvtAv1EncApp and its forks and vvencFFapp can run a compressibility check when they encode
+with a bitrate: StaxRipLinux encodes parts of the video with the quality value **Comp. Check** and compares the result
+with **Aimed Quality** to estimate the bitrate the video needs. The result adjusts the target size or the image size,
+see *After comp. check adjust* in the [Project Options](Project-Options.md#misc). `Project > Options > Misc` can run
+it automatically after opening a source.
 
 ### Override target name
 

@@ -147,6 +147,33 @@ Public Class AOMEnc
         Return ret
     End Function
 
+    Overrides Sub RunCompCheck()
+        If Not g.VerifyRequirements OrElse Not g.IsValidSource Then
+            Exit Sub
+        End If
+
+        Dim newParams As New AV1Params
+        newParams.Init(ObjectHelp.GetCopy(ParamsStore))
+        newParams.RateMode.Value = 3
+        newParams.CqLevel.Value = newParams.CompCheck.Value
+        newParams.Passes.Value = 0
+        newParams.Skip.Value = 0
+        newParams.Limit.Value = 0
+
+        Dim script = GetCompCheckScript()
+
+        Try
+            Encode("Compressibility Check", newParams.GetArgs(1, 0, 0, Nothing, script, CompCheckOutputPath, True, True), s.EncoderProcessPriority)
+        Catch ex As AbortException
+            Exit Sub
+        Catch ex As Exception
+            g.ShowException(ex)
+            Exit Sub
+        End Try
+
+        SetCompressibility(script)
+    End Sub
+
     Overloads Function GetArgs(
             pass As Integer,
             startFrame As Integer,
@@ -182,6 +209,7 @@ Public Class AOMEnc
             End If
 
             If form.ShowDialog() = DialogResult.OK Then
+                AutoCompCheckValue = CInt(newParams.CompCheckAimedQuality.Value)
                 Params = newParams
                 ParamsStore = store
                 OnStateChange()
@@ -248,6 +276,20 @@ Public Class AV1Params
         .Text = "Chunks",
         .Init = 1,
         .Config = {1, 128}}
+
+    Property CompCheck As New NumParam With {
+        .Name = "CompCheckQuant",
+        .Text = "Comp. Check",
+        .Value = 18,
+        .Help = "CQ level used as 100% for the compressibility check.",
+        .Config = {0, 63}}
+
+    Property CompCheckAimedQuality As New NumParam With {
+        .Name = "CompCheckAimedQuality",
+        .Text = "Aimed Quality",
+        .Value = 50,
+        .Help = "Percent value to adjusts the target file size or image size after the compressibility check accordingly.",
+        .Config = {1, 100}}
 
     Property DeltaqMode As New OptionParam With {
         .Switch = "--deltaq-mode",
@@ -578,7 +620,9 @@ Public Class AV1Params
                 )
 
                 Add("Other",
-                    OverrideTargetFileName, TargetFileName, TargetFileNamePreview
+                    OverrideTargetFileName, TargetFileName, TargetFileNamePreview,
+                    New LineParam(),
+                    CompCheck, CompCheckAimedQuality
                 )
             End If
 

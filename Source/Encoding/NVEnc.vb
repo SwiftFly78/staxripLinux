@@ -372,6 +372,13 @@ Public Class NVEnc
         Return New NVEncControl(Me)
     End Function
 
+    'the hardware encoders have no compressibility check
+    Overrides ReadOnly Property IsCompCheckEnabled() As Boolean
+        Get
+            Return False
+        End Get
+    End Property
+
     Overrides Property QualityMode() As Boolean
         Get
             Return Params.Mode.Value = NVEncRateMode.QVBR OrElse Params.Mode.Value = NVEncRateMode.CQP

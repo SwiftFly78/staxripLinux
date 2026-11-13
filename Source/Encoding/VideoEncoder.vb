@@ -179,6 +179,49 @@ Public MustInherit Class VideoEncoder
         End Get
     End Property
 
+    ReadOnly Property CompCheckOutputPath As String
+        Get
+            Return Path.Combine(p.TempDir, p.TargetFile.Base + "_CompCheck." + OutputExt)
+        End Get
+    End Property
+
+    'encodes the percentage of the video set in the options, in blocks of the set length
+    Protected Function GetCompCheckScript() As VideoScript
+        Dim script As New VideoScript
+        script.Engine = p.Script.Engine
+        script.Filters = p.Script.GetFiltersCopy
+        Dim range = p.Script.GetFramerate() * p.CompCheckTestblockSeconds
+        Dim every = (100 / p.CompCheckPercentage) * range
+        Dim code As String
+
+        If script.Engine = ScriptEngine.AviSynth Then
+            code = $"SelectRangeEvery({CInt(every)},{CInt(range)})"
+        Else
+            code = "fpsnum = clip.fps_num" + BR
+            code += "fpsden = clip.fps_den" + BR
+            code += $"clip = core.std.SelectEvery(clip = clip, cycle = {CInt(every)}, offsets = range({CInt(range)}))" + BR
+            code += "clip = core.std.AssumeFPS(clip = clip, fpsnum = fpsnum, fpsden = fpsden)"
+        End If
+
+        script.Filters.Add(New VideoFilter("aaa", "aaa", code))
+        script.Path = Path.Combine(p.TempDir, p.TargetFile.Base + "_CompCheck." + script.FileType)
+        script.Synchronize()
+        Log.WriteLine(BR + script.GetFullScript + BR)
+        Return script
+    End Function
+
+    Protected Sub SetCompressibility(script As VideoScript)
+        Dim bits = New FileInfo(CompCheckOutputPath).Length * 8
+        p.Compressibility = (bits / script.GetFrameCount) / (p.TargetWidth * p.TargetHeight)
+
+        OnAfterCompCheck()
+        g.MainForm.Assistant()
+
+        Log.WriteLine("Quality: " & CInt(Calc.GetPercent).ToString() + " %")
+        Log.WriteLine("Compressibility: " + p.Compressibility.ToString("f3"))
+        Log.Save()
+    End Sub
+
     Protected Sub OnAfterCompCheck()
         If p.CompCheckAction = CompCheckAction.AdjustFileSize Then
             Dim oldSize = g.MainForm.tbTargetSize.Text

@@ -363,6 +363,13 @@ Public Class VCEEnc
         ImportCommandLine(cl)
     End Sub
 
+    'the hardware encoders have no compressibility check
+    Overrides ReadOnly Property IsCompCheckEnabled() As Boolean
+        Get
+            Return False
+        End Get
+    End Property
+
     Overrides Property QualityMode() As Boolean
         Get
             Return Params.Mode.Value = 0
