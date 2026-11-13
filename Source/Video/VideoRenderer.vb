@@ -27,6 +27,13 @@ Public Class VideoRenderer
     'the text of the info overlay, the info of the script if not set
     Property InfoTextFunc As Func(Of String)
 
+    'the video of this renderer is drawn right of the split position, which is 0 to 1 of the width
+    Property SplitRenderer As VideoRenderer
+    Property SplitPosition As Single = 0.5
+
+    'the name shown in the split view when there is no info overlay
+    Property Title As String
+
     Private Server As IFrameServer
     Private Control As Drawable
     Private PositionValue As Integer
@@ -160,24 +167,56 @@ Public Class VideoRenderer
 
         gx.DrawImage(bmp, sourceRect, destRect)
 
+        Dim split = SplitRenderer
+        Dim splitBitmap = split?.GetBitmap()
+
+        'the other video is scaled to the same rectangle, so the split line shows the same image part of both
+        If splitBitmap IsNot Nothing AndAlso split.Server.Info.Width > 0 AndAlso split.Server.Info.Height > 0 Then
+            Dim position = Math.Max(0, Math.Min(1, SplitPosition))
+            Dim splitX = target.X + target.Width * position
+            Dim w = split.Server.Info.Width
+            Dim h = split.Server.Info.Height
+
+            gx.DrawImage(splitBitmap, New RectangleF(w * position, 0, Math.Max(1, w * (1 - position)), h),
+                New RectangleF(splitX, target.Y, target.Width * (1 - position), target.Height))
+
+            gx.DrawLine(New Pen(Colors.White, 2), splitX, target.Y, splitX, target.Bottom)
+        End If
+
+        Dim font = FontManager.GetCodeFont(-1)
+
         If ShowInfo Then
             DrawInfoText(gx)
+
+            If splitBitmap IsNot Nothing Then
+                DrawInfoText(gx, split.GetInfoText(), font, Control.Width)
+            End If
+        ElseIf splitBitmap IsNot Nothing Then
+            DrawInfoText(gx, Title, font)
+            DrawInfoText(gx, split.Title, font, Control.Width)
         End If
     End Sub
 
+    Function GetInfoText() As String
+        Return If(InfoTextFunc IsNot Nothing, InfoTextFunc.Invoke(), Info.GetInfoText(Position))
+    End Function
+
     Sub DrawInfoText(gx As Graphics)
-        Dim text = If(InfoTextFunc IsNot Nothing, InfoTextFunc.Invoke(), Info.GetInfoText(Position))
-        DrawInfoText(gx, text, FontManager.GetCodeFont(-1))
+        DrawInfoText(gx, GetInfoText(), FontManager.GetCodeFont(-1))
     End Sub
 
-    'draws the text in a dark box at the top left
-    Shared Sub DrawInfoText(gx As Graphics, text As String, font As Font)
+    'draws the text in a dark box at the top left, or at the top right of the given width
+    Shared Sub DrawInfoText(gx As Graphics, text As String, font As Font, Optional rightEdge As Single = 0)
+        If text = "" Then Exit Sub
+
         Dim size = gx.MeasureString(font, text)
         Dim padding = font.LineHeight / 3
-        Dim left = font.LineHeight / 2
+        Dim margin = font.LineHeight / 2
+        Dim boxWidth = size.Width + padding * 2
+        Dim left = If(rightEdge > 0, rightEdge - margin - boxWidth, margin)
 
-        gx.FillRectangle(Color.FromArgb(0, 0, 0, 180), left, left, size.Width + padding * 2, size.Height + padding * 2)
-        gx.DrawText(font, Colors.White, left + padding, left + padding, text)
+        gx.FillRectangle(Color.FromArgb(0, 0, 0, 180), left, margin, boxWidth, size.Height + padding * 2)
+        gx.DrawText(font, Colors.White, left + padding, margin + padding, text)
     End Sub
 
     Sub Dispose() Implements IDisposable.Dispose

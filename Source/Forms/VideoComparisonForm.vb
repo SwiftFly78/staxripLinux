@@ -26,6 +26,10 @@ Public Class VideoComparisonForm
     Property ShowFrameInfo As Boolean = s.Storage.GetBool("video comparison frame info")
     Private miFrameInfo As MenuItemEx
 
+    'the selected video left of a line that can be dragged and the next video right of it
+    Property SplitView As Boolean
+    Private miSplitView As MenuItemEx
+
     Shadows Menu As ContextMenuStripEx
 
     Sub New()
@@ -55,6 +59,7 @@ Public Class VideoComparisonForm
         Menu.Add("Save PNGs at current position", AddressOf Save, Keys.S, enabledFunc, "Saves a PNG image for every file/tab at the current position in the directory of the source file.")
         miFrameInfo = Menu.Add("Frame Info", AddressOf ToggleFrameInfo, Keys.I, "Shows the name, frame number, time and picture type on the videos and on saved PNGs.")
         miFrameInfo.Marked = ShowFrameInfo
+        miSplitView = Menu.Add("Split View", AddressOf ToggleSplitView, Keys.V, "Shows the selected video left and the next video right of a line, which can be dragged with the mouse.")
         Menu.Add("Crop...", AddressOf CropVideos, Keys.C, "Crops the selected video or all videos.")
         Menu.Add("Go To Frame...", AddressOf GoToFrame, Keys.F, enabledFunc)
         Menu.Add("Go To Time...", AddressOf GoToTime, Keys.T, enabledFunc)
@@ -83,6 +88,7 @@ Public Class VideoComparisonForm
             Dim previousTab = LastTab
             Dim frame = Pos
             LastTab = tab
+            UpdateSplitView()
 
             'the time of the previous tab, before the new maximum can change the position
             If SyncByTime AndAlso previousTab IsNot Nothing AndAlso previousTab IsNot tab AndAlso previousTab.Server IsNot Nothing Then
@@ -111,6 +117,40 @@ Public Class VideoComparisonForm
             TrackBar.Maximum = Math.Max(1, tabs.Max(Function(i) i.Server.Info.FrameCount - 1))
         End If
     End Sub
+
+    Sub ToggleSplitView()
+        SplitView = Not SplitView
+        miSplitView.Marked = SplitView
+        UpdateSplitView()
+    End Sub
+
+    'the next video is shown in the split view of the selected video
+    Sub UpdateSplitView()
+        Dim tabs = TabControl.TabPages.OfType(Of VideoTab).ToList()
+        Dim selected = TryCast(TabControl.SelectedTab, VideoTab)
+
+        For Each i In tabs
+            i.SetSplitTab(Nothing)
+        Next
+
+        If SplitView AndAlso selected IsNot Nothing AndAlso tabs.Count > 1 Then
+            selected.SetSplitTab(tabs((tabs.IndexOf(selected) + 1) Mod tabs.Count))
+        End If
+
+        selected?.TrackBarValueChanged()
+    End Sub
+
+    'the frame of a video at the position of the selected video
+    Function GetTabPosition(tab As VideoTab) As Integer
+        Dim selected = TryCast(TabControl.SelectedTab, VideoTab)
+        Dim ret = Pos
+
+        If SyncByTime AndAlso selected IsNot Nothing AndAlso tab IsNot selected AndAlso selected.Server IsNot Nothing Then
+            ret = tab.GetFrame(selected.GetTime(Pos))
+        End If
+
+        Return Math.Max(0, Math.Min(ret, If(tab.Server Is Nothing, 0, tab.Server.Info.FrameCount - 1)))
+    End Function
 
     Sub ToggleFrameInfo()
         ShowFrameInfo = Not ShowFrameInfo
@@ -200,29 +240,31 @@ Public Class VideoComparisonForm
             TabControl.TabPages.Remove(tab)
             tab.CloseServer()
             UpdateTrackBarMaximum()
+            UpdateSplitView()
         End If
     End Sub
 
     Sub Save()
         For Each tab As VideoTab In TabControl.TabPages
             Dim outputPath = ""
+            Dim frame = GetTabPosition(tab)
 
             Select Case s.SaveImageVideoComparisonFrameNumberPosition
                 Case ImageFrameNumberPosition.Prefix
-                    outputPath = Path.Combine(tab.SourceFilePath.Dir, $"{Pos:00000}_{tab.SourceFilePath.Base}.png")
+                    outputPath = Path.Combine(tab.SourceFilePath.Dir, $"{frame:00000}_{tab.SourceFilePath.Base}.png")
                 Case ImageFrameNumberPosition.Suffix
-                    outputPath = Path.Combine(tab.SourceFilePath.Dir, $"{tab.SourceFilePath.Base}_{Pos:00000}.png")
+                    outputPath = Path.Combine(tab.SourceFilePath.Dir, $"{tab.SourceFilePath.Base}_{frame:00000}.png")
                 Case Else
                     Throw New NotSupportedException("VideoComparisonForm.Save()")
             End Select
 
-            Using bmp = tab.GetBitmap
+            Using bmp = tab.GetBitmap(frame)
                 If bmp Is Nothing Then Continue For
 
                 If ShowFrameInfo Then
                     Using gx As New Graphics(bmp)
                         Dim font = FontManager.GetCodeFont(Math.Max(8, bmp.Height / 60.0F) - FontManager.SystemFontSize)
-                        VideoRenderer.DrawInfoText(gx, tab.GetFrameInfoText(), font)
+                        VideoRenderer.DrawInfoText(gx, tab.GetFrameInfoText(frame), font)
                     End Using
                 End If
 
@@ -280,6 +322,8 @@ Public Class VideoComparisonForm
         For Each tab As VideoTab In TabControl.TabPages
             tab.Reload()
         Next
+
+        UpdateSplitView()
     End Sub
 
     Sub OnVideoMouseWheel(sender As Object, e As MouseEventArgs)
@@ -357,6 +401,7 @@ Public Class VideoComparisonForm
                 Else
                     tab.SetCrop(values)
                     tab.Reload()
+                    UpdateSplitView()
                 End If
 
                 TrackBarValueChanged()
@@ -410,7 +455,7 @@ Public Class VideoComparisonForm
         Property SourceFilePath As String
         Property VideoPanel As Drawable
 
-        Private Renderer As VideoRenderer
+        Property Renderer As VideoRenderer
         Private FrameInfo As String()
         Private DisplayAspectRatioValue As Double
 
@@ -437,9 +482,36 @@ Public Class VideoComparisonForm
             End Set
         End Property
 
+        Private SplitTab As VideoTab
+
         Sub New()
             VideoPanel = New Drawable
             Content = VideoPanel
+
+            AddHandler VideoPanel.MouseDown, AddressOf VideoPanelMouse
+            AddHandler VideoPanel.MouseMove, AddressOf VideoPanelMouse
+        End Sub
+
+        Sub SetSplitTab(tab As VideoTab)
+            SplitTab = tab
+
+            If Renderer IsNot Nothing Then
+                Renderer.SplitRenderer = tab?.Renderer
+            End If
+        End Sub
+
+        'dragging moves the line of the split view
+        Sub VideoPanelMouse(sender As Object, e As MouseEventArgs)
+            If SplitTab Is Nothing OrElse Renderer Is Nothing OrElse e.Buttons <> MouseButtons.Primary Then Exit Sub
+
+            Dim target = Renderer.GetTargetRect()
+
+            If target.Width > 0 Then
+                Renderer.SplitPosition = CSng(Math.Max(0, Math.Min(1, (e.Location.X - target.X) / target.Width)))
+                Renderer.Draw()
+            End If
+
+            e.Handled = True
         End Sub
 
         Sub CloseServer()
@@ -487,11 +559,11 @@ Public Class VideoComparisonForm
         End Sub
 
         'the properties are the ones of the last frame of the server, the frame at the position
-        Function GetFrameInfoText() As String
+        Function GetFrameInfoText(frame As Integer) As String
             Dim pictType As String = Nothing
             Server?.FrameProperties?.TryGetValue("_PictType", pictType)
-            Dim time = Date.Today.AddSeconds(GetTime(Pos)).ToString("HH:mm:ss.fff")
-            Return SourceFilePath.FileName + BR + $"Frame {Pos}, {time}" + If(pictType <> "", $", {pictType} frame", "")
+            Dim time = Date.Today.AddSeconds(GetTime(frame)).ToString("HH:mm:ss.fff")
+            Return SourceFilePath.FileName + BR + $"Frame {frame}, {time}" + If(pictType <> "", $", {pictType} frame", "")
         End Function
 
         Function GetTime(frame As Integer) As Double
@@ -588,7 +660,9 @@ Public Class VideoComparisonForm
                 .UseSampleAspectRatio = True,
                 .DisplayAspectRatio = DisplayAspectRatio,
                 .ShowInfo = Form.ShowFrameInfo,
-                .InfoTextFunc = AddressOf GetFrameInfoText}
+                .Title = SourceFilePath.FileName}
+
+            Renderer.InfoTextFunc = Function() GetFrameInfoText(Renderer.Position)
             AddHandler VideoPanel.MouseWheel, AddressOf Form.OnVideoMouseWheel
             Dim maximum = Server.Info.FrameCount - 1
             Form.TrackBar.Maximum = If(Form.TrackBar.Maximum < maximum, maximum, Form.TrackBar.Maximum)
@@ -668,11 +742,16 @@ Public Class VideoComparisonForm
         Sub Draw()
             If Renderer Is Nothing Then Exit Sub
             Renderer.Position = Pos
+
+            If SplitTab?.Renderer IsNot Nothing Then
+                SplitTab.Renderer.Position = Form.GetTabPosition(SplitTab)
+            End If
+
             Renderer.Draw()
         End Sub
 
-        Function GetBitmap() As Bitmap
-            Return FrameHelp.CreateBitmap(Server, Pos)
+        Function GetBitmap(frame As Integer) As Bitmap
+            Return FrameHelp.CreateBitmap(Server, frame)
         End Function
 
         Sub TrackBarValueChanged()
