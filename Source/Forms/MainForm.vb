@@ -3429,6 +3429,74 @@ Partial Public Class MainForm
         End If
     End Sub
 
+    <Command("Analyzes the source with the idet filter of ffmpeg, which tells if it's progressive, interlaced or telecined.")>
+    Sub AnalyzeInterlacing()
+        If p.SourceFile = "" Then
+            ShowOpenSourceDialog()
+            Exit Sub
+        End If
+
+        If Not Package.ffmpeg.VerifyOK(True) Then Exit Sub
+
+        Dim source = p.FirstOriginalSourceFile
+        Dim seconds = p.SourceSeconds
+
+        'long sources are analyzed at three positions, idet needs consecutive frames
+        Dim starts = If(seconds > 120, {seconds * 0.25, seconds * 0.5, seconds * 0.75}, {0.0})
+        Dim frames = If(seconds > 120, 400, 1200)
+        Dim counts As New Dictionary(Of String, Integer)
+
+        For Each start In starts
+            Using proc As New Proc
+                proc.Header = "Analyze Interlacing"
+                proc.SkipStrings = {"frame=", "size="}
+                proc.Encoding = Encoding.UTF8
+                proc.Package = Package.ffmpeg
+                proc.Arguments = $"-hide_banner -ss {start.ToInvariantString("0.###")} -i {source.Escape} -map 0:v:0 -vf idet -frames:v {frames} -an -sn -f null -"
+                proc.Start()
+
+                For Each match As Match In Regex.Matches(proc.Log.ToString(), "(Multi frame detection|Repeated Fields): (.+)")
+                    For Each pair As Match In Regex.Matches(match.Groups(2).Value, "(\w+): *(\d+)")
+                        Dim key = match.Groups(1).Value.Left(" ") + pair.Groups(1).Value
+                        counts(key) = If(counts.ContainsKey(key), counts(key), 0) + pair.Groups(2).Value.ToInt()
+                    Next
+                Next
+            End Using
+        Next
+
+        Dim count = Function(key As String) If(counts.ContainsKey(key), counts(key), 0)
+        Dim tff = count("MultiTFF"), bff = count("MultiBFF"), progressive = count("MultiProgressive"), undetermined = count("MultiUndetermined")
+        Dim repeated = count("RepeatedTop") + count("RepeatedBottom")
+        Dim total = tff + bff + progressive + undetermined
+
+        If total = 0 Then
+            MsgError("Analyzing the interlacing failed.", "ffmpeg reported no frames, the log has its output.")
+            Exit Sub
+        End If
+
+        Dim percent = Function(value As Integer) CInt(value / total * 100)
+        Dim title, advice As String
+
+        'telecined frames repeat a field in two of five frames, combed frames look interlaced
+        If repeated / total > 0.15 Then
+            title = "The source is telecined"
+            advice = "Inverse telecine restores the progressive frames, for example with the Field filter IVTC (TIVTC) or VIVTC."
+        ElseIf (tff + bff) / total > 0.4 Then
+            Dim order = If(tff >= bff, "top field first (TFF)", "bottom field first (BFF)")
+            title = "The source is interlaced, " + order
+            advice = "A deinterlacer of the Field filters like QTGMC or Bwdif with the field order " + If(tff >= bff, "TFF", "BFF") + " makes it progressive."
+        ElseIf progressive / total > 0.8 Then
+            title = "The source is progressive"
+            advice = "No deinterlacing is needed."
+        Else
+            title = "The source is partly interlaced"
+            advice = "It can be a hybrid of progressive and interlaced parts, the preview shows which parts are combed."
+        End If
+
+        MsgInfo(title, $"{advice}{BR2}Frames: {total}, progressive {percent(progressive)}%, TFF {percent(tff)}%, " +
+                $"BFF {percent(bff)}%, undetermined {percent(undetermined)}%, repeated fields {percent(repeated)}%.")
+    End Sub
+
     <Command("Window to run PowerShell commands with the objects of StaxRip, like $p for the project.")>
     Sub ShowPowerShellConsole()
         Dim form As New PowerShellConsoleForm
@@ -3823,6 +3891,7 @@ Partial Public Class MainForm
         ret.Add("Project|Cuts...", NameOf(EditCuts))
         ret.Add("Project|Script Info...", NameOf(ShowScriptInfo), Keys.F2, Symbol.Info)
         ret.Add("Project|Advanced Script Info...", NameOf(ShowAdvancedScriptInfo), Keys.Control Or Keys.F2, Symbol.AddTo)
+        ret.Add("Project|Analyze Interlacing...", NameOf(AnalyzeInterlacing))
         ret.Add("Project|-")
         ret.Add("Project|Log File", NameOf(g.DefaultCommands.ShowLogFile), Keys.F8, Symbol.Page)
         ret.Add("Project|-")
