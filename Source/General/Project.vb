@@ -80,6 +80,7 @@ Public Class Project
     Public DemuxAudio As DemuxMode = DemuxMode.All
     Public DemuxChapters As Boolean = True
     Public ChaptersAtCuts As Boolean
+    Public SaveMediaInfoFiles As Boolean
     Public DemuxTags As Boolean = False
     Public DemuxVideo As Boolean = False
     Public ExtractHdrmetadata As HdrmetadataMode = HdrmetadataMode.All

@@ -263,6 +263,17 @@ Public Class GlobalClass
         Return If(GetVariables().TryGetValue(name, ret), ret, "")
     End Function
 
+    'the complete MediaInfo of the source and of the target, next to the target
+    Sub SaveMediaInfoFiles()
+        Try
+            Dim base = p.TargetFile.DirAndBase
+            File.WriteAllText(base + ".source.mediainfo.txt", MediaInfo.GetCompleteSummary(p.FirstOriginalSourceFile))
+            File.WriteAllText(base + ".mediainfo.txt", MediaInfo.GetCompleteSummary(p.TargetFile))
+        Catch ex As Exception
+            Log.WriteLine("Saving the MediaInfo files failed: " + ex.Message)
+        End Try
+    End Sub
+
     'the time of the events file that was loaded or saved, other instances can change it
     Private EventsFileTime As Date
 
@@ -810,6 +821,10 @@ Public Class GlobalClass
                         Throw New ErrorAbortException("Frame Mismatch", $"Target file has {hasFrames} frames, but should have {shouldFrames} frames!", p)
                     End If
                 End If
+            End If
+
+            If p.SaveMediaInfoFiles Then
+                SaveMediaInfoFiles()
             End If
 
             Log.Save()

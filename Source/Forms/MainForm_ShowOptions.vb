@@ -1109,6 +1109,12 @@ Partial Public Class MainForm
             b.Text = "Abort on Frame Mismatch"
             b.Field = NameOf(p.AbortOnFrameMismatch)
 
+            b = ui.AddBool(miscPage)
+            b.Text = "Save MediaInfo of the source and the target"
+            b.Help = "After a job, the complete MediaInfo of the source and of the target is saved next to the target as " +
+                "<name>.source.mediainfo.txt and <name>.mediainfo.txt, to keep metadata like time codes that isn't muxed."
+            b.Field = NameOf(p.SaveMediaInfoFiles)
+
             ui.AddLine(miscPage, "Compressibility Check")
 
             b = ui.AddBool(miscPage)
