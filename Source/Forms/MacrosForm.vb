@@ -11,6 +11,9 @@ Public Class MacrosForm
     Public WithEvents bnCopy As ButtonEx
     Public lName, lValue, lDescription As LabelEx
 
+    'the macros of audio profiles are expanded by the audio encoding
+    ReadOnly AudioMacroNames As HashSet(Of String) = Macro.GetMacros(False, False, False, False, True).Select(Function(i) i.Name).ToHashSet()
+
     Sub New()
         lv = New ListViewEx With {.View = View.Details, .HeaderStyle = ColumnHeaderStyle.None, .FullRowSelect = True, .MultiSelect = False}
         lv.Columns.Add("Macro")
@@ -61,8 +64,8 @@ Public Class MacrosForm
 
         Dim macros As New StringPairList
 
-        For Each mac In Macro.GetMacros(True, True, True, True, False)
-            macros.Add(mac.Name, mac.Description)
+        For Each mac In Macro.GetMacros(True, True, True, True, True)
+            macros.Add(mac.Name, If(AudioMacroNames.Contains(mac.Name), "Audio profiles only. " + mac.Description, mac.Description))
         Next
 
         For Each i In macros
@@ -108,7 +111,7 @@ Public Class MacrosForm
         If lv.SelectedItems.Count > 0 Then
             Dim item = lv.SelectedItems(0)
             lName.Text = item.Text
-            lValue.Text = Macro.Expand(item.Text)
+            lValue.Text = If(AudioMacroNames.Contains(item.Text), "", Macro.Expand(item.Text))
             lDescription.Text = CStr(item.Tag)
         Else
             lName.Text = ""
