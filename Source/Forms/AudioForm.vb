@@ -1080,7 +1080,12 @@ Public Class AudioForm
             If Not TempProfile.IsInputSupported AndAlso Not TempProfile.DecodingMode = AudioDecodingMode.Pipe Then
                 MsgWarn("The input format isn't supported by the current encoder," + BR + "convert to WAV or FLAC first or enable piping in the options.")
             Else
-                DesktopHelp.RunInTerminal(TempProfile.GetCommandLine(True))
+                'the output is also written to a log file, like the log of jobs
+                Dim commandLine = TempProfile.GetCommandLine(True)
+                Dim logDir = If(Directory.Exists(p.TempDir), p.TempDir, TempProfile.File.Dir)
+                Dim logPath = Path.Combine(logDir, TempProfile.File.Base + "_audio.log")
+                File.WriteAllText(logPath, $"Audio encoding, {Date.Now:yyyy-MM-dd HH:mm:ss}" + BR2 + commandLine + BR2)
+                DesktopHelp.RunInTerminal($"({commandLine}) 2>&1 | tee -a {logPath.Escape}; echo; echo Log file: {logPath.Escape}")
             End If
         Else
             MsgWarn("Source file is missing!")
