@@ -74,6 +74,7 @@ Partial Public Class MainForm
     Public cardAudio As Card
     Public WithEvents bnAddAudio As ButtonEx
     Public laNoAudio As LabelEx
+    Public laAudioCount As LabelEx
     Public pnAudio As Panel
     Public TipProvider As TipProvider
 
@@ -108,6 +109,7 @@ Partial Public Class MainForm
         NextStep = New NextStepBar
         pnAudio = New Panel
         laNoAudio = dimLabel("No audio tracks, Add Track adds a stream of the source or a file.")
+        laAudioCount = dimLabel("")
         bnAddAudio = New ButtonEx With {.Text = "Add Track", .IconName = Styling.GetIconName("list-add-symbolic"), .MinimumSize = Size.Empty}
         MenuStrip = New MenuBar With {.IncludeSystemItems = MenuBarSystemItems.None}
 
@@ -186,7 +188,7 @@ Partial Public Class MainForm
         'the content can still shrink, so the window can get narrower than that
         cardFilters = New Card("Filters") With {.HeaderRight = bnFilters, .Content = NaturalWidthBin.Create(FiltersListView, FH(15))}
         cardEncoder = New Card("Video") With {.HeaderRight = ButtonRow(bnEncoder, bnEncoderOptions), .Content = NaturalWidthBin.Create(pnEncoder, FH(24), FH(11))}
-        cardAudio = New Card("Audio") With {.HeaderRight = bnAddAudio, .Content = pnAudio}
+        cardAudio = New Card("Audio") With {.HeaderRight = HRow(laAudioCount, bnAddAudio), .Content = pnAudio}
 
         Dim toolbar As New TableLayout(Row(bnOpen, bnPreview, bnCrop, bnJobs, Scaled(Nothing), bnAddJob)) With {
             .Spacing = New Size(FH(0.35), 0), .Padding = New Padding(FH(0.5), FH(0.35))}
@@ -1177,6 +1179,22 @@ Partial Public Class MainForm
 
         laNoAudio.Visible = Not anyShown
         bnAddAudio.Enabled = anyHidden
+        UpdateAudioCount(proj)
+    End Sub
+
+    'the tracks with a stream or file and the audio streams of the source, to see if streams are missing
+    Sub UpdateAudioCount(proj As Project)
+        Dim sourceFile = proj.LastOriginalSourceFile
+
+        If Not sourceFile.FileExists() Then
+            laAudioCount.Text = ""
+            Exit Sub
+        End If
+
+        Dim tracks = proj.AudioTracks.Where(Function(i) i.MenuButton IsNot Nothing AndAlso i.IsRelevant).Count()
+        Dim streams = MediaInfo.GetAudioCount(sourceFile)
+        laAudioCount.Text = $"{tracks} {If(tracks = 1, "track", "tracks")}, the source has {streams}"
+        TipProvider.SetTip("Tracks with a stream or file, and the audio streams of the source", laAudioCount)
     End Sub
 
     Sub bnAddAudio_Click() Handles bnAddAudio.Click
