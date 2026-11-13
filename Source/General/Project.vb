@@ -20,6 +20,7 @@ Public Class Project
     Public AudioFiles As New List(Of AudioProfile)
     Public AudioTracks As New List(Of AudioTrack)
     Public AudioTracksAvailable As Integer = 4
+    Public AddAudioTracksForAllStreams As Boolean
     Public AutoCompCheck As Boolean = False
     Public AutoCorrectCropValues As Boolean = True
     Public AutoCropDolbyVisionThresholdBegin As Integer = 0

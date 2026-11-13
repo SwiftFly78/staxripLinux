@@ -366,6 +366,12 @@ Partial Public Class MainForm
             n.Field = NameOf(p.AudioTracksAvailable)
             'n.NumEdit.SaveAction = Sub(x) SetAudioTracks(CType(x, Integer))
 
+            b = ui.AddBool
+            b.Text = "Add tracks for more streams"
+            b.Help = "When the source has more audio streams of the preferred languages than audio tracks, " +
+                "tracks are added for them, up to 25 tracks. The added tracks use Copy/Mux."
+            b.Field = NameOf(p.AddAudioTracksForAllStreams)
+
             Dim prefAudio = ui.AddTextMenu
             prefAudio.Text = "Preferred Languages"
             prefAudio.Help = "List of audio tracks to demux."
