@@ -1438,11 +1438,24 @@ Public Class GlobalClass
                         Log.WriteLine(command.GetParameterHelp(ec.CommandParameters.Parameters))
                     End If
 
+                    Dim canceled = False
+
                     For i = 0 To params.Count - 1
                         If TypeOf params(i) Is String Then
-                            params(i) = Macro.ExpandWhileProcessing(DirectCast(params(i), String), p, commandline, progress, progressline)
+                            Dim value = DirectCast(params(i), String)
+
+                            'interactive macros like $browse_file$ ask the user, but not while jobs are processed
+                            If Not g.IsJobProcessing AndAlso value.ContainsAny("$browse_file$", "$enter_text", "$select:") Then
+                                Dim gui = Macro.ExpandGUI(value)
+                                canceled = canceled OrElse gui.Cancel
+                                value = gui.Value
+                            End If
+
+                            params(i) = Macro.ExpandWhileProcessing(value, p, commandline, progress, progressline)
                         End If
                     Next
+
+                    If canceled Then Continue For
 
                     g.MainForm.CustomMainMenu.CommandManager.ProcessPlusFixParams(command, params)
                 End If
