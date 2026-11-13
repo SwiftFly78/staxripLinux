@@ -369,6 +369,8 @@ Namespace UI
         ReadOnly Property Items As ListViewItemCollection
         Shadows ReadOnly Property Columns As ColumnHeaderCollection
 
+        Private AreButtonsConnected As Boolean
+
         Property UpButton As Button
         Property DownButton As Button
         Property RemoveButton As Button
@@ -965,6 +967,13 @@ Namespace UI
         'GTK measures rows added before loading too small, reloading measures them again
         Protected Overrides Sub OnLoadComplete(e As EventArgs)
             MyBase.OnLoadComplete(e)
+
+            If Not AreButtonsConnected Then
+                AreButtonsConnected = True
+                If UpButton IsNot Nothing Then AddHandler UpButton.Click, Sub() MoveSelectionUp()
+                If DownButton IsNot Nothing Then AddHandler DownButton.Click, Sub() MoveSelectionDown()
+                If RemoveButton IsNot Nothing Then AddHandler RemoveButton.Click, Sub() RemoveSelection()
+            End If
 
             If Items.Count = 0 Then
                 Exit Sub
