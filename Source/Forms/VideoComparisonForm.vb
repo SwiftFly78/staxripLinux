@@ -17,6 +17,11 @@ Public Class VideoComparisonForm
     Private ShowMessageSavedPngs As Boolean = True
     Public CropLeft, CropTop, CropRight, CropBottom As Integer
 
+    'videos with different frame rates are compared at the same time instead of the same frame number
+    Private SyncByTime As Boolean = s.Storage.GetBool("video comparison sync by time")
+    Private miSyncByTime As MenuItemEx
+    Private LastTab As VideoTab
+
     Shadows Menu As ContextMenuStripEx
 
     Sub New()
@@ -47,6 +52,8 @@ Public Class VideoComparisonForm
         Menu.Add("Crop and Zoom...", AddressOf CropZoom, Keys.C)
         Menu.Add("Go To Frame...", AddressOf GoToFrame, Keys.F, enabledFunc)
         Menu.Add("Go To Time...", AddressOf GoToTime, Keys.T, enabledFunc)
+        miSyncByTime = Menu.Add("Synchronize by Time", AddressOf ToggleSyncByTime, "Switching the tab keeps the time instead of the frame number, for videos with different frame rates.")
+        miSyncByTime.Marked = SyncByTime
         Menu.Add("Navigate | 1 frame backward", Sub() TrackBar.Value -= 1, Keys.Left, enabledFunc)
         Menu.Add("Navigate | 1 frame forward", Sub() TrackBar.Value += 1, Keys.Right, enabledFunc)
         Menu.Add("Navigate | 100 frame backward", Sub() TrackBar.Value -= 100, Keys.Left Or Keys.Control, enabledFunc)
@@ -66,8 +73,43 @@ Public Class VideoComparisonForm
 
         If tab IsNot Nothing Then
             laFilePath.Text = tab.SourceFilePath
+            Dim previousTab = LastTab
+            Dim frame = Pos
+            LastTab = tab
+
+            'the time of the previous tab, before the new maximum can change the position
+            If SyncByTime AndAlso previousTab IsNot Nothing AndAlso previousTab IsNot tab AndAlso previousTab.Server IsNot Nothing Then
+                frame = tab.GetFrame(previousTab.GetTime(Pos))
+            End If
+
+            UpdateTrackBarMaximum()
+
+            If frame <> TrackBar.Value Then
+                TrackBar.Value = Math.Min(frame, TrackBar.Maximum)
+                Exit Sub
+            End If
+
             tab.TrackBarValueChanged()
         End If
+    End Sub
+
+    'with time synchronization the track bar has the frames of the selected video, else of the longest
+    Sub UpdateTrackBarMaximum()
+        Dim tabs = TabControl.TabPages.OfType(Of VideoTab).Where(Function(i) i.Server IsNot Nothing)
+        Dim selected = TryCast(TabControl.SelectedTab, VideoTab)
+
+        If SyncByTime AndAlso selected?.Server IsNot Nothing Then
+            TrackBar.Maximum = Math.Max(1, selected.Server.Info.FrameCount - 1)
+        ElseIf tabs.Any() Then
+            TrackBar.Maximum = Math.Max(1, tabs.Max(Function(i) i.Server.Info.FrameCount - 1))
+        End If
+    End Sub
+
+    Sub ToggleSyncByTime()
+        SyncByTime = Not SyncByTime
+        s.Storage.SetBool("video comparison sync by time", SyncByTime)
+        miSyncByTime.Marked = SyncByTime
+        UpdateTrackBarMaximum()
     End Sub
 
     'the comparison uses the engine of the project if available
@@ -114,6 +156,7 @@ Public Class VideoComparisonForm
         If tab.Open(sourcePath) Then
             TabControl.TabPages.Add(tab)
             TabControl.SelectedTab = tab
+            UpdateTrackBarMaximum()
             tab.TrackBarValueChanged()
         Else
             tab.CloseServer()
@@ -135,8 +178,10 @@ Public Class VideoComparisonForm
         Dim tab = TryCast(TabControl.SelectedTab, VideoTab)
 
         If tab IsNot Nothing Then
+            If LastTab Is tab Then LastTab = Nothing
             TabControl.TabPages.Remove(tab)
             tab.CloseServer()
+            UpdateTrackBarMaximum()
         End If
     End Sub
 
@@ -289,12 +334,12 @@ Public Class VideoComparisonForm
         Dim tab = TryCast(TabControl.SelectedTab, VideoTab)
         If tab Is Nothing Then Exit Sub
         Dim d As Date
-        d = d.AddSeconds(Pos / tab.Server.FrameRate)
+        d = d.AddSeconds(tab.GetTime(Pos))
         Dim value = InputBox.Show("Go To Time", d.ToString("HH:mm:ss.fff"))
         Dim time As TimeSpan
 
         If value <> "" AndAlso TimeSpan.TryParse(value, time) Then
-            TrackBar.Value = CInt(time.TotalMilliseconds / 1000 * tab.Server.FrameRate)
+            TrackBar.Value = Math.Min(tab.GetFrame(time.TotalSeconds), TrackBar.Maximum)
         End If
     End Sub
 
@@ -347,6 +392,20 @@ Public Class VideoComparisonForm
             CloseServer()
             Open(SourceFilePath)
         End Sub
+
+        ReadOnly Property FrameRate As Double
+            Get
+                Return If(Server IsNot Nothing AndAlso Calc.IsValidFrameRate(Server.FrameRate), Server.FrameRate, 25)
+            End Get
+        End Property
+
+        Function GetTime(frame As Integer) As Double
+            Return frame / FrameRate
+        End Function
+
+        Function GetFrame(seconds As Double) As Integer
+            Return Math.Max(0, CInt(Math.Round(seconds * FrameRate)))
+        End Function
 
         Function Open(sourcePath As String) As Boolean
             Text = AdjustName(sourcePath.Base)
@@ -524,8 +583,7 @@ Public Class VideoComparisonForm
                 If FrameInfo IsNot Nothing Then
                     Form.laInfo.Text = FrameInfo(Form.TrackBar.Value)
                 Else
-                    Dim frameRate = If(Calc.IsValidFrameRate(Server.FrameRate), Server.FrameRate, 25)
-                    Dim dt = DateTime.Today.AddSeconds(Pos / frameRate)
+                    Dim dt = DateTime.Today.AddSeconds(GetTime(Pos))
                     Form.laInfo.Text = $"Position: {Pos,5}, Time: {dt:HH:mm:ss.fff}, Size: {Server.Info.Width} x {Server.Info.Height}"
                 End If
 
