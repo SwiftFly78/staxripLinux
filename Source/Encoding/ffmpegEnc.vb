@@ -24,6 +24,10 @@ Public Class ffmpegEnc
     Public Sub New(codecIndex As Integer)
         Me.New()
         Params.Codec.Value = If(codecIndex > 0 AndAlso codecIndex < Params.Codec.Values.Length, codecIndex, 0)
+
+        If Params.IsImageSequence() Then
+            Muxer = New NullMuxer()
+        End If
     End Sub
 
     Overloads Shared ReadOnly Property Package As Package
@@ -136,6 +140,14 @@ Public Class ffmpegEnc
                     Return "h265"
                 Case "AOM-AV1", "AMD | AMD AMF AV1", "Intel | Intel AV1", "Nvidia | Nvidia AV1", "VAAPI | AV1"
                     Return "ivf"
+                Case "Image | PNG"
+                    Return "png"
+                Case "Image | JPEG"
+                    Return "jpg"
+                Case "Image | TIFF"
+                    Return "tif"
+                Case "Image | BMP"
+                    Return "bmp"
                 Case "UT Video", "GoPro CineForm HD", "FFV1"
                     'the AVI container of ffmpeg accepts only AVI video
                     Return If(TryCast(Muxer, ffmpegMuxer)?.OutputFormat = "AVI", "avi", "mkv")
@@ -155,13 +167,31 @@ Public Class ffmpegEnc
         p.Script.Synchronize()
         Params.RaiseValueChanged(Nothing)
 
-        If Params.Mode.OptionText = "Two Pass" Then
+        If Params.Mode.OptionText = "Two Pass" AndAlso Not Params.IsImageSequence() Then
             Encode(Params.GetCommandLine(True, True, 1), s.EncoderProcessPriority)
             Encode(Params.GetCommandLine(True, True, 2), s.EncoderProcessPriority)
         Else
             Encode(Params.GetCommandLine(True, True), s.EncoderProcessPriority)
         End If
     End Sub
+
+    Overrides Function AfterEncoding() As Boolean
+        If Not Params.IsImageSequence() Then
+            Return MyBase.AfterEncoding()
+        End If
+
+        Dim pattern = Params.GetImageSequencePath()
+        Dim firstImage = pattern.Replace("%06d", "000001")
+
+        If Not g.FileExists(firstImage) Then
+            Throw New ErrorAbortException("Encoder output file is missing", firstImage)
+        End If
+
+        Dim count = Directory.GetFiles(pattern.Dir, pattern.FileName.Replace("%06d", "??????")).Length
+        Log.WriteLine(BR + $"{count} images written to {pattern.Dir}" + BR)
+        Log.Save()
+        Return True
+    End Function
 
     Overloads Sub Encode(commandLine As String, priority As ProcessPriorityClass)
         Using proc As New Proc
@@ -183,7 +213,7 @@ Public Class ffmpegEnc
 
     Overrides Property QualityMode() As Boolean
         Get
-            Return Params.Mode.Value = EncodingMode.Quality
+            Return Params.Mode.Value = EncodingMode.Quality OrElse Params.IsImageSequence()
         End Get
         Set(Value As Boolean)
         End Set
@@ -219,19 +249,21 @@ Public Class ffmpegEnc
                         "Intel | Intel H.264", "Intel | Intel H.265", "Intel | Intel AV1",
                         "Nvidia | Nvidia H.264", "Nvidia | Nvidia H.265", "Nvidia | Nvidia AV1",
                         "VP | VP8", "VP | VP9",
-                        "VAAPI | H.264", "VAAPI | H.265", "VAAPI | AV1"},
+                        "VAAPI | H.264", "VAAPI | H.265", "VAAPI | AV1",
+                        "Image | PNG", "Image | JPEG", "Image | TIFF", "Image | BMP"},
             .Values = {"libx264", "libx265", "libaom-av1", "libxvid", "mpeg4", "libtheora", "prores", "prores_ks",
                        "r210", "v210", "utvideo", "cfhd", "ffv1",
                        "h264_amf", "hevc_amf", "av1_amf",
                        "h264_qsv", "hevc_qsv", "av1_qsv",
                        "h264_nvenc", "hevc_nvenc", "av1_nvenc",
                        "libvpx", "libvpx-vp9",
-                       "h264_vaapi", "hevc_vaapi", "av1_vaapi"}}
+                       "h264_vaapi", "hevc_vaapi", "av1_vaapi",
+                       "png", "mjpeg", "tiff", "bmp"}}
 
         Property Mode As New OptionParam With {
             .Name = "Mode",
             .Text = "Mode",
-            .VisibleFunc = Function() Not Codec.ValueText.EqualsAny("prores", "prores_ks", "utvideo", "cfhd", "ffv1"),
+            .VisibleFunc = Function() Not Codec.ValueText.EqualsAny("prores", "prores_ks", "utvideo", "cfhd", "ffv1") AndAlso Not IsImageSequence(),
             .Options = {"Quality", "One Pass", "Two Pass"}}
 
         Property Decoder As New OptionParam With {
@@ -304,7 +336,7 @@ Public Class ffmpegEnc
                         New OptionParam With {.Name = "utVideoPrediction", .Switch = "-pred", .Text = "Prediction", .Init = 2, .AlwaysOn = True, .Options = {"None", "Left", "Median"}, .VisibleFunc = Function() Codec.ValueText = "utvideo"},
                         New OptionParam With {.Name = "utVideoPixFmt", .Switch = "-pix_fmt", .Text = "Pixel Format", .AlwaysOn = True, .Options = {"YUV420P", "YUV422P", "YUV444P", "GBRP (RGB)", "GBRAP (RGB with alpha)"}, .Values = {"yuv420p", "yuv422p", "yuv444p", "gbrp", "gbrap"}, .VisibleFunc = Function() Codec.ValueText = "utvideo"},
                         New NumParam With {.Name = "utVideoSlices", .Switch = "-slices", .Text = "Slices", .Config = {0, 256}, .VisibleFunc = Function() Codec.ValueText = "utvideo"},
-                        New NumParam With {.Name = "Quality", .Text = "Quality", .Init = -1, .VisibleFunc = Function() Mode.Value = EncodingMode.Quality AndAlso Not Codec.ValueText.EqualsAny("prores", "prores_ks", "utvideo", "cfhd", "ffv1") AndAlso Not IsVaapi(), .ArgsFunc = AddressOf GetQualityArgs, .Config = {-1, 63, 0.5, 1}},
+                        New NumParam With {.Name = "Quality", .Text = "Quality", .Init = -1, .VisibleFunc = Function() (Mode.Value = EncodingMode.Quality OrElse IsImageSequence()) AndAlso Not Codec.ValueText.EqualsAny("prores", "prores_ks", "utvideo", "cfhd", "ffv1", "png", "tiff", "bmp") AndAlso Not IsVaapi(), .ArgsFunc = AddressOf GetQualityArgs, .Config = {-1, 63, 0.5, 1}},
                         New NumParam With {.Switch = "-threads", .Text = "Threads", .Config = {0, 64}},
                         New NumParam With {.Switch = "-tile-columns", .Text = "Tile Columns", .VisibleFunc = Function() Codec.ValueText = "libvpx-vp9", .Value = 6, .DefaultValue = -1},
                         New NumParam With {.Switch = "-frame-parallel", .Text = "Frame Parallel", .VisibleFunc = Function() Codec.ValueText = "libvpx-vp9", .Value = 1, .DefaultValue = -1},
@@ -402,7 +434,12 @@ Public Class ffmpegEnc
                 sb.Append(" -vf format=" + If(is10Bit, "p010", "nv12") + ",hwupload")
             End If
 
-            Select Case Mode.Value
+            'TIFF would keep YUV, which few viewers show
+            If Codec.ValueText = "tiff" Then
+                sb.Append(" -pix_fmt " + If(p.Script.Info.BitDepth > 8, "rgb48le", "rgb24"))
+            End If
+
+            Select Case If(IsImageSequence(), EncodingMode.Quality, CType(Mode.Value, EncodingMode))
                 Case EncodingMode.TwoPass
                     sb.Append(" -pass " & pass)
                     sb.Append($" -b:v {p.VideoBitrate}k")
@@ -420,13 +457,13 @@ Public Class ffmpegEnc
                     sb.Append(" -tag:v xvid")
             End Select
             Dim targetPath As String
-            If Mode.OptionText = "Two Pass" AndAlso pass = 1 Then
+            If Mode.OptionText = "Two Pass" AndAlso pass = 1 AndAlso Not IsImageSequence() Then
                 targetPath = "-f null -"
             Else
                 targetPath = p.VideoEncoder.OutputPath.ChangeExt(p.VideoEncoder.OutputExt).Escape
             End If
 
-            If includePaths Then
+            If includePaths AndAlso Not IsImageSequence() Then
                 sb.Append(" -an -y -hide_banner " + targetPath)
             End If
 
@@ -436,7 +473,21 @@ Public Class ffmpegEnc
                 ret = Macro.Expand(ret)
             End If
 
+            'the frame number of the file names isn't a macro
+            If includePaths AndAlso IsImageSequence() Then
+                ret += " -an -y -hide_banner " + GetImageSequencePath().Escape
+            End If
+
             Return ret
+        End Function
+
+        Function IsImageSequence() As Boolean
+            Return Codec.ValueText.EqualsAny("png", "mjpeg", "tiff", "bmp")
+        End Function
+
+        'the images are named after the target file with the frame number, like movie_000001.png
+        Function GetImageSequencePath() As String
+            Return p.VideoEncoder.OutputPath.DirAndBase + "_%06d." + p.VideoEncoder.OutputExt
         End Function
 
         Function IsCustom(switch As String) As Boolean
@@ -451,7 +502,7 @@ Public Class ffmpegEnc
         End Function
 
         Function GetQualityArgs() As String
-            If Mode.Value = EncodingMode.Quality Then
+            If Mode.Value = EncodingMode.Quality OrElse IsImageSequence() Then
                 Dim param = GetNumParamByName("Quality")
 
                 If param.Value <> param.DefaultValue Then

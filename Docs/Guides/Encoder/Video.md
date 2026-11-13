@@ -9,6 +9,7 @@
 | Smallest files at high quality | SvtAv1EncApp (AV1), or one of its forks |
 | Fast encoding with the GPU | NVEncC, QSVEncC, VCEEncC or the FFmpeg hardware profiles |
 | Lossless or intermediate files | FFmpeg profiles like FFV1, UT Video or ProRes |
+| Image sequences | FFmpeg profiles `Image > PNG`, `JPEG`, `TIFF` or `BMP` |
 
 Software encoders (x264, x265, SVT-AV1, aomenc, rav1e, vvenc) give the best quality per bitrate. Hardware encoders of
 the GPU are many times faster, but need more bitrate for the same quality, which makes them a good choice for

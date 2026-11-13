@@ -167,6 +167,14 @@ Public Class ApplicationSettings
             End If
         End If
 
+        If Check(VideoEncoderProfiles, "Image sequence encoder profiles", 1) Then
+            For Each profile In VideoEncoder.GetDefaults().OfType(Of ffmpegEnc).Where(Function(x) x.Params.IsImageSequence())
+                If Not VideoEncoderProfiles.Any(Function(x) x.Name = profile.Name) Then
+                    VideoEncoderProfiles.Add(profile)
+                End If
+            Next
+        End If
+
         If Check(AudioProfiles, "Audio Profiles", 117) Then
             If AudioProfiles Is Nothing Then
                 AudioProfiles = AudioProfile.GetDefaults()

@@ -84,6 +84,9 @@ NVEncC, QSVEncC and VCEEncC also get the dynamic metadata:
 - **Command Line** runs any encoder with a command line that may contain [macros](../Macros.md), for encoders that
   aren't built in.
 - **Copy/Mux** doesn't encode, the video stream of the source is copied into the target.
+- **ffmpeg | Image** writes every frame as a PNG, JPEG, TIFF or BMP file. The images are named after the target file
+  with the frame number, like `movie_000001.png`, the container is `No Muxing`. *Quality* sets the JPEG quality, `2`
+  is the best.
 
 The encoder profiles of the menu on the Video card are edited with `Edit Profiles...`, which can rename, copy, remove
 and order them.
