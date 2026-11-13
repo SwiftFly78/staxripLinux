@@ -2255,6 +2255,7 @@ Public Class GlobalClass
                 td.AddCommand("ClipInfo()")
                 td.AddCommand("vspipe info")
                 td.AddCommand("vspipe benchmark")
+                td.AddCommand("vspipe filter time", "Benchmark that shows the time each filter takes", "vspipe filter time")
 
                 Select Case td.Show()
                     Case "vspipe info"
@@ -2262,6 +2263,8 @@ Public Class GlobalClass
                     Case "vspipe benchmark"
                         'the output . discards the frames
                         DesktopHelp.RunInTerminal(GetVersionEcho(Package.vspipe) + Package.vspipe.Path.Escape + " --progress " + script.Path.Escape + " .")
+                    Case "vspipe filter time"
+                        DesktopHelp.RunInTerminal(GetVersionEcho(Package.vspipe) + Package.vspipe.Path.Escape + " --progress --filter-time " + script.Path.Escape + " .")
                     Case "ClipInfo()"
                         Dim infoScript = script.GetNewScript
                         infoScript.Path = Path.Combine(p.TempDir, p.TargetFile.Base + "_info." + script.FileType)
