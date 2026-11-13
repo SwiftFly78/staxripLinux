@@ -1340,6 +1340,7 @@ Partial Public Class MainForm
                            If source.FilePath = "" Then Return
                            If dest Is Nothing Then Return
 
+                           Dim trackLanguage = dest.AudioProfile.Language
                            dest.AudioProfile.Reset(dest.Index)
 
                            If source.Stream Is Nothing Then
@@ -1351,39 +1352,60 @@ Partial Public Class MainForm
                                dest.TextEdit.Text = $"{source.Stream.Name} ({p.SourceFile?.Ext()})"
                            End If
 
-                           dest.AudioProfile.Language = source.Language
+                           dest.AudioProfile.Language = If(p.KeepAudioTrackLanguages AndAlso trackLanguage.IsDetermined, trackLanguage, source.Language)
                            dest.LanguageButton.Invalidate()
                        End Sub
 
-        Dim placeTrack = Function(source As (FilePath As String, Language As Language, Stream As AudioStream)) As Boolean
-                             Dim sameLanguages = p.AudioTracks.Where(Function(x) x.TextEdit.Text = "" AndAlso
-                                                                         TypeOf x.AudioProfile IsNot NullAudioProfile AndAlso
-                                                                         x.AudioProfile.Language.ThreeLetterCode = source.Language.ThreeLetterCode).ToList()
+        Dim placeSameLanguage = Function(source As (FilePath As String, Language As Language, Stream As AudioStream)) As Boolean
+                                    'with the track languages, a stream without language takes the next free track
+                                    If p.KeepAudioTrackLanguages AndAlso Not source.Language.IsDetermined Then Return False
 
-                             If sameLanguages.Any() Then
-                                 addTrack(source, sameLanguages.First())
-                                 Return True
-                             End If
+                                    Dim track = p.AudioTracks.FirstOrDefault(Function(x) x.TextEdit.Text = "" AndAlso
+                                                                                 TypeOf x.AudioProfile IsNot NullAudioProfile AndAlso
+                                                                                 x.AudioProfile.Language.ThreeLetterCode = source.Language.ThreeLetterCode)
+                                    If track Is Nothing Then Return False
 
-                             For Each track In p.AudioTracks
-                                 If TypeOf track.AudioProfile Is NullAudioProfile Then Continue For
-                                 If track.TextEdit.Text <> "" Then Continue For
-                                 If track.AudioProfile.Language.IsDetermined AndAlso track.AudioProfile.Language.ThreeLetterCode <> source.Language.ThreeLetterCode Then Continue For
+                                    addTrack(source, track)
+                                    Return True
+                                End Function
 
-                                 addTrack(source, track)
-                                 Return True
-                             Next
+        Dim placeFree = Function(source As (FilePath As String, Language As Language, Stream As AudioStream)) As Boolean
+                            For Each track In p.AudioTracks
+                                If TypeOf track.AudioProfile Is NullAudioProfile Then Continue For
+                                If track.TextEdit.Text <> "" Then Continue For
 
-                             Return False
-                         End Function
+                                If Not p.KeepAudioTrackLanguages AndAlso track.AudioProfile.Language.IsDetermined AndAlso
+                                    track.AudioProfile.Language.ThreeLetterCode <> source.Language.ThreeLetterCode Then
+
+                                    Continue For
+                                End If
+
+                                addTrack(source, track)
+                                Return True
+                            Next
+
+                            Return False
+                        End Function
 
         Dim unplaced As New List(Of (FilePath As String, Language As Language, Stream As AudioStream))
+        Dim sources = audioTracks.Where(Function(x) Not String.IsNullOrWhiteSpace(x.FilePath)).ToList()
 
-        For Each i In audioTracks
-            If Not String.IsNullOrWhiteSpace(i.FilePath) AndAlso Not placeTrack(i) Then
-                unplaced.Add(i)
-            End If
-        Next
+        If p.KeepAudioTrackLanguages Then
+            'tracks with the language of a stream get it first, the other streams take the remaining tracks
+            Dim otherLanguages As New List(Of (FilePath As String, Language As Language, Stream As AudioStream))
+
+            For Each i In sources
+                If Not placeSameLanguage(i) Then otherLanguages.Add(i)
+            Next
+
+            For Each i In otherLanguages
+                If Not placeFree(i) Then unplaced.Add(i)
+            Next
+        Else
+            For Each i In sources
+                If Not placeSameLanguage(i) AndAlso Not placeFree(i) Then unplaced.Add(i)
+            Next
+        End If
 
         'streams that found no free track get new tracks, which use Copy/Mux
         If unplaced.Count > 0 AndAlso p.AddAudioTracksForAllStreams AndAlso p.AudioTracksAvailable < 25 Then
@@ -1391,7 +1413,7 @@ Partial Public Class MainForm
             SetAudioTracks()
 
             For Each i In unplaced
-                placeTrack(i)
+                If Not placeSameLanguage(i) Then placeFree(i)
             Next
         End If
     End Sub

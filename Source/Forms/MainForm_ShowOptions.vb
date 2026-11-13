@@ -372,6 +372,13 @@ Partial Public Class MainForm
                 "tracks are added for them, up to 25 tracks. The added tracks use Copy/Mux."
             b.Field = NameOf(p.AddAudioTracksForAllStreams)
 
+            b = ui.AddBool
+            b.Text = "Track languages replace missing or wrong languages"
+            b.Help = "A stream whose language matches no track is assigned to the next free track even if the track has " +
+                "another language, and tracks with a language keep it instead of taking the language of the stream. " +
+                "For sources with streams without language or with a wrong language."
+            b.Field = NameOf(p.KeepAudioTrackLanguages)
+
             Dim prefAudio = ui.AddTextMenu
             prefAudio.Text = "Preferred Languages"
             prefAudio.Help = "List of audio tracks to demux."

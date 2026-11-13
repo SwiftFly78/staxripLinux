@@ -21,6 +21,7 @@ Public Class Project
     Public AudioTracks As New List(Of AudioTrack)
     Public AudioTracksAvailable As Integer = 4
     Public AddAudioTracksForAllStreams As Boolean
+    Public KeepAudioTrackLanguages As Boolean
     Public AutoCompCheck As Boolean = False
     Public AutoCorrectCropValues As Boolean = True
     Public AutoCropDolbyVisionThresholdBegin As Integer = 0
