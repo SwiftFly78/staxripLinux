@@ -22,6 +22,10 @@ Public Class VideoComparisonForm
     Private miSyncByTime As MenuItemEx
     Private LastTab As VideoTab
 
+    'the name, frame number, time and picture type shown on the videos and on saved PNGs
+    Property ShowFrameInfo As Boolean = s.Storage.GetBool("video comparison frame info")
+    Private miFrameInfo As MenuItemEx
+
     Shadows Menu As ContextMenuStripEx
 
     Sub New()
@@ -49,6 +53,8 @@ Public Class VideoComparisonForm
         Menu.Add("Close selected tab", AddressOf RemoveTab, Keys.Delete, enabledFunc)
         Menu.Add("Select next tab", AddressOf NextTab, Keys.Space, enabledFunc)
         Menu.Add("Save PNGs at current position", AddressOf Save, Keys.S, enabledFunc, "Saves a PNG image for every file/tab at the current position in the directory of the source file.")
+        miFrameInfo = Menu.Add("Frame Info", AddressOf ToggleFrameInfo, Keys.I, "Shows the name, frame number, time and picture type on the videos and on saved PNGs.")
+        miFrameInfo.Marked = ShowFrameInfo
         Menu.Add("Crop...", AddressOf CropVideos, Keys.C, "Crops the selected video or all videos.")
         Menu.Add("Go To Frame...", AddressOf GoToFrame, Keys.F, enabledFunc)
         Menu.Add("Go To Time...", AddressOf GoToTime, Keys.T, enabledFunc)
@@ -104,6 +110,16 @@ Public Class VideoComparisonForm
         ElseIf tabs.Any() Then
             TrackBar.Maximum = Math.Max(1, tabs.Max(Function(i) i.Server.Info.FrameCount - 1))
         End If
+    End Sub
+
+    Sub ToggleFrameInfo()
+        ShowFrameInfo = Not ShowFrameInfo
+        s.Storage.SetBool("video comparison frame info", ShowFrameInfo)
+        miFrameInfo.Marked = ShowFrameInfo
+
+        For Each i In TabControl.TabPages.OfType(Of VideoTab)
+            i.UpdateFrameInfo()
+        Next
     End Sub
 
     Sub ToggleSyncByTime()
@@ -201,7 +217,16 @@ Public Class VideoComparisonForm
             End Select
 
             Using bmp = tab.GetBitmap
-                bmp?.Save(outputPath, ImageFormat.Png)
+                If bmp Is Nothing Then Continue For
+
+                If ShowFrameInfo Then
+                    Using gx As New Graphics(bmp)
+                        Dim font = FontManager.GetCodeFont(Math.Max(8, bmp.Height / 60.0F) - FontManager.SystemFontSize)
+                        VideoRenderer.DrawInfoText(gx, tab.GetFrameInfoText(), font)
+                    End Using
+                End If
+
+                ImageHelp.Save(bmp, outputPath, ImageFormat.Png)
             End Using
         Next
 
@@ -455,6 +480,20 @@ Public Class VideoComparisonForm
             End Get
         End Property
 
+        Sub UpdateFrameInfo()
+            If Renderer Is Nothing Then Exit Sub
+            Renderer.ShowInfo = Form.ShowFrameInfo
+            Renderer.Draw()
+        End Sub
+
+        'the properties are the ones of the last frame of the server, the frame at the position
+        Function GetFrameInfoText() As String
+            Dim pictType As String = Nothing
+            Server?.FrameProperties?.TryGetValue("_PictType", pictType)
+            Dim time = Date.Today.AddSeconds(GetTime(Pos)).ToString("HH:mm:ss.fff")
+            Return SourceFilePath.FileName + BR + $"Frame {Pos}, {time}" + If(pictType <> "", $", {pictType} frame", "")
+        End Function
+
         Function GetTime(frame As Integer) As Double
             Return frame / FrameRate
         End Function
@@ -547,7 +586,9 @@ Public Class VideoComparisonForm
             Renderer = New VideoRenderer(VideoPanel, Server) With {
                 .KeepAspectRatio = True,
                 .UseSampleAspectRatio = True,
-                .DisplayAspectRatio = DisplayAspectRatio}
+                .DisplayAspectRatio = DisplayAspectRatio,
+                .ShowInfo = Form.ShowFrameInfo,
+                .InfoTextFunc = AddressOf GetFrameInfoText}
             AddHandler VideoPanel.MouseWheel, AddressOf Form.OnVideoMouseWheel
             Dim maximum = Server.Info.FrameCount - 1
             Form.TrackBar.Maximum = If(Form.TrackBar.Maximum < maximum, maximum, Form.TrackBar.Maximum)

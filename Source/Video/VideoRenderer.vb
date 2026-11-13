@@ -24,6 +24,9 @@ Public Class VideoRenderer
 
     Private BitmapSampleAspectRatio As Double = 1
 
+    'the text of the info overlay, the info of the script if not set
+    Property InfoTextFunc As Func(Of String)
+
     Private Server As IFrameServer
     Private Control As Drawable
     Private PositionValue As Integer
@@ -163,8 +166,12 @@ Public Class VideoRenderer
     End Sub
 
     Sub DrawInfoText(gx As Graphics)
-        Dim text = Info.GetInfoText(Position)
-        Dim font = FontManager.GetCodeFont(-1)
+        Dim text = If(InfoTextFunc IsNot Nothing, InfoTextFunc.Invoke(), Info.GetInfoText(Position))
+        DrawInfoText(gx, text, FontManager.GetCodeFont(-1))
+    End Sub
+
+    'draws the text in a dark box at the top left
+    Shared Sub DrawInfoText(gx As Graphics, text As String, font As Font)
         Dim size = gx.MeasureString(font, text)
         Dim padding = font.LineHeight / 3
         Dim left = font.LineHeight / 2
