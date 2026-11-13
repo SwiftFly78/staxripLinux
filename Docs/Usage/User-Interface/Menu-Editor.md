@@ -2,7 +2,7 @@
 
 Many menus of StaxRipLinux can be customized: their entries, the order, the shortcut keys and the commands they run.
 `Tools > Edit Menu...` edits the main menu, `Edit Menu...` in the menus of the [Crop](Crop.md) window, the
-[Preview](Preview.md), the [Code Editor](Code-Editor.md) and the size presets of the
+[Preview](Preview.md), the [Code Editor](Code-Editor.md), the [Jobs](Jobs.md) window and the size presets of the
 [Crop and Resize](Main.md#crop-and-resize) card edits these menus.
 
 <img width=700 src="../../../Images/Screenshots/MenuEditor.png">

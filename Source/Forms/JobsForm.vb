@@ -38,6 +38,9 @@ Friend Class JobsForm
     Private IsLoading As Boolean
     Private BlockSave As Boolean
     Private AllJobs As List(Of Job)
+    Private CommandManager As New CommandManager
+    Private CustomMenu As CustomMenu
+    Private MenuEnabledFuncs As Dictionary(Of String, Func(Of Boolean))
 
     Private ReadOnly Property FilteredJobs As List(Of Job)
         Get
@@ -80,9 +83,33 @@ Friend Class JobsForm
         SetTitle()
 
         Dim cms As New ContextMenuStripEx()
-        cms.Form = Me
         bnMenu.ContextMenuStrip = cms
         lv.ContextMenuStrip = cms
+
+        MenuEnabledFuncs = New Dictionary(Of String, Func(Of Boolean)) From {
+            {NameOf(SelectAll), Function() lv.Items.Count > lv.SelectedItems.Count},
+            {NameOf(SelectNone), Function() lv.SelectedItems.Count > 0},
+            {NameOf(CheckSelection), Function() lv.SelectedItems.Any(Function(item) Not item.Checked)},
+            {NameOf(CheckAll), Function() lv.Items.Count > lv.CheckedItems.Count},
+            {NameOf(UncheckSelection), Function() lv.SelectedItems.Any(Function(item) item.Checked)},
+            {NameOf(UncheckAll), Function() lv.CheckedItems.Count > 0},
+            {NameOf(MoveSelectionUp), Function() lv.CanMoveUp},
+            {NameOf(MoveSelectionDown), Function() lv.CanMoveDown},
+            {NameOf(MoveSelectionToTop), Function() lv.CanMoveUp},
+            {NameOf(MoveSelectionToBottom), Function() lv.CanMoveDown},
+            {NameOf(SortAlphabetically), Function() lv.Items.Count > 1},
+            {NameOf(RemoveSelection), Function() lv.SelectedItems.Count > 0},
+            {NameOf(LoadSelection), Function() lv.SelectedItems.Count = 1}}
+
+        CommandManager.AddCommandsFromObject(Me)
+        CustomMenu = New CustomMenu(AddressOf GetDefaultMenu, s.CustomMenuJobs, CommandManager, cms.Items) With {
+            .Form = Me,
+            .HandleShortcutsManually = True}
+        CustomMenu.BuildMenu()
+
+        AddHandler cms.Opening, Sub() UpdateMenu()
+        AddHandler lv.KeyDown, AddressOf OnMenuKeyDown
+        AddHandler KeyDown, AddressOf OnMenuKeyDown
 
         AddHandler lv.ItemRemoved, Sub(item)
                                        Dim job = DirectCast(item.Tag, Job)
@@ -96,25 +123,86 @@ Friend Class JobsForm
                                        End If
                                    End Sub
 
-        cms.Add("Select All", Sub() SelectAll(), Keys.Control Or Keys.S, Function() lv.Items.Count > lv.SelectedItems.Count)
-        cms.Add("Select None", Sub() SelectNone(), Keys.Shift Or Keys.S, Function() lv.SelectedItems.Count > 0)
-        cms.Add("-")
-        cms.Add("Check Selection", Sub() CheckSelection(), Keys.Shift Or Keys.C, Function() lv.SelectedItems.OfType(Of ListViewItem).Where(Function(item) Not item.Checked).Count > 0).ShortcutKeyDisplayString = "Space"
-        cms.Add("Check All", Sub() CheckAll(), Keys.Control Or Keys.C, Function() lv.Items.Count > lv.CheckedItems.Count)
-        cms.Add("-")
-        cms.Add("Uncheck Selection", Sub() UncheckSelection(), Keys.Shift Or Keys.U, Function() lv.SelectedItems.OfType(Of ListViewItem).Where(Function(item) item.Checked).Count > 0).ShortcutKeyDisplayString = "Space"
-        cms.Add("Uncheck All", Sub() UncheckAll(), Keys.Control Or Keys.U, Function() lv.CheckedItems.Count > 0)
-        cms.Add("-")
-        cms.Add("Move Selection Up", Sub() bnUp.PerformClick(), Keys.Control Or Keys.Up, Function() lv.CanMoveUp)
-        cms.Add("Move Selection Down", Sub() bnDown.PerformClick(), Keys.Control Or Keys.Down, Function() lv.CanMoveDown)
-        cms.Add("-")
-        cms.Add("Move Selection To Top", Sub() lv.MoveSelectionTop(), Keys.Control Or Keys.Home, Function() lv.CanMoveUp)
-        cms.Add("Move Selection To Bottom", Sub() lv.MoveSelectionBottom(), Keys.Control Or Keys.End, Function() lv.CanMoveDown)
-        cms.Add("-")
-        cms.Add("Sort Alphabetically", Sub() lv.SortItems(), Keys.Control Or Keys.Shift Or Keys.S, Function() lv.Items.Count > 1)
-        cms.Add("Remove Selection", Sub() bnRemove.PerformClick(), Keys.Delete, Function() lv.SelectedItems.Count > 0)
-        cms.Add("Load Selection", Sub() bnLoad.PerformClick(), Keys.Control Or Keys.L, Function() lv.SelectedItems.Count = 1)
+    End Sub
 
+    Shared Function GetDefaultMenu() As CustomMenuItem
+        Dim ret As New CustomMenuItem("Root")
+        ret.Add("Select All", NameOf(SelectAll), Keys.Control Or Keys.S)
+        ret.Add("Select None", NameOf(SelectNone), Keys.Shift Or Keys.S)
+        ret.Add("-")
+        ret.Add("Check Selection", NameOf(CheckSelection), Keys.Shift Or Keys.C)
+        ret.Add("Check All", NameOf(CheckAll), Keys.Control Or Keys.C)
+        ret.Add("-")
+        ret.Add("Uncheck Selection", NameOf(UncheckSelection), Keys.Shift Or Keys.U)
+        ret.Add("Uncheck All", NameOf(UncheckAll), Keys.Control Or Keys.U)
+        ret.Add("-")
+        ret.Add("Move Selection Up", NameOf(MoveSelectionUp), Keys.Control Or Keys.Up)
+        ret.Add("Move Selection Down", NameOf(MoveSelectionDown), Keys.Control Or Keys.Down)
+        ret.Add("-")
+        ret.Add("Move Selection To Top", NameOf(MoveSelectionToTop), Keys.Control Or Keys.Home)
+        ret.Add("Move Selection To Bottom", NameOf(MoveSelectionToBottom), Keys.Control Or Keys.End)
+        ret.Add("-")
+        ret.Add("Sort Alphabetically", NameOf(SortAlphabetically), Keys.Control Or Keys.Shift Or Keys.S)
+        ret.Add("Remove Selection", NameOf(RemoveSelection), Keys.Delete)
+        ret.Add("Load Selection", NameOf(LoadSelection), Keys.Control Or Keys.L)
+        ret.Add("-")
+        ret.Add("Edit Menu...", NameOf(ShowMenuEditor), Keys.Control Or Keys.M)
+        Return ret
+    End Function
+
+    'the list gets keys like Ctrl+Down before the form, the form handles the keys of the other controls
+    'except the search field, which gets every key
+    Sub OnMenuKeyDown(sender As Object, e As KeyEventArgs)
+        If e.Handled OrElse stb.HasFocus OrElse (sender Is Me AndAlso lv.HasFocus) Then Exit Sub
+        UpdateMenu()
+        CustomMenu.OnKeyDown(sender, e)
+    End Sub
+
+    Sub UpdateMenu()
+        For Each pair In MenuEnabledFuncs
+            CustomMenu.EnableMenuItemByActionName(pair.Key, pair.Value.Invoke)
+        Next
+    End Sub
+
+    <Command("Moves the selected jobs up.")>
+    Sub MoveSelectionUp()
+        bnUp.PerformClick()
+    End Sub
+
+    <Command("Moves the selected jobs down.")>
+    Sub MoveSelectionDown()
+        bnDown.PerformClick()
+    End Sub
+
+    <Command("Moves the selected jobs to the top.")>
+    Sub MoveSelectionToTop()
+        lv.MoveSelectionTop()
+    End Sub
+
+    <Command("Moves the selected jobs to the bottom.")>
+    Sub MoveSelectionToBottom()
+        lv.MoveSelectionBottom()
+    End Sub
+
+    <Command("Sorts the jobs alphabetically.")>
+    Sub SortAlphabetically()
+        lv.SortItems()
+    End Sub
+
+    <Command("Removes the selected jobs.")>
+    Sub RemoveSelection()
+        bnRemove.PerformClick()
+    End Sub
+
+    <Command("Opens the project of the selected job.")>
+    Sub LoadSelection()
+        bnLoad.PerformClick()
+    End Sub
+
+    <Command("Dialog to configure the menu.")>
+    Sub ShowMenuEditor()
+        s.CustomMenuJobs = CustomMenu.Edit()
+        g.SaveSettings()
     End Sub
 
     'jobs are named by the path of their project file, the list shows its name,
@@ -129,6 +217,7 @@ Friend Class JobsForm
         Return name
     End Function
 
+    <Command("Unchecks all jobs.")>
     Sub UncheckAll()
         BlockSave = True
 
@@ -140,6 +229,7 @@ Friend Class JobsForm
         HandleItemsChanged()
     End Sub
 
+    <Command("Unchecks the selected jobs.")>
     Sub UncheckSelection()
         BlockSave = True
 
@@ -151,6 +241,7 @@ Friend Class JobsForm
         HandleItemsChanged()
     End Sub
 
+    <Command("Checks all jobs.")>
     Sub CheckAll()
         BlockSave = True
 
@@ -162,6 +253,7 @@ Friend Class JobsForm
         HandleItemsChanged()
     End Sub
 
+    <Command("Checks the selected jobs.")>
     Sub CheckSelection()
         BlockSave = True
 
@@ -173,6 +265,7 @@ Friend Class JobsForm
         HandleItemsChanged()
     End Sub
 
+    <Command("Selects no job.")>
     Sub SelectNone()
         BlockSave = True
 
@@ -184,6 +277,7 @@ Friend Class JobsForm
         BlockSave = False
     End Sub
 
+    <Command("Selects all jobs.")>
     Sub SelectAll()
         BlockSave = True
 

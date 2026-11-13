@@ -34,6 +34,7 @@ Public Class ApplicationSettings
     Public CropColor As System.Drawing.Color
     Public CustomMenuCodeEditor As CustomMenuItem
     Public CustomMenuCrop As CustomMenuItem
+    Public CustomMenuJobs As CustomMenuItem
     Public CustomMenuMainForm As CustomMenuItem
     Public CustomMenuPreview As CustomMenuItem
     Public CustomMenuSize As CustomMenuItem
@@ -300,6 +301,10 @@ Public Class ApplicationSettings
 
         If Check(CustomMenuCrop, "Menu in crop dialog", 18) Then
             CustomMenuCrop = CropForm.GetDefaultMenuCrop
+        End If
+
+        If Check(CustomMenuJobs, "Menu in jobs dialog", 1) Then
+            CustomMenuJobs = JobsForm.GetDefaultMenu
         End If
 
         If Check(CustomMenuMainForm, "Main menu in main window", 167) Then

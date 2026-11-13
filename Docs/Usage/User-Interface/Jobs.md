@@ -10,7 +10,8 @@ skipped. Jobs can be moved by drag & drop and with the arrow buttons, `Remove` r
 opens the project of a job in the main window, for example to change it. The search field filters the jobs by name,
 `<active>` shows only the checked jobs, the filter doesn't change the order in which the jobs are processed.
 
-The `Edit` menu has the commands for the selection:
+The `Edit` menu has the commands for the selection, its keys work everywhere except in the search field. `Edit Menu...`
+opens the [Menu Editor](Menu-Editor.md) to change its entries and keys.
 
 | Entry | Key |
 |---|---|
@@ -22,6 +23,7 @@ The `Edit` menu has the commands for the selection:
 | Sort Alphabetically | `Ctrl+Shift+S` |
 | Remove Selection | `Delete` |
 | Load Selection | `Ctrl+L` |
+| Edit Menu... | `Ctrl+M` |
 
 `Space` checks or unchecks the selected jobs.
 
