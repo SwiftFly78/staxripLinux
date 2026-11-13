@@ -34,6 +34,12 @@ Public Class VideoRenderer
     'the name shown in the split view when there is no info overlay
     Property Title As String
 
+    'scale of the video instead of fitting it into the control, 1 shows a video pixel per screen pixel
+    Property Zoom As Single
+
+    'offset of the zoomed video from the center of the control
+    Property Offset As PointF
+
     Private Server As IFrameServer
     Private Control As Drawable
     Private PositionValue As Integer
@@ -125,6 +131,19 @@ Public Class VideoRenderer
     Function GetTargetRect() As RectangleF
         Dim width As Single = Control.Width
         Dim height As Single = Control.Height
+
+        If Zoom > 0 AndAlso Server.Info.Height > 0 Then
+            Dim pixelSize = If(Control.ParentWindow?.LogicalPixelSize, 1.0F)
+            Dim h = Server.Info.Height * Zoom / pixelSize
+            Dim w = CSng(h * VideoAspectRatio)
+
+            'the video can't be moved further than its edges
+            Dim maxX = Math.Max(0, (w - width) / 2)
+            Dim maxY = Math.Max(0, (h - height) / 2)
+            Offset = New PointF(Math.Max(-maxX, Math.Min(maxX, Offset.X)), Math.Max(-maxY, Math.Min(maxY, Offset.Y)))
+
+            Return New RectangleF((width - w) / 2 + Offset.X, (height - h) / 2 + Offset.Y, w, h)
+        End If
 
         If Not KeepAspectRatio OrElse Server.Info.Width = 0 OrElse Server.Info.Height = 0 OrElse height = 0 Then
             Return New RectangleF(0, 0, width, height)

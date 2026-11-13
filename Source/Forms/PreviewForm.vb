@@ -520,6 +520,26 @@ Public Class PreviewForm
         SetSize(CInt(ClientSize.Height * factor))
     End Sub
 
+    <Command("Shows the video with a screen pixel for each video pixel or fits it into the window again, a zoomed video can be moved with the mouse.")>
+    Sub ZoomActualSize()
+        If Renderer Is Nothing Then Exit Sub
+
+        If Renderer.Zoom > 0 Then
+            Renderer.Zoom = 0
+        Else
+            Renderer.Zoom = 1
+            Renderer.Offset = PointF.Empty
+
+            'the window gets the size of the video if it fits on the screen
+            If Not IsFullscreen Then
+                Dim extraHeight = If(pnTrack.Visible, pnTrack.Height + FH(0.2), 0) + If(ButtonsRow.Visible, FH(2.4), 0)
+                SetSize(CInt(FrameServer.Info.Height / If(ParentWindow?.LogicalPixelSize, 1.0F)) + extraHeight)
+            End If
+        End If
+
+        Renderer.Draw()
+    End Sub
+
     <Command("Shows/hides various infos.")>
     Sub ToggleInfos()
         ShowPreviewInfo = Not ShowPreviewInfo
@@ -749,6 +769,7 @@ Public Class PreviewForm
         ret.Add("View|-")
         ret.Add("View|Zoom In", NameOf(Zoom), Keys.Equal, Symbol.ZoomIn, {1.1F})
         ret.Add("View|Zoom Out", NameOf(Zoom), Keys.Minus, Symbol.ZoomOut, {0.9F})
+        ret.Add("View|Zoom 100%", NameOf(ZoomActualSize), Keys.D1)
         ret.Add("View|-")
         ret.Add("View|Buttons", NameOf(ShowHideButtons), Keys.B)
         ret.Add("View|Trackbar", NameOf(ShowHideTrackbar), Keys.Control Or Keys.T)
@@ -905,8 +926,20 @@ Public Class PreviewForm
         MyBase.OnClosing(args)
     End Sub
 
+    Private DragStart As PointF
+    Private DragOffset As PointF
+
     Sub pnVideo_MouseDown(sender As Object, e As MouseEventArgs) Handles pnVideo.MouseDown
         pnVideo.Focus()
+        DragStart = e.Location
+        DragOffset = If(Renderer Is Nothing, PointF.Empty, Renderer.Offset)
+    End Sub
+
+    'a zoomed video is moved by dragging it
+    Sub pnVideo_MouseMove(sender As Object, e As MouseEventArgs) Handles pnVideo.MouseMove
+        If Renderer Is Nothing OrElse Renderer.Zoom <= 0 OrElse e.Buttons <> MouseButtons.Primary Then Exit Sub
+        Renderer.Offset = DragOffset + (e.Location - DragStart)
+        Renderer.Draw()
     End Sub
 
     Sub pnVideo_DoubleClick(sender As Object, e As MouseEventArgs) Handles pnVideo.MouseDoubleClick

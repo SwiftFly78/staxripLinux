@@ -114,6 +114,59 @@ Namespace UI
             Next
         End Sub
 
+        'adds an item of the defaults that a menu of older settings lacks, after the item
+        'it follows in the defaults, a shortcut key that is already used isn't taken over
+        Sub AddMissingItem(defaults As CustomMenuItem, methodName As String)
+            If GetAllItems().Any(Function(i) i.MethodName = methodName) Then Exit Sub
+
+            SetParents(defaults)
+            Dim item = defaults.GetAllItems().FirstOrDefault(Function(i) i.MethodName = methodName)
+            If item Is Nothing Then Exit Sub
+
+            Dim parentTexts As New List(Of String)
+            Dim parentItem = item.Parent
+
+            While parentItem IsNot Nothing AndAlso parentItem IsNot defaults
+                parentTexts.Insert(0, parentItem.Text)
+                parentItem = parentItem.Parent
+            End While
+
+            Dim target = Me
+
+            For Each parentText In parentTexts
+                Dim subItem = target.SubItems.FirstOrDefault(Function(i) i.Text = parentText)
+
+                If subItem Is Nothing Then
+                    subItem = New CustomMenuItem(parentText)
+                    target.SubItems.Add(subItem)
+                End If
+
+                target = subItem
+            Next
+
+            Dim copy As New CustomMenuItem(item.Text) With {.MethodName = item.MethodName, .Symbol = item.Symbol}
+            copy.Parameters.AddRange(item.Parameters)
+
+            If item.KeyData = Keys.None OrElse Not GetAllItems().Any(Function(i) i.KeyData = item.KeyData) Then
+                copy.KeyData = item.KeyData
+            End If
+
+            Dim siblings = item.Parent.SubItems
+            Dim insertAt = target.SubItems.Count
+
+            For i = siblings.IndexOf(item) - 1 To 0 Step -1
+                Dim previous = siblings(i)
+                Dim index = target.SubItems.FindIndex(Function(x) x.Text = previous.Text AndAlso x.MethodName = previous.MethodName)
+
+                If index >= 0 Then
+                    insertAt = index + 1
+                    Exit For
+                End If
+            Next
+
+            target.SubItems.Insert(insertAt, copy)
+        End Sub
+
         <NonSerialized()>
         Public Parent As CustomMenuItem
 

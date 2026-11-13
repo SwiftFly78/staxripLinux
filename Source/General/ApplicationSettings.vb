@@ -315,6 +315,11 @@ Public Class ApplicationSettings
             CustomMenuPreview = PreviewForm.GetDefaultMenu()
         End If
 
+        'commands that were added to the preview later, customized menus are kept
+        If Check(CustomMenuPreview, "Items of the menu in preview dialog", 1) Then
+            CustomMenuPreview.AddMissingItem(PreviewForm.GetDefaultMenu(), NameOf(PreviewForm.ZoomActualSize))
+        End If
+
         If Check(CustomMenuCodeEditor, "Menu in code editor", 24) Then
             CustomMenuCodeEditor = CodeEditor.GetDefaultMenu()
         End If

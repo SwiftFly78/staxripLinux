@@ -30,6 +30,9 @@ Public Class VideoComparisonForm
     Property SplitView As Boolean
     Private miSplitView As MenuItemEx
 
+    Property ZoomActualSize As Boolean
+    Private miZoom As MenuItemEx
+
     Shadows Menu As ContextMenuStripEx
 
     Sub New()
@@ -60,6 +63,7 @@ Public Class VideoComparisonForm
         miFrameInfo = Menu.Add("Frame Info", AddressOf ToggleFrameInfo, Keys.I, "Shows the name, frame number, time and picture type on the videos and on saved PNGs.")
         miFrameInfo.Marked = ShowFrameInfo
         miSplitView = Menu.Add("Split View", AddressOf ToggleSplitView, Keys.V, "Shows the selected video left and the next video right of a line, which can be dragged with the mouse.")
+        miZoom = Menu.Add("Zoom 100%", AddressOf ToggleZoom, Keys.Z, "Shows the videos with a screen pixel for each video pixel, dragging moves them, in the split view with the middle mouse button.")
         Menu.Add("Crop...", AddressOf CropVideos, Keys.C, "Crops the selected video or all videos.")
         Menu.Add("Go To Frame...", AddressOf GoToFrame, Keys.F, enabledFunc)
         Menu.Add("Go To Time...", AddressOf GoToTime, Keys.T, enabledFunc)
@@ -116,6 +120,15 @@ Public Class VideoComparisonForm
         ElseIf tabs.Any() Then
             TrackBar.Maximum = Math.Max(1, tabs.Max(Function(i) i.Server.Info.FrameCount - 1))
         End If
+    End Sub
+
+    Sub ToggleZoom()
+        ZoomActualSize = Not ZoomActualSize
+        miZoom.Marked = ZoomActualSize
+
+        For Each i In TabControl.TabPages.OfType(Of VideoTab)
+            i.UpdateZoom()
+        Next
     End Sub
 
     Sub ToggleSplitView()
@@ -488,8 +501,9 @@ Public Class VideoComparisonForm
             VideoPanel = New Drawable
             Content = VideoPanel
 
-            AddHandler VideoPanel.MouseDown, AddressOf VideoPanelMouse
-            AddHandler VideoPanel.MouseMove, AddressOf VideoPanelMouse
+            AddHandler VideoPanel.MouseDown, AddressOf VideoPanelMouseDown
+            AddHandler VideoPanel.MouseMove, AddressOf VideoPanelMouseMove
+            AddHandler VideoPanel.MouseUp, AddressOf VideoPanelMouseUp
         End Sub
 
         Sub SetSplitTab(tab As VideoTab)
@@ -500,9 +514,53 @@ Public Class VideoComparisonForm
             End If
         End Sub
 
-        'dragging moves the line of the split view
-        Sub VideoPanelMouse(sender As Object, e As MouseEventArgs)
-            If SplitTab Is Nothing OrElse Renderer Is Nothing OrElse e.Buttons <> MouseButtons.Primary Then Exit Sub
+        Private DragStart As PointF
+        Private DragOffset As PointF
+
+        Sub UpdateZoom()
+            If Renderer Is Nothing Then Exit Sub
+            Renderer.Zoom = If(Form.ZoomActualSize, 1, 0)
+            Renderer.Offset = PointF.Empty
+            Renderer.Draw()
+        End Sub
+
+        Private Panning As Boolean
+
+        'dragging moves a zoomed video, in the split view with the middle button
+        Sub VideoPanelMouseDown(sender As Object, e As MouseEventArgs)
+            If Renderer Is Nothing Then Exit Sub
+
+            Panning = Renderer.Zoom > 0 AndAlso
+                ((SplitTab Is Nothing AndAlso e.Buttons = MouseButtons.Primary) OrElse e.Buttons = MouseButtons.Middle)
+
+            If Panning Then
+                DragStart = e.Location
+                DragOffset = Renderer.Offset
+                e.Handled = True
+            Else
+                MoveSplitLine(e)
+            End If
+        End Sub
+
+        Sub VideoPanelMouseMove(sender As Object, e As MouseEventArgs)
+            If Renderer Is Nothing OrElse e.Buttons = MouseButtons.None Then Exit Sub
+
+            If Panning Then
+                Renderer.Offset = DragOffset + (e.Location - DragStart)
+                Renderer.Draw()
+                e.Handled = True
+            Else
+                MoveSplitLine(e)
+            End If
+        End Sub
+
+        Sub VideoPanelMouseUp(sender As Object, e As MouseEventArgs)
+            Panning = False
+        End Sub
+
+        'the line of the split view is moved with the left mouse button
+        Sub MoveSplitLine(e As MouseEventArgs)
+            If SplitTab Is Nothing OrElse e.Buttons <> MouseButtons.Primary Then Exit Sub
 
             Dim target = Renderer.GetTargetRect()
 
@@ -660,6 +718,7 @@ Public Class VideoComparisonForm
                 .UseSampleAspectRatio = True,
                 .DisplayAspectRatio = DisplayAspectRatio,
                 .ShowInfo = Form.ShowFrameInfo,
+                .Zoom = If(Form.ZoomActualSize, 1, 0),
                 .Title = SourceFilePath.FileName}
 
             Renderer.InfoTextFunc = Function() GetFrameInfoText(Renderer.Position)
