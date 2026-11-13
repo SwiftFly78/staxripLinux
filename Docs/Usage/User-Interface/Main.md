@@ -31,6 +31,9 @@ Let's look at each part and see, what we can find there:
     For more information check out [Open Video Source File(s)](Opening.md).
 - #### Demux
 	Demuxes a video file into a specific folder while referring to the [Project Options](Project-Options.md).
+- #### Extract Sample
+	Copies a part of the source into an MKV file with mkvmerge without encoding it, for example to share a sample.
+	The dialog asks for the start, the length and the target file, the sample begins at the next key frame.
 - #### Video Comparison
 	It's a feature to compare different versions of a video, for example a source and an encode or just a
     AviSynth or VapourSynth script with some filters, that were applied, in order to see and compare the effects.  

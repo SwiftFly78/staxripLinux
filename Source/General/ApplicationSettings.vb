@@ -325,8 +325,9 @@ Public Class ApplicationSettings
         End If
 
         'commands that were added to the main menu later, customized menus are kept
-        If Check(CustomMenuMainForm, "Items of the main menu", 3) Then
-            For Each method In {NameOf(MainForm.EditCuts), NameOf(MainForm.ShowPowerShellConsole), NameOf(MainForm.AnalyzeInterlacing)}
+        If Check(CustomMenuMainForm, "Items of the main menu", 4) Then
+            For Each method In {NameOf(MainForm.EditCuts), NameOf(MainForm.ShowPowerShellConsole), NameOf(MainForm.AnalyzeInterlacing),
+                                NameOf(MainForm.ExtractSample)}
                 CustomMenuMainForm.AddMissingItem(MainForm.GetDefaultMainMenu(), method)
             Next
         End If

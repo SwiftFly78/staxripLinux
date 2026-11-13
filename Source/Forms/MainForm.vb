@@ -3547,6 +3547,71 @@ Partial Public Class MainForm
                 $"BFF {percent(bff)}%, undetermined {percent(undetermined)}%, repeated fields {percent(repeated)}%.")
     End Sub
 
+    <Command("Extracts a part of the source with mkvmerge without re-encoding, for example to share a sample.")>
+    Sub ExtractSample()
+        If p.SourceFile = "" Then
+            ShowOpenSourceDialog()
+            Exit Sub
+        End If
+
+        If Not Package.mkvmerge.VerifyOK(True) Then Exit Sub
+
+        Dim source = p.FirstOriginalSourceFile
+        Dim start = TimeSpan.FromSeconds(Math.Floor(p.SourceSeconds / 3))
+        Dim length = s.Storage.GetInt("sample length", 30)
+        Dim target = Path.Combine(p.TargetFile.Dir, source.Base + "_sample.mkv")
+
+        Using form As New SimpleSettingsForm("Extract Sample")
+            form.ScaleClientSize(32, 9)
+            Dim ui = form.SimpleUI
+            Dim page = ui.CreateFlowPage("main page")
+            page.Padding = New Padding(FH(0.5))
+
+            Dim startText = ui.AddText(page)
+            startText.Text = "Start:"
+            startText.Help = "Position in the source, like 01:30 or 00:01:30. The sample begins at the next key frame."
+            startText.Edit.Text = start.ToString("hh\:mm\:ss")
+            startText.Edit.SaveAction = Sub(value)
+                                            If Not TimeSpan.TryParse(If(value.Count(Function(c) c = ":"c) = 1, "00:" + value, value), start) Then
+                                                start = TimeSpan.Zero
+                                            End If
+                                        End Sub
+
+            Dim lengthNum = ui.AddNum(page)
+            lengthNum.Text = "Length in seconds:"
+            lengthNum.Config = {1, 3600}
+            lengthNum.NumEdit.Value = length
+            lengthNum.NumEdit.SaveAction = Sub(value) length = CInt(value)
+
+            Dim targetText = ui.AddText(page)
+            targetText.Text = "Target:"
+            targetText.Expanded = True
+            targetText.Edit.Text = target
+            targetText.Edit.SaveAction = Sub(value) target = value.Trim()
+
+            If form.ShowDialog() <> DialogResult.OK Then Exit Sub
+            ui.Save()
+        End Using
+
+        s.Storage.SetInt("sample length", length)
+        Dim [end] = start + TimeSpan.FromSeconds(length)
+
+        Using proc As New Proc
+            proc.Header = "Extract Sample"
+            proc.SkipStrings = {"Progress: "}
+            proc.Encoding = Encoding.UTF8
+            proc.Package = Package.mkvmerge
+            proc.Arguments = $"-o {target.Escape} --split parts:{start:hh\:mm\:ss}-{[end]:hh\:mm\:ss} {source.Escape}"
+            proc.AllowedExitCodes = {0, 1}
+            proc.OutputFiles = {target}
+            proc.Start()
+        End Using
+
+        If target.FileExists() Then
+            MsgInfo("Sample extracted", target + BR2 + MediaInfo.GetSummary(target))
+        End If
+    End Sub
+
     <Command("Window to run PowerShell commands with the objects of StaxRip, like $p for the project.")>
     Sub ShowPowerShellConsole()
         Dim form As New PowerShellConsoleForm
@@ -3918,6 +3983,7 @@ Partial Public Class MainForm
         ret.Add("File|Open Video Source File(s)...|Blu-ray Image File", NameOf(ShowOpenSourceBlurayImageDialog))
         ret.Add("File|Open Video Source File(s)...|Blu-ray Folder", NameOf(ShowOpenSourceBlurayFolderDialog))
         ret.Add("File|Demux...", NameOf(g.DefaultCommands.ShowDemuxTool), Symbol.fa_sitemap)
+        ret.Add("File|Extract Sample...", NameOf(ExtractSample))
         ret.Add("File|-")
         ret.Add("File|Video Comparison...", NameOf(ShowVideoComparison), Keys.F5, Symbol.VideoLegacy)
         ret.Add("File|-")
