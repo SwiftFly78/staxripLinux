@@ -306,6 +306,11 @@ Public Class ApplicationSettings
             ProjectLinks.ReplaceLinks(CustomMenuMainForm)
         End If
 
+        'commands that were added to the main menu later, customized menus are kept
+        If Check(CustomMenuMainForm, "Items of the main menu", 1) Then
+            CustomMenuMainForm.AddMissingItem(MainForm.GetDefaultMainMenu(), NameOf(MainForm.EditCuts))
+        End If
+
         'a dismissed version of StaxRip would hide the updates of StaxRipLinux
         If Check(CheckForUpdatesDismissed, "Dismissed update", 1) Then
             CheckForUpdatesDismissed = ""
@@ -316,8 +321,9 @@ Public Class ApplicationSettings
         End If
 
         'commands that were added to the preview later, customized menus are kept
-        If Check(CustomMenuPreview, "Items of the menu in preview dialog", 1) Then
+        If Check(CustomMenuPreview, "Items of the menu in preview dialog", 2) Then
             CustomMenuPreview.AddMissingItem(PreviewForm.GetDefaultMenu(), NameOf(PreviewForm.ZoomActualSize))
+            CustomMenuPreview.AddMissingItem(PreviewForm.GetDefaultMenu(), NameOf(PreviewForm.EditRanges))
         End If
 
         If Check(CustomMenuCodeEditor, "Menu in code editor", 24) Then

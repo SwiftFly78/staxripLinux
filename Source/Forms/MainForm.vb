@@ -3359,6 +3359,32 @@ Partial Public Class MainForm
         ShowPreview(True)
     End Sub
 
+    <Command("Dialog to enter the ranges of frames or times to keep, without the preview.")>
+    Sub EditCuts()
+        If p.SourceFile = "" Then
+            ShowOpenSourceDialog()
+            Exit Sub
+        End If
+
+        If Not g.VerifyRequirements OrElse Not g.IsValidSource Then Exit Sub
+
+        Dim script = p.Script.GetNewScript()
+        script.Path = Path.Combine(p.TempDir, p.TargetFile.Base + "_cuts." + script.FileType)
+        script.RemoveFilter("Cutting")
+        Dim info = script.GetInfo()
+
+        If script.Error <> "" Then
+            MsgError("Script Error", script.Error)
+            Exit Sub
+        End If
+
+        If g.EditCutRanges(info.FrameCount, CDbl(info.FrameRate)) Then
+            g.UpdateTrim(p.Script)
+            UpdateFilters()
+            Assistant()
+        End If
+    End Sub
+
     <Command("Window to preview or cut the video.")>
     Sub ShowPreview()
         ShowPreview(False)
@@ -3744,6 +3770,7 @@ Partial Public Class MainForm
         ret.Add("Preview", NameOf(ShowPreview), Keys.F4, Symbol.fa_eye)
 
         ret.Add("Project|Add Hardcoded Subtitle...", NameOf(ShowHardcodedSubtitleDialogFromTempDir), Keys.Control Or Keys.H, Symbol.Subtitles)
+        ret.Add("Project|Cuts...", NameOf(EditCuts))
         ret.Add("Project|Script Info...", NameOf(ShowScriptInfo), Keys.F2, Symbol.Info)
         ret.Add("Project|Advanced Script Info...", NameOf(ShowAdvancedScriptInfo), Keys.Control Or Keys.F2, Symbol.AddTo)
         ret.Add("Project|-")

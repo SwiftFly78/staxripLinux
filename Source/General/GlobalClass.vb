@@ -2307,6 +2307,79 @@ Public Class GlobalClass
         Return Task.Run(action)
     End Function
 
+    'the ranges to keep as text, frames or times, of the script without the Cutting filter
+    Function EditCutRanges(frameCount As Integer, frameRate As Double) As Boolean
+        Dim sb As New StringBuilder
+        sb.AppendLine("# Frames to keep, one range per line like 1500-2399, the first frame is 0.")
+        sb.AppendLine("# Times like 0:01:00.000-0:01:30.000 keep the frames until the second time.")
+        sb.AppendLine("# The video has " & frameCount & " frames at " + frameRate.ToInvariantString("0.###") + " fps.")
+
+        For Each i In p.Ranges
+            sb.AppendLine(i.Start & "-" & i.End)
+        Next
+
+        Using form As New StringEditorForm
+            form.Text = $"Cuts - {g.DefaultCommands.GetApplicationDetails()}"
+            form.cbWrap.Visible = False
+            form.rtb.WordWrap = False
+            form.rtb.Text = sb.ToString()
+            form.ScaleClientSize(42, 20)
+
+            If form.ShowDialog() <> DialogResult.OK Then
+                Return False
+            End If
+
+            Dim parsePosition = Function(value As String, isEnd As Boolean) As Integer
+                                    Dim frame As Integer
+                                    Dim time As TimeSpan
+
+                                    If Not value.Contains(":") Then
+                                        Return If(Integer.TryParse(value, frame), frame, -1)
+                                    End If
+
+                                    If Not TimeSpan.TryParse(value, CultureInfo.InvariantCulture, time) Then Return -1
+                                    Dim ret = CInt(Math.Round(time.TotalSeconds * frameRate))
+                                    Return If(isEnd, ret - 1, ret)
+                                End Function
+
+            Dim ranges As New List(Of Range)
+
+            For Each line In form.rtb.Text.SplitLinesNoEmpty()
+                line = line.Trim()
+                If line = "" OrElse line.StartsWith("#") Then Continue For
+
+                Dim match = Regex.Match(line, "^([\d:.]+)\s*-\s*([\d:.]+)$")
+                Dim startFrame = If(match.Success, parsePosition(match.Groups(1).Value, False), -1)
+                Dim endFrame = If(match.Success, parsePosition(match.Groups(2).Value, True), -1)
+
+                If startFrame < 0 OrElse endFrame < startFrame OrElse endFrame > frameCount - 1 Then
+                    MsgError("Invalid cut: " + line, "A cut is a range like 1500-2399 or 0:01:00.000-0:01:30.000 " +
+                             "with frames from 0 to " & frameCount - 1 & ".")
+                    Return False
+                End If
+
+                ranges.Add(New Range(startFrame, endFrame))
+            Next
+
+            'overlapping and adjacent ranges are joined
+            ranges.Sort()
+            Dim joined As New List(Of Range)
+
+            For Each i In ranges
+                If joined.Count > 0 AndAlso i.Start <= joined.Last.End + 1 Then
+                    joined.Last.End = Math.Max(joined.Last.End, i.End)
+                Else
+                    joined.Add(i)
+                End If
+            Next
+
+            p.Ranges = joined
+            p.CutFrameCount = frameCount
+            p.CutFrameRate = frameRate
+            Return True
+        End Using
+    End Function
+
     Sub UpdateTrim(script As VideoScript, Optional moveToTheEnd As Boolean = False)
         If script Is Nothing Then Exit Sub
         If moveToTheEnd OrElse Not p.Ranges.Any() Then script.RemoveFilter("Cutting")

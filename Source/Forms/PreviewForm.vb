@@ -490,6 +490,13 @@ Public Class PreviewForm
         g.MainForm.ShowJobsDialog()
     End Sub
 
+    <Command("Dialog to edit the selections as text, as ranges of frames or times.")>
+    Sub EditRanges()
+        If g.EditCutRanges(FrameServer.Info.FrameCount, FrameServer.FrameRate) Then
+            AfterPositionChanged()
+        End If
+    End Sub
+
     <Command("Clears all cuts.")>
     Sub ClearAllRanges()
         p.Ranges.Clear()
@@ -765,6 +772,7 @@ Public Class PreviewForm
         ret.Add("Cut|-")
         ret.Add("Cut|Delete Selection", NameOf(DeleteRange), Keys.Delete, Symbol.Delete)
         ret.Add("Cut|Delete All Selections", NameOf(ClearAllRanges), Keys.Control Or Keys.Delete)
+        ret.Add("Cut|Edit Selections...", NameOf(EditRanges), Keys.E)
         ret.Add("Cut|-")
         ret.Add("Cut|Create job for each selection", NameOf(CreateJobForEachSelection))
 
