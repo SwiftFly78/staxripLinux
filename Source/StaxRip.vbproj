@@ -40,11 +40,11 @@
   <ItemGroup>
     <PackageReference Include="Eto.Forms" Version="2.13.0" />
     <PackageReference Include="Eto.Platform.Gtk" Version="2.13.0" />
-    <PackageReference Include="System.Runtime.Serialization.Formatters" Version="10.0.13" />
-    <PackageReference Include="Microsoft.PowerShell.SDK" Version="7.6.8" />
+    <PackageReference Include="System.Runtime.Serialization.Formatters" Version="10.0.14" />
+    <PackageReference Include="Microsoft.PowerShell.SDK" Version="7.6.9" />
     <!-- the PowerShell SDK references versions with known vulnerabilities -->
-    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
-    <PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.13" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.14" />
+    <PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.14" />
   </ItemGroup>
 
   <ItemGroup>
