@@ -12,6 +12,7 @@ Public Class EventCommandsEditor
     Public WithEvents bnDown As ButtonEx
     Public WithEvents bnUp As ButtonEx
     Public WithEvents bnEdit As ButtonEx
+    Public WithEvents bnVariables As ButtonEx
     Public WithEvents lv As ListViewEx
 
     Private Sub InitializeComponent()
@@ -21,13 +22,14 @@ Public Class EventCommandsEditor
         bnRemove = New ButtonEx("Remove")
         bnUp = New ButtonEx("Up")
         bnDown = New ButtonEx("Down")
+        bnVariables = New ButtonEx("Variables...")
         bnOK = CreateButton("OK", DialogResult.OK)
         bnCancel = CreateButton("Cancel", DialogResult.Cancel)
         lv = New ListViewEx
 
         Dim buttons As New TableLayout(
             Row(bnAdd), Row(bnEdit), Row(bnClone), Row(bnRemove), Row(bnUp), Row(bnDown),
-            New TableRow With {.ScaleHeight = True}) With {.Spacing = DefaultSpacing}
+            New TableRow With {.ScaleHeight = True}, Row(bnVariables)) With {.Spacing = DefaultSpacing}
 
         Content = DialogContent(ButtonRow(bnOK, bnCancel), ScaledRow(Scaled(lv), buttons))
 
@@ -54,6 +56,21 @@ Public Class EventCommandsEditor
         lv.ItemCheckProperty = NameOf(EventCommand.Enabled)
         lv.AddItems(ObjectHelp.GetCopy(eventCommands))
         lv.SelectFirst()
+    End Sub
+
+    'variables that event commands use as %var:name% and PowerShell scripts as $Variables
+    Sub bnVariables_Click() Handles bnVariables.Click
+        Using dialog As New MacroEditorDialog
+            dialog.Text = $"Variables - {g.DefaultCommands.GetApplicationDetails()}"
+            dialog.MacroEditorControl.Value = If(s.Variables <> "", s.Variables,
+                "# One variable per line like name = value, for %var:name% in macros" + BR +
+                "# and $Variables['name'] in PowerShell scripts" + BR)
+
+            If dialog.ShowDialog() = DialogResult.OK Then
+                s.Variables = dialog.MacroEditorControl.Value
+                g.SaveSettings()
+            End If
+        End Using
     End Sub
 
     Sub bnAdd_Click() Handles bnAdd.Click

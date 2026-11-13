@@ -242,6 +242,27 @@ Public Class GlobalClass
         End Try
     End Sub
 
+    'the variables of the settings, lines starting with # are comments
+    Function GetVariables() As Dictionary(Of String, String)
+        Dim ret As New Dictionary(Of String, String)(StringComparer.OrdinalIgnoreCase)
+
+        For Each line In If(s.Variables, "").SplitLinesNoEmpty()
+            If line.TrimStart().StartsWith("#") OrElse Not line.Contains("=") Then Continue For
+            Dim name = line.Left("=").Trim()
+
+            If name <> "" Then
+                ret(name) = line.Right("=").Trim()
+            End If
+        Next
+
+        Return ret
+    End Function
+
+    Function GetVariable(name As String) As String
+        Dim ret As String = Nothing
+        Return If(GetVariables().TryGetValue(name, ret), ret, "")
+    End Function
+
     'the time of the events file that was loaded or saved, other instances can change it
     Private EventsFileTime As Date
 

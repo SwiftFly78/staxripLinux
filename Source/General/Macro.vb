@@ -227,6 +227,7 @@ Public Class Macro
             ret.Add(New Macro("filter:name", "Filter", GetType(String), "Returns the script code of a filter of the active project that matches the specified name."))
             ret.Add(New Macro("isfilteractive:name", "Active Filter Check", GetType(String), "Returns `1` if the filter is active, otherwise `0`."))
             ret.Add(New Macro("random:digits", "Random Number", GetType(Integer), "Returns a 'digits' long random number, whereas 'digits' is clamped between `1` and `10`."))
+            ret.Add(New Macro("var:name", "Variable", GetType(String), "Returns the value of a variable, variables are defined with Variables... in the Event Command dialog. PowerShell scripts get them as $Variables."))
             ret.Add(New Macro("source_mi_g:property", "MediaInfo General Property", GetType(String), "Returns the given MediaInfo property from the General section for the source file."))
             ret.Add(New Macro("source_mi_v:property", "MediaInfo Video Property", GetType(String), "Returns the given MediaInfo property from the Video section for the source file. Before `:` you can add a zero-based index for the track number of that section."))
             ret.Add(New Macro("source_mi_a:property", "MediaInfo Audio Property", GetType(String), "Returns the given MediaInfo property from the Audio section for the source file. Before `:` you can add a zero-based index for the track number of that section."))
@@ -754,6 +755,16 @@ Public Class Macro
                     value = value.Replace(i.Value, "")
 
                     If Not value.Contains("%") Then Exit For
+                Next
+            End If
+
+            If value.Contains("%var:") Then
+                Dim variables = g.GetVariables()
+
+                For Each i As Match In Regex.Matches(value, "%var:(.+?)%")
+                    Dim variable As String = Nothing
+                    variables.TryGetValue(i.Groups(1).Value, variable)
+                    value = value.Replace(i.Value, Protect(If(variable, ""), shell))
                 Next
             End If
 

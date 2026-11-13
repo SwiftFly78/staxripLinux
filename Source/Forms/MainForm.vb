@@ -252,7 +252,8 @@ Partial Public Class MainForm
         PowerShell.InitCode =
             "Using namespace StaxRip;" + BR +
             "Using namespace StaxRip.UI;" + BR +
-            "[Reflection.Assembly]::LoadWithPartialName(""StaxRip"")"
+            "[Reflection.Assembly]::LoadWithPartialName(""StaxRip"")" + BR +
+            "$Variables = [StaxRip.ShortcutModule]::g.GetVariables()"
 
         If s.WriteDebugLog Then
             Dim filePath = Path.Combine(Folder.Settings, "Debug.log")

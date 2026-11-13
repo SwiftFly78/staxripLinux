@@ -45,6 +45,9 @@ Public Class ApplicationSettings
     Public ErrorMessageExtendedByErr As Boolean = False
     Public ErrorMessageTimeout As Integer = 120
     Public EventCommands As List(Of EventCommand)
+
+    'user variables, one name = value per line, for %var:name% and $Variables in PowerShell
+    Public Variables As String
     Public EventWhileProcessingCooldown As Integer = 60
     Public ExpandPreviewWindow As Boolean = True
     Public FilterSetupProfiles As List(Of TargetVideoScript)
