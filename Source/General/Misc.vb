@@ -1664,6 +1664,15 @@ Public Class Subtitle
     Property Enabled As Boolean = True
     Property Size As Long
 
+    'PGS, VobSub and DVB subtitles are images, the others text
+    ReadOnly Property IsBitmap As Boolean
+        Get
+            Dim fileExt = Path?.Ext()
+            Dim subtitleExt = If(fileExt.EqualsAny("sup", "idx", "sub", "mks", "srt", "ass", "ssa", "vtt", "usf"), fileExt, Ext)
+            Return subtitleExt.EqualsAny("sup", "idx", "sub", "mks")
+        End Get
+    End Property
+
     'the flags of demuxed subtitles are suffixes like _forced before the extension
     Shared Function HasFlagSuffix(path As String, flag As String) As Boolean
         Dim match = Regex.Match(path.Base.ToLowerInvariant(), "(?:_(?:default|forced|commentary|hearingimpaired|visualimpaired|textdescriptions|original))+$")
@@ -2410,6 +2419,12 @@ Public Enum DemuxMode
     <DispName("Preferred Languages")> Preferred
     All
     None
+End Enum
+
+Public Enum SubtitleTypeMode
+    <DispName("Text and bitmap")> All
+    <DispName("Text only")> Text
+    <DispName("Bitmap only")> Bitmap
 End Enum
 
 Public Enum SubtitleMode

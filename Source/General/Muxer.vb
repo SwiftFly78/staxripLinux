@@ -202,7 +202,7 @@ Public MustInherit Class Muxer
                         Continue For
                     End If
 
-                    If p.PreferredSubtitles <> "" AndAlso IsSupported(iSubtitle) Then
+                    If p.PreferredSubtitles <> "" AndAlso IsSupported(iSubtitle) AndAlso p.IsSubtitleTypeIncluded(iSubtitle, False) Then
                         If fp.ToLowerEx.ContainsAny("_forced", ".forced.") Then
                             iSubtitle.Forced = True
                         End If
@@ -229,7 +229,7 @@ Public MustInherit Class Muxer
             MediaInfo.GetSubtitleCount(p.FirstOriginalSourceFile) > 0 AndAlso
             TypeOf Me Is MkvMuxer Then
 
-            Subtitles.AddRange(Subtitle.Create(p.FirstOriginalSourceFile).Where(AddressOf IsSupported))
+            Subtitles.AddRange(Subtitle.Create(p.FirstOriginalSourceFile).Where(Function(i) IsSupported(i) AndAlso p.IsSubtitleTypeIncluded(i, False)))
         End If
 
         For Each i In files

@@ -22,6 +22,7 @@ Public Class Project
     Public AudioTracksAvailable As Integer = 4
     Public AddAudioTracksForAllStreams As Boolean
     Public KeepAudioTrackLanguages As Boolean
+    Public SubtitleTypes As SubtitleTypeMode
     Public AutoCompCheck As Boolean = False
     Public AutoCorrectCropValues As Boolean = True
     Public AutoCropDolbyVisionThresholdBegin As Integer = 0
@@ -304,6 +305,18 @@ Public Class Project
             End If
         End Set
     End Property
+
+    'bitmap subtitles are demuxed for the OCR also with text only, the result is text
+    Function IsSubtitleTypeIncluded(subtitle As Subtitle, forDemux As Boolean) As Boolean
+        Select Case SubtitleTypes
+            Case SubtitleTypeMode.Text
+                Return Not subtitle.IsBitmap OrElse (forDemux AndAlso ConvertBitmapSubtitles)
+            Case SubtitleTypeMode.Bitmap
+                Return subtitle.IsBitmap
+            Case Else
+                Return True
+        End Select
+    End Function
 
     Sub AddHardcodedSubtitleFilter(path As String, showErrorMsg As Boolean)
         If p.Script.IsAviSynth Then

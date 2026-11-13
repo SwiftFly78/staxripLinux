@@ -462,6 +462,12 @@ Partial Public Class MainForm
             subMode.Text = "Subtitles"
             subMode.Field = NameOf(p.SubtitleMode)
 
+            Dim subTypes = ui.AddMenu(Of SubtitleTypeMode)
+            subTypes.Text = "Types"
+            subTypes.Help = "Subtitles of the other type aren't demuxed or included. PGS, VobSub and DVB subtitles are bitmaps." +
+                BR2 + "With OCR, text only demuxes bitmap subtitles to convert them."
+            subTypes.Field = NameOf(p.SubtitleTypes)
+
             Dim prefSub = ui.AddTextMenu(subPage)
             prefSub.Text = "Languages"
             prefSub.Help = "List of used subtitle languages."

@@ -213,6 +213,8 @@ Public Class MediaInfo
                                 subtitle.Enabled = True
                             End If
                         Next
+
+                        subtitle.Enabled = subtitle.Enabled AndAlso p.IsSubtitleTypeIncluded(subtitle, True)
                     End If
 
                     ret.Add(subtitle)

@@ -917,7 +917,7 @@ Public Class mkvDemuxer
                         skip = Not subtitle.Enabled
                 End Select
 
-                If skip Then Continue For
+                If skip OrElse Not proj.IsSubtitleTypeIncluded(subtitle, True) Then Continue For
 
                 Dim _default = If(subtitle.Default, "_default", "")
                 Dim forced = If(subtitle.Forced, "_forced", "")
