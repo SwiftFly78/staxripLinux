@@ -93,6 +93,22 @@ Public Class Audio
             ret += " [Commentary]"
         End If
 
+        If stream.HearingImpaired Then
+            ret += " [HearingImpaired]"
+        End If
+
+        If stream.VisualImpaired Then
+            ret += " [VisualImpaired]"
+        End If
+
+        If stream.TextDescriptions Then
+            ret += " [TextDescriptions]"
+        End If
+
+        If stream.Original Then
+            ret += " [Original]"
+        End If
+
         If stream.SBR Then
             ret += " [SBR]"
         End If

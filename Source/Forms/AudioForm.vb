@@ -17,6 +17,7 @@ Public Class AudioForm
     Public WithEvents SimpleUI As SimpleUI
     Public WithEvents rtbCommandLine As CommandLineRichTextBox
     Public WithEvents cbForcedTrack, cbDefaultTrack, cbNormalize, cbCenterOptimizedStereo, cbCommentaryTrack As CheckBoxEx
+    Public WithEvents cbHearingImpairedTrack, cbVisualImpairedTrack, cbTextDescriptionsTrack, cbOriginalTrack As CheckBoxEx
     Public gbBasic, gbAdvanced As GroupBox
 
     Private Sub InitializeComponent()
@@ -53,6 +54,10 @@ Public Class AudioForm
         cbDefaultTrack = New CheckBoxEx With {.Text = "Default Track"}
         cbForcedTrack = New CheckBoxEx With {.Text = "Forced Track"}
         cbCommentaryTrack = New CheckBoxEx With {.Text = "Commentary Track"}
+        cbHearingImpairedTrack = New CheckBoxEx With {.Text = "Hearing Impaired"}
+        cbVisualImpairedTrack = New CheckBoxEx With {.Text = "Visual Impaired"}
+        cbTextDescriptionsTrack = New CheckBoxEx With {.Text = "Text Descriptions"}
+        cbOriginalTrack = New CheckBoxEx With {.Text = "Original Language"}
         SimpleUI = New SimpleUI
         bnAdvanced = New ButtonEx("More...")
         bnOK = CreateButton("OK", DialogResult.OK)
@@ -73,9 +78,10 @@ Public Class AudioForm
             Row(laCustom, Scaled(tbCustom), Nothing, Nothing),
             Row(cbNormalize, Nothing, Nothing, Nothing),
             Row(cbCenterOptimizedStereo, Nothing, Nothing, Nothing),
-            Row(cbDefaultTrack, Nothing, Nothing, Nothing),
-            Row(cbForcedTrack, Nothing, Nothing, Nothing),
-            Row(cbCommentaryTrack, Nothing, Nothing, Nothing),
+            Row(cbDefaultTrack, cbHearingImpairedTrack, Nothing, Nothing),
+            Row(cbForcedTrack, cbVisualImpairedTrack, Nothing, Nothing),
+            Row(cbCommentaryTrack, cbTextDescriptionsTrack, Nothing, Nothing),
+            Row(Nothing, cbOriginalTrack, Nothing, Nothing),
             New TableRow With {.ScaleHeight = True}) With {.Spacing = DefaultSpacing}
 
         gbBasic = New GroupBox With {.Text = "Basic", .Content = basic}
@@ -107,6 +113,10 @@ Public Class AudioForm
         'cbDefaultTrack.Visible = TypeOf p.VideoEncoder.Muxer Is MkvMuxer
         cbForcedTrack.Visible = TypeOf p.VideoEncoder.Muxer Is MkvMuxer
         cbCommentaryTrack.Visible = TypeOf p.VideoEncoder.Muxer Is MkvMuxer
+
+        For Each cb In {cbHearingImpairedTrack, cbVisualImpairedTrack, cbTextDescriptionsTrack, cbOriginalTrack}
+            cb.Visible = TypeOf p.VideoEncoder.Muxer Is MkvMuxer
+        Next
 
         Dim cms As New ContextMenuStripEx With {
             .Form = Me
@@ -143,6 +153,10 @@ Public Class AudioForm
         TipProvider.SetTip("Default MKV Track.", cbDefaultTrack)
         TipProvider.SetTip("Forced MKV Track.", cbForcedTrack)
         TipProvider.SetTip("Commentary MKV Track.", cbCommentaryTrack)
+        TipProvider.SetTip("MKV track suitable for hearing impaired.", cbHearingImpairedTrack)
+        TipProvider.SetTip("MKV track suitable for visually impaired, like audio descriptions.", cbVisualImpairedTrack)
+        TipProvider.SetTip("MKV track with textual descriptions of the video.", cbTextDescriptionsTrack)
+        TipProvider.SetTip("MKV track in the original language of the content.", cbOriginalTrack)
     End Sub
 
     Protected Overrides Sub OnClosed(e As EventArgs)
@@ -169,6 +183,10 @@ Public Class AudioForm
         gap.Default = TempProfile.Default
         gap.Forced = TempProfile.Forced
         gap.Commentary = TempProfile.Commentary
+        gap.HearingImpaired = TempProfile.HearingImpaired
+        gap.VisualImpaired = TempProfile.VisualImpaired
+        gap.TextDescriptions = TempProfile.TextDescriptions
+        gap.Original = TempProfile.Original
         gap.Params = TempProfile.Params
         gap.Decoder = TempProfile.Decoder
         gap.DecodingMode = TempProfile.DecodingMode
@@ -560,6 +578,10 @@ Public Class AudioForm
         cbDefaultTrack.Checked = TempProfile.Default
         cbForcedTrack.Checked = TempProfile.Forced
         cbCommentaryTrack.Checked = TempProfile.Commentary
+        cbHearingImpairedTrack.Checked = TempProfile.HearingImpaired
+        cbVisualImpairedTrack.Checked = TempProfile.VisualImpaired
+        cbTextDescriptionsTrack.Checked = TempProfile.TextDescriptions
+        cbOriginalTrack.Checked = TempProfile.Original
         cbNormalize.Checked = TempProfile.Params.Normalize
         cbCenterOptimizedStereo.Checked = TempProfile.Params.CenterOptimizedStereo
 
@@ -1083,6 +1105,22 @@ Public Class AudioForm
 
     Sub cbCommentaryTrack_CheckedChanged(sender As Object, e As EventArgs) Handles cbCommentaryTrack.CheckedChanged
         TempProfile.Commentary = cbCommentaryTrack.Checked
+    End Sub
+
+    Sub cbHearingImpairedTrack_CheckedChanged(sender As Object, e As EventArgs) Handles cbHearingImpairedTrack.CheckedChanged
+        TempProfile.HearingImpaired = cbHearingImpairedTrack.Checked
+    End Sub
+
+    Sub cbVisualImpairedTrack_CheckedChanged(sender As Object, e As EventArgs) Handles cbVisualImpairedTrack.CheckedChanged
+        TempProfile.VisualImpaired = cbVisualImpairedTrack.Checked
+    End Sub
+
+    Sub cbTextDescriptionsTrack_CheckedChanged(sender As Object, e As EventArgs) Handles cbTextDescriptionsTrack.CheckedChanged
+        TempProfile.TextDescriptions = cbTextDescriptionsTrack.Checked
+    End Sub
+
+    Sub cbOriginalTrack_CheckedChanged(sender As Object, e As EventArgs) Handles cbOriginalTrack.CheckedChanged
+        TempProfile.Original = cbOriginalTrack.Checked
     End Sub
 
     Sub mbEncoder_ValueChangedUser(value As Object) Handles mbEncoder.ValueChangedUser

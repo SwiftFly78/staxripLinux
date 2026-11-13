@@ -131,7 +131,10 @@ Public Class MuxerForm
 
         If TypeOf muxer Is MkvMuxer Then
             dgvSubtitles.AddCheckBoxColumn("Commentary", "Commentary")
-            dgvSubtitles.AddCheckBoxColumn("Hearingimpaired", "Hearingimpaired")
+            dgvSubtitles.AddCheckBoxColumn("Hearing Impaired", "Hearingimpaired")
+            dgvSubtitles.AddCheckBoxColumn("Visual Impaired", "VisualImpaired")
+            dgvSubtitles.AddCheckBoxColumn("Text Descriptions", "TextDescriptions")
+            dgvSubtitles.AddCheckBoxColumn("Original", "Original")
         End If
 
         dgvSubtitles.AddTextBoxColumn("ID", "ID")
@@ -174,6 +177,9 @@ Public Class MuxerForm
         Property Forced As Boolean
         Property Commentary As Boolean
         Property Hearingimpaired As Boolean
+        Property VisualImpaired As Boolean
+        Property TextDescriptions As Boolean
+        Property Original As Boolean
         Property ID As Integer
         Property TypeName As String
         Property Size As String
@@ -303,6 +309,9 @@ Public Class MuxerForm
             subtitle.Subtitle.Forced = subtitle.Forced
             subtitle.Subtitle.Commentary = subtitle.Commentary
             subtitle.Subtitle.Hearingimpaired = subtitle.Hearingimpaired
+            subtitle.Subtitle.VisualImpaired = subtitle.VisualImpaired
+            subtitle.Subtitle.TextDescriptions = subtitle.TextDescriptions
+            subtitle.Subtitle.Original = subtitle.Original
 
             If subtitle.Subtitle.Title Is Nothing Then
                 subtitle.Subtitle.Title = ""
@@ -427,6 +436,9 @@ Public Class MuxerForm
                     .Forced = i.Forced,
                     .Commentary = i.Commentary,
                     .Hearingimpaired = i.Hearingimpaired,
+                    .VisualImpaired = i.VisualImpaired,
+                    .TextDescriptions = i.TextDescriptions,
+                    .Original = i.Original,
                     .ID = id,
                     .TypeName = i.TypeName,
                     .Size = GetSizeText(i.Size),

@@ -16,6 +16,10 @@ Public MustInherit Class AudioProfile
     Property [Default] As Boolean
     Property Forced As Boolean
     Property Commentary As Boolean
+    Property HearingImpaired As Boolean
+    Property VisualImpaired As Boolean
+    Property TextDescriptions As Boolean
+    Property Original As Boolean
     Property ExtractDTSCore As Boolean
     Property Decoder As AudioDecoderMode
     Property DecodingMode As AudioDecodingMode
@@ -74,6 +78,10 @@ Public MustInherit Class AudioProfile
                 If p.TakeOverAudioDefault Then [Default] = value.Contains("[Default]")
                 If p.TakeOverAudioForced Then Forced = value.Contains("[Forced]")
                 If value.Contains("[Commentary]") Then Commentary = True
+                If value.Contains("[HearingImpaired]") Then HearingImpaired = True
+                If value.Contains("[VisualImpaired]") Then VisualImpaired = True
+                If value.Contains("[TextDescriptions]") Then TextDescriptions = True
+                If value.Contains("[Original]") Then Original = True
                 OnFileChanged()
             End If
         End Set
@@ -96,6 +104,10 @@ Public MustInherit Class AudioProfile
 
                     Language = Stream.Language
                     Commentary = Stream.Commentary
+                    HearingImpaired = Stream.HearingImpaired
+                    VisualImpaired = Stream.VisualImpaired
+                    TextDescriptions = Stream.TextDescriptions
+                    Original = Stream.Original
 
                     If p.TakeOverAudioDefault Then Me.Default = Stream.Default
                     If p.TakeOverAudioForced Then Forced = Stream.Forced
@@ -755,6 +767,30 @@ Public Class MuxAudioProfile
                 cb.Help = "Flagged as commentary in MKV."
                 cb.Checked = Commentary
                 cb.SaveAction = Sub(value) Commentary = value
+
+                cb = ui.AddBool(page)
+                cb.Text = "Hearing Impaired"
+                cb.Help = "Flagged as suitable for hearing impaired in MKV."
+                cb.Checked = HearingImpaired
+                cb.SaveAction = Sub(value) HearingImpaired = value
+
+                cb = ui.AddBool(page)
+                cb.Text = "Visual Impaired"
+                cb.Help = "Flagged as suitable for visually impaired in MKV, like audio descriptions."
+                cb.Checked = VisualImpaired
+                cb.SaveAction = Sub(value) VisualImpaired = value
+
+                cb = ui.AddBool(page)
+                cb.Text = "Text Descriptions"
+                cb.Help = "Flagged as containing textual descriptions of the video in MKV."
+                cb.Checked = TextDescriptions
+                cb.SaveAction = Sub(value) TextDescriptions = value
+
+                cb = ui.AddBool(page)
+                cb.Text = "Original Language"
+                cb.Help = "Flagged as in the original language of the content in MKV."
+                cb.Checked = Original
+                cb.SaveAction = Sub(value) Original = value
             End If
 
             cb = ui.AddBool(page)

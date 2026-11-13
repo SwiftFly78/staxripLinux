@@ -89,7 +89,12 @@ Public Class MediaInfo
                     at.Title = GetAudio(index, "Title").Trim
                     at.Forced = GetAudio(index, "Forced") = "Yes"
                     at.Default = GetAudio(index, "Default") = "Yes"
-                    at.Commentary = HasServiceKind(GetAudio(index, "ServiceKind"), "C")
+                    Dim audioServiceKind = GetAudio(index, "ServiceKind")
+                    at.Commentary = HasServiceKind(audioServiceKind, "C")
+                    at.HearingImpaired = HasServiceKind(audioServiceKind, "HI")
+                    at.VisualImpaired = HasServiceKind(audioServiceKind, "VI")
+                    at.TextDescriptions = HasServiceKind(audioServiceKind, "TD")
+                    at.Original = HasServiceKind(audioServiceKind, "O")
                     at.SBR = GetAudio(index, "Format/String").ContainsEx("SBR")
 
                     Dim lm = GetAudio(index, "Language_More")
@@ -182,6 +187,9 @@ Public Class MediaInfo
                     Dim serviceKind = GetText(index, "ServiceKind")
                     subtitle.Commentary = GetText(index, "Commentary") = "Yes" OrElse HasServiceKind(serviceKind, "C")
                     subtitle.Hearingimpaired = GetText(index, "HearingImpaired") = "Yes" OrElse HasServiceKind(serviceKind, "HI")
+                    subtitle.VisualImpaired = HasServiceKind(serviceKind, "VI")
+                    subtitle.TextDescriptions = HasServiceKind(serviceKind, "TD")
+                    subtitle.Original = HasServiceKind(serviceKind, "O")
                     subtitle.ID = GetText(index, "ID").ToInt
                     subtitle.Title = GetText(index, "Title").Trim
                     subtitle.CodecString = GetText(index, "Codec/String")

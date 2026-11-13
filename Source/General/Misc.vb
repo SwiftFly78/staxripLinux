@@ -1456,6 +1456,10 @@ Public Class AudioStream
     Property Channels As Integer
     Property Channels2 As Integer
     Property Commentary As Boolean
+    Property HearingImpaired As Boolean
+    Property VisualImpaired As Boolean
+    Property TextDescriptions As Boolean
+    Property Original As Boolean
     Property Delay As Integer
     Property Enabled As Boolean = True
     Property Forced As Boolean
@@ -1654,8 +1658,17 @@ Public Class Subtitle
     Property Forced As Boolean
     Property Commentary As Boolean
     Property Hearingimpaired As Boolean
+    Property VisualImpaired As Boolean
+    Property TextDescriptions As Boolean
+    Property Original As Boolean
     Property Enabled As Boolean = True
     Property Size As Long
+
+    'the flags of demuxed subtitles are suffixes like _forced before the extension
+    Shared Function HasFlagSuffix(path As String, flag As String) As Boolean
+        Dim match = Regex.Match(path.Base.ToLowerInvariant(), "(?:_(?:default|forced|commentary|hearingimpaired|visualimpaired|textdescriptions|original))+$")
+        Return match.Success AndAlso match.Value.Split("_"c).Contains(flag)
+    End Function
 
     Sub New()
         Language = New Language
@@ -1770,6 +1783,9 @@ Public Class Subtitle
                     st.Forced = path.ToLowerEx().Contains("forced")
                     st.Commentary = path.ToLowerEx().Contains("commentary")
                     st.Hearingimpaired = path.ToLowerEx().Contains("hearingimpaired")
+                    st.VisualImpaired = HasFlagSuffix(path, "visualimpaired")
+                    st.TextDescriptions = HasFlagSuffix(path, "textdescriptions")
+                    st.Original = HasFlagSuffix(path, "original")
 
                     st.IndexIDX = CInt(Regex.Match(line, ", index: (\d+)").Groups(1).Value)
                 End If
@@ -1828,6 +1844,9 @@ Public Class Subtitle
             st.Forced = path.Base.ToLowerEx().Contains("forced")
             st.Commentary = path.Base.ToLowerEx().Contains("commentary")
             st.Hearingimpaired = path.Base.ToLowerEx().ContainsAny("hearingimpaired", "sdh")
+            st.VisualImpaired = HasFlagSuffix(path, "visualimpaired")
+            st.TextDescriptions = HasFlagSuffix(path, "textdescriptions")
+            st.Original = HasFlagSuffix(path, "original")
 
             ret.Add(st)
         End If
@@ -1967,6 +1986,9 @@ Public Class Subtitle
                 outSub.Forced = inSub.Forced
                 outSub.Commentary = inSub.Commentary
                 outSub.Hearingimpaired = inSub.Hearingimpaired
+                outSub.VisualImpaired = inSub.VisualImpaired
+                outSub.TextDescriptions = inSub.TextDescriptions
+                outSub.Original = inSub.Original
                 subtitles(x) = outSub
             Else
                 emptySubs.Add(subtitles(x))

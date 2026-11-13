@@ -213,6 +213,10 @@ Public MustInherit Class Muxer
                             iSubtitle.Hearingimpaired = True
                         End If
 
+                        iSubtitle.VisualImpaired = iSubtitle.VisualImpaired OrElse Subtitle.HasFlagSuffix(fp, "visualimpaired")
+                        iSubtitle.TextDescriptions = iSubtitle.TextDescriptions OrElse Subtitle.HasFlagSuffix(fp, "textdescriptions")
+                        iSubtitle.Original = iSubtitle.Original OrElse Subtitle.HasFlagSuffix(fp, "original")
+
                         Subtitles.Add(iSubtitle)
                     End If
                 Next
@@ -834,6 +838,9 @@ Public Class MkvMuxer
                 args += " --forced-display-flag " & id & ":" & If(subtitle.Forced, 1, 0)
                 args += " --commentary-flag " & id & ":" & If(subtitle.Commentary, 1, 0)
                 args += " --hearing-impaired-flag " & id & ":" & If(subtitle.Hearingimpaired, 1, 0)
+                args += " --visual-impaired-flag " & id & ":" & If(subtitle.VisualImpaired, 1, 0)
+                args += " --text-descriptions-flag " & id & ":" & If(subtitle.TextDescriptions, 1, 0)
+                args += " --original-flag " & id & ":" & If(subtitle.Original, 1, 0)
 
                 If Compression <> CompressionMode.zlib Then
                     args += " --compression " & id & ":" + Compression.ToString
@@ -991,6 +998,10 @@ Public Class MkvMuxer
             args += " --default-track-flag " & tid & ":" & If(ap.Default, 1, 0)
             args += " --forced-display-flag " & tid & ":" & If(ap.Forced, 1, 0)
             args += " --commentary-flag " & tid & ":" & If(ap.Commentary, 1, 0)
+            args += " --hearing-impaired-flag " & tid & ":" & If(ap.HearingImpaired, 1, 0)
+            args += " --visual-impaired-flag " & tid & ":" & If(ap.VisualImpaired, 1, 0)
+            args += " --text-descriptions-flag " & tid & ":" & If(ap.TextDescriptions, 1, 0)
+            args += " --original-flag " & tid & ":" & If(ap.Original, 1, 0)
             args += " " + ap.File.LongPathPrefix.Escape
         End If
     End Sub

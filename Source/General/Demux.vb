@@ -923,7 +923,9 @@ Public Class mkvDemuxer
                 Dim forced = If(subtitle.Forced, "_forced", "")
                 Dim commentary = If(subtitle.Commentary, "_commentary", "")
                 Dim hearingimpaired = If(subtitle.Hearingimpaired, "_hearingimpaired", "")
-                Dim outPath = Path.Combine(proj.TempDir, subtitle.Filename + _default + forced + commentary + hearingimpaired + subtitle.ExtFull)
+                Dim otherFlags = If(subtitle.VisualImpaired, "_visualimpaired", "") + If(subtitle.TextDescriptions, "_textdescriptions", "") +
+                    If(subtitle.Original, "_original", "")
+                Dim outPath = Path.Combine(proj.TempDir, subtitle.Filename + _default + forced + commentary + hearingimpaired + otherFlags + subtitle.ExtFull)
 
                 If subtitle.Ext = "mks" Then
                     Dim arguments = "--ui-language en_US --no-audio --no-video --no-global-tags --no-attachments --no-buttons -o " + outPath.Escape + " " + sourcefile.Escape
