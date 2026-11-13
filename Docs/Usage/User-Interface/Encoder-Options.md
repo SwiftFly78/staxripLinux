@@ -76,6 +76,8 @@ NVEncC, QSVEncC and VCEEncC also get the dynamic metadata:
 - **Dolby Vision**: the RPU metadata is extracted with dovi_tool, its crop values are updated when the video is
   cropped, and it's passed to the encoder with the profile set in the encoder options, usually 8.1. The encoder needs a
   build with Dolby Vision support, for SvtAv1EncApp see [Tools](../../Introduction/Linux.md#tools).
+- **Dolby Vision from HDR10+**: *Generate Dolby Vision from HDR10+* in the [Project Options](Project-Options.md#video)
+  generates the RPU from the HDR10+ metadata when the source has no Dolby Vision metadata.
 
 ## Other encoders
 

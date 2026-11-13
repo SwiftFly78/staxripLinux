@@ -84,6 +84,7 @@ Public Class Project
     Public DemuxTags As Boolean = False
     Public DemuxVideo As Boolean = False
     Public ExtractHdrmetadata As HdrmetadataMode = HdrmetadataMode.All
+    Public Hdr10PlusToDolbyVision As Boolean
     Public ExtractTimestamps As TimestampsMode = TimestampsMode.VfrOnly
     Public ExtractForcedSubSubtitles As Boolean = True
     Public FileExistAudio As FileExistMode

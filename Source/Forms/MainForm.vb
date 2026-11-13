@@ -2062,6 +2062,10 @@ Partial Public Class MainForm
                 End Select
             End If
 
+            If p.Hdr10PlusToDolbyVision AndAlso p.HdrDolbyVisionMetadataFile Is Nothing AndAlso p.Hdr10PlusMetadataFile.FileExists() Then
+                GenerateDolbyVisionMetadata(p)
+            End If
+
             p.VideoEncoder.SetMetaData(p.LastOriginalSourceFile)
 
             If p.LastOriginalSourceFile <> p.SourceFile AndAlso Not FileTypes.VideoText.Contains(p.SourceFile.Ext) Then
@@ -2986,6 +2990,52 @@ Partial Public Class MainForm
         End Try
     End Sub
 
+    'dovi_tool generates the RPU from the HDR10+ metadata, L6 and L9 take the static HDR metadata of the source
+    Sub GenerateDolbyVisionMetadata(proj As Project)
+        If Package.DoViTool.Path = "" Then
+            MsgWarn("Dolby Vision metadata not generated", "dovi_tool was not found, install it to generate Dolby Vision metadata.")
+            Exit Sub
+        End If
+
+        Dim sourcePath = If(proj.LastOriginalSourceFile.FileExists(), proj.LastOriginalSourceFile, proj.SourceFile)
+        Dim rpuPath = If(proj.TempDir.DirExists(), Path.Combine(proj.TempDir, "DVfromHDR10Plus.rpu"), proj.Hdr10PlusMetadataFile.DirAndBase + "_DVfromHDR10Plus.rpu")
+        Dim configPath = rpuPath.DirAndBase + "_Generate_Config.json"
+        Dim luminance = Regex.Match(MediaInfo.GetVideo(sourcePath, "MasteringDisplay_Luminance"), "min: ([\d\.]+) cd/m2, max: ([\d\.]+) cd/m2")
+        Dim minLuminance = If(luminance.Success, CInt(luminance.Groups(1).Value.ToDouble() * 10000), 50)
+        Dim maxLuminance = If(luminance.Success, CInt(luminance.Groups(2).Value.ToDouble()), 1000)
+        Dim primaryIndex = If(MediaInfo.GetVideo(sourcePath, "MasteringDisplay_ColorPrimaries").Contains("BT.2020"), 2, 0)
+        Dim maxCll = MediaInfo.GetVideo(sourcePath, "MaxCLL").ToInt()
+        Dim maxFall = MediaInfo.GetVideo(sourcePath, "MaxFALL").ToInt()
+
+        Dim config = "{""cm_version"":""V40"",""profile"":""8.1""," +
+            $"""level6"":{{""max_display_mastering_luminance"":{maxLuminance},""min_display_mastering_luminance"":{minLuminance}," +
+            $"""max_content_light_level"":{maxCll},""max_frame_average_light_level"":{maxFall}}}," +
+            $"""default_metadata_blocks"":[{{""Level9"":{{""length"":1,""source_primary_index"":{primaryIndex}}}}}]}}"
+        config.WriteFileUTF8(configPath)
+
+        Try
+            Using proc As New Proc
+                proc.Priority = s.ToolProcessPriority
+                proc.Package = Package.DoViTool
+                proc.Project = proj
+                proc.Header = "Generate Dolby Vision metadata from HDR10+"
+                proc.Encoding = Encoding.UTF8
+                proc.Arguments = $"generate -j {configPath.Escape} --hdr10plus-json {proj.Hdr10PlusMetadataFile.Escape} -o {rpuPath.Escape}"
+                proc.AllowedExitCodes = {0}
+                proc.OutputFiles = {rpuPath}
+                proc.Start()
+            End Using
+
+            proj.HdrDolbyVisionMetadataFile = New DolbyVisionMetadataFile(rpuPath)
+        Catch ex As AbortException
+            Throw
+        Catch ex As Exception
+            g.ShowException(ex)
+        Finally
+            Log.Save()
+        End Try
+    End Sub
+
     Async Function FindHdrMetadataAsync(proj As Project) As Task(Of (jsonFile As String, rpuFile As String))
         If proj Is Nothing Then Return Nothing
         If String.IsNullOrWhiteSpace(proj.SourceFile) Then Return Nothing
@@ -2999,12 +3049,12 @@ Partial Public Class MainForm
                                       Try
                                           files = Directory.GetFiles(sourcePath.Dir(), $"{sourcePath.Base}*.*", SearchOption.TopDirectoryOnly)
                                           jsonFile = files.FirstOrDefault(Function(x) {"json"}.Contains(x.Ext) AndAlso Not x.Base.EndsWithAny("_L5", "_Config") AndAlso Not ChunkMetadata.IsChunkFile(x))
-                                          rpuFile = files.FirstOrDefault(Function(x) {"bin", "rpu"}.Contains(x.Ext) AndAlso Not x.Base.EndsWith("_Cropped") AndAlso Not ChunkMetadata.IsChunkFile(x))
+                                          rpuFile = files.FirstOrDefault(Function(x) {"bin", "rpu"}.Contains(x.Ext) AndAlso Not x.Base.EndsWith("_Cropped") AndAlso Not ChunkMetadata.IsChunkFile(x) AndAlso (proj.Hdr10PlusToDolbyVision OrElse Not x.Base.EndsWith("DVfromHDR10Plus")))
 
                                           If Not String.IsNullOrWhiteSpace(proj.TempDir) AndAlso String.IsNullOrWhiteSpace(jsonFile) AndAlso String.IsNullOrWhiteSpace(rpuFile) Then
                                               files = Directory.GetFiles(proj.TempDir, "*.*", SearchOption.TopDirectoryOnly)
                                               jsonFile = If(String.IsNullOrWhiteSpace(jsonFile), files.FirstOrDefault(Function(x) {"json"}.Contains(x.Ext) AndAlso Not x.Base.EndsWithAny("_L5", "_Config") AndAlso Not ChunkMetadata.IsChunkFile(x)), jsonFile)
-                                              rpuFile = If(String.IsNullOrWhiteSpace(rpuFile), files.FirstOrDefault(Function(x) {"bin", "rpu"}.Contains(x.Ext) AndAlso Not x.Base.EndsWith("_Cropped") AndAlso Not ChunkMetadata.IsChunkFile(x)), rpuFile)
+                                              rpuFile = If(String.IsNullOrWhiteSpace(rpuFile), files.FirstOrDefault(Function(x) {"bin", "rpu"}.Contains(x.Ext) AndAlso Not x.Base.EndsWith("_Cropped") AndAlso Not ChunkMetadata.IsChunkFile(x) AndAlso (proj.Hdr10PlusToDolbyVision OrElse Not x.Base.EndsWith("DVfromHDR10Plus"))), rpuFile)
                                           End If
                                       Catch ex As Exception
                                           Log.WriteLine(ex.Message)

@@ -80,6 +80,9 @@ The options of [Auto Crop](../Cropping.md#auto-crop):
   source to the encoder.
 - **Extract HDR metadata**: extracts dynamic HDR10+ and Dolby Vision metadata with hdr10plus_tool and dovi_tool,
   `None`, `HDR10+ only`, `Dolby Vision only` or `All`.
+- **Generate Dolby Vision from HDR10+**: generates Dolby Vision profile 8.1 metadata with dovi_tool from the HDR10+
+  metadata of sources without Dolby Vision metadata, the mastering display and light levels of the source go to its
+  L6 and L9 metadata.
 - **Min. duration for BDMV playlists**: playlists of Blu-ray discs that are shorter aren't listed, `-1` uses the
   default of eac3to.
 - **Film Threshold for D2V files**: the percentage of film frames from which a D2V source is treated as film.

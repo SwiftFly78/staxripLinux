@@ -318,6 +318,7 @@ Partial Public Class MainForm
             Dim takeOverVideoLanguage = ui.AddBool()
             Dim importVui = ui.AddBool()
             Dim extractHdrmetadata = ui.AddMenu(Of HdrmetadataMode)
+            Dim hdr10PlusToDolbyVision = ui.AddBool()
 
             videoExist.Text = "Existing Video Output"
             videoExist.Help = "What to do in case the video encoding output file already exists from a previous job run, skip and reuse or re-encode and overwrite. The 'Copy/Mux' video encoder profile is also capable of reusing existing video encoder output.'"
@@ -341,6 +342,10 @@ Partial Public Class MainForm
             extractHdrmetadata.Button.ValueChangedAction = Sub(value)
                                                                Dim visible = value = HdrmetadataMode.All OrElse value = HdrmetadataMode.DolbyVision
                                                            End Sub
+
+            hdr10PlusToDolbyVision.Text = "Generate Dolby Vision from HDR10+"
+            hdr10PlusToDolbyVision.Help = "Generates Dolby Vision profile 8.1 metadata with dovi_tool from the HDR10+ metadata of sources without Dolby Vision metadata."
+            hdr10PlusToDolbyVision.Field = NameOf(p.Hdr10PlusToDolbyVision)
 
             ui.AddLine()
 
