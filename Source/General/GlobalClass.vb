@@ -242,6 +242,9 @@ Public Class GlobalClass
         End Try
     End Sub
 
+    'the time of the events file that was loaded or saved, other instances can change it
+    Private EventsFileTime As Date
+
     Sub SaveEvents()
         If Not s?.SaveEventsSeparately Then Return
 
@@ -253,6 +256,7 @@ Public Class GlobalClass
                 Using stream As New FileStream(EventsFile, FileMode.Create, FileAccess.Write, FileShare.None)
                     formatter.Serialize(stream, s.EventCommands)
                 End Using
+                EventsFileTime = File.GetLastWriteTimeUtc(EventsFile)
                 mutex.ReleaseMutex()
             End Using
         Catch ex As Exception
@@ -273,6 +277,7 @@ Public Class GlobalClass
                 Using stream As New FileStream(EventsFile, FileMode.Open, FileAccess.Read, FileShare.Read)
                     events = DirectCast(formatter.Deserialize(stream), List(Of EventCommand))
                 End Using
+                EventsFileTime = File.GetLastWriteTimeUtc(EventsFile)
                 mutex.ReleaseMutex()
             End Using
 
@@ -1396,6 +1401,11 @@ Public Class GlobalClass
 
         If File.Exists(scriptPath) Then
             g.DefaultCommands.ExecutePowerShellFile(scriptPath)
+        End If
+
+        'events edited in another instance apply to the jobs this instance processes
+        If s.SaveEventsSeparately AndAlso EventsFile.FileExists() AndAlso File.GetLastWriteTimeUtc(EventsFile) <> EventsFileTime Then
+            LoadEvents()
         End If
 
         For Each ec In s.EventCommands
