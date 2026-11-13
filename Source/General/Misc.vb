@@ -72,6 +72,64 @@ Public Structure SizePrefix
 
 End Structure
 
+Public Class ChapterHelp
+    'the start times of the chapters of an XML or OGM text chapter file
+    Shared Function GetStartTimes(path As String) As List(Of TimeSpan)
+        Dim ret As New List(Of TimeSpan)
+        If Not File.Exists(path) Then Return ret
+        Dim values As IEnumerable(Of String)
+
+        If path.Ext = "xml" Then
+            values = Xml.Linq.XDocument.Load(path).Descendants("ChapterTimeStart").Select(Function(i) i.Value.Trim())
+        Else
+            values = Regex.Matches(File.ReadAllText(path), "^CHAPTER\d+=(\S+)", RegexOptions.Multiline).Select(Function(i) i.Groups(1).Value)
+        End If
+
+        For Each value In values
+            Dim time As TimeSpan
+
+            'TimeSpan takes up to 7 decimal places, XML chapters have 9
+            If TimeSpan.TryParse(Left(value, 16), CultureInfo.InvariantCulture, time) Then
+                ret.Add(time)
+            End If
+        Next
+
+        Return ret
+    End Function
+
+    'the time in the cut target like the muxer computes it, Nothing for times that are cut away
+    Shared Function GetCutTime(time As TimeSpan) As TimeSpan?
+        If p.Ranges.Count = 0 OrElse p.CutFrameRate <= 0 Then Return time
+
+        Dim frameTicks = 10000000 / p.CutFrameRate
+        Dim parts = p.Ranges.Select(Function(r) (Start:=CLng(r.Start * frameTicks), [End]:=CLng((r.End + 1) * frameTicks))).ToArray()
+
+        If Not parts.Any(Function(part) time.Ticks >= part.Start - frameTicks / 2 AndAlso time.Ticks < part.End - frameTicks / 2) Then
+            Return Nothing
+        End If
+
+        Return New TimeSpan(parts.Sum(Function(part) Math.Clamp(time.Ticks - part.Start, 0, part.End - part.Start)))
+    End Function
+
+    'a QP file for x264 and x265 with a keyframe at each chapter of the target, empty without chapters
+    Shared Function WriteKeyframeQpFile() As String
+        Dim frameRate = p.Script.GetCachedFrameRate()
+        Dim frameCount = p.Script.Info.FrameCount
+
+        Dim frames = GetStartTimes(p.VideoEncoder?.Muxer?.ChapterFile).
+            Select(Function(i) GetCutTime(i)).Where(Function(i) i.HasValue).
+            Select(Function(i) CInt(Math.Round(i.Value.TotalSeconds * frameRate))).
+            Where(Function(i) i > 0 AndAlso (frameCount = 0 OrElse i < frameCount)).
+            Distinct().OrderBy(Function(i) i).ToList()
+
+        If frames.Count = 0 OrElse Not Directory.Exists(p.TempDir) Then Return ""
+
+        Dim path = IO.Path.Combine(p.TempDir, p.TargetFile.Base + "_chapters.qp")
+        File.WriteAllLines(path, frames.Select(Function(i) i & " K"))
+        Return path
+    End Function
+End Class
+
 <Serializable()>
 Public Class Range
     Implements IComparable(Of Range)

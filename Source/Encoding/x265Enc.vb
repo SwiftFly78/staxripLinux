@@ -766,6 +766,21 @@ Public Class x265Params
         .Help = "Percent value to adjusts the target file size or image size after the compressibility check accordingly.",
         .Config = {1, 100}}
 
+    Property QPFile As New StringParam With {.Switch = "--qpfile", .Text = "QP File", .BrowseFile = True}
+
+    Property KeyframesAtChapters As New BoolParam With {
+        .Name = "KeyframesAtChapters",
+        .Text = "Keyframes at chapters",
+        .Help = "Writes a QP file with a keyframe at each chapter, the chapters are taken from the container options. " +
+            "It isn't used with a QP File or with chunks.",
+        .ArgsFunc = AddressOf GetKeyframesAtChaptersArgs}
+
+    Function GetKeyframesAtChaptersArgs() As String
+        If Not KeyframesAtChapters.Value OrElse QPFile.Value <> "" OrElse CInt(Chunks.Value) > 1 Then Return ""
+        Dim path = ChapterHelp.WriteKeyframeQpFile()
+        Return If(path = "", "", "--qpfile " + path.Escape)
+    End Function
+
     Property Chunks As New NumParam With {
         .Text = "Chunks",
         .Init = 1,
@@ -1482,7 +1497,7 @@ Public Class x265Params
                     New NumParam() With {.Switch = "--lookahead-threads", .Text = "Lookahead Threads"},
                     BFrames, BFrameBias, BAdapt, Bpyramid,
                     New BoolParam With {.Switch = "--hrd-concat", .Init = False, .Text = "HRD Concat"},
-                    New StringParam With {.Switch = "--qpfile", .Text = "QP File", .BrowseFile = True},
+                    QPFile, KeyframesAtChapters,
                     New OptionParam() With {.Switch = "--force-flush", .Text = "Force Flush", .IntegerValue = True, .Options = {"Flush the encoder only when all the input pictures are over", "Flush all the frames even when the input is not over", "Flush the slicetype decided frames only"}}
                 )
                 Add("Rate Control",
