@@ -854,6 +854,8 @@ Public Class MkvMuxer
             End If
         Next
 
+        Dim cutChapters As XDocument = Nothing
+
         If File.Exists(ChapterFile) Then
             If p.Ranges.Count > 0 AndAlso ChapterFile.Ext = "xml" Then
                 Dim xDoc = XDocument.Load(ChapterFile)
@@ -885,13 +887,23 @@ Public Class MkvMuxer
                 Next
 
                 If xDoc.Descendants("ChapterAtom").Count > 0 Then
-                    Dim CutChapterFile = Path.Combine(p.TempDir, "cut_cpt.xml")
-                    xDoc.Save(CutChapterFile)
-                    args += " --chapters " + CutChapterFile.Escape
+                    cutChapters = xDoc
                 End If
             Else
                 args += " --chapters " + ChapterFile.Escape
             End If
+        End If
+
+        If p.ChaptersAtCuts AndAlso p.Ranges.Count > 1 AndAlso p.CutFrameRate > 0 AndAlso
+            Not (File.Exists(ChapterFile) AndAlso ChapterFile.Ext <> "xml") Then
+
+            cutChapters = AddCutPointChapters(cutChapters)
+        End If
+
+        If cutChapters IsNot Nothing Then
+            Dim cutChapterFile = Path.Combine(p.TempDir, "cut_cpt.xml")
+            cutChapters.Save(cutChapterFile)
+            args += " --chapters " + cutChapterFile.Escape
         End If
 
         If CoverFile <> "" AndAlso File.Exists(CoverFile) Then
@@ -930,6 +942,39 @@ Public Class MkvMuxer
         Next
 
         Return args
+    End Function
+
+    'a chapter at the start of each part that is kept, unless the source has a chapter there
+    Shared Function AddCutPointChapters(doc As XDocument) As XDocument
+        If doc Is Nothing Then
+            doc = New XDocument(New XElement("Chapters", New XElement("EditionEntry")))
+        End If
+
+        Dim edition = doc.Descendants("EditionEntry").First()
+        Dim frameTicks = 10000000 / p.CutFrameRate
+        Dim existing = doc.Descendants("ChapterTimeStart").Select(Function(i) TimeSpan.Parse(Left(i.Value, 16)).Ticks).ToList()
+        Dim startFrame = 0
+
+        For x = 0 To p.Ranges.Count - 1
+            Dim ticks = CLng(startFrame * frameTicks)
+
+            If Not existing.Any(Function(i) Math.Abs(i - ticks) < frameTicks) Then
+                edition.Add(New XElement("ChapterAtom",
+                    New XElement("ChapterTimeStart", New TimeSpan(ticks).ToString()),
+                    New XElement("ChapterDisplay",
+                        New XElement("ChapterString", "Part " & (x + 1)),
+                        New XElement("ChapterLanguage", "eng"))))
+            End If
+
+            startFrame += p.Ranges(x).End - p.Ranges(x).Start + 1
+        Next
+
+        'mkvmerge keeps the order of the atoms
+        Dim atoms = edition.Elements("ChapterAtom").OrderBy(Function(i) TimeSpan.Parse(Left(i.Element("ChapterTimeStart").Value, 16)).Ticks).ToList()
+        edition.Elements("ChapterAtom").Remove()
+        edition.Add(atoms)
+
+        Return doc
     End Function
 
     Sub AddAudioArgs(ap As AudioProfile, ByRef args As String)

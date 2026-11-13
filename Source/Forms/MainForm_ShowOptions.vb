@@ -544,6 +544,13 @@ Partial Public Class MainForm
             b.Checked = p.DemuxChapters
             b.SaveAction = Sub(val) p.DemuxChapters = val
 
+            b = ui.AddBool(chaptersPage)
+            b.Text = "Add chapters at cut points"
+            b.Help = "When the video is cut, MKV files get a chapter at the start of each part that is kept, " +
+                "named Part 1, Part 2 and so on. Chapters of the source are kept."
+            b.Checked = p.ChaptersAtCuts
+            b.SaveAction = Sub(val) p.ChaptersAtCuts = val
+
 
             '   ----------------------------------------------------------------
             Dim timestampsPage = ui.CreateFlowPage("Timestamps", True)

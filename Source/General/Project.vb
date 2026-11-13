@@ -79,6 +79,7 @@ Public Class Project
     Public DemuxAttachments As Boolean = True
     Public DemuxAudio As DemuxMode = DemuxMode.All
     Public DemuxChapters As Boolean = True
+    Public ChaptersAtCuts As Boolean
     Public DemuxTags As Boolean = False
     Public DemuxVideo As Boolean = False
     Public ExtractHdrmetadata As HdrmetadataMode = HdrmetadataMode.All
