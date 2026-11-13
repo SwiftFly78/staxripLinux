@@ -107,11 +107,13 @@ Partial Public Class MainForm
                     ("PAR " & sourcePar.X & ":" & sourcePar.Y, False),
                     ("DAR " & Calc.GetSourceDAR.ToInvariantString.Shorten(8), False))
 
+                Dim audioBytes = Calc.GetAudioBytes()
+
                 lTarget1.SetFacts(
                     (g.GetTimeString(p.TargetSeconds), True),
                     (p.TargetFrameRate.ToInvariantString.Shorten(9) + " fps", False),
                     (p.Script.Info.Width & "×" & p.Script.Info.Height, True),
-                    ("Audio " & CInt(Calc.GetAudioBitrate) & " kb/s", False))
+                    ("Audio " & CInt(Calc.GetAudioBitrate) & " kb/s" & If(audioBytes > 0, ", " & FormatSize(audioBytes), ""), False))
 
                 If p.VideoEncoder.IsCompCheckEnabled Then
                     laTarget2.SetFacts(

@@ -24,6 +24,18 @@ Public Module SizePrefixModule
             Return _types(Mathf.Clamp(exp, 0, _types.Length - 1))
         End Get
     End Property
+
+    'the size in the largest unit that keeps the value at least 1, like 5.4 GB
+    Public Function FormatSize(bytes As Long) As String
+        Dim exp = 0
+
+        While exp < 4 AndAlso bytes >= PrefixedSize(exp + 1).Factor
+            exp += 1
+        End While
+
+        Dim value = bytes / PrefixedSize(exp).Factor
+        Return If(exp < 2 OrElse value >= 100, CLng(value).ToString(CultureInfo.InvariantCulture), value.ToInvariantString("0.0")) + " " + PrefixedSize(exp).Unit
+    End Function
 End Module
 
 Public Structure SizePrefix
