@@ -54,6 +54,7 @@ Public Class VideoComparisonForm
         Menu.Add("Go To Time...", AddressOf GoToTime, Keys.T, enabledFunc)
         miSyncByTime = Menu.Add("Synchronize by Time", AddressOf ToggleSyncByTime, "Switching the tab keeps the time instead of the frame number, for videos with different frame rates.")
         miSyncByTime.Marked = SyncByTime
+        Menu.Add("Aspect Ratio...", AddressOf SetAspectRatio, Keys.A, enabledFunc, "Display aspect ratio of the selected video, by default it's taken from the sample aspect ratio of the video.")
         Menu.Add("Navigate | 1 frame backward", Sub() TrackBar.Value -= 1, Keys.Left, enabledFunc)
         Menu.Add("Navigate | 1 frame forward", Sub() TrackBar.Value += 1, Keys.Right, enabledFunc)
         Menu.Add("Navigate | 100 frame backward", Sub() TrackBar.Value -= 100, Keys.Left Or Keys.Control, enabledFunc)
@@ -321,6 +322,20 @@ Public Class VideoComparisonForm
         End Using
     End Sub
 
+    Sub SetAspectRatio()
+        Dim tab = TryCast(TabControl.SelectedTab, VideoTab)
+        If tab Is Nothing Then Exit Sub
+
+        Dim current = If(tab.DisplayAspectRatio > 0, tab.DisplayAspectRatio.ToInvariantString("0.######"), "")
+        Dim value = InputBox.Show("Aspect Ratio", current, "Display aspect ratio of the selected video, like 16:9 or 2.35." + BR +
+                                  "Empty uses the sample aspect ratio of the video.")
+        If value Is Nothing Then Exit Sub
+
+        Dim ar = Calc.ParseCustomAR(value.Trim(), 0, 0)
+        tab.DisplayAspectRatio = If(ar.X > 0 AndAlso ar.Y > 0, ar.X / ar.Y, 0)
+        tab.TrackBarValueChanged()
+    End Sub
+
     Sub GoToFrame()
         Dim value = InputBox.Show("Go To Frame", TrackBar.Value.ToString)
         Dim pos As Integer
@@ -355,6 +370,18 @@ Public Class VideoComparisonForm
 
         Private Renderer As VideoRenderer
         Private FrameInfo As String()
+        Private DisplayAspectRatioValue As Double
+
+        'display aspect ratio that replaces the one of the video, 0 uses the sample aspect ratio
+        Property DisplayAspectRatio As Double
+            Get
+                Return DisplayAspectRatioValue
+            End Get
+            Set(value As Double)
+                DisplayAspectRatioValue = value
+                If Renderer IsNot Nothing Then Renderer.DisplayAspectRatio = value
+            End Set
+        End Property
 
         Sub New()
             VideoPanel = New Drawable
@@ -488,7 +515,10 @@ Public Class VideoComparisonForm
             script.Synchronize(True, True, True)
 
             Server = FrameServerFactory.Create(script.Path)
-            Renderer = New VideoRenderer(VideoPanel, Server) With {.KeepAspectRatio = True}
+            Renderer = New VideoRenderer(VideoPanel, Server) With {
+                .KeepAspectRatio = True,
+                .UseSampleAspectRatio = True,
+                .DisplayAspectRatio = DisplayAspectRatio}
             AddHandler VideoPanel.MouseWheel, AddressOf Form.OnVideoMouseWheel
             Dim maximum = Server.Info.FrameCount - 1
             Form.TrackBar.Maximum = If(Form.TrackBar.Maximum < maximum, maximum, Form.TrackBar.Maximum)
@@ -580,11 +610,15 @@ Public Class VideoComparisonForm
                 Pos = Form.TrackBar.Value
                 Draw()
 
+                'the bitmap has the sample aspect ratio of the frame
+                Renderer?.GetBitmap()
+
                 If FrameInfo IsNot Nothing Then
                     Form.laInfo.Text = FrameInfo(Form.TrackBar.Value)
                 Else
                     Dim dt = DateTime.Today.AddSeconds(GetTime(Pos))
-                    Form.laInfo.Text = $"Position: {Pos,5}, Time: {dt:HH:mm:ss.fff}, Size: {Server.Info.Width} x {Server.Info.Height}"
+                    Form.laInfo.Text = $"Position: {Pos,5}, Time: {dt:HH:mm:ss.fff}, Size: {Server.Info.Width} x {Server.Info.Height}, " +
+                        $"DAR: {Renderer.VideoAspectRatio.ToInvariantString("0.###")}"
                 End If
 
             Catch ex As Exception

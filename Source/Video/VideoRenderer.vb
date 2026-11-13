@@ -16,6 +16,14 @@ Public Class VideoRenderer
     'letterboxes the video instead of stretching it to the control size
     Property KeepAspectRatio As Boolean
 
+    'applies the sample aspect ratio of the frame properties that source filters like ffms2 set
+    Property UseSampleAspectRatio As Boolean
+
+    'display aspect ratio that replaces the one of the frames, 0 keeps it
+    Property DisplayAspectRatio As Double
+
+    Private BitmapSampleAspectRatio As Double = 1
+
     Private Server As IFrameServer
     Private Control As Drawable
     Private PositionValue As Integer
@@ -77,8 +85,32 @@ Public Class VideoRenderer
 
         FrameHelp.CopyToBitmap(Bitmap, frame.Data, frame.Width, frame.Height, frame.Stride)
         BitmapPosition = Position
+        BitmapSampleAspectRatio = GetSampleAspectRatio(Server.FrameProperties)
         Return Bitmap
     End Function
+
+    Shared Function GetSampleAspectRatio(props As Dictionary(Of String, String)) As Double
+        Dim num, den As Integer
+
+        If props IsNot Nothing AndAlso props.ContainsKey("_SARNum") AndAlso props.ContainsKey("_SARDen") AndAlso
+            Integer.TryParse(props("_SARNum"), num) AndAlso Integer.TryParse(props("_SARDen"), den) AndAlso num > 0 AndAlso den > 0 Then
+
+            Return num / den
+        End If
+
+        Return 1
+    End Function
+
+    'the aspect ratio the video is shown with
+    ReadOnly Property VideoAspectRatio As Double
+        Get
+            If Server.Info.Width = 0 OrElse Server.Info.Height = 0 Then Return 0
+            If DisplayAspectRatio > 0 Then Return DisplayAspectRatio
+            Dim ret = Server.Info.Width / Server.Info.Height
+            If UseSampleAspectRatio Then ret *= BitmapSampleAspectRatio
+            Return ret
+        End Get
+    End Property
 
     Function GetTargetRect() As RectangleF
         Dim width As Single = Control.Width
@@ -88,7 +120,7 @@ Public Class VideoRenderer
             Return New RectangleF(0, 0, width, height)
         End If
 
-        Dim videoAR = Server.Info.Width / Server.Info.Height
+        Dim videoAR = VideoAspectRatio
 
         If width / height > videoAR Then
             Dim w = CSng(height * videoAR)

@@ -9,7 +9,15 @@ Public Interface IFrameServer
     ReadOnly Property [Error] As String
     ReadOnly Property FrameRate As Decimal
     Function GetFrame(position As Integer, ByRef data As IntPtr, ByRef pitch As Integer) As Integer
+
+    'properties of the frame GetFrame returned last, the keys of FramePropertyKeys that the frame has
+    ReadOnly Property FrameProperties As Dictionary(Of String, String)
 End Interface
+
+Public Module FrameServerProperties
+    'picture type and sample aspect ratio, which source filters like ffms2 and BestSource set
+    Public ReadOnly FramePropertyKeys As String() = {"_PictType", "_SARNum", "_SARDen"}
+End Module
 
 Public Structure ServerInfo
     Public Width As Integer
@@ -135,6 +143,7 @@ Public Class VapourSynthServer
 
     Property Info As ServerInfo Implements IFrameServer.Info
     ReadOnly Property [Error] As String Implements IFrameServer.Error
+    ReadOnly Property FrameProperties As New Dictionary(Of String, String) Implements IFrameServer.FrameProperties
 
     Private Shared ReadOnly LockObject As New Object
 
@@ -163,6 +172,10 @@ Public Class VapourSynthServer
     Private vsGetFrameWidth As GetFrameSizeDelegate
     Private vsGetFrameHeight As GetFrameSizeDelegate
     Private vsGetFrame As GetFrameDelegate
+    Private vsGetFramePropertiesRO As GetFramePropertiesRODelegate
+    Private vsMapGetInt As MapGetIntDelegate
+    Private vsMapGetData As MapGetDataDelegate
+    Private vsMapGetDataSize As MapGetDataSizeDelegate
 
     Const VSSCRIPT_API_VERSION As Integer = (4 << 16) Or 1
     Const VAPOURSYNTH_API_VERSION As Integer = (4 << 16) Or 0
@@ -236,6 +249,10 @@ Public Class VapourSynthServer
         vsGetFrameWidth = GetDelegate(Of GetFrameSizeDelegate)(API, 27)
         vsGetFrameHeight = GetDelegate(Of GetFrameSizeDelegate)(API, 28)
         vsGetFrame = GetDelegate(Of GetFrameDelegate)(API, 36)
+        vsGetFramePropertiesRO = GetDelegate(Of GetFramePropertiesRODelegate)(API, 19)
+        vsMapGetInt = GetDelegate(Of MapGetIntDelegate)(API, 59)
+        vsMapGetData = GetDelegate(Of MapGetDataDelegate)(API, 69)
+        vsMapGetDataSize = GetDelegate(Of MapGetDataSizeDelegate)(API, 70)
 
         Script = vsCreateScript(IntPtr.Zero)
 
@@ -392,6 +409,7 @@ Public Class VapourSynthServer
                 End If
 
                 Try
+                    ReadFrameProperties(frame)
                     Dim format = ReadFormat(vsGetVideoFrameFormat(frame))
                     Dim width = vsGetFrameWidth(frame, 0)
                     Dim height = vsGetFrameHeight(frame, 0)
@@ -421,6 +439,28 @@ Public Class VapourSynthServer
             End Try
         End SyncLock
     End Function
+
+    Private Sub ReadFrameProperties(frame As IntPtr)
+        FrameProperties.Clear()
+        Dim map = vsGetFramePropertiesRO(frame)
+        If map = IntPtr.Zero Then Exit Sub
+
+        For Each key In FramePropertyKeys
+            Dim err As Integer
+            Dim intValue = vsMapGetInt(map, key, 0, err)
+
+            If err = 0 Then
+                FrameProperties(key) = intValue.ToString(Globalization.CultureInfo.InvariantCulture)
+                Continue For
+            End If
+
+            Dim data = vsMapGetData(map, key, 0, err)
+
+            If err = 0 AndAlso data <> IntPtr.Zero Then
+                FrameProperties(key) = Marshal.PtrToStringUTF8(data, vsMapGetDataSize(map, key, 0, err))
+            End If
+        Next
+    End Sub
 
     Private Sub EnsureBuffer(size As Integer)
         If BufferSize < size Then
@@ -571,6 +611,18 @@ Public Class VapourSynthServer
 
     <UnmanagedFunctionPointer(CallingConvention.Cdecl)>
     Delegate Function GetFrameDelegate(n As Integer, node As IntPtr, errorMsg As IntPtr, bufSize As Integer) As IntPtr
+
+    <UnmanagedFunctionPointer(CallingConvention.Cdecl)>
+    Delegate Function GetFramePropertiesRODelegate(frame As IntPtr) As IntPtr
+
+    <UnmanagedFunctionPointer(CallingConvention.Cdecl)>
+    Delegate Function MapGetIntDelegate(map As IntPtr, <MarshalAs(UnmanagedType.LPUTF8Str)> key As String, index As Integer, ByRef [error] As Integer) As Long
+
+    <UnmanagedFunctionPointer(CallingConvention.Cdecl)>
+    Delegate Function MapGetDataDelegate(map As IntPtr, <MarshalAs(UnmanagedType.LPUTF8Str)> key As String, index As Integer, ByRef [error] As Integer) As IntPtr
+
+    <UnmanagedFunctionPointer(CallingConvention.Cdecl)>
+    Delegate Function MapGetDataSizeDelegate(map As IntPtr, <MarshalAs(UnmanagedType.LPUTF8Str)> key As String, index As Integer, ByRef [error] As Integer) As Integer
 End Class
 
 'creates Eto bitmaps from BGRA frame data

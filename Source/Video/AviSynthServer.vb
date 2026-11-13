@@ -9,6 +9,7 @@ Public Class AviSynthServer
 
     Property Info As ServerInfo Implements IFrameServer.Info
     ReadOnly Property [Error] As String Implements IFrameServer.Error
+    ReadOnly Property FrameProperties As New Dictionary(Of String, String) Implements IFrameServer.FrameProperties
 
     Private Shared ReadOnly LockObject As New Object
 
@@ -101,6 +102,7 @@ Public Class AviSynthServer
             End If
 
             Try
+                ReadFrameProperties(frame)
                 Dim srcPitch = avs_get_pitch_p(frame, 0)
                 Dim src = avs_get_read_ptr_p(frame, 0)
                 Dim size = srcPitch * Info.Height
@@ -126,6 +128,37 @@ Public Class AviSynthServer
             Return 0
         End SyncLock
     End Function
+
+    'frame properties need AviSynth+ 3.7.1
+    Private FramePropertiesSupported As Boolean = True
+
+    Private Sub ReadFrameProperties(frame As IntPtr)
+        FrameProperties.Clear()
+        If Not FramePropertiesSupported Then Exit Sub
+
+        Try
+            Dim map = avs_get_frame_props_ro(Env, frame)
+            If map = IntPtr.Zero Then Exit Sub
+
+            For Each key In FramePropertyKeys
+                Dim err As Integer
+                Dim intValue = avs_prop_get_int(Env, map, key, 0, err)
+
+                If err = 0 Then
+                    FrameProperties(key) = intValue.ToString(Globalization.CultureInfo.InvariantCulture)
+                    Continue For
+                End If
+
+                Dim data = avs_prop_get_data(Env, map, key, 0, err)
+
+                If err = 0 AndAlso data <> IntPtr.Zero Then
+                    FrameProperties(key) = Marshal.PtrToStringUTF8(data, avs_prop_get_data_size(Env, map, key, 0, err))
+                End If
+            Next
+        Catch ex As EntryPointNotFoundException
+            FramePropertiesSupported = False
+        End Try
+    End Sub
 
     Private Disposed As Boolean
 
@@ -203,6 +236,22 @@ Public Class AviSynthServer
 
     <DllImport("avisynth", CallingConvention:=CallingConvention.Cdecl)>
     Shared Function avs_get_pitch_p(frame As IntPtr, plane As Integer) As Integer
+    End Function
+
+    <DllImport("avisynth", CallingConvention:=CallingConvention.Cdecl)>
+    Shared Function avs_get_frame_props_ro(env As IntPtr, frame As IntPtr) As IntPtr
+    End Function
+
+    <DllImport("avisynth", CallingConvention:=CallingConvention.Cdecl)>
+    Shared Function avs_prop_get_int(env As IntPtr, map As IntPtr, <MarshalAs(UnmanagedType.LPUTF8Str)> key As String, index As Integer, ByRef [error] As Integer) As Long
+    End Function
+
+    <DllImport("avisynth", CallingConvention:=CallingConvention.Cdecl)>
+    Shared Function avs_prop_get_data(env As IntPtr, map As IntPtr, <MarshalAs(UnmanagedType.LPUTF8Str)> key As String, index As Integer, ByRef [error] As Integer) As IntPtr
+    End Function
+
+    <DllImport("avisynth", CallingConvention:=CallingConvention.Cdecl)>
+    Shared Function avs_prop_get_data_size(env As IntPtr, map As IntPtr, <MarshalAs(UnmanagedType.LPUTF8Str)> key As String, index As Integer, ByRef [error] As Integer) As Integer
     End Function
 
     <DllImport("avisynth", CallingConvention:=CallingConvention.Cdecl)>
