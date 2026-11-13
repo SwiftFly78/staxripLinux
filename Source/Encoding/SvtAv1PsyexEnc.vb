@@ -296,6 +296,7 @@ Public Class SvtAv1PsyexEnc
             If chunkCount > 1 Then
                 chunkName = "_chunk" & (chunk + 1)
                 passName = " chunk " & (chunk + 1)
+                ChunkMetadata.Write({Params.DolbyVisionRpu, Params.Hdr10PlusJson}, chunkStart, chunkEnd, chunkName)
             End If
 
             If Params.Passes > 1 Then
@@ -1632,11 +1633,14 @@ Public Class SvtAv1PsyexEncParams
             End If
         End If
 
-        Dim q = From i In Items Where i.GetArgs <> "" AndAlso Not IsCustom(pass, i.GetSwitches())
+        Dim metadataParams = If(includePaths AndAlso chunkName <> "", {DolbyVisionRpu, Hdr10PlusJson}, New StringParam() {})
+        Dim q = From i In Items Where i.GetArgs <> "" AndAlso Not IsCustom(pass, i.GetSwitches()) AndAlso Not metadataParams.Any(Function(x) x Is i)
 
         If q.Count > 0 Then
             sb.Append(" " + q.Select(Function(item) item.GetArgs).Join(" "))
         End If
+
+        sb.Append(ChunkMetadata.GetArgs(metadataParams.Where(Function(i) Not IsCustom(pass, i.Switch)), chunkName))
 
         Return Macro.Expand(sb.ToString.Trim.FixBreak.Replace(BR, " "))
     End Function

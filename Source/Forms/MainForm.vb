@@ -2998,13 +2998,13 @@ Partial Public Class MainForm
         Dim searchTask = Task.Run(Sub()
                                       Try
                                           files = Directory.GetFiles(sourcePath.Dir(), $"{sourcePath.Base}*.*", SearchOption.TopDirectoryOnly)
-                                          jsonFile = files.FirstOrDefault(Function(x) {"json"}.Contains(x.Ext) AndAlso Not x.Base.EndsWithAny("_L5", "_Config"))
-                                          rpuFile = files.FirstOrDefault(Function(x) {"bin", "rpu"}.Contains(x.Ext) AndAlso Not x.Base.EndsWith("_Cropped"))
+                                          jsonFile = files.FirstOrDefault(Function(x) {"json"}.Contains(x.Ext) AndAlso Not x.Base.EndsWithAny("_L5", "_Config") AndAlso Not ChunkMetadata.IsChunkFile(x))
+                                          rpuFile = files.FirstOrDefault(Function(x) {"bin", "rpu"}.Contains(x.Ext) AndAlso Not x.Base.EndsWith("_Cropped") AndAlso Not ChunkMetadata.IsChunkFile(x))
 
                                           If Not String.IsNullOrWhiteSpace(proj.TempDir) AndAlso String.IsNullOrWhiteSpace(jsonFile) AndAlso String.IsNullOrWhiteSpace(rpuFile) Then
                                               files = Directory.GetFiles(proj.TempDir, "*.*", SearchOption.TopDirectoryOnly)
-                                              jsonFile = If(String.IsNullOrWhiteSpace(jsonFile), files.FirstOrDefault(Function(x) {"json"}.Contains(x.Ext) AndAlso Not x.Base.EndsWithAny("_L5", "_Config")), jsonFile)
-                                              rpuFile = If(String.IsNullOrWhiteSpace(rpuFile), files.FirstOrDefault(Function(x) {"bin", "rpu"}.Contains(x.Ext) AndAlso Not x.Base.EndsWith("_Cropped")), rpuFile)
+                                              jsonFile = If(String.IsNullOrWhiteSpace(jsonFile), files.FirstOrDefault(Function(x) {"json"}.Contains(x.Ext) AndAlso Not x.Base.EndsWithAny("_L5", "_Config") AndAlso Not ChunkMetadata.IsChunkFile(x)), jsonFile)
+                                              rpuFile = If(String.IsNullOrWhiteSpace(rpuFile), files.FirstOrDefault(Function(x) {"bin", "rpu"}.Contains(x.Ext) AndAlso Not x.Base.EndsWith("_Cropped") AndAlso Not ChunkMetadata.IsChunkFile(x)), rpuFile)
                                           End If
                                       Catch ex As Exception
                                           Log.WriteLine(ex.Message)

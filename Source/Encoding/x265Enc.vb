@@ -328,7 +328,7 @@ Public Class x265Enc
     End Property
 
     Overrides Function CanChunkEncode() As Boolean
-        Return CInt(Params.Chunks.Value) > 1 AndAlso Not IsDolbyVisionSet
+        Return CInt(Params.Chunks.Value) > 1
     End Function
 
     Overrides Function GetChunks() As Integer
@@ -353,6 +353,7 @@ Public Class x265Enc
             If chunkCount > 1 Then
                 chunkName = "_chunk" & (chunk + 1)
                 passName = " chunk " & (chunk + 1)
+                ChunkMetadata.Write({Params.DolbyVisionRpu, Params.DhdrInfo}, chunkStart, chunkEnd, chunkName)
             End If
 
             If Params.Mode.Value = x265RateMode.TwoPass Then
@@ -1898,11 +1899,14 @@ Public Class x265Params
             sb.Append($" {FoveaGazeX.HelpSwitch} {FoveaGazeX.Value},{FoveaGazeY.Value}")
         End If
 
-        Dim q = From i In Items Where i.GetArgs <> "" AndAlso Not IsCustom(pass, i.GetSwitches())
+        Dim metadataParams = If(includePaths AndAlso chunkName <> "", {DolbyVisionRpu, DhdrInfo}, New StringParam() {})
+        Dim q = From i In Items Where i.GetArgs <> "" AndAlso Not IsCustom(pass, i.GetSwitches()) AndAlso Not metadataParams.Any(Function(x) x Is i)
 
         If q.Count > 0 Then
             sb.Append(" " + q.Select(Function(item) item.GetArgs).Join(" "))
         End If
+
+        sb.Append(ChunkMetadata.GetArgs(metadataParams.Where(Function(i) Not IsCustom(pass, i.Switch)), chunkName))
 
         If includePaths Then
             If Decoder.Value <> 0 OrElse pipeTool <> "automatic" Then

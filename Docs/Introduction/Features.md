@@ -103,7 +103,8 @@
   menu that allows to quickly find GUI options for command line switches.
 - Generic audio and video command line based encoder to integrate any encoder that isn't already built-in.
 - Parallel audio/video encoding.
-- Parallel chunk encoding for various video encoders.
+- Parallel chunk encoding for various video encoders, x265 and the SVT-AV1 forks get the Dolby Vision and
+  HDR10+ metadata of their frames.
 
 
 ## Muxing
