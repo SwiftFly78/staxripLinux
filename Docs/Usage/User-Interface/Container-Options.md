@@ -18,7 +18,9 @@ opens the [Audio Settings](Audio-Settings.md) of the selected track, `Play` play
 The subtitles of the target with their settings:
 
 - **Enabled**: whether the subtitle is muxed.
-- **Language** and **Name**: the language and the track name.
+- **Language** and **Name**: the language and the track name. Languages are BCP 47 tags, MKV and MP4 keep the
+  region and the script of tags like `pt-BR` or `zh-Hant-TW`, and `%language_english%` in a name gives
+  `Portuguese (Brazil)`.
 - **Default** and **Forced**: the flags that tell players which subtitle to show. Forced subtitles are shown even
   when subtitles are turned off, for example for foreign language dialogues.
 - **Commentary** and **Hearingimpaired**: further flags of MKV.

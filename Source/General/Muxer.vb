@@ -397,7 +397,7 @@ Public Class MP4Muxer
                     args.Append(" -add " + (st.Path + "#" & (st.IndexIDX + 1) &
                                 ":name=" + Macro.Expand(st.Title) + def + If(st.Forced, ":txtflags=0xC0000000", "")).Escape)
                 Else
-                    args.Append(" -add " + (st.Path + ":lang=" + st.Language.ThreeLetterCode +
+                    args.Append(" -add " + (st.Path + ":lang=" + GetLanguageCode(st.Language) +
                                 ":name=" + Macro.Expand(st.Title) + def + If(st.Forced, ":txtflags=0xC0000000", "")).Escape)
                 End If
             End If
@@ -430,6 +430,11 @@ Public Class MP4Muxer
         Return args.ToString.Trim
     End Function
 
+    'MP4Box writes the ISO 639-2 code and for BCP 47 tags with a region or script, like pt-BR, the tag as well
+    Shared Function GetLanguageCode(lang As Language) As String
+        Return If(lang.Name.Contains("-"), lang.Name, lang.ThreeLetterCode)
+    End Function
+
     Sub AddAudio(ap As AudioProfile, args As StringBuilder, forceDisabling As Boolean)
         If File.Exists(ap.File) AndAlso IsSupported(ap.File.Ext) AndAlso IsSupported(ap.OutputFileType) Then
             Dim value As New StringBuilder(ap.File)
@@ -444,7 +449,7 @@ Public Class MP4Muxer
                 value.Append(":sbr")
             End If
 
-            value.Append(":lang=" + ap.Language.ThreeLetterCode)
+            value.Append(":lang=" + GetLanguageCode(ap.Language))
 
             If ap.Delay <> 0 AndAlso Not ap.HandlesDelay Then
                 value.Append(":delay=" + ap.Delay.ToString)

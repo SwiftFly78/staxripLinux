@@ -755,13 +755,16 @@ Public Class Language
 
             Dim selectedLanguages As IEnumerable(Of Language)
 
+            'BCP 47 tags like pt-BR are case insensitive
+            Dim equals = Function(a As String, b As String) String.Equals(a, b, StringComparison.OrdinalIgnoreCase)
+
             Select Case lang.Length
                 Case 2
-                    selectedLanguages = Languages.Where(Function(x) x.TwoLetterCode = lang OrElse x.CultureInfo.IetfLanguageTag = lang)
+                    selectedLanguages = Languages.Where(Function(x) equals(x.TwoLetterCode, lang) OrElse equals(x.CultureInfo.IetfLanguageTag, lang))
                 Case 3
-                    selectedLanguages = Languages.Where(Function(x) x.ThreeLetterCode = lang)
+                    selectedLanguages = Languages.Where(Function(x) equals(x.ThreeLetterCode, lang) OrElse equals(x.CultureInfo.ThreeLetterISOLanguageName, lang))
                 Case Else
-                    selectedLanguages = Languages.Where(Function(x) x.Name = lang)
+                    selectedLanguages = Languages.Where(Function(x) equals(x.Name, lang))
             End Select
 
             If selectedLanguages.Any() Then
