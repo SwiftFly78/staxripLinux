@@ -48,7 +48,9 @@ function Variants($code) {
         $variant = [regex]::Replace($variant, '\$enter_text:([^$]*)\$', {
             param($m) Text $m.Groups[1].Value $variant.Substring(0, $m.Index)
         })
-        $variant.Replace('$browse_file$', (Join-Path $media 'identity.cube'))
+        # the Logo filters read an image, the Cube filters a 3D LUT
+        $file = if ($variant -match 'ImageSource|imwri\.Read') { 'logo.png' } else { 'identity.cube' }
+        $variant.Replace('$browse_file$', (Join-Path $media $file))
     }
 }
 

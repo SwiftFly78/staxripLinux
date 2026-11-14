@@ -121,6 +121,11 @@ case $SUITE in
                 $FFPROBE -v error -show_format -show_streams -show_chapters -count_frames -of json "$target" \
                     > "/work/out/$name.probe.json" 2> "/work/out/$name.probe.err"
                 rm -f "$target"
+            # the image sequences of the ffmpeg Image profiles are named <target>_000001.png and so on
+            elif [ -n "$target" ] && [ -f "${target%.*}_000001.${target##*.}" ]; then
+                $FFPROBE -v error -f image2 -i "${target%.*}_%06d.${target##*.}" -show_format -show_streams \
+                    -count_frames -of json > "/work/out/$name.probe.json" 2> "/work/out/$name.probe.err"
+                rm -f "${target%.*}"_[0-9][0-9][0-9][0-9][0-9][0-9]."${target##*.}"
             fi
         done ;;
 esac

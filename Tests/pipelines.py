@@ -45,6 +45,7 @@ FFMPEG_CODECS = {
     'x264': 'h264', 'x265': 'hevc', 'AOM-AV1': 'av1', 'XviD': 'mpeg4', 'MPEG-4': 'mpeg4', 'Theora': 'theora',
     'ProRes': 'prores', 'ProRes-KS': 'prores', 'R210': 'r210', 'V210': 'v210', 'UT Video': 'utvideo',
     'GoPro CineForm HD': 'cfhd', 'FFV1': 'ffv1', 'VP8': 'vp8', 'VP9': 'vp9',
+    'PNG': 'png', 'JPEG': 'mjpeg', 'TIFF': 'tiff', 'BMP': 'bmp',
 }
 
 # the slow encoders get their fastest preset, SetSwitch is a function of driver.ps1
@@ -137,8 +138,10 @@ def generate(inventory):
         for engine in ('AviSynth', 'VapourSynth'):
             if e['type'] == 'BatchEncoder' and engine != 'AviSynth':
                 continue
+            # image sequences have no container, staxrip.sh probes the images
+            muxer = 'No Muxing' if e.get('muxer') == 'No Muxing' else None
             specs.append(spec(f"encoder {e['name']} ({engine})", 'hevc10_hdr.mkv' if ten_bit else 'h264_aac_subs.mkv',
-                              e, engine, audio=aac))
+                              e, engine, muxer=muxer, audio=aac))
 
     # every muxer with an encoder and an audio format it supports
     # StaxRip offers the muxers of FFmpeg for every codec, the containers that don't take H.264 get a codec they take

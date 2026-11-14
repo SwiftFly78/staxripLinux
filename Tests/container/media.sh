@@ -27,6 +27,10 @@ printf 'CHAPTER01=00:00:00.000\nCHAPTER01NAME=Intro\nCHAPTER02=00:00:03.000\nCHA
     for b in 0 1; do for g in 0 1; do for r in 0 1; do echo "$r.0 $g.0 $b.0"; done; done; done
 } > identity.cube
 
+# a logo with transparent and opaque parts for the Logo filters
+$F -f lavfi -i "color=c=black@0:size=160x60,format=rgba,drawbox=x=10:y=10:w=140:h=40:color=white@1:t=fill" \
+    -frames:v 1 logo.png
+
 $F $V $A1 -filter_complex "[1]aformat=channel_layouts=stereo[a]" -map 0 -map "[a]" -c:v libx264 -preset ultrafast \
     -pix_fmt yuv420p -c:a aac -b:a 128k base.mkv
 $MKVMERGE -q -o h264_aac_subs.mkv --language 1:en --track-name 1:Stereo base.mkv --language 0:en en.srt \
