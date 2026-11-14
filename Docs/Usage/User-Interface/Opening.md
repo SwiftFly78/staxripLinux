@@ -20,8 +20,14 @@
     Opens several files as one source, for example the VOB files of a DVD title. The demuxers and indexers that
     accept several input files, like D2V Witch, process them together. To join other formats, use *Merge Files*.
 - #### Merge Files
-    Joins the files with mkvmerge into `<first file>_merged.mkv` and opens the result. MPEG-2 files (`.mpg`, `.vob`)
-    are opened like *Multiple Files* instead. The files must have the same format, resolution and tracks.
+    Joins the files into `<first file>_merged` and opens the result. The files must have the same format, resolution
+    and tracks. *Merge with* at the bottom of the file list chooses the tool:
+    - `mkvmerge` appends the files into an MKV file.
+    - `ffmpeg concat demuxer` joins the files and keeps the container of the first file, for example MP4 parts.
+    - `ffmpeg concat protocol` joins the bytes of the files, for parts of an MPEG-TS file and for fragmented MP4
+      segments (`.m4s`) with their init segment, which is moved to the front. The segments are written to MP4.
+    - `Automatic` uses the concat protocol for TS and M4S files, opens MPEG-2 files (`.mpg`, `.vob`) like
+      *Multiple Files* and uses mkvmerge for other files.
 - #### File Batch
     Adds a job for each file to the [job list](Jobs.md) and opens it. Every job uses the current template and
     settings, the target files are named like the source files. This way many files can be encoded the same way

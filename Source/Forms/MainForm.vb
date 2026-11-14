@@ -4757,55 +4757,144 @@ Partial Public Class MainForm
             form.IsMerge = True
 
             If form.ShowDialog() = DialogResult.OK AndAlso form.lb.Items.Count > 0 Then
-                Dim files = form.GetFiles
+                Dim files = form.GetFiles.ToArray
+                Dim method = form.MergeMethod
 
-                Select Case files(0).Ext
-                    Case "mpg", "vob"
-                        OpenVideoSourceFiles(files)
-                    Case Else
-                        Using proc As New Proc
-                            proc.Header = "Merge source files"
+                'the indexers of MPEG-2 sources read several files
+                If method = MergeMethod.Automatic AndAlso files(0).Ext.EqualsAny("mpg", "vob") Then
+                    OpenVideoSourceFiles(files)
+                    Exit Sub
+                End If
 
-                            For Each i In files
-                                Log.WriteLine(MediaInfo.GetSummary(i) + "---------------------------------------------------------" + BR2)
-                            Next
+                Dim outFile = MergeSourceFiles(files, method)
 
-                            proc.Encoding = Encoding.UTF8
-                            proc.Package = Package.mkvmerge
-                            Dim outFile = files(0).DirAndBase + "_merged.mkv"
-                            proc.Arguments = "-o " + outFile.Escape + " " + files.Select(Function(i) i.Escape).Join(" + ")
+                If outFile = "" Then
+                    Exit Sub
+                End If
 
-                            Try
-                                proc.Start()
-                            Catch ex As Exception
-                                g.ShowException(ex)
-                                MsgInfo("Manual Merging", "Please merge the files manually with an appropriate tool or visit the support forum.")
-                                Throw New AbortException
-                            End Try
+                Dim showTemplateSelection = (s.ShowTemplateSelection And (ShowTemplateSelectionMode.Always Or ShowTemplateSelectionMode.OpeningMenu)) <> 0
+                Dim showTemplateSelectionTimeout = If(s.ShowTemplateSelection <> ShowTemplateSelectionMode.Never, s.ShowTemplateSelectionTimeout, 0)
 
-                            If Not g.FileExists(outFile) Then
-                                Log.Write("Error merged output file is missing", outFile)
-                                Exit Sub
-                            Else
-                                Dim showTemplateSelection = (s.ShowTemplateSelection And (ShowTemplateSelectionMode.Always Or ShowTemplateSelectionMode.OpeningMenu)) <> 0
-                                Dim showTemplateSelectionTimeout = If(s.ShowTemplateSelection <> ShowTemplateSelectionMode.Never, s.ShowTemplateSelectionTimeout, 0)
-
-                                If showTemplateSelection Then
-                                    If LoadTemplateWithSelectionDialog(outFile, showTemplateSelectionTimeout) Then
-                                        OpenVideoSourceFile(outFile)
-                                    Else
-                                        Exit Sub
-                                    End If
-                                Else
-                                    OpenProject(g.LastModifiedTemplate)
-                                    OpenVideoSourceFile(outFile)
-                                End If
-                            End If
-                        End Using
-                End Select
+                If showTemplateSelection Then
+                    If LoadTemplateWithSelectionDialog(outFile, showTemplateSelectionTimeout) Then
+                        OpenVideoSourceFile(outFile)
+                    End If
+                Else
+                    OpenProject(g.LastModifiedTemplate)
+                    OpenVideoSourceFile(outFile)
+                End If
             End If
         End Using
     End Sub
+
+    'returns the merged file, mkvmerge writes MKV, ffmpeg keeps the container of the first file
+    Function MergeSourceFiles(files As String(), method As MergeMethod) As String
+        If method = MergeMethod.Automatic Then
+            Dim isSegments = files.Any(Function(i) i.Ext = "m4s") OrElse files.All(Function(i) i.Ext.EqualsAny("ts", "m2ts", "mts"))
+            method = If(isSegments, MergeMethod.FfmpegConcatProtocol, MergeMethod.Mkvmerge)
+        End If
+
+        For Each i In files
+            Log.WriteLine(MediaInfo.GetSummary(i) + "---------------------------------------------------------" + BR2)
+        Next
+
+        Dim outFile As String
+        Dim listFile = ""
+
+        Using proc As New Proc
+            proc.Header = "Merge source files"
+            proc.Encoding = Encoding.UTF8
+
+            If method = MergeMethod.Mkvmerge Then
+                outFile = files(0).DirAndBase + "_merged.mkv"
+                proc.Package = Package.mkvmerge
+                proc.Arguments = "-o " + outFile.Escape + " " + files.Select(Function(i) i.Escape).Join(" + ")
+            Else
+                Dim ext = files(0).Ext
+                ext = If(ext = "m4s", "mp4", If(ext.EqualsAny("mp4", "m4v", "mov", "mkv", "webm", "ts", "m2ts", "mts"), ext, "mkv"))
+                outFile = files(0).DirAndBase + "_merged." + ext
+                proc.Package = Package.ffmpeg
+                proc.SkipStrings = {"frame=", "size="}
+                Dim input As String
+
+                If method = MergeMethod.FfmpegConcatProtocol Then
+                    If files.Any(Function(i) i.Contains("|")) Then
+                        MsgError("Merging failed", "The concat protocol of ffmpeg can't read files with '|' in their path.")
+                        Return ""
+                    End If
+
+                    'the init segment of fragmented MP4 must be first
+                    If files.Any(Function(i) i.Ext = "m4s") Then
+                        files = files.OrderBy(Function(i) If(IsInitSegment(i), 0, 1)).ToArray
+                    End If
+
+                    input = "-i " + ("concat:" + files.Select(Function(i) "file:" + i).Join("|")).Escape
+                Else
+                    listFile = outFile.DirAndBase + "_concat.txt"
+                    Dim list = "ffconcat version 1.0" + BR + files.Select(Function(i) "file '" + i.Replace("'", "'\''") + "'").Join(BR) + BR
+                    list.WriteFileUTF8(listFile)
+                    input = "-f concat -safe 0 -i " + listFile.Escape
+                End If
+
+                proc.Arguments = $"-hide_banner {input} -map 0:v -map 0:a? -map 0:s? -c copy -y {outFile.Escape}"
+            End If
+
+            Try
+                proc.Start()
+            Catch ex As AbortException
+                Throw
+            Catch ex As Exception
+                g.ShowException(ex)
+                MsgInfo("Manual Merging", "Please merge the files manually with an appropriate tool or visit the support forum.")
+                Throw New AbortException
+            Finally
+                FileHelp.Delete(listFile)
+            End Try
+        End Using
+
+        If Not g.FileExists(outFile) Then
+            Log.Write("Error merged output file is missing", outFile)
+            Return ""
+        End If
+
+        Return outFile
+    End Function
+
+    'an init segment of fragmented MP4 has the moov box but no fragments
+    Shared Function IsInitSegment(path As String) As Boolean
+        Try
+            Using stream = File.OpenRead(path)
+                Dim header(15) As Byte
+                Dim hasMoov = False
+
+                While stream.Position + 8 <= stream.Length
+                    Dim start = stream.Position
+                    stream.ReadExactly(header, 0, 8)
+                    Dim size = CLng(header(0)) << 24 Or CLng(header(1)) << 16 Or CLng(header(2)) << 8 Or CLng(header(3))
+                    Dim type = Encoding.ASCII.GetString(header, 4, 4)
+
+                    If type = "moof" Then Return False
+                    If type = "moov" Then hasMoov = True
+
+                    If size = 1 Then
+                        stream.ReadExactly(header, 8, 8)
+                        size = 0
+
+                        For i = 8 To 15
+                            size = size << 8 Or CLng(header(i))
+                        Next
+                    End If
+
+                    If size < 8 Then Exit While
+                    stream.Position = start + size
+                End While
+
+                Return hasMoov
+            End Using
+        Catch
+            Return False
+        End Try
+    End Function
 
     <Command("Dialog to open a file batch source.")>
     Sub ShowOpenSourceBatchFilesDialog()
