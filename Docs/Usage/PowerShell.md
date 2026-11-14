@@ -31,7 +31,13 @@ The types of StaxRipLinux, like `MediaInfo`, `VideoFilter` or `TaskDialog`, can 
   [macros](Macros.md#function-macros).
 
 `Tools > Advanced > PowerShell Terminal` opens `pwsh` in a terminal with the macros as environment variables, if
-PowerShell is installed.
+PowerShell is installed. `Tools > Advanced > PowerShell Console` runs commands inside StaxRipLinux instead, with `$p`,
+`$s` and `$g` for the project, the settings and the global object, for example to look at a value of the project
+(`$p.SourceFile`) or to try code before putting it into a script. Its variables are kept until it's closed, `Up` and
+`Down` browse the history.
+
+Scripts get the variables of `Variables...` in the [Event Commands](User-Interface/Events.md) as `$Variables`, like
+`$Variables['folder']`.
 
 ## Examples
 

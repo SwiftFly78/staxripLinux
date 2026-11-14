@@ -10,6 +10,13 @@ The checkbox of an event command enables or disables it. `Add...` creates a new 
 one, `Clone` copies it, `Remove` removes it, `Up` and `Down` change the order in which event commands of the same
 event run.
 
+`Variables...` defines variables, one per line like `name = value`. Event commands and other macros use them as
+`%var:name%`, PowerShell scripts as `$Variables['name']`, so a value that several event commands use, like a folder,
+is changed in one place.
+
+The event commands are stored in the settings folder (`Events.dat`). When another instance of StaxRipLinux
+changes them, the next event reloads them, so all instances run the same event commands.
+
 ## Event Command editor
 
 <img width=600 src="../../../Images/Screenshots/EventCommandEditor.png">
@@ -20,3 +27,5 @@ event run.
   `Match Any` one of them. Each condition compares a [macro](../Macros.md) with a value, for example
   `%source_height%` *Is Higher Than* `1080`, or `%target_file%` *Contains* `.mkv`.
 - **Command** and **Parameters**: the command and its parameters, like in the [Menu Editor](Menu-Editor.md).
+  The parameters may contain [interactive macros](../Macros.md#interactive-macros) like `$enter_text:prompt$`, which
+  ask for the value when the event command runs. During job processing they aren't asked, so jobs don't wait.

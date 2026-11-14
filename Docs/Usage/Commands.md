@@ -90,6 +90,10 @@ Adds tags to the container (works only with mkvmerge).
 | --- | --- |
 | Tags \<string\> | name 1 = value 1; name 2 = value 2; etc. |
 
+### AnalyzeInterlacing
+
+Analyzes the source with the idet filter of ffmpeg, which tells if it's progressive, interlaced or telecined.
+
 ### CheckForUpdate
 
 Checks if an update is available.
@@ -142,6 +146,10 @@ Placeholder for dynamically updated menu items.
 | Parameter | Description |
 | --- | --- |
 | ID \<dynamicmenuitemid\> | AudioProfiles, EncoderProfiles, FilterSetupProfiles, MuxerProfiles, RecentProjects, TemplateProjects, HelpApplications, Scripts, AddFilters, InsertFilters, ReplaceFilters, FilterCategory |
+
+### EditCuts
+
+Dialog to enter the ranges of frames or times to keep, without the preview.
 
 ### EnableEvents
 
@@ -205,6 +213,10 @@ Extract dynamic HDR metadata from a source file.
 | --- |
 | sourcePath \<string\> |
 
+### ExtractSample
+
+Extracts a part of the source with mkvmerge without re-encoding, for example to share a sample.
+
 ### GenerateWikiContent
 
 Generates various wiki content.
@@ -218,6 +230,24 @@ Gets application details.
 | includeName \<boolean\> |
 | includeVersion \<boolean\> |
 | includeSettingsVersion \<boolean\> |
+
+### ImportAudioEncoderCommandLine
+
+Changes the command line of an audio track: the custom arguments of GUI audio profiles, the whole command lines of Command Line audio profiles.
+
+| Parameter | Description |
+| --- | --- |
+| Track \<integer\> | Number of the audio track, starting with 1. |
+| Command Line \<string\> | |
+
+### ImportAudioEncoderCommandLineFromTextFile
+
+Changes the command line of an audio track from a text file, like ImportAudioEncoderCommandLine.
+
+| Parameter | Description |
+| --- | --- |
+| Track \<integer\> | Number of the audio track, starting with 1. |
+| File Path \<string\> | |
 
 ### ImportVideoEncoderCommandLine
 
@@ -612,6 +642,10 @@ Dialog to open a single file source.
 ### ShowOptionsDialog
 
 Dialog to configure project options.
+
+### ShowPowerShellConsole
+
+Window to run PowerShell commands with the objects of StaxRip, like $p for the project.
 
 ### ShowPreview
 

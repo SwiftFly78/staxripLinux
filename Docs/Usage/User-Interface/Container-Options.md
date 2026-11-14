@@ -23,7 +23,8 @@ The subtitles of the target with their settings:
   `Portuguese (Brazil)`.
 - **Default** and **Forced**: the flags that tell players which subtitle to show. Forced subtitles are shown even
   when subtitles are turned off, for example for foreign language dialogues.
-- **Commentary** and **Hearingimpaired**: further flags of MKV.
+- **Commentary**, **Hearing Impaired**, **Visual Impaired**, **Text Descriptions** and **Original**: further flags
+  of MKV, taken over from the source.
 
 `Add...` adds subtitle files, `Set Names...` sets the names of all subtitles from their language, `Play` plays the
 video with the subtitle in mpv. `BDSup2Sub++` and `Subtitle Edit` open the subtitle in these apps, if they're

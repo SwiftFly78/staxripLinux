@@ -120,9 +120,10 @@ for example in scripts or settings. Most of them are also used for [events](Even
 | `%source_mi_g:property%` | Returns the given MediaInfo property from the General section for the source file. |
 | `%source_mi_t:property%` | Returns the given MediaInfo property from the Text section for the source file. Before `:` you can add a zero-based index for the track number of that section. |
 | `%source_mi_v:property%` | Returns the given MediaInfo property from the Video section for the source file. Before `:` you can add a zero-based index for the track number of that section. |
+| `%var:name%` | Returns the value of a variable, variables are defined with Variables... in the Event Command dialog. PowerShell scripts get them as $Variables. |
 
 ## Interactive Macros
-Interactive macros can be used in certain menus like the filter profiles menu. They give you the ability to pop up dialogs in which you have to put values in or select an option.
+Interactive macros can be used in certain menus like the filter profiles menu and in the parameters of [event commands](User-Interface/Events.md). They give you the ability to pop up dialogs in which you have to put values in or select an option.
 
 | Name | Description |
 |---|---|

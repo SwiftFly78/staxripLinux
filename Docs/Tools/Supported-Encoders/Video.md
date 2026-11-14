@@ -35,12 +35,13 @@ NVEncC isn't part of the full AppImage, VCEEncC needs AMD's AMF runtime.
 | ffmpeg \| VP \| VP8, VP9 | VP8 and VP9 (libvpx) |
 | ffmpeg \| ProRes, ProRes-KS | Apple ProRes, for editing |
 | ffmpeg \| R210, V210 | Uncompressed 10-bit RGB and YUV |
-| ffmpeg \| UT Video, FFV1 | Lossless |
+| ffmpeg \| UT Video, FFV1 | Lossless, UT Video with the prediction, the pixel format (YUV or RGB with alpha) and slices |
 | ffmpeg \| GoPro CineForm HD | CineForm, for editing |
 | ffmpeg \| Nvidia \| Nvidia H.264, H.265, AV1 | NVENC of NVIDIA GPUs |
 | ffmpeg \| Intel \| Intel H.264, H.265, AV1 | Quick Sync of Intel GPUs |
 | ffmpeg \| AMD \| AMD AMF H.264, H.265, AV1 | AMF of AMD GPUs, needs AMD's AMF runtime |
 | ffmpeg \| VAAPI \| H.264, H.265, AV1 | VA-API of AMD and Intel GPUs with the open source drivers |
+| ffmpeg \| Image \| PNG, JPEG, TIFF, BMP | Image sequences, an image per frame |
 
 The FFmpeg of the full AppImage contains the encoders of these profiles. For the VA-API profiles, the device is
 `/dev/dri/renderD128` unless another render node is set in the encoder options.

@@ -77,13 +77,20 @@ to feed the video encoder. It is also used to cut the video.
 - #### Add Hardcoded Subtitle  
 	Opens a file dialog, where you can choose a subtitle file, that it then used to set a new filter with it.  
 	> :information_source: Due to special needs this command is not a regular filter profile.
+- #### Cuts
+	Edits the ranges of the video to keep as text without the [Preview](Preview.md), one range of frames like
+	`1500-2399` or times like `0:01:00.000-0:01:30.000` per line.
 - #### Script Info  
 	Just a short overview about your resulting script.  
 	> :information_source: This is the same information the [Preview](Preview.md) windows shows.
 - #### Advanced Script Info  
 	In case you want or need more information, you can select between multiple options, that provide those data.
 	Depending on the [Frame Server](../Frame-Servers.md) you use, different options appear,
-	that provide different information.
+	that provide different information. With VapourSynth, *vspipe filter time* is a benchmark that shows the time each
+	filter takes.
+- #### Analyze Interlacing
+	Analyzes the source with the `idet` filter of ffmpeg and tells whether it's progressive, interlaced with its field
+	order, or telecined, with the filters that fit. Long sources are analyzed at three positions.
 - #### Log File  
 	Opens the current log file within the [Log File Viewer](Log-File-Viewer.md).  
 	In case there is no current log file, mostly before a source is opened, the `Log Files` folder with
@@ -114,6 +121,10 @@ to feed the video encoder. It is also used to cut the video.
     	Opens a terminal in the working folder with additional and/or extended environment variables.
 	- ##### PowerShell Terminal
     	Opens a PowerShell session (`pwsh`) in a terminal with additional and/or extended environment variables.
+	- ##### PowerShell Console
+    	A window that runs PowerShell commands inside StaxRipLinux, with `$p` for the project, `$s` for the settings and
+    	`$g` for the global object, see [PowerShell](../PowerShell.md). The variables of a session are kept, `Up` and
+    	`Down` browse the history.
 
 - #### Edit Menu
 	Opens the [Menu Editor](Menu-Editor.md), which you can use to customize the Main Menu.
@@ -270,6 +281,9 @@ The button next to the heading and a right-click on a filter open the filter men
         > :information_source: Even though they can be useful in some cases,
 		you should consider creating a template instead.
 
+> :information_source: `Misc > Logo...` adds an image with transparency, like a logo, to a corner of the video. It
+> asks for the image file and the corner, the opacity is set in the code of the filter.
+
 ## Crop and Resize
 
 The Crop and Resize card gives you the opportunity to resize the given video pretty easy. To do so you can choose
@@ -326,8 +340,9 @@ Other encoders show their command line, `Copy/Mux` copies the video stream witho
 
 ## Audio
 
-The Audio card has a row for each audio track. The text field contains the stream or file name of the source,
-next to it there are:
+The Audio card has a row for each audio track. The text field contains the stream or file name of the source, the
+name of the track in the target is shown next to it when it has one. Next to the heading, the card shows how many
+tracks the project has and how many audio streams the source has. Next to the text field there are:
 
 - #### Track menu
     The button with the three dots opens the menu of the track, which also opens with a right-click on the text field.

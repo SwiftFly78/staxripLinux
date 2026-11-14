@@ -21,6 +21,8 @@ recordings and quick encodes.
 - **Preset**: `slow` or `slower`, `veryslow` gains little more.
 - **Tune**: `film`, `animation` or `grain` for such content.
 - 8-bit output plays everywhere.
+- **Keyframes at chapters**: forces a key frame at every chapter, so players jump exactly to the chapters. x265 has
+  the same option.
 
 ## x265
 

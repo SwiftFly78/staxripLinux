@@ -33,6 +33,8 @@ decides what happens with it:
 - **Channels** and **Sampling Rate**: `Original` keeps them, fewer channels downmix the audio.
 - **Bitrate** and **Quality**: the bitrate, or the quality for encoders with a quality mode, like the VBR mode of
   fdkaac or Opus.
+- **Bitrates by Channels**: bitrates for channel counts of the target, like `2=128 6=256 8=320`. When the audio has
+  one of the channel counts, its bitrate replaces the bitrate of the profile.
 - **Gain**: changes the volume in dB.
 - **Delay**: the delay in milliseconds, read from the file name of demuxed tracks (`DELAY 40ms`). It's applied by the
   muxer.
@@ -44,7 +46,8 @@ decides what happens with it:
 - **Normalize**: normalizes the volume. The method, peak volume (`volumedetect`), EBU R128 loudness (`loudnorm`) or
   dynamic normalization (`dynaudnorm`), is chosen in the advanced options of ffmpeg.
 - **Center/Speech optimized Stereo**: a stereo downmix that keeps dialogues clear.
-- **Default Track**, **Forced Track**, **Commentary Track**: the flags of the track in MKV files.
+- **Default Track**, **Forced Track**, **Commentary Track**, **Hearing Impaired**, **Visual Impaired**, **Text
+  Descriptions** and **Original Language**: the flags of the track in MKV files, taken over from the source.
 
 ## Advanced
 
@@ -53,7 +56,8 @@ opusenc, the AAC profile (LC, HE-AAC) and VBR mode of fdkaac, or the dynamic ran
 eac3to and DeeZy. `More...` opens further options: the *Decoding Method*, the ffmpeg options like the
 *Normalize Method*, and the settings of the `loudnorm` and `dynaudnorm` normalization.
 
-The command line at the bottom shows how the encoder is run. The menu button has *Execute Command Line*,
+The command line at the bottom shows how the encoder is run. *Execute Command Line* runs it in a terminal and writes
+its output to `<audio file>_audio.log` in the temp folder of the project. The menu button has *Execute Command Line*,
 *Copy Command Line*, *Show Command Line...*, *Save Profile...*, which saves the settings as new audio profile, and the
 help of eac3to and ffmpeg.
 

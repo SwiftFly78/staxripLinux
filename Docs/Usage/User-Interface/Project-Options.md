@@ -92,6 +92,11 @@ The options of [Auto Crop](../Cropping.md#auto-crop):
 <img width=600 src="../../../Images/Screenshots/ProjectOptionsAudio.png">
 
 - **Audio Tracks**: the maximum number of audio tracks of the project.
+- **Add tracks for more streams**: when the source has more audio streams of the preferred languages than tracks,
+  tracks are added for them, up to 25. The added tracks use `Copy/Mux`.
+- **Track languages replace missing or wrong languages**: a stream whose language matches no track goes to the next
+  free track even if the track has another language, and the tracks keep their language. For sources whose streams
+  have no or a wrong language.
 - **Preferred Languages**: the languages that are demuxed with *Preferred Languages*, like `eng deu`, `all` for all
   languages. The order decides the order of the tracks.
 - **Cutting Method**: `mkvmerge` cuts the audio without decoding it, `FFAudioSource` decodes it with AviSynth+ and
@@ -112,6 +117,8 @@ The options of [Auto Crop](../Cropping.md#auto-crop):
     - *Include preferred languages directly without demuxing*
     - *Show dialog to choose subtitles to be included*
     - *Don't include subtitles*
+- **Types**: `Text and bitmap`, `Text only` or `Bitmap only`, subtitles of the other type aren't demuxed or included.
+  PGS, VobSub and DVB subtitles are bitmaps. With OCR, `Text only` still demuxes bitmap subtitles to convert them.
 - **Languages**: the preferred subtitle languages, `all` for all languages.
 - **Track Name**: the name of the subtitle tracks, may contain [macros](../Macros.md) like `%language_english%`.
 - **Default Subtitle**: which subtitle gets the default flag: `None`, `Single`, `First`, `Second`, `English`, `Native`
@@ -125,6 +132,8 @@ The options of [Auto Crop](../Cropping.md#auto-crop):
 ## Chapters, Timestamps, Attachments, Tags
 
 - **Demux Chapters**: demuxes the chapters and adds them to the target.
+- **Add chapters at cut points**: when the video is cut, MKV files get a chapter at the start of each kept part,
+  named `Part 1`, `Part 2` and so on. Chapters of the source are kept.
 - **Extract timestamps from MKV files**: `Never`, `VFR only` or `Always`. Variable frame rate videos keep their
   timing with the timestamps file.
 - **Demux Attachments** and **Add Attachments to Muxing**: fonts of ASS subtitles and cover images.
@@ -185,6 +194,9 @@ Code that is added to every script StaxRipLinux generates: **Code appended to tr
 - **Hide dialogs asking to demux, source filter etc.**: uses the defaults without asking, for batch processing.
 - **Use source file folder for temp files**: writes the temp files next to the source.
 - **Abort on Frame Mismatch**: aborts the job when the frame count of the encoded video differs from the script.
+- **Save MediaInfo of the source and the target**: after a job, the complete MediaInfo of the source and the target is
+  saved next to the target as `<name>.source.mediainfo.txt` and `<name>.mediainfo.txt`, for metadata like time codes
+  that isn't muxed.
 - **Auto run compressibility check** with **Percentage of length to check**, **Seconds per test block** and
   **After comp. check adjust** (`image size` or `file size`): the compressibility check encodes parts of the video to
   estimate how well it compresses, see [Encoder Options](Encoder-Options.md#compressibility-check).

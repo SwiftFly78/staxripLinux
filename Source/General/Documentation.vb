@@ -147,7 +147,7 @@ Public Class Documentation
 
         sb.AppendLine()
         sb.AppendLine("## Interactive Macros")
-        sb.AppendLine("Interactive macros can be used in certain menus like the filter profiles menu. They give you the ability to pop up dialogs in which you have to put values in or select an option.")
+        sb.AppendLine("Interactive macros can be used in certain menus like the filter profiles menu and in the parameters of [event commands](User-Interface/Events.md). They give you the ability to pop up dialogs in which you have to put values in or select an option.")
         sb.AppendLine()
         sb.AppendLine("| Name | Description |")
         sb.AppendLine("|---|---|")

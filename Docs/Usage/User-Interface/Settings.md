@@ -103,6 +103,9 @@ example:
 
 - **Encoder Process Priority** and **Tool Process Priority**: the priority of the encoders and of the other tools.
   `BelowNormal` or `Idle` keeps the system responsive while encoding.
+- **Delete temp folder on project close**: `Never`, `Ask` or `Always` move the temp folder of a project with a
+  source, with its demuxed streams, index files and logs, to the trash when the project is closed. Temp folders that
+  jobs use are kept.
 - **Command Line Preview**: `Code Preview` shows command lines in a window of StaxRipLinux, the other modes show them
   in the terminal.
 - **Terminal**: the terminal emulator for console apps, for example `kitty` or `konsole`. Empty uses the `TERMINAL`

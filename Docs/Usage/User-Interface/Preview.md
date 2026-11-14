@@ -40,10 +40,12 @@ trimmed as well.
 | Cut | `Home`, `End` | Begin and end a selection |
 | | `S` | Split the selection |
 | | `Delete`, `Ctrl+Delete` | Delete the selection or all selections |
+| | `E` | Edit the selections as text, one range of frames (`1500-2399`) or times (`0:01:00.000-0:01:30.000`) per line |
 | View | `R` | Reload the script, for example after changing a filter |
 | | `I` | Show the info of the script: size, frame rate, length and color format |
 | | `Enter` | Fullscreen |
 | | `=`, `-` | Zoom in and out |
+| | `1` | Zoom 100%: a screen pixel for each video pixel, dragging moves the video, `1` again fits it into the window |
 | | `B`, `Ctrl+T` | Show or hide the buttons and the trackbar |
 | Tools | `F9` | Play the script with mpv from the current position |
 | | | Copy the frame number or the time |
