@@ -120,7 +120,8 @@ to feed the video encoder. It is also used to cut the video.
 	- ##### Terminal
     	Opens a terminal in the working folder with additional and/or extended environment variables.
 	- ##### PowerShell Terminal
-    	Opens a PowerShell session (`pwsh`) in a terminal with additional and/or extended environment variables.
+    	Opens a PowerShell session (`pwsh`) in a terminal with additional and/or extended environment variables. Without
+    	an installed PowerShell, it's the PowerShell of StaxRipLinux, see [PowerShell](../PowerShell.md).
 	- ##### PowerShell Console
     	A window that runs PowerShell commands inside StaxRipLinux, with `$p` for the project, `$s` for the settings and
     	`$g` for the global object, see [PowerShell](../PowerShell.md). The variables of a session are kept, `Up` and

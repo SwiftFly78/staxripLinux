@@ -387,15 +387,10 @@ Public Class GlobalClass
         Return False
     End Function
 
-    'runs PowerShell code in a terminal, requires pwsh
+    'runs PowerShell code in a terminal
     Sub RunCodeInTerminal(code As String)
-        If ShellHelp.Which("pwsh") = "" Then
-            MsgError("PowerShell (pwsh) is not installed.", "PowerShell is required to run this command in a terminal.")
-            Exit Sub
-        End If
-
         Dim base64 = Convert.ToBase64String(Encoding.Unicode.GetBytes(code)) 'UTF16LE
-        DesktopHelp.RunInTerminal("pwsh -NoLogo -NoProfile -EncodedCommand " + base64)
+        DesktopHelp.RunInTerminal(PowerShellTerminal.GetCommand() + " -NoLogo -NoProfile -EncodedCommand " + base64)
     End Sub
 
     Sub RunCommandInTerminal(fileName As String, Optional arguments As String = Nothing)

@@ -494,6 +494,15 @@ Public Class Package
         .LaunchAction = Sub() g.ShellExecute(Package.mpvnet.Path, "--player-operation-mode=pseudo-gui"),
         .Description = "Media player (GUI app)."})
 
+    Shared Property PSReadLine As Package = Add(New Package With {
+        .RequiredFunc = Function() False,
+        .Name = "PSReadLine",
+        .Filename = "PSReadLine.psd1",
+        .Location = IO.Path.Combine("Support", "PowerShell", "PSReadLine"),
+        .WebURL = "https://github.com/PowerShell/PSReadLine",
+        .DownloadURL = "https://www.powershellgallery.com/packages/PSReadLine",
+        .Description = "History, completion and syntax colors in the PowerShell terminal of StaxRipLinux."})
+
     Shared Property MPC As Package = Add(New Package With {
         .Name = "MPC",
         .Filename = "mpc-be64.exe",

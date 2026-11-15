@@ -124,5 +124,9 @@ check "7z" bash -c "$A/Support/7zip/7z a -bd archive.7z in.wav > /dev/null && $A
 # StaxRip downloads the languages
 check "tesseract" $A/Subtitles/Tesseract/tesseract --version
 check "mpv" $A/Support/mpv.net/mpv --no-config --vo=null --ao=null --frames=24 $MEDIA/h264_aac_subs.mkv
+# the PowerShell of StaxRipLinux, which the terminal runs when PowerShell isn't installed
+PWSH=/tmp/app/usr/lib/staxrip/StaxRip
+check "pwsh" $PWSH --pwsh -NoLogo -NoProfile -Command 'if (-not (Get-ChildItem /tmp/app)) { exit 1 }'
+check "PSReadLine" $PWSH --pwsh -NoLogo -NoProfile -Command 'Import-Module PSReadLine -ErrorAction Stop'
 
 echo "$(grep -c '^pass' /work/results/tools.tsv) of $(wc -l < /work/results/tools.tsv) tool tests pass"

@@ -7,7 +7,7 @@ the others are installed on the system when they are needed, see
 
 - [Console apps](#console-apps) (36)
 - [GUI apps](#gui-apps) (6)
-- [Libraries and other tools](#libraries-and-other-tools) (6)
+- [Libraries and other tools](#libraries-and-other-tools) (7)
 - [AviSynth+ plugins](#avisynth-plugins) (86)
 - [AviSynth+ scripts](#avisynth-scripts) (53)
 - [VapourSynth plugins](#vapoursynth-plugins) (69)
@@ -74,6 +74,7 @@ the others are installed on the system when they are needed, see
 | [FFTW](https://www.fftw.org) | Library required by various AviSynth and VapourSynth plugins. | ✓ |
 | [HDR10Plus_Tool](https://github.com/quietvoid/hdr10plus_tool) | CLI utility to work with HDR10+ in HEVC files. | ✓ |
 | [MediaInfo](https://mediaarea.net/en/MediaInfo) | Library to retrieve info from media files. | ✓ |
+| [PSReadLine](https://github.com/PowerShell/PSReadLine) | History, completion and syntax colors in the PowerShell terminal of StaxRipLinux. | ✓ |
 | [VapourSynth](https://www.vapoursynth.com) | Video processing Python scripting library. | ✓ |
 
 ## AviSynth+ plugins

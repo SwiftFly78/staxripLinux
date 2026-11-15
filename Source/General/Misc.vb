@@ -1412,6 +1412,10 @@ End Enum
 Public Class Startup
     <STAThread()>
     Shared Sub Main(args As String())
+        If PowerShellTerminal.IsCommandLine(args) Then
+            Environment.Exit(PowerShellTerminal.Run(args))
+        End If
+
         'command lines are built with the culture, but tools reject the minus sign U+2212 of cultures like sv-SE
         Dim culture = DirectCast(CultureInfo.CurrentCulture.Clone(), CultureInfo)
         culture.NumberFormat.NegativeSign = "-"

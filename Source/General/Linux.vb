@@ -390,7 +390,9 @@ Public Class DesktopHelp
         If command <> "" Then
             Dim exe = command.Split(" "c)(0)
 
-            If ShellHelp.Which(exe) = "" Then
+            If exe = "pwsh" Then
+                command = PowerShellTerminal.GetCommand() + command.Substring(exe.Length)
+            ElseIf ShellHelp.Which(exe) = "" Then
                 MsgError(exe + " wasn't found.", "Install it with your package manager.")
                 Exit Sub
             End If

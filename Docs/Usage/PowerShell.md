@@ -25,13 +25,14 @@ The types of StaxRipLinux, like `MediaInfo`, `VideoFilter` or `TaskDialog`, can 
   staxrip "-ExecutePowerShellFile:/path/to/script.ps1"
   ```
 
-  With *Use External Shell*, `ExecutePowerShellCode` runs the code in a terminal with `pwsh` instead, which needs
-  PowerShell to be installed.
+  With *Use External Shell*, `ExecutePowerShellCode` runs the code in a terminal with `pwsh` instead.
 - **Macros**: `%eval:expression%` evaluates a PowerShell expression in any text that supports
   [macros](Macros.md#function-macros).
 
-`Tools > Advanced > PowerShell Terminal` opens `pwsh` in a terminal with the macros as environment variables, if
-PowerShell is installed. `Tools > Advanced > PowerShell Console` runs commands inside StaxRipLinux instead, with `$p`,
+`Tools > Advanced > PowerShell Terminal` opens `pwsh` in a terminal with the macros as environment variables. When
+PowerShell isn't installed, the terminal and *Use External Shell* run the PowerShell StaxRipLinux runs its scripts
+with (`staxrip --pwsh` takes the parameters of `pwsh`), the full AppImage adds PSReadLine for the history and the
+completion of commands. `Tools > Advanced > PowerShell Console` runs commands inside StaxRipLinux instead, with `$p`,
 `$s` and `$g` for the project, the settings and the global object, for example to look at a value of the project
 (`$p.SourceFile`) or to try code before putting it into a script. Its variables are kept until it's closed, `Up` and
 `Down` browse the history.
