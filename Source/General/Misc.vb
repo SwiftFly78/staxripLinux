@@ -1431,6 +1431,10 @@ Public Class Startup
         Dim app As New Application(Eto.Platforms.Gtk)
         EtoHelp.InitMainThread()
 
+        'the Wayland clipboard of Eto 2.13.0 loses its connection on KWin 6, which only has ext-data-control,
+        'fixed after Eto 2.13.0 (picoe/Eto#3147)
+        app.Platform.Add(Of Eto.Forms.Clipboard.IHandler)(Function() New Eto.GtkSharp.Forms.ClipboardHandler())
+
         'the app ID of the windows on Wayland, desktops show the icon of staxrip.desktop,
         'GTK# sets the name from the assembly name when GTK is initialized
         GLib.Global.ProgramName = "staxrip"
