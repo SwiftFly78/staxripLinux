@@ -611,7 +611,7 @@ Partial Public Class MainForm
 
         Await Task.Run(Sub()
                            If Folder.Scripts.DirExists Then
-                               files = Directory.GetFiles(Folder.Scripts)
+                               files = Directory.GetFiles(Folder.Scripts).OrderBy(Function(path) path).ToArray
                            End If
                        End Sub)
 
