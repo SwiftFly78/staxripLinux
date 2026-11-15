@@ -615,7 +615,8 @@ Partial Public Class MainForm
                            End If
                        End Sub)
 
-        If IsDisposed OrElse files.Count = 0 Then
+        'replacing an open submenu leaves GTK with a dead grab that blocks all input
+        If IsDisposed OrElse files.Count = 0 OrElse IsMenuOpen Then
             Exit Sub
         End If
 

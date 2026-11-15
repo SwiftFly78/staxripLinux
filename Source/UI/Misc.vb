@@ -21,13 +21,25 @@ Namespace UI
             ShowActivated = True
             AddHandler GotFocus, Sub()
                                      g.ActiveForm = Me
-                                     OnActivated(EventArgs.Empty)
+
+                                     'on Wayland, GTK focuses the window again whenever a submenu of the menu bar opens
+                                     If Not IsMenuOpen Then
+                                         OnActivated(EventArgs.Empty)
+                                     End If
                                  End Sub
         End Sub
 
         Protected Overridable Sub OnActivated(e As EventArgs)
             RaiseEvent Activated(Me, e)
         End Sub
+
+        'open menus hold the GTK grab
+        ReadOnly Property IsMenuOpen As Boolean
+            Get
+                Dim window = TryCast(ControlObject, Global.Gtk.Window)
+                Return window IsNot Nothing AndAlso TypeOf window.Group.CurrentGrab Is Global.Gtk.MenuShell
+            End Get
+        End Property
 
         Protected Overrides Sub OnKeyDown(e As KeyEventArgs)
             MyBase.OnKeyDown(e)
