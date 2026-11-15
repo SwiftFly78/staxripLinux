@@ -303,9 +303,10 @@ Public Class GlobalCommands
 
         Try
             FilePath = Macro.Expand(FilePath)
+            Dim mpv = Package.mpvnet.Path
 
-            If ShellHelp.Which("mpv") <> "" Then
-                g.Execute("mpv", $"--no-video --really-quiet --volume={Volume} {FilePath.Escape}")
+            If mpv <> "" Then
+                g.Execute(mpv, $"--no-video --really-quiet --volume={Volume} {FilePath.Escape}")
             ElseIf ShellHelp.Which("ffplay") <> "" Then
                 g.Execute("ffplay", $"-nodisp -autoexit -loglevel quiet -volume {Volume} {FilePath.Escape}")
             ElseIf ShellHelp.Which("pw-play") <> "" Then
