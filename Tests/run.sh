@@ -1,7 +1,7 @@
 #!/bin/bash
 # Runs the test suites of the full AppImage in containers, see Tests/README.md.
 # usage: run.sh <AppImage> <suite>...
-#   suites: static, tools, options, frames, pipelines or pipelines:<shard>/<count>, all
+#   suites: static, tools, options, frames, pipelines or pipelines:<shard>/<count>, ui, all
 # The results are lines of "<pass|fail|skip>\t<test>\t<detail>" in Tests/.work/results/<suite>.tsv,
 # report.py summarizes them. PIPELINES_MATCH=<regex> only runs the pipelines whose names match.
 set -euo pipefail
@@ -19,11 +19,15 @@ shift
 W=${TEST_WORK:-$PWD/.work}
 mkdir -p "$W/results"
 
-# the image of Dockerfile, with gpu=1 the one of Dockerfile.gpu with the software drivers of Vulkan and OpenCL
+# the image of Dockerfile, with 1 the one of Dockerfile.gpu with the software drivers of Vulkan and OpenCL, with ui
+# the one of Dockerfile.ui with the desktops of the ui suite
 image() {
     local file=Dockerfile tag
-    [ "$1" = 1 ] && file=Dockerfile.gpu
-    tag=staxriplinux-test$([ "$1" = 1 ] && echo -gpu || true):$(sha256sum $file | cut -c1-12)
+    case $1 in
+        1) file=Dockerfile.gpu ;;
+        ui) file=Dockerfile.ui ;;
+    esac
+    tag=staxriplinux-test$(echo "${file#Dockerfile}" | tr . -):$(sha256sum $file | cut -c1-12)
 
     if ! docker image inspect "$tag" > /dev/null 2>&1; then
         # without context, the images copy no files
@@ -33,12 +37,16 @@ image() {
     echo "$tag"
 }
 
-# container <gpu> <script> [<arg>...]
+# container <image of image()> <script> [<arg>...]
 container() {
-    local gpu=$1
+    local variant=$1 options=()
     shift
-    docker run --rm --user "$(id -u):$(id -g)" --shm-size=1g -v "$appimage:/app.AppImage:ro" \
-        -v "$PWD/container:/t:ro" -v "$W:/work" "$(image "$gpu")" bash "$@"
+
+    # crashes of the desktops mustn't reach the core dump handler of the host
+    [ "$variant" = ui ] && options+=(--ulimit core=0)
+
+    docker run --rm --user "$(id -u):$(id -g)" --shm-size=1g "${options[@]}" -v "$appimage:/app.AppImage:ro" \
+        -v "$PWD/container:/t:ro" -v "$W:/work" "$(image "$variant")" bash "$@"
 }
 
 media() {
@@ -55,7 +63,7 @@ inventory() {
 }
 
 suites=("$@")
-[ "${suites[*]}" = all ] && suites=(static tools options frames pipelines)
+[ "${suites[*]}" = all ] && suites=(static tools options frames pipelines ui)
 
 for suite in "${suites[@]}"; do
     echo "== $suite"
@@ -85,6 +93,8 @@ for suite in "${suites[@]}"; do
                 ${PIPELINES_MATCH:+--match "$PIPELINES_MATCH"}
             container 0 /t/staxrip.sh pipelines
             python3 -I pipelines.py validate "$W/specs" "$W/out" "$W/results/pipelines${shard:+-${shard/\//-of-}}.tsv" ;;
+        ui)
+            container ui /t/ui.sh ;;
         *)
             echo "unknown suite: $suite" >&2
             exit 2 ;;

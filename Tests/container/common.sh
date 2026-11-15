@@ -29,3 +29,44 @@ check() {
         result fail "$name" "$(printf '%s\n' "$out" | grep -v '^\s*$' | tail -3)"
     fi
 }
+
+# staxrip <seconds> <script> [<arg>...]: runs a PowerShell script in a new StaxRip process, the script ends it,
+# returns 124 after a timeout
+staxrip() {
+    local seconds=$1 script=$2 args
+    shift 2
+    args=$(IFS=';'; echo "$*")
+    timeout -k 10 "$seconds" /tmp/app/AppRun "-ExecutePowerShellFile:$script${args:+,$args}" >> /tmp/staxrip.out 2>&1
+}
+
+# the first start shows the changelog in a dialog before StaxRip runs the script. The OK button at its bottom right
+# is clicked when the dialog is visible and keeps its place, and again every 5 seconds while it stays open.
+first_start() {
+    local pid i=0 next=0 dialog last= best id x y w h
+    rm -f /tmp/started
+    staxrip 120 /t/started.ps1 /tmp/started &
+    pid=$!
+
+    while [ ! -f /tmp/started ] && kill -0 $pid 2> /dev/null; do
+        dialog= best=
+        for id in $(xdotool search --onlyvisible --name '^StaxRipLinux v' 2> /dev/null); do
+            eval "$(xdotool getwindowgeometry --shell "$id")"
+            if [ -z "$best" ] || [ $((WIDTH * HEIGHT)) -lt "$best" ]; then
+                best=$((WIDTH * HEIGHT)) dialog="$X $Y $WIDTH $HEIGHT"
+            fi
+        done
+
+        if [ -n "$dialog" ] && [ "$dialog" = "$last" ] && [ $i -ge $next ]; then
+            read -r x y w h <<< "$dialog"
+            xdotool mousemove $((x + w - 62)) $((y + h - 40)) click 1
+            next=$((i + 10))
+        fi
+
+        last=$dialog
+        i=$((i + 1))
+        sleep 0.5
+    done
+
+    wait $pid
+    [ -f /tmp/started ]
+}

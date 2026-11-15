@@ -98,7 +98,7 @@ jobs:
       fail-fast: false
       matrix:
         suite: [static, tools, options, frames, 'pipelines:1/6', 'pipelines:2/6', 'pipelines:3/6', 'pipelines:4/6',
-                'pipelines:5/6', 'pipelines:6/6']
+                'pipelines:5/6', 'pipelines:6/6', ui]
 
     steps:
       - name: Check out
@@ -166,7 +166,7 @@ jobs:
             exit 1
           fi
           # a suite that crashed has no results, which report.py can't tell from no failures
-          for suite in static tools options frames pipelines-{1..6}-of-6; do
+          for suite in static tools options frames pipelines-{1..6}-of-6 ui; do
             if [ ! -s "results/$suite.tsv" ]; then
               echo "::error::The suite $suite has no results, see its job"
               exit 1
