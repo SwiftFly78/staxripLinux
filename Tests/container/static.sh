@@ -91,6 +91,14 @@ for p in inv['packages']:
 EOF
 
 echo "-- executables"
+# the GUI apps abort without a display, they run until the timeout ends them
+Xvfb :90 -nolisten tcp > /dev/null 2>&1 &
+xvfb=$!
+export DISPLAY=:90
+for i in $(seq 1 100); do
+    xdotool getdisplaygeometry > /dev/null 2>&1 && break
+    sleep 0.1
+done
 find $A -type f -perm -u+x ! -name '*.so*' ! -path '*/FrameServer/Python/lib/*' | sort | while read -r f; do
     head -c 4 "$f" 2> /dev/null | grep -q ELF || continue
     timeout 20 "$f" --help < /dev/null > /tmp/static/start.out 2>&1
@@ -104,3 +112,4 @@ find $A -type f -perm -u+x ! -name '*.so*' ! -path '*/FrameServer/Python/lib/*' 
         result pass "start ${f#$A/}"
     fi
 done
+kill $xvfb

@@ -183,6 +183,36 @@ apps_plugin() {
     apps_install "Plugins/$host/$package" "$@"
 }
 
+# copies Qt plugins of the prefix, like platforms/libqxcb.so, to Apps/lib/qt6/plugins
+qt_plugin_install() {
+    local p
+    for p in "$@"; do
+        mkdir -p "$O/Apps/lib/qt6/plugins/${p%/*}"
+        cp -L "$PREFIX/plugins/$p" "$O/Apps/lib/qt6/plugins/$p"
+    done
+}
+
+# installs a Qt GUI of the prefix into Apps/<location> as <name>.bin with a qt.conf that points it to the plugins of
+# the bundle, and the script <name> that starts it without the plugins of the Qt of the system and with X11, the
+# only platform of the bundle, also on Wayland desktops, the optional third argument are lines the script runs before
+qt_app_install() {
+    local location=$1 file=$2 setup=${3:-} name dir
+    name=$(basename "$file")
+    dir=$O/Apps/$location
+    mkdir -p "$dir"
+    cp -L "$PREFIX/$file" "$dir/$name.bin"
+    printf '[Paths]\nPrefix = %s\nPlugins = lib/qt6/plugins\n' "$(realpath -m --relative-to="$dir" "$O/Apps")" > "$dir/qt.conf"
+    {
+        echo '#!/bin/sh'
+        echo 'dir=$(dirname "$(readlink -f "$0")")'
+        echo 'unset QT_PLUGIN_PATH'
+        echo '[ "${QT_QPA_PLATFORM:-}" = offscreen ] || export QT_QPA_PLATFORM=xcb'
+        if [ -n "$setup" ]; then printf '%s\n' "$setup"; fi
+        echo "exec \"\$dir/$name.bin\" \"\$@\""
+    } > "$dir/$name"
+    chmod +x "$dir/$name"
+}
+
 # stages the license files of the current folder, like LICENSE and COPYING
 stage_license_files() {
     local f

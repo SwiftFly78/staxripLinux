@@ -12,6 +12,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libfontconfig-dev libfreetype-dev libgmp-dev libjpeg-dev liblcms2-dev libluajit-5.1-dev liblzma-dev \
         libogg-dev libpng-dev libpulse-dev libva-dev libvorbis-dev libvulkan-dev libx11-dev libxext-dev \
         libxpresent-dev libxrandr-dev libxss-dev libxxhash-dev ocl-icd-opencl-dev opencl-headers zlib1g-dev \
+        libx11-xcb-dev libxcb-cursor-dev libxcb-icccm4-dev libxcb-image0-dev libxcb-keysyms1-dev libxcb-randr0-dev \
+        libxcb-render-util0-dev libxcb-shape0-dev libxcb-shm0-dev libxcb-sync-dev libxcb-util-dev libxcb-xfixes0-dev \
+        libxcb-xinput-dev libxcb-xkb-dev libxkbcommon-dev libxkbcommon-x11-dev \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements-build.txt /tmp/

@@ -129,4 +129,24 @@ PWSH=/tmp/app/usr/lib/staxrip/StaxRip
 check "pwsh" $PWSH --pwsh -NoLogo -NoProfile -Command 'if (-not (Get-ChildItem /tmp/app)) { exit 1 }'
 check "PSReadLine" $PWSH --pwsh -NoLogo -NoProfile -Command 'Import-Module PSReadLine -ErrorAction Stop'
 
+echo "-- GUI apps"
+# D2V Witch indexes on the command line, d2vsource opens the index
+D2VSOURCE="import sys, vapoursynth as vs; vs.core.std.LoadPlugin(sys.argv[1]); vs.core.d2v.Source(sys.argv[2]).get_frame(0)"
+for f in dvd.vob mpeg2_ac3.ts; do
+    check "D2V Witch $f" bash -c '"$0" --quiet --audio-ids all --output "$1" "$2" && grep -q DGIndexProjectFile "$1"' \
+        "$A/Support/D2V Witch/d2vwitch" "$f.d2v" "$MEDIA/$f"
+    check "d2vsource $f" $PYTHON -c "$D2VSOURCE" "$A/Plugins/VS/d2vsource/libd2vsource.so" "$f.d2v"
+done
+# the others started when they run until the timeout ends them
+Xvfb :92 -nolisten tcp > /dev/null 2>&1 &
+xvfb=$!
+for i in $(seq 1 100); do
+    DISPLAY=:92 xdotool getdisplaygeometry > /dev/null 2>&1 && break
+    sleep 0.1
+done
+check "MKVToolNix GUI" bash -c 'DISPLAY=:92 timeout 10 "$0"; [ $? = 124 ]' "$A/Support/MKVToolNix/mkvtoolnix-gui"
+check "Subtitle Edit" bash -c 'DISPLAY=:92 timeout 15 "$0" "$1"; [ $? = 124 ]' "$A/Support/SubtitleEdit/subtitleedit" \
+    "$MEDIA/en.srt"
+kill $xvfb
+
 echo "$(grep -c '^pass' /work/results/tools.tsv) of $(wc -l < /work/results/tools.tsv) tool tests pass"

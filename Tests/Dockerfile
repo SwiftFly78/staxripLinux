@@ -1,8 +1,9 @@
 # A desktop-like Ubuntu 22.04, the oldest system the full AppImage supports, without any of the bundled tools, so
-# missing libraries show up. xdotool confirms the changelog dialog of the first start, xwd takes screenshots. The
-# frames suite runs in the image of Dockerfile.gpu.
+# missing libraries show up. xdotool confirms the changelog dialog of the first start, xwd takes screenshots, Mesa
+# provides the OpenGL Subtitle Edit needs. The frames suite runs in the image of Dockerfile.gpu.
 FROM ubuntu:22.04@sha256:076e7bf82319619f28dd0aa9c02ab34b055ad37100395b4f49a2ffba04fb5e11
 ENV DEBIAN_FRONTEND=noninteractive LANG=C.UTF-8
 RUN apt-get update \
-    && apt-get install -y libgtk-3-0 libicu70 xvfb xauth fonts-dejavu-core xdotool x11-apps \
+    && apt-get install -y libgtk-3-0 libicu70 libxkbcommon-x11-0 libegl1 libgl1-mesa-dri xvfb xauth \
+        fonts-dejavu-core xdotool x11-apps \
     && rm -rf /var/lib/apt/lists/*

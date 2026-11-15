@@ -60,10 +60,10 @@ the others are installed on the system when they are needed, see
 |---|---|---|
 | [BDSup2Sub++](https://github.com/amichaeltm/BDSup2SubPlusPlus) | GUI app that converts Blu-ray subtitles to other formats like VobSub. |  |
 | [chapterEditor](https://forum.doom9.org/showthread.php?t=169984) | GUI app to edit chapters and menus for OGG, XML, TTXT, m.AVCHD, m.editions-mkv, Matroska Menu. |  |
-| [D2V Witch](https://github.com/dubhater/D2VWitch) | Portable MPEG-2 demuxing and d2v indexing GUI app. |  |
-| [MKVToolnix GUI](https://mkvtoolnix.download) | MKV muxing/demuxing GUI app. |  |
+| [D2V Witch](https://github.com/dubhater/D2VWitch) | Portable MPEG-2 demuxing and d2v indexing GUI app. | ✓ |
+| [MKVToolnix GUI](https://mkvtoolnix.download) | MKV muxing/demuxing GUI app. | ✓ |
 | [mpv](https://mpv.io) | Media player (GUI app). | ✓ |
-| [Subtitle Edit](https://www.nikse.dk/SubtitleEdit) | Subtitle editor GUI app. |  |
+| [Subtitle Edit](https://www.nikse.dk/SubtitleEdit) | Subtitle editor GUI app. | ✓ |
 
 ## Libraries and other tools
 

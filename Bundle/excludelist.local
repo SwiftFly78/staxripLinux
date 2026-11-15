@@ -10,5 +10,7 @@ libpulse.so.0
 libpulse-simple.so.0
 libdbus-1.so.3
 libxkbcommon.so.0
+# uses the internal structures of libxkbcommon, it has to be the same version
+libxkbcommon-x11.so.0
 libwayland-cursor.so.0
 libwayland-egl.so.1

@@ -43,6 +43,8 @@ it depends on. With `KEEP_GOING=1` a failed component doesn't stop the build, th
   `configure_make`, `cmake_build` or `meson_build`. `stage_license` adds license files.
 - `bundle`, which copies its files from `$PREFIX` into the Apps folder with `apps_install` or `apps_plugin`.
   Tools go where the package looks for them in the Apps folder, see `Location` and `Locations` of the package.
+  `qt_app_install` installs a Qt GUI with a `qt.conf` and a script that starts it with the X11 platform and only the
+  plugins of the bundle, which `qt_plugin_install` copies to `Apps/lib/qt6/plugins`.
 
 Plugins are built with `cmake_plugin`, `meson_plugin`, `autotools_plugin` or plain `make`, then `plugin_install`
 copies the built library under the file name StaxRipLinux looks for into the folder of its package, and
