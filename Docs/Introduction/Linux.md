@@ -141,7 +141,8 @@ subtitles with the OCR engine [Tesseract](https://github.com/tesseract-ocr/tesse
 edited and are supported by more containers and players, MP4 for example doesn't support PGS.
 
 - *OCR to SRT...* on the *Subtitles* tab of the container options (*Container Options* in the main window) converts the
-  selected bitmap subtitle. The SRT file replaces the subtitle in the list, its language, name and flags are kept.
+  selected bitmap subtitles, Ctrl and Shift select more than one. A dialog lists them with the language of their text,
+  which can be changed. The SRT files replace the subtitles in the list, their language, name and flags are kept.
 - *Convert bitmap subtitles (PGS, VobSub) to SRT using OCR* in the subtitle options (`Project > Options > Subtitles`)
   converts the demuxed bitmap subtitles when a source is opened.
 - The OCR uses the language of the subtitle. Subtitles with an undetermined language use English, or another installed

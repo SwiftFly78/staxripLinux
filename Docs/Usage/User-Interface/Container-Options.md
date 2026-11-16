@@ -28,8 +28,9 @@ The subtitles of the target with their settings:
 
 `Add...` adds subtitle files, `Set Names...` sets the names of all subtitles from their language, `Play` plays the
 video with the subtitle in mpv. `BDSup2Sub++` and `Subtitle Edit` open the subtitle in these apps, if they're
-installed, the full AppImage contains Subtitle Edit. `OCR to SRT...` converts the selected bitmap subtitle (PGS,
-VobSub) to a text subtitle with Tesseract, see [Subtitle OCR](../../Introduction/Linux.md#subtitle-ocr).
+installed, the full AppImage contains Subtitle Edit. `OCR to SRT...` converts the selected bitmap subtitles (PGS,
+VobSub) to text subtitles with Tesseract, see [Subtitle OCR](../../Introduction/Linux.md#subtitle-ocr). Ctrl and Shift
+select more than one subtitle for `Remove` and `OCR to SRT...`.
 
 Which subtitles of the source are added is set in the [Project Options](Project-Options.md#subtitles).
 

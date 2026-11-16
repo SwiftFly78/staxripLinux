@@ -28,12 +28,23 @@ Namespace UI
             End Get
         End Property
 
+        'the selected rows in ascending order, more than one if AllowMultipleSelection is set
+        ReadOnly Property SelectedIndices As List(Of Integer)
+            Get
+                If List Is Nothing Then
+                    Return New List(Of Integer)
+                End If
+
+                Return SelectedRows.Where(Function(i) i > -1 AndAlso i < List.Count).OrderBy(Function(i) i).ToList
+            End Get
+        End Property
+
         Function CanMoveUp() As Boolean
-            Return HasSelection AndAlso SelectedRow > 0
+            Return SelectedIndices.Count = 1 AndAlso SelectedRow > 0
         End Function
 
         Function CanMoveDown() As Boolean
-            Return HasSelection AndAlso SelectedRow < List.Count - 1
+            Return SelectedIndices.Count = 1 AndAlso SelectedRow < List.Count - 1
         End Function
 
         Sub MoveSelectionUp()
@@ -64,16 +75,21 @@ Namespace UI
         End Sub
 
         Sub RemoveSelection()
-            If Not HasSelection Then
+            Dim indices = SelectedIndices
+
+            If indices.Count = 0 Then
                 Exit Sub
             End If
 
-            Dim index = SelectedRow
-            List.RemoveAt(index)
+            For Each i In indices.OrderByDescending(Function(x) x)
+                List.RemoveAt(i)
+            Next
+
+            UnselectAll()
             RefreshData()
 
             If List.Count > 0 Then
-                SelectRow(Math.Min(index, List.Count - 1))
+                SelectRow(Math.Min(indices(0), List.Count - 1))
             End If
         End Sub
 
@@ -89,12 +105,14 @@ Namespace UI
         'reloads the rows, needed for lists without change notification
         Sub RefreshData()
             Dim store = DataStore
-            Dim index = SelectedRow
+            Dim indices = SelectedIndices
             DataStore = Nothing
             DataStore = store
 
-            If index > -1 AndAlso List IsNot Nothing AndAlso index < List.Count Then
-                SelectRow(index)
+            If List IsNot Nothing Then
+                For Each i In indices.Where(Function(x) x < List.Count)
+                    SelectRow(i)
+                Next
             End If
         End Sub
 

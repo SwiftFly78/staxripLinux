@@ -152,36 +152,24 @@ Public Class SubtitleOcr
         End Using
     End Sub
 
-    'asks for the language of a subtitle, languages that aren't installed are downloaded,
+    'asks for the languages of the text of subtitles, languages that aren't installed are downloaded,
     'returns Nothing if it was canceled
-    Shared Function SelectLanguage(lang As Language, fileName As String) As String
-        Dim installed = GetInstalledLanguages()
-        Dim language = GetDefaultLanguage(lang)
-
-        Using td As New TaskDialog(Of DialogResult)
-            td.Title = "OCR Language"
-            td.Content = $"Language of the text in {fileName}." + BR2 +
-                "Languages that aren't installed are downloaded once from the tessdata_fast repository of Tesseract on GitHub."
-            td.Buttons = TaskButton.OkCancel
-
-            For Each i In installed
-                td.MenuItems.Add(New ListBag(Of String)(GetLanguageName(i), i))
-            Next
-
-            For Each i In Languages.Keys.Except(installed).OrderBy(Function(x) Languages(x))
-                td.MenuItems.Add(New ListBag(Of String)(GetLanguageName(i) + " - download", i))
-            Next
-
-            td.MenuValue = td.MenuItems.OfType(Of ListBag(Of String)).FirstOrDefault(Function(i) i.Value = language)
-
-            If td.Show() <> DialogResult.OK Then
+    Shared Function SelectLanguages(subtitles As IEnumerable(Of (Language As Language, Name As String))) As List(Of String)
+        Using form As New OcrSubtitlesForm(subtitles)
+            If form.ShowDialog() <> DialogResult.OK Then
                 Return Nothing
             End If
 
-            language = DirectCast(td.MenuValue, ListBag(Of String)).Value
-        End Using
+            Dim languages = form.SelectedLanguages
 
-        Return If(IsInstalled(language) OrElse Download(language), language, Nothing)
+            For Each language In languages.Distinct
+                If Not IsInstalled(language) AndAlso Not Download(language) Then
+                    Return Nothing
+                End If
+            Next
+
+            Return languages
+        End Using
     End Function
 
     Shared Function IsBitmap(subtitle As Subtitle) As Boolean

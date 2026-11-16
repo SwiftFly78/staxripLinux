@@ -50,7 +50,7 @@ Public Class MuxerForm
         bnSubtitleBDSup2SubPP = New ButtonEx("BDSup2Sub++")
         bnSubtitleEdit = New ButtonEx("Subtitle Edit")
         bnSubtitleOcr = New ButtonEx("OCR to SRT...")
-        dgvSubtitles = New DataGridViewEx With {.AllowDrop = True}
+        dgvSubtitles = New DataGridViewEx With {.AllowDrop = True, .AllowMultipleSelection = True}
 
         bnAttachmentAdd = New ButtonEx("Add...")
         bnAttachmentRemove = New ButtonEx("Remove")
@@ -341,16 +341,17 @@ Public Class MuxerForm
         bnAudioUp.Enabled = dgvAudio.CanMoveUp
         bnAudioDown.Enabled = dgvAudio.CanMoveDown
 
-        Dim selectedSubtitles = dgvSubtitles.HasSelection
-        Dim subtitlePath = If(selectedSubtitles, SubtitleItems(dgvSubtitles.SelectedIndex).Subtitle.Path, "")
-        bnSubtitleBDSup2SubPP.Enabled = selectedSubtitles AndAlso {"idx", "sup"}.Contains(subtitlePath.Ext)
-        bnSubtitleOcr.Enabled = selectedSubtitles AndAlso {"idx", "sup"}.Contains(subtitlePath.Ext)
-        bnSubtitleEdit.Enabled = selectedSubtitles
-        bnSubtitlePlay.Enabled = p.SourceFile <> "" AndAlso selectedSubtitles
+        'OCR and Remove work on all selected subtitles, the other buttons on one
+        Dim selectedSubtitles = dgvSubtitles.SelectedIndices.Select(Function(i) SubtitleItems(i)).ToList
+        Dim singleSubtitle = selectedSubtitles.Count = 1
+        bnSubtitleBDSup2SubPP.Enabled = singleSubtitle AndAlso {"idx", "sup"}.Contains(selectedSubtitles(0).Subtitle.Path.Ext)
+        bnSubtitleOcr.Enabled = selectedSubtitles.Any(Function(i) {"idx", "sup"}.Contains(i.Subtitle.Path.Ext))
+        bnSubtitleEdit.Enabled = singleSubtitle
+        bnSubtitlePlay.Enabled = p.SourceFile <> "" AndAlso singleSubtitle
         bnSubtitleUp.Enabled = dgvSubtitles.CanMoveUp
         bnSubtitleDown.Enabled = dgvSubtitles.CanMoveDown
-        bnSubtitleSetNames.Enabled = selectedSubtitles
-        bnSubtitleRemove.Enabled = selectedSubtitles
+        bnSubtitleSetNames.Enabled = selectedSubtitles.Count > 0
+        bnSubtitleRemove.Enabled = selectedSubtitles.Count > 0
 
         lbAttachments.UpdateControls()
     End Sub
@@ -706,44 +707,51 @@ Public Class MuxerForm
         End Try
     End Sub
 
-    'the SRT file replaces the bitmap subtitle, the settings of the subtitle are kept
+    'the SRT files replace the bitmap subtitles, the settings of the subtitles are kept
     Sub bnSubtitleOcr_Click(sender As Object, e As EventArgs) Handles bnSubtitleOcr.Click
         Package.Tesseract.VerifyOK(True)
 
-        Dim item = SubtitleItems(dgvSubtitles.SelectedIndex)
-        Dim language = SubtitleOcr.SelectLanguage(item.Language, item.Subtitle.Path.FileName)
+        Dim items = dgvSubtitles.SelectedIndices.Select(Function(i) SubtitleItems(i)).
+            Where(Function(i) SubtitleOcr.IsBitmap(i.Subtitle)).ToList
+        Dim languages = SubtitleOcr.SelectLanguages(items.Select(Function(i) (Language:=i.Language, Name:=i.Subtitle.Path.FileName)))
 
-        If language Is Nothing Then
+        If languages Is Nothing Then
             Exit Sub
         End If
 
-        Dim outputPath = SubtitleOcr.GetTextPath(item.Subtitle)
-        Dim count As Integer
+        Dim empty As New List(Of String)
 
         Try
-            count = SubtitleOcr.Convert(item.Subtitle, language, outputPath)
+            For x = 0 To items.Count - 1
+                Dim item = items(x)
+                Dim outputPath = SubtitleOcr.GetTextPath(item.Subtitle)
+
+                If SubtitleOcr.Convert(item.Subtitle, languages(x), outputPath) = 0 Then
+                    empty.Add(item.Subtitle.Path.FileName)
+                    Continue For
+                End If
+
+                item.Subtitle = New Subtitle(item.Language) With {.Path = outputPath, .Size = New FileInfo(outputPath).Length}
+                item.TypeName = item.Subtitle.TypeName
+                item.Size = GetSizeText(item.Subtitle.Size)
+                item.Filename = outputPath.FileName
+            Next
         Catch ex As AbortException
-            Exit Sub
+            empty.Clear()
         Catch ex As Exception
             g.ShowException(ex)
-            Exit Sub
+            empty.Clear()
         Finally
             'the main window is shown again after processing and must not cover the dialog
             ProcController.Finished()
             UIBeginInvoke(AddressOf BringToFront)
+            dgvSubtitles.RefreshData()
+            UpdateControls()
         End Try
 
-        If count = 0 Then
-            MsgWarn("No text was recognized.", item.Subtitle.Path.FileName)
-            Exit Sub
+        If empty.Count > 0 Then
+            MsgWarn("No text was recognized.", empty.Join(BR))
         End If
-
-        item.Subtitle = New Subtitle(item.Language) With {.Path = outputPath, .Size = New FileInfo(outputPath).Length}
-        item.TypeName = item.Subtitle.TypeName
-        item.Size = GetSizeText(item.Subtitle.Size)
-        item.Filename = outputPath.FileName
-        dgvSubtitles.RefreshData()
-        UpdateControls()
     End Sub
 
     Sub dgvSubtitles_SelectionChanged(sender As Object, e As EventArgs) Handles dgvSubtitles.SelectionChanged
