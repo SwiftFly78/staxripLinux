@@ -1,13 +1,14 @@
-# The ui suite: Arch Linux with the newest GTK, openbox, sway and KWin. Its packages are the ones of the day the base
-# image was built, from the Arch Linux Archive, so the image only changes with the digest. sway and KWin can't start in
-# a container with their capabilities, the suite adds its user to /etc/passwd for D-Bus and KWin. gcc builds the input
-# client of the suite.
+# The ui suite: Arch Linux with the newest GTK, openbox, sway, KWin and GNOME Shell. Its packages are the ones of the
+# day the base image was built, from the Arch Linux Archive, so the image only changes with the digest. sway and KWin
+# can't start in a container with their capabilities, the suite adds its user to /etc/passwd for D-Bus and KWin, GNOME
+# Shell needs a machine ID. gcc builds the input client of the suite.
 FROM archlinux:base@sha256:d4594bb2300cba11f41c2f27923eb56f63d9988909c402f9c95517d1e362c899
 ENV LANG=C.UTF-8
 RUN day=$(date -d "$(LC_ALL=C pacman -Qi pacman | sed -n 's/^Install Date *: //p')" +%Y/%m/%d) \
     && echo "Server = https://archive.archlinux.org/repos/$day/\$repo/os/\$arch" > /etc/pacman.d/mirrorlist \
     && pacman -Syu --noconfirm --needed gtk3 icu ttf-dejavu dbus jq xorg-server-xvfb xdotool xclip openbox sway wtype \
-        wl-clipboard grim kwin gcc wlr-protocols plasma-wayland-protocols \
+        wl-clipboard grim kwin gnome-shell gcc wlr-protocols plasma-wayland-protocols \
     && rm -rf /var/cache/pacman/pkg/* \
     && setcap -r /usr/bin/sway && setcap -r /usr/bin/kwin_wayland \
+    && dbus-uuidgen --ensure=/etc/machine-id \
     && chmod 666 /etc/passwd

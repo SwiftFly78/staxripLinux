@@ -5,8 +5,8 @@ The test suites of the full AppImage, CI runs them for every pull request and pu
 run in a desktop-like Ubuntu 22.04 without any of the bundled tools (`Dockerfile`), the oldest system the AppImage
 supports, so missing libraries show up. The frames suite runs in Ubuntu 24.04 with the software drivers of Vulkan and
 OpenCL (`Dockerfile.gpu`), the OpenCL driver PoCL of 22.04 can't run NNEDI3CL. The ui suite runs in Arch Linux with the
-newest GTK, openbox, sway and KWin (`Dockerfile.ui`), its packages come from the Arch Linux Archive of the day its base
-image was built. The media of the tests are generated with the bundled tools (`container/media.sh`).
+newest GTK, openbox, sway, KWin and GNOME Shell (`Dockerfile.ui`), its packages come from the Arch Linux Archive of the
+day its base image was built. The media of the tests are generated with the bundled tools (`container/media.sh`).
 
 ```sh
 Tests/run.sh <AppImage> <suite>...
@@ -19,12 +19,13 @@ Tests/run.sh <AppImage> <suite>...
 | `options` | that the encoders know every switch the options of their StaxRipLinux profiles can pass: a switch their help doesn't name must not be rejected as unknown, so removed or renamed switches show up |
 | `frames` | every default filter profile of both frame servers, with every option of its menus, renders frames of the script StaxRipLinux generates for it, Vulkan and OpenCL with the software drivers lavapipe and PoCL |
 | `pipelines` | StaxRipLinux jobs: every encoder profile with both frame servers, every muxer, every source filter with every source it can open, every audio encoder with the decoders, downmixing and normalization, and features like multi-pass encoding, chunks, cutting, cropping, deinterlacing, hard subtitles, HDR10, Dolby Vision and VFR |
-| `ui` | StaxRipLinux on X11 with openbox and on Wayland with sway and KWin, driven by the pointer like by a user: every menu and submenu of the main menu opens, also the ones StaxRipLinux fills when they open, and closes again without a GTK critical or a GTK grab left behind, a script runs from Tools > Scripts and shows its message, Copy Message of an error copies it to the clipboard of the desktop |
+| `ui` | StaxRipLinux on X11 with openbox and on Wayland with sway, KWin and GNOME Shell, driven by the pointer like by a user: every menu and submenu of the main menu opens, also the ones StaxRipLinux fills when they open, and closes again without a GTK critical or a GTK grab left behind, a script runs from Tools > Scripts and shows its message, Copy Message of an error copies it to the clipboard of the desktop, a process started in a dialog shows the processing window above the dialog, its Abort button works, and the dialog stays |
 
 `all` runs them all. `pipelines:<n>/<count>` runs every count-th job, CI splits them into six parallel jobs.
-KWin runs in a window of sway with software compositing, so the ui suite needs no GPU. `container/ui.sh` moves and
-clicks the pointer with xdotool on X11, swaymsg on sway and the fake input protocol of KWin (`container/input.c`),
-`container/ui.ps1` runs PowerShell in StaxRipLinux to find the widgets and their positions. Failed ui tests save
+KWin runs in a window of sway with software compositing and GNOME Shell runs headless, so the ui suite needs no GPU.
+`container/ui.sh` moves and clicks the pointer with xdotool on X11, swaymsg on sway, the fake input protocol of KWin
+(`container/input.c`) and the Eval API of GNOME Shell, `container/ui.ps1` runs PowerShell in StaxRipLinux to find the
+widgets and their positions. Failed ui tests save
 renders of the windows to `Tests/.work/out/ui-*.png`.
 `pipelines.py` generates the jobs from the profiles StaxRipLinux has (`container/inventory.ps1`), so new profiles are
 tested automatically, and checks the targets with ffprobe: codec, frames, size, audio tracks, HDR10 and Dolby Vision.

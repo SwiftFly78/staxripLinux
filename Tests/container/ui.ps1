@@ -30,8 +30,9 @@ function Label($widget) {
 
 function Windows { [Gtk.Window]::ListToplevels() | Where-Object { $_.IsMapped } }
 
+# titles are compared trimmed, ui.sh splits them into words
 function Window([string]$title) {
-    $window = Windows | Where-Object { $_.Title -eq $title } | Select-Object -First 1
+    $window = Windows | Where-Object { $_.Title.Trim() -eq $title } | Select-Object -First 1
     if (-not $window) { throw "no window $title" }
     ,$window
 }
@@ -88,9 +89,10 @@ function Origin($window) {
     $y
 }
 
-# "<x> <y> <width> <height> <x> <y> <title>": the rectangle of a widget relative to the surface of its window, of
-# menus relative to the window of their menu bar, the position of that window, which is only known on X11, and its
-# title
+# "<x> <y> <width> <height> <x> <y> <x> <y> <width> <height> <title>": the rectangle of a widget relative to the
+# surface of its window, of menus relative to the window of their menu bar, the position of that window, which is only
+# known on X11, the position of a widget of a menu in the menu and the size of the menu, else -1, and the title of the
+# window. With client side decorations, GTK doesn't know where menus are.
 function Rect($widget) {
     $top = $widget.Toplevel
     $root = $top
@@ -105,7 +107,9 @@ function Rect($widget) {
     $o = Origin $top
     $r = Origin $root
     $a = $widget.Allocation
-    "$($x + $o[0] - $r[0]) $($y + $o[1] - $r[1]) $($a.Width) $($a.Height) $($r[0]) $($r[1]) $($root.Title)"
+    $menu = "-1 -1 -1 -1"
+    if ($top.Handle -ne $root.Handle) { $menu = "$x $y $($top.Allocation.Width) $($top.Allocation.Height)" }
+    "$($x + $o[0] - $r[0]) $($y + $o[1] - $r[1]) $($a.Width) $($a.Height) $($r[0]) $($r[1]) $menu $($root.Title.Trim())"
 }
 
 # the names of the items of an open menu with a submenu, that are sensitive and visible
@@ -121,8 +125,14 @@ function Submenus([string]$path) {
     }
 }
 
+# the button of the window with the grab of GTK, the modal dialog on top, comes first
 function Button([string]$text) {
-    foreach ($window in Windows) {
+    $windows = [System.Collections.Generic.List[object]]::new()
+    $grab = $g.MainForm.ControlObject.Group.CurrentGrab
+    if ($grab -is [Gtk.Window]) { $windows.Add($grab) }
+    foreach ($window in Windows) { $windows.Add($window) }
+
+    foreach ($window in $windows) {
         $button = Find $window { param($w) $w -is [Gtk.Button] -and (Label $w) -eq $text }
         if ($null -ne $button) { return ,$button }
     }
