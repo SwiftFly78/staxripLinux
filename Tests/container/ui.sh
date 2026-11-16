@@ -41,6 +41,12 @@ if ! first_start; then
     exit 1
 fi
 
+# the bitmap subtitles of the OCR test and the English of Tesseract, which isn't downloaded then
+python3 /t/pgs.py /tmp/ocr-1.sup "First subtitle" "with two lines"
+python3 /t/pgs.py /tmp/ocr-2.sup "Second subtitle"
+mkdir -p $STAXRIP_SETTINGS/tessdata
+cp /usr/share/tessdata/eng.traineddata $STAXRIP_SETTINGS/tessdata
+
 # ask <code>: runs PowerShell code in StaxRip, prints its output and its error to stderr. The id is the time, a
 # counter would be lost in subshells.
 ask() {
@@ -325,7 +331,30 @@ processing() {
     finish "processing in a dialog"
 }
 
-tests=(menus "script from the Scripts menu" clipboard "processing in a dialog")
+# OCR to SRT of two selected bitmap subtitles in the options of the container, with the dialog of their languages
+ocr() {
+    local muxer='[Eto.Forms.Application]::Instance.Windows | Where-Object { $_ -is [StaxRip.MuxerForm] }'
+    begin
+    rm -f /tmp/ocr-*.srt
+    ask 'Later { $g.MainForm.bnMuxerOptions_Click() }' > /dev/null
+    wait_for "@(Dialogs).Count -eq 1" || problem "the options of the container didn't open"
+    ask "\$f = $muxer; \$f.tcMain.SelectedIndex = 1
+        foreach (\$i in 1, 2) { \$f.AddSubtitles([StaxRip.Subtitle]::Create(\"/tmp/ocr-\$i.sup\")) }
+        \$f.dgvSubtitles.SelectAll(); \$f.UpdateControls()" > /dev/null
+    click_button "OCR to SRT..."
+    wait_for "@(@(Dialogs) -match '^OCR to SRT').Count -eq 1" || problem "the dialog of the OCR languages didn't open"
+    click_button Convert
+    wait_for "@(($muxer).dgvSubtitles.DataStore | Where-Object { \$_.TypeName -eq 'SRT' }).Count -eq 2" 30 ||
+        problem "the subtitles weren't converted"
+    wait_for '-not $g.ProcForm.Visible' || problem "the processing window didn't close"
+    grep -q "First subtitle" /tmp/ocr-1.srt && grep -q "with two lines" /tmp/ocr-1.srt &&
+        grep -q "Second subtitle" /tmp/ocr-2.srt || problem "wrong text: $(cat /tmp/ocr-*.srt 2>&1 | tr '\n' ' ')"
+    click_button Cancel
+    wait_for "@(Dialogs).Count -eq 0" || problem "the options of the container didn't close"
+    finish "OCR of two subtitles"
+}
+
+tests=(menus "script from the Scripts menu" clipboard "processing in a dialog" "OCR of two subtitles")
 
 # all <result> <detail>: the result of every test of the environment
 all() {
@@ -356,6 +385,7 @@ run() {
         script
         clipboard
         processing
+        ocr
         printf '#0\n[Environment]::Exit(0)\n' > /tmp/ui/cmd.tmp
         mv /tmp/ui/cmd.tmp /tmp/ui/cmd.ps1
     else
