@@ -861,13 +861,18 @@ Public Class ProcController
         End If
 
         UIInvoke(Sub()
-                     If g.MainForm.Visible Then
-                         g.MainForm.Hide()
-                     End If
-
                      If g.ProcForm Is Nothing OrElse g.ProcForm.IsDisposed Then
                          g.ProcForm = New ProcessingForm
                          _progressInterval = 200
+                     End If
+
+                     'GNOME unmaps a modal dialog with its parent, its grab then blocks the main window, so the
+                     'processing window of a dialog is a modal child of the dialog
+                     Dim dialog = g.ProcForm.GetModalDialog()
+                     g.ProcForm.SetDialog(dialog)
+
+                     If dialog Is Nothing AndAlso g.MainForm.Visible Then
+                         g.MainForm.Hide()
                      End If
 
                      If g.ProcForm.WindowState <> WindowState.Minimized OrElse Not BlockActivation Then

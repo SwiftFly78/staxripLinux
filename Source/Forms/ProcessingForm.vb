@@ -206,6 +206,24 @@ Public Class ProcessingForm
         Visible = False
     End Sub
 
+    'the modal dialog open in StaxRip, it holds the grab of GTK, or the dialog of the processing that runs
+    Function GetModalDialog() As Gtk.Window
+        Dim window = DirectCast(ControlObject, Gtk.Window)
+
+        If window.Visible AndAlso window.Modal Then
+            Return window.TransientFor
+        End If
+
+        Dim main = TryCast(g.MainForm?.ControlObject, Gtk.Window)
+        Return TryCast(main?.Group.CurrentGrab, Gtk.Window)
+    End Function
+
+    Sub SetDialog(dialog As Gtk.Window)
+        Dim window = DirectCast(ControlObject, Gtk.Window)
+        window.TransientFor = dialog
+        window.Modal = dialog IsNot Nothing
+    End Sub
+
     Sub UpdateControls()
         TitleBase = $"Processing: {JobManager.JobPath.Base()}"
         Title = TitleBase
