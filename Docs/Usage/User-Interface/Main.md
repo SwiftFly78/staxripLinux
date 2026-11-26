@@ -361,6 +361,11 @@ tracks the project has and how many audio streams the source has. Next to the te
 
 `Add Track` next to the heading adds a track and opens its menu, so you can choose a stream or file right away.
 
+Without a video source, audio files can be converted on their own: drop them on the window or open them, they go
+into the free tracks, also media files with only audio. [Next Step](#next-step) then offers `Convert audio`, which
+converts the file of every track with its profile, with the settings of the profile like the channels and the
+normalization, and saves the results next to the files, without replacing existing files.
+
 > :information_source: The profile `No Audio` lets the audio track being ignored and not muxed to the final result.  
 > :information_source: Tracks without a file and with the default profile are hidden, a template shows the tracks
 > it sets up. The maximum number of tracks can be set in [Project Options](Project-Options.md).

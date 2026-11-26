@@ -44,6 +44,9 @@ also be dropped on the main window or passed on the [command line](../Command-Li
 Before the source is opened, the [Template Selection](Template-Selection.md) can ask which template to use. When a
 project with changes is open, StaxRipLinux asks whether to save it first.
 
+Files without video, like audio files or MKV files with only audio, aren't opened as source, they go into the free
+tracks of the [Audio](Main.md#audio) card, where they can be converted without a video source.
+
 ## Source Files
 
 *Merge Files* and *File Batch* collect the files in a list first:

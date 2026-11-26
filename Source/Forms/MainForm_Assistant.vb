@@ -21,7 +21,7 @@ Partial Public Class MainForm
             If refreshScript Then
                 AssistantTimer.Stop()
                 p.Script.Synchronize(False, False)
-            ElseIf p.Script.Info.FrameCount = 0 AndAlso p.Script.Error = "" Then
+            ElseIf p.Script.Info.FrameCount = 0 AndAlso p.Script.Error = "" AndAlso File.Exists(p.Script.Path) Then
                 Using server = FrameServerFactory.Create(p.Script.Path)
                     If server IsNot Nothing Then
                         p.Script.Info = server.Info
@@ -185,6 +185,14 @@ Partial Public Class MainForm
                                   "The first filter must be an active filter of the category Source. Activate the source filter or add one in the filter editor.") Then
                         Return Block("Invalid filter setup", AddressOf FiltersListView.ShowCodeEditor, "Edit Filters...")
                     End If
+                End If
+
+                If p.SourceFile = "" AndAlso GetConvertibleAudioTracks().Count > 0 AndAlso
+                    ProcessTip("Click here to convert the audio files with their audio profiles.",
+                               "Without a video source, the audio files of the audio tracks are converted with their audio profiles, the results are saved next to them.") Then
+
+                    CanIgnoreTip = False
+                    Return Hint("Convert audio", AddressOf ConvertAudioFiles, "Convert")
                 End If
 
                 If p.SourceSeconds = 0 AndAlso ProcessTip("Click here to open a source file.", OpenSourceTip) Then

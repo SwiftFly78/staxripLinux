@@ -1636,18 +1636,7 @@ Partial Public Class MainForm
                 OpenBlurayImage(files(0))
             End If
         ElseIf FileTypes.Audio.ContainsAny(files.Select(Function(s) s.Ext.ToLowerInvariant)) Then
-            Dim audioFiles = files.Where(Function(x) FileTypes.Audio.Contains(x.Ext().ToLowerInvariant())).OrderBy(Function(x) x, New StringLogicalComparer())
-            Dim fileIndex = 0
-            Dim freeAudioTracks = p.AudioTracks.Where(Function(x) x.TextEdit.Text = "")
-
-            If audioFiles?.Any() AndAlso freeAudioTracks?.Any() Then
-                For Each track In freeAudioTracks
-                    If fileIndex >= audioFiles.Count() Then Exit For
-
-                    track.TextEdit.Text = audioFiles(fileIndex)
-                    fileIndex += 1
-                Next
-            End If
+            OpenAudioFiles(files.Where(Function(x) FileTypes.Audio.Contains(x.Ext().ToLowerInvariant())))
         Else
             files = files.OrderBy(Function(x) FileTypes.Video.Contains(x.Ext)).ThenBy(Function(x) FileTypes.Audio.Contains(x.Ext))
 
@@ -1793,7 +1782,88 @@ Partial Public Class MainForm
         OpenVideoSourceFiles(files, demux, False, errorTimeout)
     End Sub
 
+    'the files go into the free audio tracks, without a video source they can be converted there
+    Sub OpenAudioFiles(files As IEnumerable(Of String))
+        Dim audioFiles = files.OrderBy(Function(x) x, New StringLogicalComparer()).ToList()
+        Dim fileIndex = 0
+
+        For Each track In p.AudioTracks.Where(Function(x) x.TextEdit.Text = "").ToList()
+            If fileIndex >= audioFiles.Count Then Exit For
+
+            track.TextEdit.Text = audioFiles(fileIndex)
+            fileIndex += 1
+        Next
+    End Sub
+
+    Shared Function IsAudioOnlyFile(filePath As String) As Boolean
+        Return File.Exists(filePath) AndAlso MediaInfo.GetVideoCount(filePath) = 0 AndAlso MediaInfo.GetAudioCount(filePath) > 0
+    End Function
+
+    Function GetConvertibleAudioTracks() As List(Of AudioTrack)
+        Return p.AudioTracks.Where(Function(x) TypeOf x.AudioProfile IsNot NullAudioProfile AndAlso
+                                       x.AudioProfile.File <> "" AndAlso File.Exists(x.AudioProfile.File)).ToList()
+    End Function
+
+    'without a video source, the audio files of the audio tracks are converted with their profiles, the results are
+    'saved next to them
+    Sub ConvertAudioFiles()
+        If g.IsJobProcessing OrElse ProcController.Procs.Count > 0 Then
+            MsgWarn("Audio can be converted when no job is processed.")
+            Exit Sub
+        End If
+
+        Dim results As New List(Of String)
+
+        Try
+            For Each track In GetConvertibleAudioTracks()
+                Dim ap = track.AudioProfile
+                Dim input = ap.File
+                Dim tempDir = Path.Combine(input.Dir, input.Base + "_temp")
+                Directory.CreateDirectory(tempDir)
+                p.TempDir = tempDir
+
+                Try
+                    Audio.Process(ap)
+                    ap.Encode()
+
+                    If ap.File <> input AndAlso File.Exists(ap.File) Then
+                        Dim target = Path.Combine(input.Dir, input.Base + ap.File.ExtFull)
+                        Dim number = 2
+
+                        While File.Exists(target)
+                            target = Path.Combine(input.Dir, $"{input.Base} ({number}){ap.File.ExtFull}")
+                            number += 1
+                        End While
+
+                        File.Move(ap.File, target)
+                        results.Add(target)
+                    End If
+                Finally
+                    ap.File = input
+                    p.TempDir = ""
+                    FolderHelp.Delete(tempDir)
+                End Try
+            Next
+        Catch ex As AbortException
+        Catch ex As Exception
+            g.ShowException(ex)
+        Finally
+            ProcController.Finished()
+            Assistant()
+        End Try
+
+        If results.Count > 0 Then
+            MsgInfo("Audio converted", results.Join(BR))
+        End If
+    End Sub
+
     Sub OpenVideoSourceFiles(files As IEnumerable(Of String), demuxSource As Boolean, isEncoding As Boolean, Optional errorTimeout As Integer = 0)
+        'an audio file has no video to open as source
+        If Not isEncoding AndAlso files.Any() AndAlso files.All(Function(x) IsAudioOnlyFile(x.TrimQuotes())) Then
+            OpenAudioFiles(files.Select(Function(x) New FileInfo(x.TrimQuotes()).FullName))
+            Exit Sub
+        End If
+
         If p.SourceFile = "" Then SetLastModifiedTemplate()
 
         Dim recoverPath = g.ProjectPath
