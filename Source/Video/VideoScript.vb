@@ -606,8 +606,9 @@ clipname.set_output()" + BR
             If s.LoadVapourSynthPlugins AndAlso Not IsVsPluginInAutoLoadFolder(plugin.Filename) AndAlso Not script.Contains(plugin.Filename) AndAlso Not code.Contains(plugin.Filename) Then
                 Dim line = "core.std.LoadPlugin(" + ToPythonString(plugin.Path) + ", altsearchpath=True)"
 
+                'the code grows at both ends, so the marker goes in front of the line itself
                 If Not plugin.RequirementsFulfilled Then
-                    code += "# !! The following line is commented out by StaxRipLinux, because the system does not fulfill all requirements to execute it !!" & BR & "# "
+                    line = "# !! The following line is commented out by StaxRipLinux, because the system does not fulfill all requirements to execute it !!" & BR & "# " & line
                 End If
 
                 code = line + BR + code
