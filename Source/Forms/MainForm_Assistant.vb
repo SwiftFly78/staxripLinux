@@ -19,6 +19,7 @@ Partial Public Class MainForm
             SkipAssistant = True
 
             If refreshScript Then
+                AssistantTimer.Stop()
                 p.Script.Synchronize(False, False)
             ElseIf p.Script.Info.FrameCount = 0 AndAlso p.Script.Error = "" Then
                 Using server = FrameServerFactory.Create(p.Script.Path)

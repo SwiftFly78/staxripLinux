@@ -4151,6 +4151,9 @@ Partial Public Class MainForm
         SetImageHeight()
         SkipAssistant = False
         Assistant(False)
+
+        'keys and the wheel have no MouseUp, which refreshes the script after drags
+        ScheduleAssistant()
     End Sub
 
     Sub SetImageHeight()
@@ -4279,11 +4282,42 @@ Partial Public Class MainForm
         End Try
     End Sub
 
+    'one script refresh after typing, arrow keys, the wheel or slider keys settle, partly typed sizes aren't evaluated
+    Private WithEvents AssistantTimer As New UITimer With {.Interval = 0.6}
+    Private IsSizeWheelInput As Boolean
+
+    Sub ScheduleAssistant()
+        AssistantTimer.Stop()
+        AssistantTimer.Start()
+    End Sub
+
+    Sub AssistantTimer_Elapsed(sender As Object, e As EventArgs) Handles AssistantTimer.Elapsed
+        AssistantTimer.Stop()
+
+        If Not IsDisposed Then
+            Assistant()
+        End If
+    End Sub
+
+    Sub OnTargetSizeTextChanged(edit As TextEdit)
+        If SkipAssistant Then
+            Exit Sub
+        End If
+
+        If edit.Focused OrElse IsSizeWheelInput Then
+            ScheduleAssistant()
+        Else
+            Assistant()
+        End If
+    End Sub
+
     Sub tbTargetWidth_TextChanged() Handles tbTargetWidth.TextChanged
         Try
-            If Integer.TryParse(tbTargetWidth.Text, Nothing) Then
-                p.TargetWidth = CInt(tbTargetWidth.Text)
-                Assistant()
+            Dim value As Integer
+
+            If Integer.TryParse(tbTargetWidth.Text, value) AndAlso value > 0 Then
+                p.TargetWidth = value
+                OnTargetSizeTextChanged(tbTargetWidth)
             End If
         Catch
         End Try
@@ -4291,9 +4325,11 @@ Partial Public Class MainForm
 
     Sub tbTargetHeight_TextChanged() Handles tbTargetHeight.TextChanged
         Try
-            If Integer.TryParse(tbTargetHeight.Text, Nothing) Then
-                p.TargetHeight = CInt(tbTargetHeight.Text)
-                Assistant()
+            Dim value As Integer
+
+            If Integer.TryParse(tbTargetHeight.Text, value) AndAlso value > 0 Then
+                p.TargetHeight = value
+                OnTargetSizeTextChanged(tbTargetHeight)
             End If
         Catch
         End Try
@@ -4324,23 +4360,27 @@ Partial Public Class MainForm
     End Sub
 
     Sub tbTargetWidth_MouseWheel(sender As Object, e As MouseEventArgs) Handles tbTargetWidth.MouseWheel
-        If e.Delta.Height < 0 Then
+        IsSizeWheelInput = True
+
+        Try
             Dim modVal = p.ForcedOutputMod
-            tbTargetWidth.Text = CInt(((p.TargetWidth - modVal) / modVal) * modVal).ToString()
-        Else
-            Dim modVal = p.ForcedOutputMod
-            tbTargetWidth.Text = CInt(((p.TargetWidth + modVal) / modVal) * modVal).ToString()
-        End If
+            Dim width = If(e.Delta.Height < 0, p.TargetWidth - modVal, p.TargetWidth + modVal)
+            tbTargetWidth.Text = CInt((width / modVal) * modVal).ToString()
+        Finally
+            IsSizeWheelInput = False
+        End Try
     End Sub
 
     Sub tbTargetHeight_MouseWheel(sender As Object, e As MouseEventArgs) Handles tbTargetHeight.MouseWheel
-        If e.Delta.Height < 0 Then
+        IsSizeWheelInput = True
+
+        Try
             Dim modVal = p.ForcedOutputMod
-            tbTargetHeight.Text = CInt(((p.TargetHeight - modVal) / modVal) * modVal).ToString()
-        Else
-            Dim modVal = p.ForcedOutputMod
-            tbTargetHeight.Text = CInt(((p.TargetHeight + modVal) / modVal) * modVal).ToString()
-        End If
+            Dim height = If(e.Delta.Height < 0, p.TargetHeight - modVal, p.TargetHeight + modVal)
+            tbTargetHeight.Text = CInt((height / modVal) * modVal).ToString()
+        Finally
+            IsSizeWheelInput = False
+        End Try
     End Sub
 
     Shared Function GetDefaultMenuSize() As CustomMenuItem
