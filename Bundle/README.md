@@ -77,9 +77,11 @@ request, and every hour on Fridays, the only day it creates pull requests (Europ
   the oldest systems the AppImage supports, the tests run there too, and the frames suite on 24.04, whose PoCL runs
   NNEDI3CL.
 - Known breaks aren't part of it: major versions of FFmpeg (L-SMASH-Works), VapourSynth R80 and newer (plugins of
-  API 3), libplacebo newer than 7.360 (QSVEncC, VCEEncC), BestSource R22 and newer (VapourSynth R79) and major
-  versions of nv-codec-headers (minimum NVIDIA driver). The Dependency Dashboard issue lists them with every other
-  pending update, a tick there opens a pull request of their own at once, outside of the schedule too.
+  API 3), libplacebo newer than 7.360 (QSVEncC, VCEEncC), BestSource R22 and newer (VapourSynth R79), major
+  versions of nv-codec-headers (minimum NVIDIA driver) and a new major version of .NET with the PowerShell SDK for
+  it, whose pull request needs the new `TargetFramework` of `Source/StaxRip.vbproj` (the updates for .NET 10 are
+  part of the pull request). The Dependency Dashboard issue lists them with every other pending update, a tick there
+  opens a pull request of their own at once, outside of the schedule too.
 
 The `# renovate:` comment of a version names the datasource and package of its upstream, for example:
 

@@ -100,6 +100,14 @@
       semanticCommitScope: 'deps',
     },
     {
+      // StaxRip targets .NET 10, the updates of these for .NET 10 are separate from those for a new major version of
+      // .NET, the minor version of PowerShell follows the major version of .NET
+      matchDepNames: ['dotnet-sdk', 'System.Runtime.Serialization.Formatters', 'System.Security.Cryptography.Pkcs',
+        'System.Security.Cryptography.Xml', 'Microsoft.PowerShell.SDK'],
+      separateMajorMinor: true,
+      separateMinorPatch: true,
+    },
+    {
       matchManagers: ['github-actions'],
       semanticCommitType: 'ci',
     },
@@ -110,10 +118,11 @@
     },
     {
       // all updates in one pull request, a group takes most settings from its first update, so its schedule and scope
-      // are the same for all
+      // are the same for all, the branch topic keeps the .NET updates, which are separated by type, in the branch,
+      // Renovate would prefix it with their type
       matchPackageNames: ['*'],
       groupName: 'all dependencies',
-      groupSlug: 'all',
+      group: { branchTopic: 'all' },
       semanticCommitScope: 'deps',
     },
     {
@@ -125,6 +134,19 @@
       groupName: null,
       semanticCommitScope: 'bundle',
       prBodyNotes: ['L-SMASH-Works needs the API of FFmpeg 8, check whether it builds with the new major version.'],
+    },
+    {
+      matchDepNames: ['dotnet-sdk', 'System.Runtime.Serialization.Formatters', 'System.Security.Cryptography.Pkcs',
+        'System.Security.Cryptography.Xml', 'Microsoft.PowerShell.SDK'],
+      matchUpdateTypes: ['major', 'minor'],
+      dependencyDashboardApproval: true,
+      groupName: '.NET',
+      group: { branchTopic: 'dotnet' },
+      semanticCommitType: 'build',
+      prBodyNotes: [
+        'StaxRip targets .NET 10, the PowerShell SDK for a new major version of .NET only builds with that version.',
+        'Commit the new TargetFramework of Source/StaxRip.vbproj and the version in the docs to this branch.',
+      ],
     },
     {
       matchDepNames: ['VapourSynth'],
