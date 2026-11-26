@@ -1,14 +1,14 @@
 # the HDR fork of SVT-AV1 by juliobbv-p
-version=2026-09-29-a46bc2d # renovate: datasource=git-refs depName=https://github.com/juliobbv-p/svt-av1-hdr.git branch=main digest=a46bc2d59774785f4db7341003fa23dbeb473b5a
+version=2026-11-19-421c659 # renovate: datasource=git-refs depName=https://github.com/juliobbv-p/svt-av1-hdr.git branch=main digest=421c65909eeb3703d5e8a7fda21a38374dc7565d
 packages="SvtAv1EncApp (SVT-AV1-HDR)"
 depends="libdovi libhdr10plus"
 sources="
-git https://github.com/juliobbv-p/svt-av1-hdr.git a46bc2d59774785f4db7341003fa23dbeb473b5a
+git https://github.com/juliobbv-p/svt-av1-hdr.git 421c65909eeb3703d5e8a7fda21a38374dc7565d
 "
 
 build() {
-    unpack svt-av1-hdr-a46bc2d59774.tar
-    cd svt-av1-hdr-a46bc2d59774
+    unpack svt-av1-hdr-421c65909eeb.tar
+    cd svt-av1-hdr-421c65909eeb
     # Dolby Vision and HDR10+ metadata with libdovi and libhdr10plus
     cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DBUILD_DEC=OFF -DBUILD_TESTING=OFF \
         -DLIBDOVI_FOUND=ON -DLIBHDR10PLUS_RS_FOUND=ON
