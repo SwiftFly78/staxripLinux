@@ -539,6 +539,25 @@ Public Class SvtAv1EssentialEncParams
         .Values = {"0", "1"},
         .Init = 1}
 
+    Shared ReadOnly OutputFormatFlags As New Concurrent.ConcurrentDictionary(Of String, Boolean)
+
+    'Essential 4.3 and newer take --webm, --ivf and --obu without a value and choose the format by the extension of the
+    'output file, which follows the WebM option
+    Shared Function HasOutputFormatFlags() As Boolean
+        Dim filePath = Package.SvtAv1EncAppEssential.Path
+
+        If Not File.Exists(filePath) Then
+            Return False
+        End If
+
+        Return OutputFormatFlags.GetOrAdd(filePath + "|" + File.GetLastWriteTimeUtc(filePath).Ticks.ToString,
+            Function(key)
+                Dim match = Regex.Match(ProcessHelp.GetConsoleOutput(filePath, "--version"), "\bv(\d+)\.(\d+)")
+                Return match.Success AndAlso
+                    New Version(CInt(match.Groups(1).Value), CInt(match.Groups(2).Value)) >= New Version(4, 3)
+            End Function)
+    End Function
+
     'the default speed depends on the height, so both options are synchronized but stored
     'separately, a shared value is removed when it's the default of one of them
     Property SpeedHigh As New OptionParam With {
@@ -1662,7 +1681,7 @@ Public Class SvtAv1EssentialEncParams
         '    sb.Append(" --analysis-reuse-file " + (targetPath.DirAndBase + chunkName + ".analysis").Escape)
         'End If
 
-        If Not IsCustom(pass, WebM.HelpSwitch) Then
+        If Not IsCustom(pass, WebM.HelpSwitch) AndAlso Not HasOutputFormatFlags() Then
             sb.Append($" {WebM.HelpSwitch} {WebM.Value}")
         End If
 
