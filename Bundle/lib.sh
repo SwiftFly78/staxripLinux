@@ -74,11 +74,14 @@ fetch() {
 
         file=${file:-$(basename "${url%%\?*}")}
 
-        if [ ! -f "$C/downloads/$file" ]; then
-            # also TLS and connection errors, which curl doesn't retry by default
-            curl -fsSL --retry 5 --retry-all-errors --retry-delay 10 -o "$C/downloads/$file.tmp" "$url"
-            mv "$C/downloads/$file.tmp" "$C/downloads/$file"
+        # a cached file of the same name can be another version, like the CPython of another python-build-standalone
+        if [ -f "$C/downloads/$file" ] && echo "$sum  $C/downloads/$file" | sha256sum -c --status; then
+            continue
         fi
+
+        # also TLS and connection errors, which curl doesn't retry by default
+        curl -fsSL --retry 5 --retry-all-errors --retry-delay 10 -o "$C/downloads/$file.tmp" "$url"
+        mv "$C/downloads/$file.tmp" "$C/downloads/$file"
 
         if ! echo "$sum  $C/downloads/$file" | sha256sum -c --quiet; then
             echo "checksum mismatch: $file" >&2
