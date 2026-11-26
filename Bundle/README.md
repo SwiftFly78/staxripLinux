@@ -89,7 +89,8 @@ version=1.0-d00a374 # renovate: datasource=git-refs depName=https://github.com/o
 ```
 
 Renovate changes the version (or the digest), `renovate.py post-upgrade` completes the update in the same commit: the
-commit of the tag of a git source, the URLs and checksums of downloads and the names in `build` and `bundle`.
+commit of the tag of a git source, the URLs and checksums of downloads and the names in `binary_sources`, `build`
+and `bundle`.
 `source=<n>[,<n>]` assigns the version to lines of `sources`, `none=<reason>` marks a component without updates.
 `versioning=loose` compares versions with four numbers or a suffix, versions like `r12` or `R21` need
 `versioning=regex:^[rR](?<major>\d+)(?:\.(?<minor>\d+))?$`, Renovate ignores components whose version it can't read.
@@ -98,8 +99,8 @@ Loose versioning ranks `3.0.2` above `3.0.2-B`, suffixes of later builds of a ve
 also have the tags of their upstream, and has the form `^<prefix>(?<version>...)$` without groups in the version,
 post-upgrade derives the tag from it.
 A `revision=` of a recipe is the commit count of its git source, which archives lack, post-upgrade counts it for a new
-commit (AviSynth+ shows it in its version string). `renovate.py check --online` verifies the comments of all recipes
-and the revisions, run it after adding a component.
+commit (AviSynth+ shows it in its version string). `renovate.py check --online` verifies the comments and
+`binary_sources` of all recipes and the revisions, run it after adding a component.
 
 The CI workflow tests every pull request: it builds the changed components with everything that depends on them,
 builds the AppImages and runs the test suites of `Tests`, see the README there. An update is merged when its tests

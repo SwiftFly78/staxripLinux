@@ -3,8 +3,8 @@
     renovate.py post-upgrade <recipe>   completes an update of Renovate, which only changes the annotated versions:
                                         the commits of git sources, the URLs and checksums of downloads and the names
                                         of their files and folders in the recipe, for requirements-build.txt the hashes
-    renovate.py check [--online]        verifies the annotations of all recipes, --online also the tag commits and
-                                        the revisions
+    renovate.py check [--online]        verifies the annotations and binary_sources of all recipes, --online also the
+                                        tag commits and the revisions
 
 A version variable carries its annotation as a comment, which doesn't change the cache key of the recipe:
 
@@ -102,19 +102,24 @@ def revision(text):
     return (m, git) if m and git else (None, None)
 
 
+# a fetch into a new repository in a temporary folder, without the maintenance that git starts in the background,
+# which still writes into the folder while it's deleted
+def fetch(tmp, *args):
+    run('git', 'init', '-q', tmp)
+    run('git', 'fetch', '-q', '--no-auto-maintenance', *args, cwd=tmp)
+
+
 # the version of a branch commit in the style of the old version: <date>-<commit>, <branch>-<commit> or
 # <tag>-<commit> like git describe
 def branch_version(old, url, branch, commit):
     if DATED.match(old):
         with tempfile.TemporaryDirectory() as tmp:
-            run('git', 'init', '-q', tmp)
-            run('git', 'fetch', '-q', '--depth', '1', url, commit, cwd=tmp)
+            fetch(tmp, '--depth', '1', url, commit)
             return run('git', 'log', '-1', '--format=%cs', 'FETCH_HEAD', cwd=tmp).strip() + '-' + commit[:7]
     if old.startswith(branch + '-'):
         return f'{branch}-{commit[:7]}'
     with tempfile.TemporaryDirectory() as tmp:
-        run('git', 'init', '-q', tmp)
-        run('git', 'fetch', '-q', '--filter=blob:none', '--tags', url, branch, cwd=tmp)
+        fetch(tmp, '--filter=blob:none', '--tags', url, branch)
         described = run('git', 'describe', '--tags', '--abbrev=0', commit, cwd=tmp).strip()
     if described.startswith('v') and not old.startswith('v'):
         described = described[1:]
@@ -169,8 +174,13 @@ def stem(name):
     return re.sub(r'(\.tar)?\.(gz|xz|bz2|zst|tgz|zip|7z|whl)$', '', name)
 
 
-# the names of the downloaded files, their folders and the version in the build and bundle functions
+BINARY_SOURCES = re.compile(r'^binary_sources="(.*?)"', re.S | re.M)
+
+
+# the names of the downloaded files in binary_sources and in the build and bundle functions, there also the names of
+# their folders and the version
 def replace_in_functions(text, names, pairs):
+    text = BINARY_SOURCES.sub(lambda m: replace_version(m.group(0), [], literals=dict(names)), text)
     start = text.index('build()') if 'build()' in text else len(text)
     literals = {}
     for o, n in names:
@@ -399,6 +409,11 @@ def check(online):
                         errors.append(f"{recipe.name}: source {i + 1} isn't the commit of tag {tag_of(keys, a['value'])}")
         for i in set(range(len(lines))) - covered:
             errors.append(f'{recipe.name}: source {i + 1} has no annotation')
+        downloads = {file_name(line) for line in lines if not line.startswith('git ')}
+        m = BINARY_SOURCES.search(text)
+        for name in m.group(1).split() if m else []:
+            if name not in downloads:
+                errors.append(f'{recipe.name}: {name} of binary_sources isn\'t a download of sources')
         m, git = revision(text)
         if online and m and int(m.group(1)) != commit_count(git[1], git[2]):
             errors.append(f"{recipe.name}: revision isn't the commit count of {git[2]}")
