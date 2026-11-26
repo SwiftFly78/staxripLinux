@@ -164,6 +164,14 @@
       prBodyNotes: ['QSVEncC and VCEEncC need the API layout of libplacebo 7.360.'],
     },
     {
+      matchDepNames: ['mpv-player/mpv'],
+      matchUpdateTypes: ['major', 'minor'],
+      dependencyDashboardApproval: true,
+      groupName: null,
+      semanticCommitScope: 'bundle',
+      prBodyNotes: ['mpv 0.42 and newer need a newer libplacebo than 7.360, which QSVEncC and VCEEncC need.'],
+    },
+    {
       matchDepNames: ['vapoursynth/bestsource'],
       dependencyDashboardApproval: true,
       groupName: null,
