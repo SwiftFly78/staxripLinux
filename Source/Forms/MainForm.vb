@@ -3196,27 +3196,7 @@ Partial Public Class MainForm
                 BlockSourceTextBoxTextChanged = False
             End If
 
-            Dim cacheBase = If(codeLower.Contains("cachepath") AndAlso p.TempDir <> "", Path.Combine(p.TempDir, g.GetSourceBase), p.SourceFile)
-            Dim cachePath = cacheBase + ".0.bsindex"
-
-            If Not cachePath.FileExists() Then
-                Using proc As New Proc
-                    proc.Header = "Index BestSource"
-                    proc.Encoding = Encoding.UTF8
-                    proc.SkipStrings = {"Creating bsindex"}
-
-                    If p.Script.IsAviSynth Then
-                        proc.File = Package.ffmpeg.Path
-                        proc.Arguments = "-i " + p.Script.Path.LongPathPrefix.Escape + " -hide_banner"
-                    Else
-                        proc.File = Package.vspipe.Path
-                        proc.Arguments = p.Script.Path.Escape + " - -i"
-                    End If
-
-                    proc.AllowedExitCodes = {0, 1}
-                    proc.Start()
-                End Using
-            End If
+            IndexBestSource()
         ElseIf codeLower.Contains("lsmashvideosource(") OrElse
             codeLower.Contains("libavsmashsource(") OrElse
             codeLower.Contains("directshowsource(") OrElse
@@ -3230,6 +3210,105 @@ Partial Public Class MainForm
             End If
         End If
     End Sub
+
+    'engine, source file and expanded source filter code of the index passes of this session, BestSource writes no
+    'index for sources of less than 100 frames in its automatic cache modes
+    ReadOnly BestSourceIndexPasses As New HashSet(Of String)
+
+    Sub IndexBestSource()
+        Dim sourceCode = Macro.Expand(p.Script.GetFilter("Source").Script)
+        Dim info = New FileInfo(p.SourceFile)
+        Dim key = p.Script.Engine.ToString + "|" + p.SourceFile + "|" +
+            If(info.Exists, info.Length & "|" & info.LastWriteTimeUtc.Ticks, "") + "|" + sourceCode
+
+        If BestSourceIndexPasses.Contains(key) OrElse BestSourceIndexExists(sourceCode, p.SourceFile) Then
+            Exit Sub
+        End If
+
+        'the pass indexes the source only, the other filters would make it as slow as the script
+        Dim indexScriptPath = p.Script.Path.DirAndBase + "_bsindex." + p.Script.FileType
+        Dim indexCode = VideoScript.ModifyScript(sourceCode, p.Script.Engine)
+
+        Try
+            If p.Script.IsVapourSynth Then
+                indexCode.WriteFileUTF8(indexScriptPath)
+            Else
+                indexCode.WriteFile(indexScriptPath, TextEncoding.EncodingOfProcess)
+            End If
+
+            Using proc As New Proc
+                proc.Header = "Index BestSource"
+                proc.Encoding = Encoding.UTF8
+                proc.SkipStrings = {"Creating bsindex"}
+
+                If p.Script.IsAviSynth Then
+                    proc.File = Package.ffmpeg.Path
+                    proc.Arguments = "-i " + indexScriptPath.LongPathPrefix.Escape + " -hide_banner"
+                Else
+                    proc.File = Package.vspipe.Path
+                    proc.Arguments = indexScriptPath.Escape + " - -i"
+                End If
+
+                proc.AllowedExitCodes = {0, 1}
+                proc.Start()
+            End Using
+
+            BestSourceIndexPasses.Add(key)
+        Catch ex As Exception When TypeOf ex IsNot AbortException
+            'a failed pass isn't repeated, the evaluation of the script reports the error
+            BestSourceIndexPasses.Add(key)
+            Throw
+        Finally
+            Try
+                File.Delete(indexScriptPath)
+            Catch
+            End Try
+        End Try
+    End Sub
+
+    'BestSource R21 writes <cachepath or source>.<track>.bsindex in the cache modes 3 and 4, and
+    '<cachepath or $XDG_CACHE_HOME/bsindex or $HOME/bsindex>/<source path>.<track>.bsindex in the modes 1 and 2
+    Shared Function BestSourceIndexExists(code As String, sourceFile As String) As Boolean
+        Try
+            Dim modeMatch = Regex.Match(code, "\bcachemode\s*=\s*(\d+)", RegexOptions.IgnoreCase)
+            Dim mode = If(modeMatch.Success, CInt(modeMatch.Groups(1).Value), 1)
+            Dim pathMatch = Regex.Match(code, "\bcachepath\s*=\s*[rRuU]?(""|')(.*?)\1", RegexOptions.IgnoreCase)
+            Dim cachePath = If(pathMatch.Success, pathMatch.Groups(2).Value, "")
+            Dim basePath As String
+
+            Select Case mode
+                Case 3, 4
+                    basePath = If(cachePath <> "", cachePath, sourceFile)
+                Case 1, 2
+                    Dim root = cachePath
+
+                    If root = "" Then
+                        Dim xdgCache = Environment.GetEnvironmentVariable("XDG_CACHE_HOME")
+                        root = Path.Combine(If(xdgCache <> "", xdgCache, Environment.GetEnvironmentVariable("HOME")), "bsindex")
+                    End If
+
+                    Dim relative = Regex.Replace(Path.GetFullPath(sourceFile).TrimStart("/"c), "[?*<>|""]", "_").Replace(":"c, "/"c)
+                    basePath = Path.Combine(Path.GetFullPath(root), relative)
+                Case Else
+                    Return False
+            End Select
+
+            basePath = Path.GetFullPath(basePath)
+            Dim dir = Path.GetDirectoryName(basePath)
+            Dim name = Path.GetFileName(basePath)
+
+            If Not Directory.Exists(dir) Then
+                Return False
+            End If
+
+            Dim pattern = "^" + Regex.Escape(name) + "\.\d+\.bsindex$"
+
+            Return Directory.EnumerateFiles(dir, name + ".*.bsindex").Any(
+                Function(i) Regex.IsMatch(Path.GetFileName(i), pattern) AndAlso New FileInfo(i).Length > 0)
+        Catch
+            Return False
+        End Try
+    End Function
 
     <Command("Shows a file browser to open a project file.")>
     Sub ShowFileBrowserToOpenProject()
