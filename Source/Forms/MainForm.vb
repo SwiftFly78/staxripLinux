@@ -1809,7 +1809,6 @@ Partial Public Class MainForm
 
         Try
             SafeSerialization.Serialize(p, recoverProjectPath)
-            AddHandler AppDomain.CurrentDomain.ProcessExit, Sub() FileHelp.Delete(recoverProjectPath)
         Catch ex As Exception
             MsgWarn("Recovery not saved!", $"The recovery project could not be saved at:{BR}{recoverProjectPath}")
         End Try
@@ -2207,6 +2206,12 @@ Partial Public Class MainForm
             g.OnException(ex)
             OpenProject("", False)
         Finally
+            'only the restore above needs it, a crash or kill would leave it in the temp folder
+            Try
+                File.Delete(recoverProjectPath)
+            Catch
+            End Try
+
             SkipAssistant = False
             If Not isEncoding Then
                 ProcController.Finished()
