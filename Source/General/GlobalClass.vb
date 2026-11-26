@@ -1125,6 +1125,11 @@ Public Class GlobalClass
                         }) _
                         .Reverse().Distinct().Reverse()
 
+        'demuxers append the language, like "<release name> ID3 English.sup" or "ID2_[en] (English).ac3", the release
+        'name can name another one, the loop keeps the last match, so the segments are ordered by where they end
+        segments = segments.Select(Function(segment, index) (Segment:=segment, Index:=index, EndPos:=GetSegmentEnd(filename, segment))).
+            OrderBy(Function(x) x.EndPos).ThenBy(Function(x) x.Index).Select(Function(x) x.Segment).ToArray()
+
         For Each extracted In segments
             If String.IsNullOrWhiteSpace(extracted) Then Continue For
             extracted = extracted.Trim()
@@ -1168,6 +1173,25 @@ Public Class GlobalClass
         End If
 
         Return ret
+    End Function
+
+    'the end of the last occurrence of a segment in the file name, as whole word if possible, "en" is in "English"
+    Shared Function GetSegmentEnd(filename As String, segment As String) As Integer
+        Dim value = segment?.Trim()
+
+        If String.IsNullOrEmpty(value) Then
+            Return -1
+        End If
+
+        Dim match = Regex.Match(filename, "(?<![\p{L}\p{N}])" + Regex.Escape(value) + "(?![\p{L}\p{N}])",
+                                RegexOptions.IgnoreCase Or RegexOptions.RightToLeft)
+
+        If match.Success Then
+            Return match.Index + match.Length
+        End If
+
+        Dim pos = filename.LastIndexOf(value, StringComparison.OrdinalIgnoreCase)
+        Return If(pos < 0, -1, pos + value.Length)
     End Function
 
     'language names must be whole words, otherwise Rwa is found in Hinterwald

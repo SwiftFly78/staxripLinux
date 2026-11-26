@@ -315,12 +315,12 @@ Public MustInherit Class AudioProfile
     End Function
 
     Function GetAudioText(stream As AudioStream, path As String) As String
-        For Each i In Language.Languages
-            If path.Contains(i.CultureInfo.EnglishName) Then
-                stream.Language = i
-                Exit For
-            End If
-        Next
+        'like the language of the profile, the first language name anywhere in the path was often the release name's
+        Dim pathLanguage = g.ExtractLanguageFromPath(path)
+
+        If pathLanguage IsNot Nothing AndAlso pathLanguage.IsDetermined Then
+            stream.Language = pathLanguage
+        End If
 
         Dim matchDelay = Regex.Match(path, " (-?\d+)ms")
 
