@@ -6,10 +6,12 @@
   extends: ['config:recommended', ':semanticCommits'],
   // broken and malicious releases are usually found within two weeks
   minimumReleaseAge: '14 days',
-  // new branches on Fridays at noon, when the workflow starts Renovate, the hour after covers delayed and long runs,
-  // updates ticked in the Dependency Dashboard get their branch at once
+  // new pull requests only on Fridays, when the workflow starts Renovate every hour, the runs every 6 hours of the
+  // other days update the Dependency Dashboard and the open pull requests, updates ticked in the dashboard get their
+  // branch at once
   timezone: 'Europe/Berlin',
-  schedule: ['* 12-13 * * 5'],
+  schedule: ['* * * * 5'],
+  updateNotScheduled: true,
   separateMajorMinor: false,
   prConcurrentLimit: 10,
   prHourlyLimit: 0,

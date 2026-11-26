@@ -64,7 +64,8 @@ upstream StaxRip ships. The AviSynth and VapourSynth scripts are in `scripts`, s
 [Renovate](https://docs.renovatebot.com) recommends the updates in one pull request: of the components, the NuGet
 packages, the actions of the workflows, the base images, the build tools of `requirements-build.txt` and the
 appimagetool and AppImage runtime of `Source/appimage-tools.sh`. It runs in `.github/workflows/renovate.yml` with the
-configuration `.github/renovate.json5` and creates the pull request on Fridays at noon (Europe/Berlin):
+configuration `.github/renovate.json5` every 6 hours, which updates the Dependency Dashboard issue and the open pull
+request, and every hour on Fridays, the only day it creates pull requests (Europe/Berlin):
 
 - A release is proposed two weeks after its publication, when broken and malicious releases are usually known.
   Commits of a branch, the source of components without releases, have no publication date and come at once.
