@@ -473,7 +473,9 @@ clipname.set_output()" + BR
         code = Regex.Replace(key, VB.ChrW(&HE000) & "(\d+)" & VB.ChrW(&HE001),
             Function(m) Macro.Expand(volatileMacros(CInt(m.Groups(1).Value))))
 
-        If Me.Error <> "" OrElse key <> LastCode OrElse (comparePath AndAlso Path <> LastPath) Then
+        'an unchanged script that failed isn't evaluated again (see Retry), every activation of the main window would
+        'evaluate it again, with the index pass of its source
+        If key <> LastCode OrElse (comparePath AndAlso Path <> LastPath) Then
             If Path.Dir.DirExists Then
                 If Engine = ScriptEngine.VapourSynth Then
                     ModifyScript(code, Engine).WriteFileUTF8(Path)
@@ -487,22 +489,38 @@ clipname.set_output()" + BR
                     Throw New AbortException
                 End If
 
-                g.MainForm.Indexing()
+                Try
+                    g.MainForm.Indexing()
 
-                Using server = FrameServerFactory.Create(Path)
-                    Info = server.Info
+                    Using server = FrameServerFactory.Create(Path)
+                        If server Is Nothing Then
+                            Info = Nothing
+                            Me.Error = "The frame server failed to open the script."
+                        Else
+                            Info = server.Info
+                            Me.Error = server.Error
+                        End If
 
-                    If Not convertToRGB Then
-                        OriginalInfo = Info
-                    End If
-
-                    Me.Error = server.Error
-                End Using
+                        If Not convertToRGB Then
+                            OriginalInfo = Info
+                        End If
+                    End Using
+                Catch ex As Exception When TypeOf ex IsNot AbortException
+                    Me.Error = If(TypeOf ex Is ErrorAbortException, DirectCast(ex, ErrorAbortException).Title + BR2, "") + ex.Message
+                    LastCode = key
+                    LastPath = Path
+                    Throw
+                End Try
 
                 LastCode = key
                 LastPath = Path
             End If
         End If
+    End Sub
+
+    'the next Synchronize evaluates the script again, also when it's unchanged
+    Sub Retry()
+        LastCode = Nothing
     End Sub
 
     Shared Function ModifyScript(script As String, engine As ScriptEngine) As String

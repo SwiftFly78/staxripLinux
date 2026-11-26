@@ -20,10 +20,12 @@ Partial Public Class MainForm
 
             If refreshScript Then
                 p.Script.Synchronize(False, False)
-            ElseIf p.Script.Info.FrameCount = 0 Then
+            ElseIf p.Script.Info.FrameCount = 0 AndAlso p.Script.Error = "" Then
                 Using server = FrameServerFactory.Create(p.Script.Path)
-                    p.Script.Info = server.Info
-                    p.Script.Error = server.Error
+                    If server IsNot Nothing Then
+                        p.Script.Info = server.Info
+                        p.Script.Error = server.Error
+                    End If
                 End Using
             End If
 
@@ -365,7 +367,10 @@ Partial Public Class MainForm
                     End If
                 End If
 
-                If TypeOf p.VideoEncoder.Muxer Is MkvMuxer AndAlso Not String.IsNullOrWhiteSpace(p.VideoEncoder.Muxer.TimestampsFile) Then
+                'a failed script has no length, its error is shown below
+                If TypeOf p.VideoEncoder.Muxer Is MkvMuxer AndAlso Not String.IsNullOrWhiteSpace(p.VideoEncoder.Muxer.TimestampsFile) AndAlso
+                    p.Script.Error = "" Then
+
                     Dim sfc = p.SourceScript.GetFrameCount()
                     Dim tfc = p.Script.GetFrameCount()
                     If sfc <> tfc Then
@@ -494,7 +499,7 @@ Partial Public Class MainForm
                     Dim err = p.Script.Error
 
                     If err <> "" AndAlso ProcessTip(err) Then
-                        Return Block("Script error", AddressOf FiltersListView.ShowCodeEditor, "Edit Filters...")
+                        Return Block("Script error", AddressOf RetryScript, "Edit Filters...")
                     End If
                 End If
 
@@ -523,4 +528,14 @@ Partial Public Class MainForm
             SkipAssistant = False
         End Try
     End Function
+
+    'a failed script isn't evaluated again by itself, the click retries it, the editor opens when it still fails
+    Sub RetryScript()
+        p.Script.Retry()
+        Assistant()
+
+        If p.Script.Error <> "" Then
+            FiltersListView.ShowCodeEditor()
+        End If
+    End Sub
 End Class
