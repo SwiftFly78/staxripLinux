@@ -1,14 +1,14 @@
 # the Tritium fork of SVT-AV1 by Uranite
-version=2026-11-26-2e3deaf # renovate: datasource=git-refs depName=https://github.com/Uranite/svt-av1-tritium.git branch=main digest=2e3deafd2928dc5a854a39533f71ac06a4cdd03b
+version=2026-11-27-4931f28 # renovate: datasource=git-refs depName=https://github.com/Uranite/svt-av1-tritium.git branch=main digest=4931f28c5ba96c48652283badaa8cd97690a6555
 packages="SvtAv1EncApp (SVT-AV1-Tritium)"
 depends="libdovi libhdr10plus"
 sources="
-git https://github.com/Uranite/svt-av1-tritium.git 2e3deafd2928dc5a854a39533f71ac06a4cdd03b
+git https://github.com/Uranite/svt-av1-tritium.git 4931f28c5ba96c48652283badaa8cd97690a6555
 "
 
 build() {
-    unpack svt-av1-tritium-2e3deafd2928.tar
-    cd svt-av1-tritium-2e3deafd2928
+    unpack svt-av1-tritium-4931f28c5ba9.tar
+    cd svt-av1-tritium-4931f28c5ba9
     # the TF workaround of 2e3deaf uses TRUE, which only windows.h defines
     sed -i 's/|| TRUE)/|| true)/' Source/Lib/Codec/temporal_filtering.c
     # Dolby Vision and HDR10+ metadata with libdovi and libhdr10plus
