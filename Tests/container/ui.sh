@@ -107,8 +107,14 @@ declare -A origins
 origin() {
     local rect x y w h pointer= px py i
     if [ -z "${origins[$1]:-}" ]; then
-        rect=$(window_rect "$1")
-        read -r x y w h <<< "$rect"
+        # the desktop gets the title of a new window a moment after GTK
+        for i in $(seq 1 25); do
+            rect=$(window_rect "$1")
+            read -r x y w h <<< "$rect"
+            [ "${h:-0}" -gt 0 ] 2> /dev/null && break
+            sleep 0.2
+        done
+
         if ! [ "${h:-0}" -gt 0 ] 2> /dev/null; then
             echo "no window $1" >&2
             return 1

@@ -30,8 +30,17 @@ image() {
     tag=staxriplinux-test$(echo "${file#Dockerfile}" | tr . -):$(sha256sum $file | cut -c1-12)
 
     if ! docker image inspect "$tag" > /dev/null 2>&1; then
-        # without context, the images copy no files
-        docker build -q -t "$tag" - < $file > /dev/null
+        # without context, the images copy no files. Package mirrors and the Arch Linux Archive fail now and then, a
+        # failed build is tried again after a minute and shows the end of its output when it fails again.
+        if ! docker build -t "$tag" - < $file > "$W/image.log" 2>&1; then
+            sleep 60
+
+            if ! docker build -t "$tag" - < $file > "$W/image.log" 2>&1; then
+                echo "the image of $file couldn't be built:" >&2
+                tail -30 "$W/image.log" >&2
+                return 1
+            fi
+        fi
     fi
 
     echo "$tag"
@@ -39,14 +48,15 @@ image() {
 
 # container <image of image()> <script> [<arg>...]
 container() {
-    local variant=$1 options=()
+    local variant=$1 options=() tag
     shift
+    tag=$(image "$variant") || exit 1
 
     # crashes of the desktops mustn't reach the core dump handler of the host
     [ "$variant" = ui ] && options+=(--ulimit core=0)
 
     docker run --rm --user "$(id -u):$(id -g)" --shm-size=1g "${options[@]}" -v "$appimage:/app.AppImage:ro" \
-        -v "$PWD/container:/t:ro" -v "$W:/work" "$(image "$variant")" bash "$@"
+        -v "$PWD/container:/t:ro" -v "$W:/work" "$tag" bash "$@"
 }
 
 media() {
