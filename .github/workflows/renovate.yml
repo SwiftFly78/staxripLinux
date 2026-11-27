@@ -37,7 +37,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 120
     env:
-      RENOVATE_VERSION: 44.236.5 # renovate: datasource=npm depName=renovate
+      RENOVATE_VERSION: 44.239.1 # renovate: datasource=npm depName=renovate
 
     steps:
       - name: Check out
